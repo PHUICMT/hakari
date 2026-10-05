@@ -20,9 +20,8 @@ public sealed partial class SettingsWindow
     private const string FolderGlyph = "";
     private const string AccountGlyph = "";
     private const string DisplayGlyph = "";
-    private const string MoveUpGlyph = "";
-    private const string MoveDownGlyph = "";
-    private const double MoveGlyphSize = 11;
+    /// <summary>Account rows drag by the whole row; the grip shows that they can.</summary>
+    private const string GripGlyph = "";
     private const double AccountControlSpacing = 4;
     private const double NicknameBoxWidth = 110;
     private const int NicknameMaximumLength = 12;
@@ -127,6 +126,7 @@ public sealed partial class SettingsWindow
 
     private void FillAccounts(HakariSettings settings)
     {
+        AttachAccountReorder();
         AccountList.Children.Clear();
         var accounts = SettingsDataLoader.LoadAccounts();
         if (accounts.Count == 0)
@@ -159,7 +159,7 @@ public sealed partial class SettingsWindow
     }
 
     /// <summary>
-    /// The email stays the title. On the right: the nickname field, up and down to reorder,
+    /// The email stays the title; drag the row to reorder. On the right: the nickname field
     /// and whether the account shows at all, which keeps a signed-out account available.
     /// </summary>
     private SettingRow AccountRow(AccountInfo account, HakariSettings settings, bool isFirst)
@@ -174,13 +174,11 @@ public sealed partial class SettingsWindow
         };
         var nickname = settings.NicknameOf(account.AccountId);
         controls.Children.Add(NicknameBox(account.AccountId, nickname));
-        controls.Children.Add(MoveButton(account.AccountId, MoveUpGlyph, steps: -1));
-        controls.Children.Add(MoveButton(account.AccountId, MoveDownGlyph, steps: 1));
         controls.Children.Add(ShowToggle(account.AccountId, settings));
 
         var row = new SettingRow
         {
-            Glyph = AccountGlyph,
+            Glyph = GripGlyph,
             Title = AccountLabels.Full(account),
             Description = string.Join(DetailSeparator, details),
             Content = controls,
@@ -193,23 +191,19 @@ public sealed partial class SettingsWindow
         return row;
     }
 
-    private Button MoveButton(string accountId, string glyph, int steps)
+    private bool accountReorderAttached;
+
+    private void AttachAccountReorder()
     {
-        var button = new Button
+        if (accountReorderAttached)
         {
-            Content = new FontIcon
-            {
-                Glyph = glyph,
-                FontSize = MoveGlyphSize,
-                FontFamily = (FontFamily)Application.Current.Resources["HakariIconFont"],
-            },
-            Style = (Style)Application.Current.Resources["HakariSubtleButton"],
-        };
-        ToolTipService.SetToolTip(button, Texts.Get(steps < 0
-            ? "settings.accounts.moveUp"
-            : "settings.accounts.moveDown"));
-        button.Click += (_, _) => MoveAccount(accountId, steps);
-        return button;
+            return;
+        }
+
+        accountReorderAttached = true;
+        RowReorder.Attach(AccountList, order => ReorderAccounts(
+            [.. order.Where(index => index < shownAccountOrder.Count)
+                .Select(index => shownAccountOrder[index])]));
     }
 
     private HakariToggle ShowToggle(string accountId, HakariSettings settings)

@@ -60,7 +60,9 @@ internal static class WidgetText
         widget.Bottom.Text,
         ToWidgetTone(widget.Bottom.Tone),
         ToWidgetTone(widget.Top.Tone),
-        widget.Ring is { } ring ? ToRing(ring) : null);
+        widget.Ring is { } ring ? ToRing(ring) : null,
+        TurnIndex: widget.Turn?.Index ?? 0,
+        TurnCount: widget.Turn?.Count ?? 0);
 
     private static WidgetRing ToRing(ComposedRing ring) => new(
         ring.Fraction,

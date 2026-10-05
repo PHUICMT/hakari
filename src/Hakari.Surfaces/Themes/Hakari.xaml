@@ -247,6 +247,7 @@
             <Setter.Value>
                 <ControlTemplate TargetType="controls:SettingRow">
                     <Grid Padding="{TemplateBinding Padding}" MinHeight="{TemplateBinding MinHeight}"
+                        Background="{TemplateBinding Background}"
                         ColumnSpacing="12" BorderBrush="{TemplateBinding BorderBrush}"
                         BorderThickness="{TemplateBinding BorderThickness}">
                         <Grid.ColumnDefinitions>

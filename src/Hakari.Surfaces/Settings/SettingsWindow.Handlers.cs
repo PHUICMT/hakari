@@ -107,10 +107,9 @@ public sealed partial class SettingsWindow
         }
     }
 
-    /// <summary>Moving switches to the user's own order, starting from what is shown now.</summary>
-    private void MoveAccount(string accountId, int steps)
+    /// <summary>A drag switches to the user's own order.</summary>
+    private void ReorderAccounts(IReadOnlyList<string> order)
     {
-        var order = AccountArrangement.Move(shownAccountOrder, accountId, steps);
         var updated = store.Update(current => current with
         {
             AccountOrdering = AccountOrder.Custom,
@@ -118,7 +117,6 @@ public sealed partial class SettingsWindow
         });
         RefreshAccounts(updated);
     }
-
     private void SetAccountShown(string accountId, bool shown)
     {
         var updated = store.Update(current => current with

@@ -29,8 +29,8 @@ public sealed partial class SettingsWindow
         (WidgetItem.RepliesToday, "settings.item.repliesToday"),
         (WidgetItem.SessionLimit, "settings.item.session"),
         (WidgetItem.WeeklyLimit, "settings.item.weekly"),
-        (WidgetItem.MostPressingLimit, "settings.item.pressing"),
         (WidgetItem.SessionAndWeeklyLimits, "settings.item.both"),
+        (WidgetItem.MostPressingLimit, "settings.item.pressing"),
         (WidgetItem.SecondAccount, "settings.item.secondAccount"),
         (WidgetItem.Nothing, "settings.item.nothing"),
     ];

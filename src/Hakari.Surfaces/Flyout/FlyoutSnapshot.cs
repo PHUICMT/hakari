@@ -9,5 +9,6 @@ public sealed record FlyoutSnapshot(
     IReadOnlyList<AccountLimitGroup> Accounts,
     IReadOnlyList<StatTile> Stats,
     string BurnRate,
+    IReadOnlyList<decimal> HourlyBurn,
     IReadOnlyList<SourceRow> Sources,
     string? Notice);

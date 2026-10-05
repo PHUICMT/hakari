@@ -20,6 +20,12 @@ internal static class WidgetMetrics
     /// <summary>The bar across a full ring, as a share of its diameter.</summary>
     public const float StopBarShare = 0.5f;
 
+    /// <summary>Take-turns dots: 4 px, 3 px apart, the others at 30% opacity.</summary>
+    public const float DotSize = 4f;
+    public const float DotSpacing = 3f;
+    public const float DotsGap = 8f;
+    public const byte OtherDotAlpha = 77;
+
     /// <summary>Space between blocks when each account has its own.</summary>
     public const float PanelGap = 6f;
 

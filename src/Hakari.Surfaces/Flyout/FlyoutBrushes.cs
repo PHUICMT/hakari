@@ -11,6 +11,7 @@ public static class FlyoutBrushes
     private const string CriticalKey = "HakariCriticalBrush";
     private const string FaintKey = "HakariInkFaintBrush";
     private const string OkKey = "HakariOkBrush";
+    private const string InkKey = "HakariInkBrush";
 
     public static Brush ForTone(Tone tone) => Lookup(tone switch
     {
@@ -19,6 +20,10 @@ public static class FlyoutBrushes
         Tone.Muted => FaintKey,
         _ => AccentKey,
     });
+
+    /// <summary>Values read in ink; only a full limit turns critical, as in the design.</summary>
+    public static Brush ForValue(Tone tone) =>
+        Lookup(tone == Tone.Critical ? CriticalKey : InkKey);
 
     public static Brush ForSource(bool isRecent) => Lookup(isRecent ? OkKey : FaintKey);
 

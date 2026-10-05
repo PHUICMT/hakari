@@ -20,6 +20,8 @@ internal static class FlyoutDataLoader
 {
     private const double PercentScale = 100.0;
     private const string DetailSeparator = " · ";
+    private const int FullPercent = 100;
+    private const int SparkHours = 12;
     private static readonly TimeSpan RecentSourceWindow = TimeSpan.FromMinutes(10);
 
     public static FlyoutSnapshot Load()
@@ -42,11 +44,12 @@ internal static class FlyoutDataLoader
             account => account.Snapshot.Freshness == LimitFreshness.LastKnown);
 
         return new FlyoutSnapshot(
-            UpdatedText: UpdatedText(newest, now),
+            UpdatedText: accounts.Count > 1 ? string.Empty : UpdatedText(newest, now),
             AccountSummary: AccountSummary(accounts, settings),
             Accounts: [.. accounts.Select(account => Group(account, settings, query, now))],
             Stats: StatTiles(query, now),
             BurnRate: BurnRate(query, now),
+            HourlyBurn: HourlyBurn(query, now),
             Sources: SourceRows(store, now),
             Notice: anyLastKnown ? Texts.Get("flyout.lastKnown") : null);
     }
@@ -179,12 +182,12 @@ internal static class FlyoutDataLoader
     [
         .. limits.Limits.Select(limit => new LimitRow(
             Name: LimitNames.Long(limit),
-            Value: valueOf(limit),
+            Value: limit.Percent >= FullPercent ? Texts.Get("flyout.full") : valueOf(limit),
             ResetText: limit.ResetsAt is { } resetsAt
                 ? Texts.Format("flyout.resets", ResetText.Long(resetsAt, now))
                 : Texts.Get("flyout.startsNext"),
             Fraction: Math.Clamp(percentOf(limit) / PercentScale, 0, 1),
-            Tone: ToneOf(limit, limits.Freshness))),
+            Tone: limit.Percent >= FullPercent ? Tone.Critical : ToneOf(limit, limits.Freshness))),
     ];
 
     private static Tone ToneOf(UsageLimit limit, LimitFreshness freshness) =>
@@ -225,6 +228,14 @@ internal static class FlyoutDataLoader
         Texts.Format("flyout.replies", today.Messages.ToString("N0", CultureInfo.InvariantCulture));
 
     private static string Month(DateTimeOffset now) => now.ToString("MMMM", Texts.Culture);
+
+    /// <summary>Spending in each of the last twelve hours, oldest first.</summary>
+    private static List<decimal> HourlyBurn(UsageQuery query, DateTimeOffset now) =>
+    [
+        .. Enumerable.Range(0, SparkHours).Select(hour => query.Total(new UsageFilter(
+            From: now.AddHours(hour - SparkHours),
+            To: now.AddHours(hour - SparkHours + 1))).Cost),
+    ];
 
     private static string BurnRate(UsageQuery query, DateTimeOffset now)
     {

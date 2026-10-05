@@ -35,6 +35,9 @@ public sealed partial class FlyoutWindow : Window
     private (int AnchorX, int AnchorY, double Scale)? lastAnchor;
 
     private const int StatColumns = 2;
+    private const double SparkWidth = 120;
+    private const double SparkHeight = 22;
+    private const double SparkInset = 2;
     private const double FoldedChevronAngle = -90;
     private const string AnglePath = "Angle";
     private const string OpacityPath = "Opacity";
@@ -159,6 +162,7 @@ public sealed partial class FlyoutWindow : Window
         AccountList.ItemsSource = snapshot.Accounts;
         FillStats(snapshot.Stats);
         BurnText.Text = snapshot.BurnRate;
+        BurnSpark.Points = SparkPoints(snapshot.HourlyBurn);
         SourceList.ItemsSource = snapshot.Sources;
         NoticeText.Text = snapshot.Notice ?? string.Empty;
         NoticeCard.Visibility = snapshot.Notice is null ? Visibility.Collapsed : Visibility.Visible;
@@ -173,6 +177,22 @@ public sealed partial class FlyoutWindow : Window
         var frameWidth = AppWindow.Size.Width - AppWindow.ClientSize.Width;
         var frameHeight = AppWindow.Size.Height - AppWindow.ClientSize.Height;
         AppWindow.Resize(new SizeInt32(client.Width + frameWidth, client.Height + frameHeight));
+    }
+
+    /// <summary>Scaled to the line's box; a quiet day draws a flat line along the bottom.</summary>
+    private static PointCollection SparkPoints(IReadOnlyList<decimal> values)
+    {
+        var points = new PointCollection();
+        var highest = values.Count == 0 ? 0 : (double)values.Max();
+        for (var index = 0; index < values.Count; index++)
+        {
+            var x = SparkWidth * index / Math.Max(1, values.Count - 1);
+            var share = highest <= 0 ? 0 : (double)values[index] / highest;
+            var y = SparkHeight - SparkInset - share * (SparkHeight - SparkInset * 2);
+            points.Add(new Windows.Foundation.Point(x, y));
+        }
+
+        return points;
     }
 
     private void FillStats(IReadOnlyList<StatTile> stats)

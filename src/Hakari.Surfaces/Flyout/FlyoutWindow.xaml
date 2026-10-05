@@ -99,7 +99,7 @@
                                                     <TextBlock Text="{x:Bind Name}" Style="{StaticResource HakariLabelText}" />
                                                     <TextBlock Text="{x:Bind Value}" HorizontalAlignment="Right"
                                                         Style="{StaticResource HakariValueText}"
-                                                        Foreground="{x:Bind local:FlyoutBrushes.ForTone(Tone)}" />
+                                                        Foreground="{x:Bind local:FlyoutBrushes.ForValue(Tone)}" />
                                                 </Grid>
                                                 <Border Height="6" CornerRadius="3" Background="{ThemeResource HakariLineBrush}">
                                                     <Border x:Name="MeterFill" CornerRadius="3" RenderTransformOrigin="0,0.5"
@@ -134,10 +134,19 @@
             </Grid>
 
             <!-- Burn rate -->
-            <Grid>
-                <TextBlock Text="{l:Text Key=flyout.burnRate}" Style="{StaticResource HakariLabelText}" />
-                <TextBlock x:Name="BurnText" HorizontalAlignment="Right" FontWeight="SemiBold"
-                    Foreground="{ThemeResource HakariInkBrush}" />
+            <Grid ColumnSpacing="12">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="{l:Text Key=flyout.burnRate}" Style="{StaticResource HakariLabelText}"
+                    VerticalAlignment="Center" />
+                <!-- Spending per hour over the last twelve hours, newest on the right -->
+                <Polyline x:Name="BurnSpark" Grid.Column="1" Width="120" Height="22" HorizontalAlignment="Right"
+                    Stroke="{ThemeResource HakariAccentBrush}" StrokeThickness="1.5" StrokeLineJoin="Round" />
+                <TextBlock x:Name="BurnText" Grid.Column="2" FontSize="14" FontWeight="SemiBold"
+                    VerticalAlignment="Center" Foreground="{ThemeResource HakariInkBrush}" />
             </Grid>
 
             <!-- Sources -->

@@ -32,7 +32,8 @@ public static class WidgetPanels
         {
             var turn = TurnIndex(accounts.Count, now, turnLength ?? DefaultTurnLength);
             var account = accounts[turn];
-            return [ForAccount(layoutOf(account.AccountId), facts, account, now)];
+            var block = ForAccount(layoutOf(account.AccountId), facts, account, now);
+            return [block with { Turn = (turn, accounts.Count) }];
         }
 
         return

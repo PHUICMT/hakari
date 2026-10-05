@@ -122,7 +122,9 @@ public sealed class WidgetRenderer : IDisposable
         var ringSpace = frame.Current.Ring is null
             ? 0f
             : (float)((WidgetMetrics.RingDiameter + WidgetMetrics.RingGap) * scale);
-        var width = (int)Math.Ceiling(MeasureWidestText(lines) + ringSpace + padding * 2);
+        var textWidth = MeasureWidestText(lines);
+        var dotsSpace = DotsWidth(frame.Current, scale);
+        var width = (int)Math.Ceiling(textWidth + ringSpace + dotsSpace + padding * 2);
         var height = (int)Math.Round(WidgetMetrics.Height * scale);
 
         var bitmap = new Bitmap(width, height, PixelFormat.Format32bppPArgb);
@@ -137,6 +139,8 @@ public sealed class WidgetRenderer : IDisposable
         var lineGap = (float)(WidgetMetrics.LineGap * scale);
         var top = (height - (primaryHeight + lineGap + secondaryHeight)) / 2f;
         DrawRing(graphics, frame, palette, scale, padding, height);
+        var dotsLeft = padding + ringSpace + textWidth;
+        DrawTurnDots(graphics, frame.Current, palette, scale, dotsLeft, height);
         var textLeft = padding + ringSpace;
         var primaryColors = PrimaryColors(frame, palette);
         DrawLine(graphics, frame, lines.Primary, primaryFont!, primaryColors, textLeft, top);
@@ -285,8 +289,40 @@ public sealed class WidgetRenderer : IDisposable
     private static double Lerp(double from, double to, double progress) =>
         from + (to - from) * progress;
 
-    private static (Color From, Color To) PrimaryColors(
-        WidgetFrame frame,
+    /// <summary>Room for the take-turns dots: a gap, then one dot per account.</summary>
+    private static float DotsWidth(WidgetContent content, double scale) =>
+        content.TurnCount < 2
+            ? 0
+            : (float)((WidgetMetrics.DotsGap + content.TurnCount * WidgetMetrics.DotSize
+                + (content.TurnCount - 1) * WidgetMetrics.DotSpacing) * scale);
+
+    /// <summary>One dot per account in turn; the current account's is solid.</summary>
+    private static void DrawTurnDots(
+        Graphics graphics,
+        WidgetContent content,
+        WidgetPalette palette,
+        double scale,
+        float left,
+        int height)
+    {
+        if (content.TurnCount < 2)
+        {
+            return;
+        }
+
+        var size = (float)(WidgetMetrics.DotSize * scale);
+        var step = size + (float)(WidgetMetrics.DotSpacing * scale);
+        var x = left + (float)(WidgetMetrics.DotsGap * scale);
+        var y = (height - size) / 2f;
+        for (var index = 0; index < content.TurnCount; index++)
+        {
+            var alpha = index == content.TurnIndex ? byte.MaxValue : WidgetMetrics.OtherDotAlpha;
+            using var brush = new SolidBrush(Color.FromArgb(alpha, palette.SecondaryText));
+            graphics.FillEllipse(brush, x + index * step, y, size, size);
+        }
+    }
+
+    private static (Color From, Color To) PrimaryColors(        WidgetFrame frame,
         WidgetPalette palette)
     {
         var target = palette.ForPrimaryTone(frame.Current.PrimaryTone);
