@@ -21,4 +21,7 @@ internal static class LogFieldNames
     public const string CacheCreation = "cache_creation";
     public const string CacheWriteFiveMinutes = "ephemeral_5m_input_tokens";
     public const string CacheWriteOneHour = "ephemeral_1h_input_tokens";
+    public const string InferenceGeography = "inference_geo";
+    public const string ServerToolUse = "server_tool_use";
+    public const string WebSearchRequests = "web_search_requests";
 }

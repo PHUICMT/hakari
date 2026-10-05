@@ -10,9 +10,13 @@ public sealed record UsageRecord(
     string? GitBranch,
     bool IsSidechain,
     string Speed,
-    TokenCounts Tokens)
+    string? InferenceGeography,
+    TokenCounts Tokens,
+    long WebSearchRequests)
 {
     private const char DeduplicationSeparator = '|';
 
     public string DeduplicationKey => $"{MessageId}{DeduplicationSeparator}{RequestId}";
+
+    public DateOnly UtcDay => DateOnly.FromDateTime(Timestamp.UtcDateTime);
 }

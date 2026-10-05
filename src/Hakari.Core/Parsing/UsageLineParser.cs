@@ -53,8 +53,15 @@ public static class UsageLineParser
             GitBranch: root.GetStringOrNull(LogFieldNames.GitBranch),
             IsSidechain: root.IsTrue(LogFieldNames.IsSidechain),
             Speed: usage.GetStringOrNull(LogFieldNames.Speed) ?? SpeedNames.Standard,
-            Tokens: ReadTokens(usage));
+            InferenceGeography: usage.GetStringOrNull(LogFieldNames.InferenceGeography),
+            Tokens: ReadTokens(usage),
+            WebSearchRequests: ReadWebSearchRequests(usage));
     }
+
+    private static long ReadWebSearchRequests(JsonElement usage) =>
+        usage.TryGetObject(LogFieldNames.ServerToolUse, out var serverToolUse)
+            ? serverToolUse.GetInt64OrZero(LogFieldNames.WebSearchRequests)
+            : 0;
 
     private static TokenCounts ReadTokens(JsonElement usage)
     {

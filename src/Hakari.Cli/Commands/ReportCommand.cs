@@ -37,7 +37,7 @@ internal sealed class ReportCommand : ICliCommand
     {
         var table = new TableWriter(
             groupBy.ToString(), "Messages", "Input", "Output",
-            "Write 5m", "Write 1h", "Cache read", "Hit %", "Cost $");
+            "Write 5m", "Write 1h", "Cache read", "Hit %", "Searches", "Cost $");
 
         foreach (var summary in summaries)
         {
@@ -51,6 +51,7 @@ internal sealed class ReportCommand : ICliCommand
                 DisplayFormat.Number(tokens.CacheWriteOneHour),
                 DisplayFormat.Number(tokens.CacheRead),
                 DisplayFormat.Percent(tokens.CacheHitRate),
+                DisplayFormat.Number(summary.WebSearchRequests),
                 FormatCost(summary));
         }
 

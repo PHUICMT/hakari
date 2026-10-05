@@ -2,9 +2,21 @@ namespace Hakari.Core.Indexing;
 
 internal static class IndexSchema
 {
+    /// <summary>Bump when columns change; an index with another version is rebuilt.</summary>
+    public const int CurrentVersion = 2;
+
     public const string ConnectionPragmas = """
         PRAGMA journal_mode = WAL;
         PRAGMA synchronous = NORMAL;
+        """;
+
+    public const string ReadVersion = "PRAGMA user_version;";
+
+    public const string WriteVersionFormat = "PRAGMA user_version = {0};";
+
+    public const string DropTables = """
+        DROP TABLE IF EXISTS usage_records;
+        DROP TABLE IF EXISTS tracked_files;
         """;
 
     public const string CreateTables = """
@@ -26,11 +38,13 @@ internal static class IndexSchema
             git_branch TEXT,
             is_sidechain INTEGER NOT NULL,
             speed TEXT NOT NULL,
+            inference_geography TEXT,
             input_tokens INTEGER NOT NULL,
             output_tokens INTEGER NOT NULL,
             cache_write_five_minutes INTEGER NOT NULL,
             cache_write_one_hour INTEGER NOT NULL,
-            cache_read_tokens INTEGER NOT NULL
+            cache_read_tokens INTEGER NOT NULL,
+            web_search_requests INTEGER NOT NULL
         );
 
         CREATE INDEX IF NOT EXISTS index_usage_timestamp
