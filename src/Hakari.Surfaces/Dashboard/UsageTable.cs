@@ -101,11 +101,22 @@ internal static class UsageTable
             Func<UsageSummary, (string Title, string? Detail)> nameOf)
         {
             var body = new StackPanel { Visibility = Visibility.Collapsed };
-            foreach (var row in Rows)
+
+            // Built on first opening: a page of folded projects stays light however many
+            // sessions they hold.
+            void FillOnce()
             {
-                var name = NameCell(nameOf(row));
-                name.Margin = new Thickness(ChildIndent, 0, 0, 0);
-                body.Children.Add(Row(row, totalCost, currency, name, divider: true));
+                if (body.Children.Count > 0)
+                {
+                    return;
+                }
+
+                foreach (var row in Rows)
+                {
+                    var name = NameCell(nameOf(row));
+                    name.Margin = new Thickness(ChildIndent, 0, 0, 0);
+                    body.Children.Add(Row(row, totalCost, currency, name, divider: true));
+                }
             }
 
             var chevron = Chevron();
@@ -122,7 +133,11 @@ internal static class UsageTable
                 Style = (Style)Application.Current.Resources["HakariCardHeaderButton"],
                 Padding = new Thickness(0),
             };
-            header.Click += (_, _) => Toggle(body, chevron);
+            header.Click += (_, _) =>
+            {
+                FillOnce();
+                Toggle(body, chevron);
+            };
 
             var section = new StackPanel();
             section.Children.Add(Divider());

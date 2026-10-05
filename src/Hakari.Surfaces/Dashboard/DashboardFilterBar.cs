@@ -81,20 +81,27 @@ internal sealed partial class DashboardFilterBar : StackPanel
         return choices;
     }
 
-    private void FillSelects()
+    /// <summary>"All" at once; the accounts and sources are read off the UI thread.</summary>
+    private async void FillSelects()
     {
-        var settings = SettingsStore.Default.Load();
-        var accounts = DashboardData.Accounts()
+        var allAccounts = (AllChoice, Texts.Get("dashboard.allAccounts"));
+        var allSources = (AllChoice, Texts.Get("dashboard.allSources"));
+        accountSelect.SetChoices([allAccounts], AllChoice);
+        sourceSelect.SetChoices([allSources], AllChoice);
+
+        var (accounts, sourceIds, settings) = await Task.Run(() =>
+            (DashboardData.Accounts(), DashboardData.SourceIds(), SettingsStore.Default.Load()));
+        var accountChoices = accounts
             .Select(account => ((object)account.AccountId, AccountLabels.Full(
                 account,
                 settings.NicknameOf(account.AccountId))))
-            .Prepend((AllChoice, Texts.Get("dashboard.allAccounts")));
-        accountSelect.SetChoices(accounts, DashboardFilter.Current.AccountId ?? AllChoice);
+            .Prepend(allAccounts);
+        accountSelect.SetChoices(accountChoices, DashboardFilter.Current.AccountId ?? AllChoice);
 
-        var sources = DashboardData.SourceIds()
+        var sourceChoices = sourceIds
             .Select(sourceId => ((object)sourceId, SourceNames.Display(sourceId)))
-            .Prepend((AllChoice, Texts.Get("dashboard.allSources")));
-        sourceSelect.SetChoices(sources, DashboardFilter.Current.SourceId ?? AllChoice);
+            .Prepend(allSources);
+        sourceSelect.SetChoices(sourceChoices, DashboardFilter.Current.SourceId ?? AllChoice);
     }
 
     private Button RefreshButton()

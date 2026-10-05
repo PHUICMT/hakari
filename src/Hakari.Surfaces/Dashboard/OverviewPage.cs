@@ -35,6 +35,7 @@ internal sealed partial class OverviewPage : UserControl
 
     private readonly StackPanel content = new() { Spacing = SectionSpacing, Padding = PagePadding };
     private readonly DashboardFilterBar filterBar = new();
+    private readonly PageLoader<OverviewData> loader;
     private readonly ContentControl body = new()
     {
         HorizontalContentAlignment = HorizontalAlignment.Stretch,
@@ -46,12 +47,13 @@ internal sealed partial class OverviewPage : UserControl
         content.Children.Add(Header());
         content.Children.Add(body);
         Content = new ScrollViewer { Content = content };
-        filterBar.Changed += (_, _) => Refresh();
-        Refresh();
+        loader = new PageLoader<OverviewData>(body, OverviewData.Load, Build);
+        filterBar.Changed += (_, _) => loader.Load(force: true);
+        loader.Load();
     }
 
-    /// <summary>Reads the index again for the current filter.</summary>
-    public void Refresh() => body.Content = Build(OverviewData.Load(DashboardFilter.Current));
+    /// <summary>Shows the current filter's numbers, reading again only when stale.</summary>
+    public void Refresh() => loader.Load();
 
     private Grid Header()
     {

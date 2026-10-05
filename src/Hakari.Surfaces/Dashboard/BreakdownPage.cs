@@ -21,6 +21,7 @@ internal sealed partial class BreakdownPage : UserControl
     private readonly GroupBy groupBy;
     private readonly string titleKey;
     private readonly DashboardFilterBar filterBar = new();
+    private readonly PageLoader<BreakdownRows> loader;
     private readonly ContentControl body = new()
     {
         HorizontalContentAlignment = HorizontalAlignment.Stretch,
@@ -46,24 +47,32 @@ internal sealed partial class BreakdownPage : UserControl
         content.Children.Add(header);
         content.Children.Add(body);
         Content = new ScrollViewer { Content = content };
-        filterBar.Changed += (_, _) => Refresh();
-        Loaded += (_, _) => Refresh();
+        loader = new PageLoader<BreakdownRows>(body, Read, Build);
+        filterBar.Changed += (_, _) => loader.Load(force: true);
+        Loaded += (_, _) => loader.Load();
     }
 
-    public void Refresh()
-    {
-        var (rows, total, currency) = DashboardData.Read(
-            (query, _) =>
-            {
-                var filter = DashboardFilter.Current.ToUsageFilter(DateTimeOffset.Now);
-                return (query.Summarize(filter, groupBy), query.Total(filter).Cost, query.Currency);
-            },
-            ((IReadOnlyList<UsageSummary>)[], 0m, "USD"));
-        body.Content = DashboardCard.Create(
-            Texts.Get(titleKey),
-            Texts.Format("dashboard.rowCount", rows.Count),
-            Table(rows, total, currency));
-    }
+    private sealed record BreakdownRows(
+        IReadOnlyList<UsageSummary> Rows,
+        decimal Total,
+        string Currency);
+
+    /// <summary>Runs off the UI thread.</summary>
+    private BreakdownRows Read(DashboardFilter filter) => DashboardData.Read(
+        (query, _) =>
+        {
+            var usage = filter.ToUsageFilter(DateTimeOffset.Now);
+            return new BreakdownRows(
+                query.Summarize(usage, groupBy),
+                query.Total(usage).Cost,
+                query.Currency);
+        },
+        new BreakdownRows([], 0m, "USD"));
+
+    private Border Build(BreakdownRows data) => DashboardCard.Create(
+        Texts.Get(titleKey),
+        Texts.Format("dashboard.rowCount", data.Rows.Count),
+        Table(data.Rows, data.Total, data.Currency));
 
     /// <summary>Branches and sessions sit under their project; other pages are flat.</summary>
     private UIElement Table(IReadOnlyList<UsageSummary> rows, decimal total, string currency)
