@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
-using System.Windows.Automation;
+using Hakari.Taskbar.Automation;
+using Interop.UIAutomationClient;
 
 namespace Hakari.Taskbar.Placement;
 
@@ -17,15 +18,15 @@ public sealed class TaskbarLayoutMonitor : IDisposable
     private static readonly TimeSpan MissingLayoutRetryInterval = TimeSpan.FromSeconds(1.5);
 
     private readonly ConcurrentDictionary<IntPtr, TaskbarLayout> layouts = new();
-    private readonly Dictionary<IntPtr, AutomationElement> subscribed = [];
+    private readonly Dictionary<IntPtr, IUIAutomationElement> subscribed = [];
     private readonly AutoResetEvent changed = new(initialState: false);
     private readonly CancellationTokenSource cancellation = new();
     private readonly Thread worker;
-    private readonly StructureChangedEventHandler structureChangedHandler;
+    private readonly StructureChangedHandler structureChangedHandler;
 
     public TaskbarLayoutMonitor()
     {
-        structureChangedHandler = (_, _) => changed.Set();
+        structureChangedHandler = new StructureChangedHandler(() => changed.Set());
         worker = new Thread(RunLoop) { IsBackground = true, Name = "Hakari taskbar layout" };
         worker.Start();
     }
@@ -123,14 +124,16 @@ public sealed class TaskbarLayoutMonitor : IDisposable
 
         try
         {
-            var element = AutomationElement.FromHandle(handle);
-            Automation.AddStructureChangedEventHandler(
+            var automation = AutomationClient.Instance;
+            var element = automation.ElementFromHandle(handle);
+            automation.AddStructureChangedEventHandler(
                 element,
-                TreeScope.Subtree,
+                TreeScope.TreeScope_Subtree,
+                null,
                 structureChangedHandler);
             subscribed[handle] = element;
         }
-        catch (Exception exception) when (TaskbarLayoutReader.IsAutomationProblem(exception))
+        catch (Exception exception) when (AutomationClient.IsAutomationProblem(exception))
         {
         }
     }
@@ -141,9 +144,11 @@ public sealed class TaskbarLayoutMonitor : IDisposable
         {
             try
             {
-                Automation.RemoveStructureChangedEventHandler(element, structureChangedHandler);
+                AutomationClient.Instance.RemoveStructureChangedEventHandler(
+                    element,
+                    structureChangedHandler);
             }
-            catch (Exception exception) when (TaskbarLayoutReader.IsAutomationProblem(exception))
+            catch (Exception exception) when (AutomationClient.IsAutomationProblem(exception))
             {
             }
         }

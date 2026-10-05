@@ -1,5 +1,6 @@
 using System.Drawing;
-using System.Windows.Automation;
+using Hakari.Taskbar.Automation;
+using Interop.UIAutomationClient;
 
 namespace Hakari.Taskbar.Placement;
 
@@ -17,33 +18,54 @@ public static class TaskbarLayoutReader
     {
         try
         {
-            var root = AutomationElement.FromHandle(taskbarHandle);
-            var taskbarBounds = ToRectangle(root.Current.BoundingRectangle);
-            var elements = root.FindAll(TreeScope.Descendants, Condition.TrueCondition);
-            var layout = Summarize(elements.Cast<AutomationElement>());
+            var automation = AutomationClient.Instance;
+            var root = automation.ElementFromHandle(taskbarHandle);
+            var taskbarBounds = ToRectangle(root.CurrentBoundingRectangle);
+            var elements = root.FindAllBuildCache(
+                TreeScope.TreeScope_Descendants,
+                automation.CreateTrueCondition(),
+                CreateCacheRequest(automation));
+
+            var layout = Summarize(ReadElements(elements));
             return layout is not null && IsPlausible(layout, taskbarBounds) ? layout : null;
         }
-        catch (Exception exception) when (IsAutomationProblem(exception))
+        catch (Exception exception) when (AutomationClient.IsAutomationProblem(exception))
         {
             return null;
         }
     }
 
-    public static bool IsAutomationProblem(Exception exception) =>
-        exception is ElementNotAvailableException
-            or InvalidOperationException
-            or System.Runtime.InteropServices.COMException
-            or ArgumentException;
+    /// <summary>
+    /// Caching the two properties fetches them in one cross-process call instead of two calls
+    /// per element.
+    /// </summary>
+    private static IUIAutomationCacheRequest CreateCacheRequest(IUIAutomation automation)
+    {
+        var cacheRequest = automation.CreateCacheRequest();
+        cacheRequest.AddProperty(AutomationClient.ClassNamePropertyId);
+        cacheRequest.AddProperty(AutomationClient.BoundingRectanglePropertyId);
+        return cacheRequest;
+    }
 
-    private static TaskbarLayout? Summarize(IEnumerable<AutomationElement> elements)
+    private static IEnumerable<(string ClassName, Rectangle Bounds)> ReadElements(
+        IUIAutomationElementArray elements)
+    {
+        for (var position = 0; position < elements.Length; position++)
+        {
+            var element = elements.GetElement(position);
+            var className = element.CachedClassName ?? string.Empty;
+            yield return (className, ToRectangle(element.CachedBoundingRectangle));
+        }
+    }
+
+    private static TaskbarLayout? Summarize(
+        IEnumerable<(string ClassName, Rectangle Bounds)> elements)
     {
         var appButtons = Rectangle.Empty;
         var notificationArea = Rectangle.Empty;
 
-        foreach (var element in elements)
+        foreach (var (className, bounds) in elements)
         {
-            var className = element.Current.ClassName ?? string.Empty;
-            var bounds = ToRectangle(element.Current.BoundingRectangle);
             if (bounds.IsEmpty)
             {
                 continue;
@@ -86,8 +108,6 @@ public static class TaskbarLayoutReader
     private static Rectangle Union(Rectangle current, Rectangle next) =>
         current.IsEmpty ? next : Rectangle.Union(current, next);
 
-    private static Rectangle ToRectangle(System.Windows.Rect bounds) =>
-        bounds.IsEmpty
-            ? Rectangle.Empty
-            : new Rectangle((int)bounds.X, (int)bounds.Y, (int)bounds.Width, (int)bounds.Height);
+    private static Rectangle ToRectangle(tagRECT bounds) =>
+        Rectangle.FromLTRB(bounds.left, bounds.top, bounds.right, bounds.bottom);
 }

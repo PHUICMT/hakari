@@ -10,6 +10,12 @@ internal static class WidgetMetrics
     public const float LineGap = 1f;
     public const float CornerRadius = 4f;
 
+    /// <summary>Content never comes closer than this to any edge, even mid-animation.</summary>
+    public const float MinimumInset = 2f;
+
+    /// <summary>How far a changing value travels, as a share of its line height.</summary>
+    public const float ValueTravel = 0.45f;
+
     /// <summary>
     /// Fully transparent pixels of a layered window let clicks fall through, so the background
     /// keeps an alpha of one: invisible, but still clickable.

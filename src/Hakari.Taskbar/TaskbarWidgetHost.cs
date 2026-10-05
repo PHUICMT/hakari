@@ -1,4 +1,6 @@
+using System.Diagnostics;
 using Hakari.Taskbar.Interop;
+using Hakari.Taskbar.Motion;
 using Hakari.Taskbar.Placement;
 using Hakari.Taskbar.Rendering;
 
@@ -6,7 +8,7 @@ namespace Hakari.Taskbar;
 
 /// <summary>
 /// Owns the widgets on every taskbar through a hidden top-level window, which is what receives
-/// "TaskbarCreated" and keeps the timer running while Explorer restarts. Every method runs on
+/// "TaskbarCreated" and keeps the timers running while Explorer restarts. Every method runs on
 /// the creating thread; other threads use <see cref="PostContent"/>.
 /// </summary>
 public sealed class TaskbarWidgetHost : IDisposable
@@ -20,24 +22,32 @@ public sealed class TaskbarWidgetHost : IDisposable
     /// <summary>The taskbar repaints after a theme change, so its color is checked again.</summary>
     private const uint ThemeSettleDelay = 1500;
 
+    /// <summary>About 60 frames a second, and only while something is moving.</summary>
+    private const uint AnimationFrameInterval = 16;
+
     private static readonly IntPtr PlacementTimerId = new(1);
     private static readonly IntPtr ThemeSettleTimerId = new(2);
+    private static readonly IntPtr AnimationTimerId = new(3);
 
     private readonly TaskbarWidgetHostOptions options;
     private readonly WidgetRenderer renderer = new();
     private readonly TaskbarLayoutMonitor layoutMonitor = new();
     private readonly List<WidgetWindow> widgets = [];
+    private readonly Dictionary<WidgetWindow, WidgetState> states = [];
     private readonly uint taskbarCreatedMessage;
     private readonly object pendingLock = new();
     private readonly IntPtr hostHandle;
 
     private WidgetContent content;
     private WidgetContent? pendingContent;
+    private MotionTokens motion;
+    private bool animationTimerRunning;
 
     public TaskbarWidgetHost(TaskbarWidgetHostOptions options, WidgetContent initialContent)
     {
         this.options = options;
         content = initialContent;
+        motion = ResolveMotion();
         taskbarCreatedMessage = User32.RegisterWindowMessage(TaskbarCreatedMessageName);
         WindowClassRegistry.Register(ClassName, HandleMessage);
         hostHandle = CreateHiddenHostWindow();
@@ -89,6 +99,7 @@ public sealed class TaskbarWidgetHost : IDisposable
         }
 
         widgets.Clear();
+        states.Clear();
         layoutMonitor.Dispose();
         renderer.Dispose();
         User32.DestroyWindow(hostHandle);
@@ -108,6 +119,9 @@ public sealed class TaskbarWidgetHost : IDisposable
         Kernel32.GetModuleHandle(null),
         IntPtr.Zero);
 
+    private MotionTokens ResolveMotion() =>
+        MotionTokens.For(MotionSettings.Resolve(options.Motion));
+
     /// <summary>
     /// Creates widgets for new or restarted taskbars and drops dead ones. Only widgets that
     /// are new, changed DPI, or are asked for (<paramref name="renderAll"/>) are redrawn;
@@ -115,22 +129,8 @@ public sealed class TaskbarWidgetHost : IDisposable
     /// </summary>
     private void SynchronizeWidgets(bool renderAll)
     {
-        foreach (var deadWidget in widgets.Where(widget => !widget.IsAlive).ToList())
-        {
-            deadWidget.Dispose();
-            widgets.Remove(deadWidget);
-            Diagnostics.WidgetsRecreated++;
-        }
-
-        foreach (var target in WantedTargets())
-        {
-            var taskbarHandle = target.Resolve();
-            var exists = widgets.Any(widget => widget.Target == target);
-            if (taskbarHandle != IntPtr.Zero && !exists)
-            {
-                widgets.Add(CreateWidget(target, taskbarHandle));
-            }
-        }
+        RemoveDeadWidgets();
+        AddMissingWidgets();
 
         foreach (var widget in widgets)
         {
@@ -140,13 +140,38 @@ public sealed class TaskbarWidgetHost : IDisposable
                 continue;
             }
 
-            var needsRender = renderAll || widget.RenderedDpi != taskbar.Dpi;
-            if (needsRender)
+            if (renderAll || widget.RenderedDpi != taskbar.Dpi)
             {
-                Render(widget, taskbar);
+                RenderFull(widget, taskbar);
             }
 
             Place(widget, taskbar);
+        }
+    }
+
+    private void RemoveDeadWidgets()
+    {
+        foreach (var deadWidget in widgets.Where(widget => !widget.IsAlive).ToList())
+        {
+            deadWidget.Dispose();
+            widgets.Remove(deadWidget);
+            states.Remove(deadWidget);
+            Diagnostics.WidgetsRecreated++;
+        }
+    }
+
+    private void AddMissingWidgets()
+    {
+        foreach (var target in WantedTargets())
+        {
+            var taskbarHandle = target.Resolve();
+            var exists = widgets.Any(widget => widget.Target == target);
+            if (taskbarHandle != IntPtr.Zero && !exists)
+            {
+                var widget = CreateWidget(target, taskbarHandle);
+                widgets.Add(widget);
+                states[widget] = new WidgetState(content);
+            }
         }
     }
 
@@ -158,28 +183,24 @@ public sealed class TaskbarWidgetHost : IDisposable
         var widget = WidgetWindow.Create(target, taskbarHandle, options.Mode);
         widget.Clicked += (_, _) => Clicked?.Invoke(this, EventArgs.Empty);
         widget.RightClicked += (_, _) => RightClicked?.Invoke(this, EventArgs.Empty);
-        widget.HoverChanged += (_, _) => RenderAndPlace(widget);
+        widget.HoverChanged += (_, _) => StartHoverTransition(widget);
         return widget;
     }
 
-    private void RenderAndPlace(WidgetWindow widget)
+    /// <summary>Samples the taskbar's color again, then draws the current frame.</summary>
+    private void RenderFull(WidgetWindow widget, TaskbarInfo taskbar)
     {
-        var taskbar = TaskbarLocator.Describe(widget.Target, layoutMonitor);
-        if (taskbar is null)
-        {
-            return;
-        }
-
-        Render(widget, taskbar);
-        Place(widget, taskbar);
-    }
-
-    private void Render(WidgetWindow widget, TaskbarInfo taskbar)
-    {
-        var palette = TaskbarTheme.IsLight(taskbar)
+        var state = states[widget];
+        state.Palette = TaskbarTheme.IsLight(taskbar)
             ? WidgetPalette.LightTaskbar
             : WidgetPalette.DarkTaskbar;
-        using var bitmap = renderer.Render(content, palette, taskbar.Scale, widget.IsHovered);
+        RenderFrame(widget, taskbar, state);
+    }
+
+    private void RenderFrame(WidgetWindow widget, TaskbarInfo taskbar, WidgetState state)
+    {
+        var frame = state.Animation.FrameAt(Stopwatch.GetTimestamp(), motion);
+        using var bitmap = renderer.Render(frame, state.Palette, taskbar.Scale);
         widget.Present(bitmap, taskbar.Dpi);
         Diagnostics.Renders++;
     }
@@ -215,8 +236,73 @@ public sealed class TaskbarWidgetHost : IDisposable
             pendingContent = null;
         }
 
+        motion = ResolveMotion();
+        var now = Stopwatch.GetTimestamp();
+        foreach (var state in states.Values)
+        {
+            state.Animation.ChangeContent(content, now, motion);
+        }
+
         SynchronizeWidgets(renderAll: true);
+        StartAnimationTimerIfNeeded();
     }
+
+    private void StartHoverTransition(WidgetWindow widget)
+    {
+        if (!states.TryGetValue(widget, out var state))
+        {
+            return;
+        }
+
+        state.Animation.ChangeHover(widget.IsHovered, Stopwatch.GetTimestamp(), motion);
+        StartAnimationTimerIfNeeded();
+        DrawAnimationFrames();
+    }
+
+    private void StartAnimationTimerIfNeeded()
+    {
+        var now = Stopwatch.GetTimestamp();
+        var anyMoving = states.Values.Any(state => state.Animation.NeedsFrame(now, motion));
+        if (anyMoving && !animationTimerRunning)
+        {
+            User32.SetTimer(hostHandle, AnimationTimerId, AnimationFrameInterval, IntPtr.Zero);
+            animationTimerRunning = true;
+        }
+    }
+
+    /// <summary>Draws a frame for every moving widget; stops the timer once all rest.</summary>
+    private void DrawAnimationFrames()
+    {
+        var now = Stopwatch.GetTimestamp();
+        var anyMoving = false;
+        foreach (var widget in widgets)
+        {
+            var state = states[widget];
+            if (!state.Animation.NeedsFrame(now, motion))
+            {
+                continue;
+            }
+
+            var taskbar = TaskbarLocator.Describe(widget.Target, layoutMonitor);
+            if (taskbar is null)
+            {
+                continue;
+            }
+
+            RenderFrame(widget, taskbar, state);
+            Place(widget, taskbar);
+            anyMoving |= state.Animation.NeedsFrame(Stopwatch.GetTimestamp(), motion);
+        }
+
+        if (!anyMoving && animationTimerRunning)
+        {
+            User32.KillTimer(hostHandle, AnimationTimerId);
+            animationTimerRunning = false;
+        }
+    }
+
+    private void ScheduleThemeRecheck() =>
+        User32.SetTimer(hostHandle, ThemeSettleTimerId, ThemeSettleDelay, IntPtr.Zero);
 
     private IntPtr HandleMessage(
         IntPtr windowHandle,
@@ -237,6 +323,9 @@ public sealed class TaskbarWidgetHost : IDisposable
             case ContentChangedMessage:
                 ApplyPendingContent();
                 return IntPtr.Zero;
+            case WindowMessages.Timer when wordParameter == AnimationTimerId:
+                DrawAnimationFrames();
+                return IntPtr.Zero;
             case WindowMessages.Timer when wordParameter == ThemeSettleTimerId:
                 User32.KillTimer(hostHandle, ThemeSettleTimerId);
                 SynchronizeWidgets(renderAll: true);
@@ -247,9 +336,10 @@ public sealed class TaskbarWidgetHost : IDisposable
                 return IntPtr.Zero;
             case WindowMessages.DisplayChange:
             case WindowMessages.SettingChange:
+                motion = ResolveMotion();
                 layoutMonitor.RequestRefresh();
                 SynchronizeWidgets(renderAll: true);
-                User32.SetTimer(hostHandle, ThemeSettleTimerId, ThemeSettleDelay, IntPtr.Zero);
+                ScheduleThemeRecheck();
                 return IntPtr.Zero;
             default:
                 return User32.DefWindowProc(windowHandle, message, wordParameter, longParameter);

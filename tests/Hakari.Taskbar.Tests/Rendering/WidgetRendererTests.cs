@@ -47,6 +47,25 @@ public sealed class WidgetRendererTests : IDisposable
         Assert.True(bitmap.Height - content.Bottom >= inset, $"bottom gap below {inset}");
     }
 
+    [Theory]
+    [InlineData(0.1, true)]
+    [InlineData(0.5, true)]
+    [InlineData(0.9, true)]
+    [InlineData(0.5, false)]
+    public void Keeps_moving_text_away_from_the_edges(double progress, bool movesText)
+    {
+        var next = new WidgetContent("$1,228.76 today", "Full in ~6 min", WidgetTone.Critical);
+        var frame = new WidgetFrame(next, SampleContent, progress, progress, 0, movesText);
+
+        using var bitmap = renderer.Render(frame, WidgetPalette.DarkTaskbar, 1.5);
+        var content = FindContentBounds(bitmap);
+        var inset = (int)Math.Ceiling(MinimumInset * 1.5);
+
+        Assert.True(content.Top >= inset && content.Left >= inset);
+        Assert.True(bitmap.Height - content.Bottom >= inset);
+        Assert.True(bitmap.Width - content.Right >= inset);
+    }
+
     [Fact]
     public void Grows_wider_for_longer_text_instead_of_clipping()
     {

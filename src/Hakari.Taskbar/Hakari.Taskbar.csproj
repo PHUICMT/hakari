@@ -3,11 +3,11 @@
   <PropertyGroup>
     <TargetFramework>net9.0-windows10.0.19041.0</TargetFramework>
     <SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
-    <!-- Only for System.Windows.Automation (reading the taskbar's XAML layout); no WPF UI -->
-    <UseWPF>true</UseWPF>
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- UI Automation COM API; lighter than System.Windows.Automation, which loads WPF -->
+    <PackageReference Include="Interop.UIAutomationClient" Version="10.19041.0" />
     <PackageReference Include="System.Drawing.Common" Version="10.0.12" />
   </ItemGroup>
 

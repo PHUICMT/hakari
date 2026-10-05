@@ -1,11 +1,14 @@
 using System.Diagnostics;
 using Hakari.Taskbar;
+using Hakari.Taskbar.Motion;
 using Hakari.Taskbar.Rendering;
 using Hakari.TaskbarSpike;
 
 const string OverlayFlag = "--overlay";
 const long BytesPerMegabyte = 1024 * 1024;
 const string ReportSecondsFlag = "--report-seconds";
+const string MotionDemoFlag = "--demo-motion";
+const string MotionFlag = "--motion";
 const int DefaultReportSeconds = 30;
 var reportInterval = TimeSpan.FromSeconds(ReadReportSeconds(args));
 
@@ -14,13 +17,24 @@ var mode = args.Contains(OverlayFlag) ? AttachMode.TopMostOverlay : AttachMode.C
 Console.WriteLine($"Hakari taskbar spike · mode {mode} · right-click the widget to quit");
 
 var loading = new WidgetContent("Hakari", "Reading logs…", WidgetTone.Muted);
-var hostOptions = TaskbarWidgetHostOptions.Default with { Mode = mode };
+var hostOptions = TaskbarWidgetHostOptions.Default with
+{
+    Mode = mode,
+    Motion = ReadMotion(args),
+};
 using var widget = new TaskbarWidgetHost(hostOptions, loading);
 using var feed = new UsageFeed();
-feed.Updated += content => widget.PostContent(content);
 widget.Clicked += (_, _) => Console.WriteLine("Clicked: the flyout would open here.");
 widget.RightClicked += (_, _) => MessageLoop.Quit();
-feed.Start();
+
+using var demo = args.Contains(MotionDemoFlag)
+    ? MotionDemo.Start(content => widget.PostContent(content))
+    : null;
+if (demo is null)
+{
+    feed.Updated += content => widget.PostContent(content);
+    feed.Start();
+}
 
 var process = Process.GetCurrentProcess();
 var startedAt = DateTime.UtcNow;
@@ -71,6 +85,15 @@ void Report()
     catch (InvalidOperationException)
     {
     }
+}
+
+static MotionPreference? ReadMotion(string[] arguments)
+{
+    var position = Array.IndexOf(arguments, MotionFlag);
+    var hasValue = position >= 0 && position + 1 < arguments.Length;
+    return hasValue && Enum.TryParse<MotionPreference>(arguments[position + 1], true, out var value)
+        ? value
+        : null;
 }
 
 static int ReadReportSeconds(string[] arguments)

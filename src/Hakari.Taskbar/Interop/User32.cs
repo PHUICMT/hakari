@@ -140,4 +140,11 @@ internal static class User32
 
     [DllImport(Library)]
     public static extern IntPtr GetWindow(IntPtr windowHandle, uint relationship);
+
+    [DllImport(Library, SetLastError = true)]
+    public static extern bool SystemParametersInfo(
+        uint action,
+        uint parameter,
+        ref bool value,
+        uint flags);
 }
