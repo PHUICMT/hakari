@@ -40,7 +40,7 @@ internal static class FlyoutDataLoader
         return new FlyoutSnapshot(
             UpdatedText: UpdatedText(newest, now),
             AccountSummary: AccountSummary(accounts, settings),
-            Accounts: [.. accounts.Select(account => Group(account, settings, now))],
+            Accounts: [.. accounts.Select(account => Group(account, settings, query, now))],
             Stats: StatTiles(query, now),
             BurnRate: BurnRate(query, now),
             Sources: SourceRows(store, now),
@@ -80,13 +80,18 @@ internal static class FlyoutDataLoader
     private static AccountLimitGroup Group(
         (AccountInfo Account, LimitSnapshot Snapshot) entry,
         HakariSettings settings,
+        UsageQuery query,
         DateTimeOffset now)
     {
         var nickname = settings.NicknameOf(entry.Account.AccountId);
+        var today = query.Total(new UsageFilter(
+            From: TimePeriods.StartOfToday(now),
+            AccountId: entry.Account.AccountId));
         var details = new[]
         {
             nickname is null ? null : entry.Account.Email,
             PlanNames.Short(entry.Account.Plan),
+            Texts.Format("widget.today", MoneyText.Format(today.Cost, query.Currency)),
             UpdatedText(entry.Snapshot, now),
         };
         return new AccountLimitGroup(
