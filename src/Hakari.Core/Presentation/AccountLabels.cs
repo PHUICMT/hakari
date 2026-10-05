@@ -1,4 +1,5 @@
 using Hakari.Core.Accounts;
+using Hakari.Core.Localization;
 
 namespace Hakari.Core.Presentation;
 
@@ -6,7 +7,7 @@ namespace Hakari.Core.Presentation;
 public static class AccountLabels
 {
     private const int MaximumLength = 8;
-    private const string Fallback = "Account";
+    private const string FallbackKey = "account.fallback";
 
     /// <summary>The part of the email before "@", else the first name, cut to fit.</summary>
     public static string Short(AccountInfo? account)
@@ -14,10 +15,10 @@ public static class AccountLabels
         var label = account?.Email?.Split('@')[0]
             ?? account?.DisplayName?.Split(' ', StringSplitOptions.RemoveEmptyEntries)
                 .FirstOrDefault()
-            ?? Fallback;
+            ?? Texts.Get(FallbackKey);
         if (label.Length == 0)
         {
-            label = Fallback;
+            label = Texts.Get(FallbackKey);
         }
 
         return label.Length <= MaximumLength ? label : label[..MaximumLength];

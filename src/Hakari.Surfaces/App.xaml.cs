@@ -1,4 +1,6 @@
 using Hakari.Core.Interprocess;
+using Hakari.Core.Localization;
+using Hakari.Core.Settings;
 using Hakari.Surfaces.Flyout;
 using Hakari.Surfaces.Settings;
 using Microsoft.UI.Dispatching;
@@ -44,6 +46,7 @@ public partial class App : Application
     private void Handle(SurfaceCommand command)
     {
         idleExitTimer?.Stop();
+        ApplyLanguage();
         if (command.Kind == SurfaceKind.Settings)
         {
             ShowSettings();
@@ -73,14 +76,40 @@ public partial class App : Application
         if (settings is null)
         {
             settings = new SettingsWindow();
+            var window = settings;
             settings.Closed += (_, _) =>
             {
-                settings = null;
-                idleExitTimer?.Start();
+                if (settings == window)
+                {
+                    settings = null;
+                    idleExitTimer?.Start();
+                }
             };
+            settings.LanguageChanged += (_, _) => RebuildForLanguage(window);
         }
 
         settings.Present();
+    }
+
+    /// <summary>
+    /// Window text is read when a window is built, so a new language means new windows. The
+    /// settings window reopens where the user was working.
+    /// </summary>
+    private void RebuildForLanguage(SettingsWindow oldWindow)
+    {
+        ApplyLanguage();
+        settings = null;
+        ShowSettings();
+        oldWindow.Close();
+    }
+
+    private void ApplyLanguage()
+    {
+        if (Texts.Use(SettingsStore.Default.Load().Language) && flyout is not null)
+        {
+            flyout.Close();
+            flyout = null;
+        }
     }
 
     private void ExitWhenIdle()

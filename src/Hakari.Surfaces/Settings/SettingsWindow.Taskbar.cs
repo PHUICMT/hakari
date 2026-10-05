@@ -1,3 +1,4 @@
+using Hakari.Core.Localization;
 using Hakari.Core.Presentation.Widget;
 using Hakari.Core.Settings;
 using Microsoft.UI.Xaml;
@@ -7,18 +8,21 @@ namespace Hakari.Surfaces.Settings;
 /// <summary>The taskbar layout card: ring, the two lines, and the live preview.</summary>
 public sealed partial class SettingsWindow
 {
-    private static readonly (object Value, string Text)[] LineChoices =
+    private static readonly (WidgetItem Value, string TextKey)[] LineChoiceKeys =
     [
-        (WidgetItem.Automatic, "Automatic"),
-        (WidgetItem.CostToday, "Cost today"),
-        (WidgetItem.CostThisMonth, "Cost this month"),
-        (WidgetItem.BurnRate, "Burn rate"),
-        (WidgetItem.SessionLimit, "5-hour limit"),
-        (WidgetItem.WeeklyLimit, "Weekly limit"),
-        (WidgetItem.MostPressingLimit, "Most pressing limit"),
-        (WidgetItem.SecondAccount, "Second account"),
-        (WidgetItem.Nothing, "Nothing"),
+        (WidgetItem.Automatic, "settings.item.automatic"),
+        (WidgetItem.CostToday, "settings.item.costToday"),
+        (WidgetItem.CostThisMonth, "settings.item.costMonth"),
+        (WidgetItem.BurnRate, "settings.item.burnRate"),
+        (WidgetItem.SessionLimit, "settings.item.session"),
+        (WidgetItem.WeeklyLimit, "settings.item.weekly"),
+        (WidgetItem.MostPressingLimit, "settings.item.pressing"),
+        (WidgetItem.SecondAccount, "settings.item.secondAccount"),
+        (WidgetItem.Nothing, "settings.item.nothing"),
     ];
+
+    private static IEnumerable<(object Value, string Text)> LineChoices =>
+        LineChoiceKeys.Select(choice => ((object)choice.Value, Texts.Get(choice.TextKey)));
 
     private WidgetFacts? previewFacts;
 

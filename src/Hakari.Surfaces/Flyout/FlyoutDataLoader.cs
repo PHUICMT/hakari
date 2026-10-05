@@ -1,8 +1,10 @@
+using System.Globalization;
 using Hakari.Core.Accounts;
 using Hakari.Core.Configuration;
 using Hakari.Core.Currency;
 using Hakari.Core.Indexing;
 using Hakari.Core.Limits;
+using Hakari.Core.Localization;
 using Hakari.Core.Presentation;
 using Hakari.Core.Pricing;
 using Hakari.Core.Querying;
@@ -33,13 +35,13 @@ internal static class FlyoutDataLoader
 
         return new FlyoutSnapshot(
             UpdatedText: UpdatedText(projected, now),
-            AccountName: account is null ? "No account yet" : AccountName(account),
+            AccountName: account is null ? Texts.Get("flyout.noAccount") : AccountName(account),
             Limits: projected is null ? [] : LimitRows(projected, now),
             Stats: StatTiles(query, now),
             BurnRate: BurnRate(query, now),
             Sources: SourceRows(store, now),
             Notice: projected?.Freshness == LimitFreshness.LastKnown
-                ? "Showing the last known limits. They refresh while Claude Code is in use."
+                ? Texts.Get("flyout.lastKnown")
                 : null);
     }
 
@@ -66,13 +68,13 @@ internal static class FlyoutDataLoader
     {
         if (limits is null)
         {
-            return "No limits yet";
+            return Texts.Get("flyout.noLimits");
         }
 
         var age = now - limits.FetchedAt;
         return age < TimeSpan.FromMinutes(1)
-            ? "Updated just now"
-            : $"Updated {(int)age.TotalMinutes} min ago";
+            ? Texts.Get("flyout.updatedNow")
+            : Texts.Format("flyout.updatedMinutes", (int)age.TotalMinutes);
     }
 
     private static List<LimitRow> LimitRows(LimitSnapshot limits, DateTimeOffset now) =>
@@ -81,8 +83,8 @@ internal static class FlyoutDataLoader
             Name: LimitNames.Long(limit),
             Value: $"{limit.Percent}%",
             ResetText: limit.ResetsAt is { } resetsAt
-                ? $"Resets {ResetText.Long(resetsAt, now)}"
-                : "Starts with your next request",
+                ? Texts.Format("flyout.resets", ResetText.Long(resetsAt, now))
+                : Texts.Get("flyout.startsNext"),
             Fraction: Math.Clamp(limit.Percent / PercentScale, 0, 1),
             Tone: ToneOf(limit, limits.Freshness))),
     ];
@@ -104,11 +106,18 @@ internal static class FlyoutDataLoader
         var month = query.Total(new UsageFilter(From: TimePeriods.StartOfMonth(now)));
         return
         [
-            new("Today", MoneyText.Format(today.Cost, currency), $"{today.Messages:N0} replies"),
-            new("This week", MoneyText.Format(week.Cost, currency), "since Monday"),
-            new("This month", MoneyText.Format(month.Cost, currency), $"{now:MMMM}"),
+            new(Texts.Get("flyout.today"), MoneyText.Format(today.Cost, currency), Replies(today)),
+            new(Texts.Get("flyout.thisWeek"), MoneyText.Format(week.Cost, currency), SinceMonday),
+            new(Texts.Get("flyout.thisMonth"), MoneyText.Format(month.Cost, currency), Month(now)),
         ];
     }
+
+    private static string SinceMonday => Texts.Get("flyout.sinceMonday");
+
+    private static string Replies(UsageSummary today) =>
+        Texts.Format("flyout.replies", today.Messages.ToString("N0", CultureInfo.InvariantCulture));
+
+    private static string Month(DateTimeOffset now) => now.ToString("MMMM", Texts.Culture);
 
     private static string BurnRate(UsageQuery query, DateTimeOffset now)
     {
@@ -120,15 +129,15 @@ internal static class FlyoutDataLoader
     [
         .. SourceActivity.Load(store).Select(activity => new SourceRow(
             Name: SourceNames.Display(activity.SourceId),
-            Detail: $"last used {LastUsedText(now - activity.LastUsage)}",
+            Detail: Texts.Format("flyout.lastUsed", LastUsedText(now - activity.LastUsage)),
             IsRecent: now - activity.LastUsage < RecentSourceWindow)),
     ];
 
     private static string LastUsedText(TimeSpan age) => age switch
     {
-        _ when age < TimeSpan.FromMinutes(1) => "just now",
-        _ when age < TimeSpan.FromHours(1) => $"{(int)age.TotalMinutes} min ago",
-        _ when age < TimeSpan.FromDays(1) => $"{(int)age.TotalHours} h ago",
-        _ => $"{(int)age.TotalDays} d ago",
+        _ when age < TimeSpan.FromMinutes(1) => Texts.Get("age.justNow"),
+        _ when age < TimeSpan.FromHours(1) => Texts.Format("age.minutes", (int)age.TotalMinutes),
+        _ when age < TimeSpan.FromDays(1) => Texts.Format("age.hours", (int)age.TotalHours),
+        _ => Texts.Format("age.days", (int)age.TotalDays),
     };
 }

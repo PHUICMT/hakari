@@ -1,4 +1,5 @@
 using Hakari.Core.Displays;
+using Hakari.Core.Localization;
 using Hakari.Core.Settings;
 using Hakari.Core.Startup;
 using Hakari.Taskbar.Tray;
@@ -11,25 +12,26 @@ internal sealed class ResidentMenu(
     Action<HakariSettings> apply,
     Action openSettings)
 {
-    private static readonly (AnimationSetting Setting, string Label)[] AnimationChoices =
+    private static readonly (AnimationSetting Setting, string LabelKey)[] AnimationChoices =
     [
-        (AnimationSetting.FollowWindows, "Animations: follow Windows"),
-        (AnimationSetting.Full, "Animations: full"),
-        (AnimationSetting.Reduced, "Animations: reduced"),
-        (AnimationSetting.Off, "Animations: off"),
+        (AnimationSetting.FollowWindows, "menu.animations.follow"),
+        (AnimationSetting.Full, "menu.animations.full"),
+        (AnimationSetting.Reduced, "menu.animations.reduced"),
+        (AnimationSetting.Off, "menu.animations.off"),
     ];
 
     private static string ExecutablePath => Environment.ProcessPath ?? string.Empty;
 
     public event EventHandler? QuitRequested;
 
+    /// <summary>Built each time it opens, so it is always in the current language.</summary>
     public IReadOnlyList<TrayMenuItem> Build()
     {
         var settings = settingsStore.Load();
         var items = new List<TrayMenuItem>
         {
-            new("Settings…", openSettings),
-            new("Pause updates", () => Change(current => current with
+            new(Texts.Get("menu.settings"), openSettings),
+            new(Texts.Get("menu.pause"), () => Change(current => current with
             {
                 Paused = !current.Paused,
             }), settings.Paused),
@@ -37,23 +39,25 @@ internal sealed class ResidentMenu(
         };
 
         items.AddRange(AnimationChoices.Select(choice => new TrayMenuItem(
-            choice.Label,
+            Texts.Get(choice.LabelKey),
             () => Change(current => current with { Animation = choice.Setting }),
             settings.Animation == choice.Setting)));
 
         items.Add(TrayMenuItem.Separator);
         var onEveryDisplay = settings.Displays == TaskbarDisplays.All;
-        items.Add(new("Show on every display", () => Change(current => current with
+        items.Add(new(Texts.Get("menu.everyDisplay"), () => Change(current => current with
         {
             Displays = onEveryDisplay ? TaskbarDisplays.Primary : TaskbarDisplays.All,
         }), onEveryDisplay));
         var startsWithWindows = StartupRegistration.IsRegistered(ExecutablePath);
         items.Add(new(
-            "Start with Windows",
+            Texts.Get("menu.startup"),
             () => StartupRegistration.Set(ExecutablePath, !startsWithWindows),
             startsWithWindows));
         items.Add(TrayMenuItem.Separator);
-        items.Add(new("Quit Hakari", () => QuitRequested?.Invoke(this, EventArgs.Empty)));
+        items.Add(new(
+            Texts.Get("menu.quit"),
+            () => QuitRequested?.Invoke(this, EventArgs.Empty)));
         return items;
     }
 

@@ -13,4 +13,10 @@
     <InternalsVisibleTo Include="Hakari.Core.Tests" />
   </ItemGroup>
 
+  <!-- One file per language; embedded so every executable has them without copying -->
+  <ItemGroup>
+    <EmbeddedResource Include="..\..\data\locales\*.json"
+      LogicalName="Hakari.Core.Locales.%(Filename)%(Extension)" />
+  </ItemGroup>
+
 </Project>

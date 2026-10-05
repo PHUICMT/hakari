@@ -1,3 +1,4 @@
+using Hakari.Core.Localization;
 using Hakari.Core.Settings;
 using Hakari.Surfaces.Flyout;
 using Hakari.Surfaces.Motion;
@@ -36,11 +37,14 @@ public sealed partial class SettingsWindow : Window
     public SettingsWindow()
     {
         InitializeComponent();
+        Title = Texts.Get("settings.windowTitle");
         ConfigureChrome();
         BuildCurrencyChoices();
         Fill();
         AddEscapeToClose();
     }
+
+    public event EventHandler? LanguageChanged;
 
     private IntPtr WindowHandle => WinRT.Interop.WindowNative.GetWindowHandle(this);
 

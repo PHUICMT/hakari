@@ -3,6 +3,7 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:Hakari.Surfaces.Flyout"
+    xmlns:l="using:Hakari.Surfaces.Localization"
     Title="Hakari">
 
     <Grid x:Name="Root" Background="{ThemeResource HakariSurfaceBrush}" Opacity="0"
@@ -88,7 +89,7 @@
 
             <!-- Burn rate -->
             <Grid>
-                <TextBlock Text="Burn rate · last hour" Style="{StaticResource HakariLabelText}" />
+                <TextBlock Text="{l:Text Key=flyout.burnRate}" Style="{StaticResource HakariLabelText}" />
                 <TextBlock x:Name="BurnText" HorizontalAlignment="Right" FontWeight="SemiBold"
                     Foreground="{ThemeResource HakariInkBrush}" />
             </Grid>
@@ -126,8 +127,8 @@
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
-            <Button Content="Settings" Style="{StaticResource HakariButton}" Click="OnSettingsClicked" />
-            <Button Grid.Column="2" Content="Close" Style="{StaticResource HakariSubtleButton}"
+            <Button Content="{l:Text Key=flyout.settings}" Style="{StaticResource HakariButton}" Click="OnSettingsClicked" />
+            <Button Grid.Column="2" Content="{l:Text Key=flyout.close}" Style="{StaticResource HakariSubtleButton}"
                 Click="OnCloseClicked" />
         </Grid>
     </Grid>

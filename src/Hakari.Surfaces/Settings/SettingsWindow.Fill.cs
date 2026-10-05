@@ -2,6 +2,7 @@ using Hakari.Core.Accounts;
 using Hakari.Core.Configuration;
 using Hakari.Core.Currency;
 using Hakari.Core.Displays;
+using Hakari.Core.Localization;
 using Hakari.Core.Presentation;
 using Hakari.Core.Settings;
 using Hakari.Core.Sources;
@@ -21,7 +22,6 @@ public sealed partial class SettingsWindow
     private const string CurrencyGroup = "Currency";
     private const string ProjectsFolderName = "projects";
     private const string DetailSeparator = " · ";
-    private const string VersionFormat = "Hakari {0}";
     private const int VersionParts = 3;
 
     /// <summary>Indented under the row that opened them.</summary>
@@ -78,7 +78,9 @@ public sealed partial class SettingsWindow
             {
                 Glyph = DisplayGlyph,
                 Title = display.Name,
-                Description = display.IsPrimary ? "Main display" : string.Empty,
+                Description = display.IsPrimary
+                    ? Texts.Get("settings.displays.mainDisplay")
+                    : string.Empty,
                 Content = toggle,
                 Padding = NestedRowPadding,
             });
@@ -95,8 +97,8 @@ public sealed partial class SettingsWindow
                 Glyph = FolderGlyph,
                 Title = folder,
                 Description = Directory.Exists(Path.Combine(folder, ProjectsFolderName))
-                    ? "Has Claude Code logs"
-                    : "No Claude Code logs here yet",
+                    ? Texts.Get("settings.folders.hasLogs")
+                    : Texts.Get("settings.folders.noLogs"),
                 Content = RemoveFolderButton(folder),
             });
         }
@@ -106,7 +108,7 @@ public sealed partial class SettingsWindow
     {
         var button = new Button
         {
-            Content = "Remove",
+            Content = Texts.Get("settings.folders.remove"),
             Style = (Style)Application.Current.Resources["HakariSubtleButton"],
         };
         button.Click += (_, _) => RemoveFolder(folder);
@@ -122,8 +124,8 @@ public sealed partial class SettingsWindow
             AccountList.Children.Add(new SettingRow
             {
                 Glyph = AccountGlyph,
-                Title = "No accounts yet",
-                Description = "They appear once Claude Code has signed in on a source.",
+                Title = Texts.Get("settings.accounts.none"),
+                Description = Texts.Get("settings.accounts.none.description"),
                 BorderThickness = new Thickness(0),
             });
         }
@@ -143,7 +145,7 @@ public sealed partial class SettingsWindow
         var row = new SettingRow
         {
             Glyph = AccountGlyph,
-            Title = account.Email ?? account.DisplayName ?? "Signed-in account",
+            Title = account.Email ?? account.DisplayName ?? Texts.Get("account.signedIn"),
             Description = string.Join(DetailSeparator, details),
         };
         if (isFirst)
@@ -165,6 +167,9 @@ public sealed partial class SettingsWindow
         RateUsageDay.IsChecked = settings.RateMode == RateMode.UsageDay;
         RateLatest.IsChecked = settings.RateMode == RateMode.Latest;
         PauseToggle.IsChecked = settings.Paused;
+        LanguageSystem.IsChecked = settings.Language == Texts.FollowSystem;
+        LanguageEnglish.IsChecked = settings.Language == Texts.English;
+        LanguageThai.IsChecked = settings.Language == Texts.Thai;
     }
 
     /// <summary>
@@ -177,7 +182,7 @@ public sealed partial class SettingsWindow
         StartupToggle.IsEnabled = resident is not null;
         StartupToggle.IsChecked = resident is not null
             && StartupRegistration.IsRegistered(resident);
-        StartupRow.Description = resident is null ? "Available once Hakari is running." : "";
+        StartupRow.Description = resident is null ? Texts.Get("settings.startup.unavailable") : "";
     }
 
     private void BuildCurrencyChoices()
@@ -215,10 +220,7 @@ public sealed partial class SettingsWindow
     private void FillAbout()
     {
         var version = typeof(SettingsWindow).Assembly.GetName().Version;
-        VersionRow.Title = string.Format(
-            System.Globalization.CultureInfo.InvariantCulture,
-            VersionFormat,
-            version?.ToString(VersionParts));
+        VersionRow.Title = Texts.Format("settings.version", version?.ToString(VersionParts));
         DataFolderRow.Description = HakariPaths.DataDirectory;
     }
 }

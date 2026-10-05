@@ -1,4 +1,5 @@
 using Hakari.Core.Limits;
+using Hakari.Core.Localization;
 
 namespace Hakari.Core.Presentation.Widget;
 
@@ -42,16 +43,16 @@ public static class WidgetComposer
         return item switch
         {
             WidgetItem.Automatic => Automatic(isTop, facts, now),
-            WidgetItem.CostToday => Money($"{Format(facts.CostToday, facts)} today"),
-            WidgetItem.CostThisMonth => Money($"month {Format(facts.CostThisMonth, facts)}"),
-            WidgetItem.BurnRate => Money($"{Format(facts.CostLastHour, facts)}/h"),
+            WidgetItem.CostToday => Today(facts),
+            WidgetItem.CostThisMonth => Month(facts),
+            WidgetItem.BurnRate => PerHour(facts),
             WidgetItem.SessionLimit => LimitLine(first, Session, labelled, facts, now),
             WidgetItem.WeeklyLimit => LimitLine(first, Weekly, labelled, facts, now),
             WidgetItem.MostPressingLimit =>
                 LimitLine(first, LimitPriority.MostPressing, labelled, facts, now),
             WidgetItem.SecondAccount => facts.Accounts.Count >= TwoAccounts
                 ? LimitLine(facts.Accounts[1], LimitPriority.MostPressing, true, facts, now)
-                : new ComposedLine("No second account", LineTone.Muted),
+                : new ComposedLine(Texts.Get("widget.noSecondAccount"), LineTone.Muted),
             _ => new ComposedLine(string.Empty),
         };
     }
@@ -71,13 +72,15 @@ public static class WidgetComposer
 
         if (isTop)
         {
-            return Money($"{Format(facts.CostToday, facts)} today");
+            return Today(facts);
         }
 
         return accounts.Count == 1
             ? LimitLine(accounts[0], LimitPriority.MostPressing, false, facts, now)
-            : Money($"{Format(facts.CostLastHour, facts)}/h · "
-                + $"month {Format(facts.CostThisMonth, facts)}");
+            : Money(Texts.Format(
+                "widget.burnAndMonth",
+                Format(facts.CostLastHour, facts),
+                Format(facts.CostThisMonth, facts)));
     }
 
     private static ComposedLine LimitLine(
@@ -89,13 +92,13 @@ public static class WidgetComposer
     {
         if (account is null)
         {
-            return new ComposedLine("No limits yet", LineTone.Muted);
+            return NoLimits;
         }
 
         var snapshot = account.Snapshot.ProjectedTo(now);
         if (pick(snapshot) is not { } limit)
         {
-            return new ComposedLine("No limits yet", LineTone.Muted);
+            return NoLimits;
         }
 
         var prefix = snapshot.Freshness == LimitFreshness.LastKnown
@@ -158,7 +161,18 @@ public static class WidgetComposer
             .ThenByDescending(limit => limit.Percent)
             .FirstOrDefault();
 
+    private static ComposedLine NoLimits => new(Texts.Get("widget.noLimits"), LineTone.Muted);
+
     private static ComposedLine Money(string text) => new(text);
+
+    private static ComposedLine Today(WidgetFacts facts) =>
+        Money(Texts.Format("widget.today", Format(facts.CostToday, facts)));
+
+    private static ComposedLine Month(WidgetFacts facts) =>
+        Money(Texts.Format("widget.month", Format(facts.CostThisMonth, facts)));
+
+    private static ComposedLine PerHour(WidgetFacts facts) =>
+        Money(Texts.Format("widget.perHour", Format(facts.CostLastHour, facts)));
 
     private static string Format(decimal amount, WidgetFacts facts) =>
         MoneyText.Format(amount, facts.Currency);

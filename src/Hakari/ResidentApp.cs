@@ -1,4 +1,5 @@
 using Hakari.Core.Interprocess;
+using Hakari.Core.Localization;
 using Hakari.Core.Settings;
 using Hakari.Core.Startup;
 using Hakari.Feed;
@@ -32,6 +33,7 @@ internal sealed class ResidentApp : IDisposable
         this.settingsStore = settingsStore;
         var settings = settingsStore.Load();
         appliedSettings = settings;
+        Texts.Use(settings.Language);
 
         var hostOptions = TaskbarWidgetHostOptions.Default with
         {
@@ -125,11 +127,12 @@ internal sealed class ResidentApp : IDisposable
     {
         widgets.SetMotion(ToMotion(settings.Animation));
         widgets.SetDisplayFilter(DisplayFilter.From(settings));
+        var languageChanged = Texts.Use(settings.Language);
         if (!settings.FeedsSameDataAs(appliedSettings))
         {
             feed.ReloadSettings();
         }
-        else if (settings.Widget != appliedSettings.Widget)
+        else if (languageChanged || settings.Widget != appliedSettings.Widget)
         {
             feed.SetLayout(settings.Widget);
         }

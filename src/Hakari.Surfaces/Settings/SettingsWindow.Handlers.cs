@@ -2,6 +2,7 @@ using System.Diagnostics;
 using Hakari.Core.Configuration;
 using Hakari.Core.Currency;
 using Hakari.Core.Displays;
+using Hakari.Core.Localization;
 using Hakari.Surfaces.Motion;
 using Hakari.Core.Settings;
 using Hakari.Core.Sources;
@@ -178,6 +179,21 @@ public sealed partial class SettingsWindow
     {
         var mode = ReferenceEquals(sender, RateLatest) ? RateMode.Latest : RateMode.UsageDay;
         Save(current => current with { RateMode = mode });
+    }
+
+    /// <summary>Saved, then the window is rebuilt in the new language by the app.</summary>
+    private void OnLanguageChecked(object sender, RoutedEventArgs args)
+    {
+        if (filling)
+        {
+            return;
+        }
+
+        var language = ReferenceEquals(sender, LanguageEnglish) ? Texts.English
+            : ReferenceEquals(sender, LanguageThai) ? Texts.Thai
+            : Texts.FollowSystem;
+        store.Update(current => current with { Language = language });
+        LanguageChanged?.Invoke(this, EventArgs.Empty);
     }
 
     private void OnPauseClicked(object sender, RoutedEventArgs args) =>

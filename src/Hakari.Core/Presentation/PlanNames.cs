@@ -1,4 +1,5 @@
 using Hakari.Core.Accounts;
+using Hakari.Core.Localization;
 
 namespace Hakari.Core.Presentation;
 
@@ -11,6 +12,6 @@ public static class PlanNames
         SubscriptionPlan.MaxTwentyTimes => "Max 20x",
         SubscriptionPlan.Team => "Team",
         SubscriptionPlan.Enterprise => "Enterprise",
-        _ => "Unknown plan",
+        _ => Texts.Get("plan.unknown"),
     };
 }

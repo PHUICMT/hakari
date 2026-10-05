@@ -1,5 +1,6 @@
 using Hakari.Core.Currency;
 using Hakari.Core.Displays;
+using Hakari.Core.Localization;
 using Hakari.Core.Presentation.Widget;
 using Hakari.Core.Sources;
 
@@ -9,6 +10,9 @@ namespace Hakari.Core.Settings;
 public sealed record HakariSettings
 {
     public AnimationSetting Animation { get; init; } = AnimationSetting.FollowWindows;
+
+    /// <summary>"system", or a code from <see cref="Texts.Languages"/>.</summary>
+    public string Language { get; init; } = Texts.FollowSystem;
 
     public WidgetLayout Widget { get; init; } = new();
 

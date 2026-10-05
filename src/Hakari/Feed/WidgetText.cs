@@ -1,3 +1,4 @@
+using Hakari.Core.Localization;
 using Hakari.Core.Presentation.Widget;
 using Hakari.Core.Querying;
 using Hakari.Taskbar.Rendering;
@@ -7,11 +8,13 @@ namespace Hakari.Feed;
 /// <summary>Gathers the facts, lets the shared composer lay them out, maps the colors.</summary>
 internal static class WidgetText
 {
-    public static WidgetContent Loading { get; } =
-        new("Hakari", "Reading logs…", WidgetTone.Muted);
+    private const string ProductName = "Hakari";
 
-    public static WidgetContent Paused { get; } =
-        new("Hakari", "Paused", WidgetTone.Muted);
+    public static WidgetContent Loading =>
+        new(ProductName, Texts.Get("widget.loading"), WidgetTone.Muted);
+
+    public static WidgetContent Paused =>
+        new(ProductName, Texts.Get("widget.paused"), WidgetTone.Muted);
 
     public static WidgetContent Build(UsageQuery query, LimitPoller limits, WidgetLayout layout)
     {

@@ -1,5 +1,6 @@
 using System.Globalization;
 using Hakari.Core.Limits;
+using Hakari.Core.Localization;
 
 namespace Hakari.Core.Presentation;
 
@@ -23,13 +24,13 @@ public static class LimitText
 
         if (limit.Percent >= LimitForecaster.FullPercent)
         {
-            return $"{name} full{reset}";
+            return Texts.Format("limit.full", name) + reset;
         }
 
         if (fullAt is { } filling)
         {
             var clock = filling.ToLocalTime().ToString(ClockFormat, CultureInfo.InvariantCulture);
-            return $"{name} {limit.Percent}%{Separator}full ~{clock}";
+            return $"{name} {limit.Percent}%{Separator}{Texts.Format("limit.fullAt", clock)}";
         }
 
         return $"{name} {limit.Percent}%{reset}";
