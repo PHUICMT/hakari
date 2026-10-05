@@ -56,6 +56,7 @@ internal static class WidgetFactsLoader
             arranged,
             withAccountUsage: true,
             settings.AccountNicknames,
-            now);
+            now,
+            percentDecimals: settings.PercentDecimals);
     }
 }

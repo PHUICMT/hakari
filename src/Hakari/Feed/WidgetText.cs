@@ -36,7 +36,8 @@ internal static class WidgetText
             withAccountUsage: presentation.AccountsMode != MultiAccountMode.Together,
             presentation.AccountNicknames,
             now,
-            limits.FullAt);
+            limits.FullAt,
+            presentation.PercentDecimals);
     }
 
     /// <summary>The cheap part: lays the facts out, such as for the next account's turn.</summary>

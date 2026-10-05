@@ -71,6 +71,15 @@ public sealed partial class SettingsWindow
         TurnSpeedRow.Visibility = settings.AccountsMode == MultiAccountMode.TakeTurns
             ? Visibility.Visible
             : Visibility.Collapsed;
+        foreach (var choice in new[] { Precision0, Precision1, Precision2 })
+        {
+            var wasFillingPrecision = filling;
+            filling = true;
+            choice.IsChecked = choice.Tag as string
+                == settings.PercentDecimals.ToString(CultureInfo.InvariantCulture);
+            filling = wasFillingPrecision;
+        }
+
         foreach (var choice in new[] { Turn4, Turn8, Turn15, Turn30 })
         {
             var wasFillingTurn = filling;
@@ -142,6 +151,20 @@ public sealed partial class SettingsWindow
         }
 
         ShowPreview(settings);
+    }
+
+    /// <summary>A new precision needs fresh estimates, so the facts are read again.</summary>
+    private void OnPrecisionChecked(object sender, RoutedEventArgs args)
+    {
+        if (filling || sender is not HakariSegment { Tag: string tag }
+            || !int.TryParse(tag, CultureInfo.InvariantCulture, out var decimals))
+        {
+            return;
+        }
+
+        var updated = store.Update(current => current with { PercentDecimals = decimals });
+        previewFacts = null;
+        ShowPreview(updated);
     }
 
     private void OnTurnSpeedChecked(object sender, RoutedEventArgs args)

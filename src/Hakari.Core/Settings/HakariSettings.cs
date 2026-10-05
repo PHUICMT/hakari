@@ -19,6 +19,9 @@ public sealed record HakariSettings
 
     public MultiAccountMode AccountsMode { get; init; } = MultiAccountMode.SideBySide;
 
+    /// <summary>0 for "93%", 1 for "93.4%", 2 for "93.41%". Decimals are estimated.</summary>
+    public int PercentDecimals { get; init; } = 1;
+
     /// <summary>How long each account is shown when taking turns.</summary>
     public int TurnSeconds { get; init; } = (int)WidgetPanels.DefaultTurnLength.TotalSeconds;
 
@@ -78,6 +81,7 @@ public sealed record HakariSettings
         Widget == other.Widget
         && AccountsMode == other.AccountsMode
         && TurnSeconds == other.TurnSeconds
+        && PercentDecimals == other.PercentDecimals
         && AccountOrdering == other.AccountOrdering
         && CustomAccountOrder.SequenceEqual(other.CustomAccountOrder)
         && HiddenAccounts.SequenceEqual(other.HiddenAccounts)

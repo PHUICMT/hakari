@@ -17,15 +17,17 @@ public static class WidgetFactsBuilder
         bool withAccountUsage,
         IReadOnlyDictionary<string, string> nicknames,
         DateTimeOffset now,
-        Func<string, UsageLimit, DateTimeOffset, DateTimeOffset?>? fullAt = null)
+        Func<string, UsageLimit, DateTimeOffset, DateTimeOffset?>? fullAt = null,
+        int percentDecimals = 0)
     {
         var total = UsageOf(query, accountId: null, now);
-        var shown = withAccountUsage
-            ? [.. accounts.Select(account => account with
-            {
-                Costs = UsageOf(query, account.AccountId, now),
-            })]
-            : accounts;
+        var shown = accounts.Select(account => account with
+        {
+            Costs = withAccountUsage ? UsageOf(query, account.AccountId, now) : account.Costs,
+            EstimatedPercents = percentDecimals > 0
+                ? EstimatesOf(query, account, now)
+                : null,
+        }).ToList();
         return new WidgetFacts(
             CostToday: total.Today,
             CostThisMonth: total.ThisMonth,
@@ -36,7 +38,30 @@ public static class WidgetFactsBuilder
             Nicknames: nicknames,
             TokensToday: total.TokensToday,
             TokensThisMonth: total.TokensThisMonth,
-            RepliesToday: total.RepliesToday);
+            RepliesToday: total.RepliesToday,
+            PercentDecimals: percentDecimals);
+    }
+
+    /// <summary>Only live readings: a last-known one is too old to build on.</summary>
+    private static Dictionary<string, double>? EstimatesOf(
+        UsageQuery query,
+        WidgetAccount account,
+        DateTimeOffset now)
+    {
+        var snapshot = account.Snapshot.ProjectedTo(now);
+        if (snapshot.Freshness != LimitFreshness.Live)
+        {
+            return null;
+        }
+
+        decimal CostBetween(DateTimeOffset from, DateTimeOffset to) => query.Total(
+            new UsageFilter(From: from, To: to, AccountId: account.AccountId)).Cost;
+
+        return snapshot.Limits
+            .Where(limit => PercentEstimator.WindowOf(limit) is not null)
+            .ToDictionary(
+                limit => limit.Kind,
+                limit => PercentEstimator.Estimate(limit, snapshot.FetchedAt, now, CostBetween));
     }
 
     private static AccountCosts UsageOf(UsageQuery query, string? accountId, DateTimeOffset now)

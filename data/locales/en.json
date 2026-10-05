@@ -82,6 +82,8 @@
   "settings.topLine": "Top line",
   "settings.bottomLine": "Bottom line",
   "settings.bottomLine.description": "Automatic gives each of two signed-in accounts its own line.",
+  "settings.precision": "Percent detail",
+  "settings.precision.description": "The server reports whole percent. Decimals are estimated from what the account spent since the last reading, and never run past the next whole percent.",
   "settings.item.automatic": "Automatic",
   "settings.item.costToday": "Cost today",
   "settings.item.costMonth": "Cost this month",

@@ -93,6 +93,17 @@
                                 Description="{l:Text Key=settings.bottomLine.description}">
                                 <controls:HakariSelect x:Name="BottomSelect" />
                             </controls:SettingRow>
+                            <controls:SettingRow Glyph="&#xE9D2;" Title="{l:Text Key=settings.precision}"
+                                Description="{l:Text Key=settings.precision.description}">
+                                <controls:HakariSegmented>
+                                    <controls:HakariSegment x:Name="Precision0" GroupName="Precision" Tag="0"
+                                        Content="93%" Checked="OnPrecisionChecked" />
+                                    <controls:HakariSegment x:Name="Precision1" GroupName="Precision" Tag="1"
+                                        Content="93.4%" Checked="OnPrecisionChecked" />
+                                    <controls:HakariSegment x:Name="Precision2" GroupName="Precision" Tag="2"
+                                        Content="93.41%" Checked="OnPrecisionChecked" />
+                                </controls:HakariSegmented>
+                            </controls:SettingRow>
                         </StackPanel>
                     </Border>
                 </StackPanel>

@@ -82,6 +82,8 @@
   "settings.topLine": "บรรทัดบน",
   "settings.bottomLine": "บรรทัดล่าง",
   "settings.bottomLine.description": "อัตโนมัติ: ถ้าลงชื่อเข้าใช้ 2 บัญชี จะแสดงบัญชีละบรรทัด",
+  "settings.precision": "ความละเอียดของ %",
+  "settings.precision.description": "เซิร์ฟเวอร์ส่งมาเป็นจำนวนเต็ม ทศนิยมประมาณจากยอดที่บัญชีใช้ไปตั้งแต่อ่านค่าครั้งล่าสุด และจะไม่เกินจำนวนเต็มถัดไป",
   "settings.item.automatic": "อัตโนมัติ",
   "settings.item.costToday": "ค่าใช้จ่ายวันนี้",
   "settings.item.costMonth": "ค่าใช้จ่ายเดือนนี้",

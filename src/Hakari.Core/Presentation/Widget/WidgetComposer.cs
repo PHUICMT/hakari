@@ -117,7 +117,8 @@ public static class WidgetComposer
             ? $"{AccountLabels.Short(account.Account, nickname)} "
             : string.Empty;
         var fullAt = facts.FullAt?.Invoke(account.AccountId, limit, now);
-        var text = $"{prefix}{label}{LimitText.Compact(limit, fullAt, now)}";
+        var percent = facts.FormatPercent(account.PercentOf(limit));
+        var text = $"{prefix}{label}{LimitText.Compact(limit, fullAt, now, percent)}";
         return new ComposedLine(text, ToneOf(limit, snapshot.Freshness));
     }
 
@@ -145,7 +146,7 @@ public static class WidgetComposer
             : string.Empty;
         var parts = limits.Select(limit => limit.Percent >= LimitForecaster.FullPercent
             ? Texts.Format("limit.full", LimitNames.Short(limit))
-            : $"{LimitNames.Short(limit)} {limit.Percent}%");
+            : $"{LimitNames.Short(limit)} {facts.FormatPercent(account.PercentOf(limit))}");
         var tone = limits.Select(limit => ToneOf(limit, snapshot.Freshness)).Max();
         return new ComposedLine(label + string.Join(Separator, parts), tone);
     }
@@ -163,7 +164,7 @@ public static class WidgetComposer
         var snapshot = first.Snapshot.ProjectedTo(now);
         if (source == WidgetRingSource.SessionAndWeekly)
         {
-            return TwoRings(snapshot);
+            return TwoRings(first, snapshot);
         }
 
         var limit = source switch
@@ -175,31 +176,31 @@ public static class WidgetComposer
         return limit is null
             ? null
             : new ComposedRing(
-                Math.Clamp(limit.Percent / PercentScale, 0, 1),
+                FractionOf(first, limit),
                 ToneOf(limit, snapshot.Freshness));
     }
 
     /// <summary>The week outside, since it is the bigger window; the 5 hours inside.</summary>
-    private static ComposedRing? TwoRings(LimitSnapshot snapshot)
+    private static ComposedRing? TwoRings(WidgetAccount account, LimitSnapshot snapshot)
     {
         var weekly = Weekly(snapshot);
         var session = Session(snapshot);
         if (weekly is null || session is null)
         {
             return (weekly ?? session) is { } only
-                ? new ComposedRing(FractionOf(only), ToneOf(only, snapshot.Freshness))
+                ? new ComposedRing(FractionOf(account, only), ToneOf(only, snapshot.Freshness))
                 : null;
         }
 
         return new ComposedRing(
-            FractionOf(weekly),
+            FractionOf(account, weekly),
             ToneOf(weekly, snapshot.Freshness),
-            FractionOf(session),
+            FractionOf(account, session),
             ToneOf(session, snapshot.Freshness));
     }
 
-    private static double FractionOf(UsageLimit limit) =>
-        Math.Clamp(limit.Percent / PercentScale, 0, 1);
+    private static double FractionOf(WidgetAccount account, UsageLimit limit) =>
+        Math.Clamp(account.PercentOf(limit) / PercentScale, 0, 1);
 
     public static LineTone ToneOf(UsageLimit limit, LimitFreshness freshness)
     {

@@ -17,8 +17,17 @@ public sealed record WidgetFacts(
     IReadOnlyDictionary<string, string>? Nicknames = null,
     long TokensToday = 0,
     long TokensThisMonth = 0,
-    long RepliesToday = 0)
+    long RepliesToday = 0,
+    int PercentDecimals = 0)
 {
+    /// <summary>"93%", or "93.4%" with one decimal; the decimals are an estimate.</summary>
+    public string FormatPercent(double percent) =>
+        PercentDecimals <= 0
+            ? $"{Math.Floor(percent).ToString(System.Globalization.CultureInfo.InvariantCulture)}%"
+            : percent.ToString(
+                "F" + PercentDecimals.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                System.Globalization.CultureInfo.InvariantCulture) + "%";
+
     public string? NicknameOf(string accountId) =>
         Nicknames is not null && Nicknames.TryGetValue(accountId, out var name) ? name : null;
 }

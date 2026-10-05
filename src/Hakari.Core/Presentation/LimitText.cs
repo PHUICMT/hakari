@@ -15,8 +15,14 @@ public static class LimitText
     /// "5h 67% · ↺ 1:48" normally; "5h 82% · full ~18:40" when the current pace fills it
     /// before it resets; "5h full · ↺ 1:48" once it is full, counting down to the reset.
     /// </summary>
-    public static string Compact(UsageLimit limit, DateTimeOffset? fullAt, DateTimeOffset now)
+    /// <param name="percentText">The share used as written, such as "93.4%".</param>
+    public static string Compact(
+        UsageLimit limit,
+        DateTimeOffset? fullAt,
+        DateTimeOffset now,
+        string? percentText = null)
     {
+        var percent = percentText ?? $"{limit.Percent}%";
         var name = LimitNames.Short(limit);
         var reset = limit.ResetsAt is { } resetsAt
             ? $"{Separator}{ResetSymbol} {ResetText.Short(resetsAt, now)}"
@@ -30,9 +36,9 @@ public static class LimitText
         if (fullAt is { } filling)
         {
             var clock = filling.ToLocalTime().ToString(ClockFormat, CultureInfo.InvariantCulture);
-            return $"{name} {limit.Percent}%{Separator}{Texts.Format("limit.fullAt", clock)}";
+            return $"{name} {percent}{Separator}{Texts.Format("limit.fullAt", clock)}";
         }
 
-        return $"{name} {limit.Percent}%{reset}";
+        return $"{name} {percent}{reset}";
     }
 }
