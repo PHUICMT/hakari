@@ -1,3 +1,7 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Hakari Design Handoff</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -464,7 +468,7 @@ section.block { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(-
 .taskbar.dark .widget:hover { background: rgba(255, 255, 255, .07); }
 .widget.outline-demo { outline: 1px dashed currentColor; outline-offset: -1px; }
 .w-lines { display: grid; line-height: 1.2; }
-.w-primary { font-size: 13px; font-weight: 600; letter-spacing: .005em; }
+.w-primary { font-size: 13px; font-weight: 700; letter-spacing: .005em; }
 .w-secondary { font-size: 11px; }
 .w-col { display: grid; justify-items: start; line-height: 1.15; }
 .w-col .w-label { font-size: 10px; letter-spacing: .04em; text-transform: uppercase; }
@@ -1389,6 +1393,7 @@ td .model { font-family: var(--font-mono); font-size: 12px; }
 .dropdown-item svg { width: 12px; height: 12px; color: var(--accent); visibility: hidden; }
 .dropdown-item[aria-selected="true"] { font-weight: 600; }
 .dropdown-item[aria-selected="true"] svg { visibility: visible; }
+.dropdown-hint { display: block; font-size: 11px; font-weight: 400; color: var(--ink-faint); }
 
 /* ---------- Settings window (current build) ---------- */
 .settings-window { display: grid; gap: var(--space-3); max-width: 860px; min-width: 0; }
@@ -1421,6 +1426,114 @@ td .model { font-family: var(--font-mono); font-size: 12px; }
 .input.code { width: 72px; text-transform: uppercase; }
 .card-note { padding: 10px var(--space-4) 12px; }
 .lang-option { font-family: "Leelawadee UI", var(--font-ui); }
+
+/* ---------- Ring states: stop disc (full) and 5h + Week (two rings) ---------- */
+.ring-stop { animation: fade var(--duration-slow) var(--ease-standard) both; }
+.ring-stop.m-pulse { animation: pulse-once var(--duration-emphasis) var(--ease-spring) 1; }
+.w-ring22.is-zoom { width: 66px; height: 66px; }
+.ring-specimens { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: var(--space-3); }
+.ring-specimen { display: grid; gap: 6px; margin: 0; min-width: 0; }
+.ring-specimen .strip { height: auto; padding: 10px; justify-content: center; align-items: center; gap: 14px; }
+.ring-specimen figcaption { font-size: 12px; color: var(--ink-muted); }
+.ring-specimen figcaption b { display: block; color: var(--ink); font-size: 12.5px; }
+
+/* ---------- Odometer: only the changed characters roll ---------- */
+@keyframes roll-out { to { opacity: 0; transform: translateY(-45%); } }
+@keyframes fade-out { to { opacity: 0; } }
+.odo-keep, .odo-slot, .odo-tail, .odo-old, .odo-new { white-space: pre; }
+.odo-slot { position: relative; display: inline-block; }
+.odo-new { display: inline-block; animation: tick-in var(--duration-normal) var(--ease-decelerate) both; }
+.odo-old {
+  position: absolute;
+  left: 0;
+  top: 0;
+  pointer-events: none;
+  animation: roll-out var(--duration-normal) var(--ease-accelerate) forwards;
+}
+.odo-tail { display: inline-block; }
+.odo-tail.is-sliding { transition: transform var(--duration-normal) var(--ease-decelerate); }
+:root[data-motion="reduced"] .odo-new { animation-name: fade; }
+:root[data-motion="reduced"] .odo-old { animation-name: fade-out; }
+@media (prefers-reduced-motion: reduce) {
+  .odo-new { animation-name: fade; }
+  .odo-old { animation-name: fade-out; }
+}
+
+/* ---------- Flyout account card (folds) ---------- */
+.account-folds { display: grid; gap: var(--space-2); min-width: 0; }
+.account-fold {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-overlay);
+  overflow: hidden;
+  min-width: 0;
+}
+.fold-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 12px;
+  gap: var(--space-2);
+  align-items: center;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: background-color var(--duration-fast) var(--ease-standard);
+}
+.fold-head:hover { background: color-mix(in srgb, var(--ink) 5%, transparent); }
+.fold-head:active { background: color-mix(in srgb, var(--ink) 9%, transparent); }
+.fold-head:focus-visible { outline-offset: -2px; border-radius: 7px; }
+.fold-text { display: grid; gap: 1px; min-width: 0; }
+.fold-title { display: flex; align-items: baseline; gap: var(--space-2); min-width: 0; }
+.fold-title .account-section-name { flex-shrink: 0; }
+.fold-summary {
+  margin-left: auto;
+  min-width: 0;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  opacity: 0;
+  transition: opacity var(--duration-normal) var(--ease-decelerate);
+}
+.fold-summary.normal { color: var(--accent); }
+.fold-summary.warn { color: var(--warn); }
+.fold-summary.critical { color: var(--critical); }
+.fold-chevron {
+  width: 12px;
+  height: 12px;
+  color: var(--ink-muted);
+  transform: rotate(180deg);
+  transition: transform var(--duration-normal) var(--ease-decelerate);
+}
+.fold-body {
+  display: grid;
+  grid-template-rows: 1fr;
+  opacity: 1;
+  transition: grid-template-rows var(--duration-normal) var(--ease-decelerate),
+    opacity var(--duration-normal) var(--ease-decelerate);
+}
+.fold-clip { overflow: hidden; min-height: 0; }
+.fold-inner { display: grid; gap: 10px; padding: 0 12px 12px; }
+.account-fold.is-folded .fold-summary { opacity: 1; }
+.account-fold.is-folded .fold-chevron { transform: rotate(90deg); }
+.account-fold.is-folded .fold-body { grid-template-rows: 0fr; opacity: 0; }
+:root[data-motion="reduced"] .fold-body,
+:root[data-motion="reduced"] .fold-chevron,
+:root[data-motion="reduced"] .fold-summary { transition-duration: var(--duration-fast); }
+@media (prefers-reduced-motion: reduce) {
+  .fold-body, .fold-chevron, .fold-summary { transition-duration: var(--duration-fast); }
+}
+.stat-grid.money-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+/* ---------- Settings: account rows ---------- */
+.btn.icon-small { padding: 3px 5px; }
+.btn.icon-small svg { width: 12px; height: 12px; }
+.account-row.is-off .setting-title, .account-row.is-off .setting-desc { opacity: .55; }
 
 /* ---------- Spec tables ---------- */
 .spec-table td { white-space: normal; vertical-align: top; }
@@ -1472,7 +1585,9 @@ td .model { font-family: var(--font-mono); font-size: 12px; }
     <symbol id="i-scale" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="M12 3v17M7 20h10M4 7h16M6.5 7 3.5 14a3 3 0 0 0 6 0L6.5 7Zm11 0-3 7a3 3 0 0 0 6 0l-3-7Z"/></symbol>
     <symbol id="i-app" viewBox="0 0 48 48"><rect width="48" height="48" rx="10.5" fill="#2f4c8c"/><g fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M24 12v24M16.5 36h15M11 16h26"/><path d="M13 16 8.5 26M13 16l4.5 10M8 26h10a5 5 0 0 1-10 0Z"/><path d="M35 16l-4.5 10M35 16l4.5 10M30 26h10a5 5 0 0 1-10 0Z"/></g><circle cx="24" cy="11.5" r="1.9" fill="#fff"/></symbol>
     <symbol id="i-chevron-up"viewBox="0 0 16 16"><path fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" d="m4 10 4-4 4 4"/></symbol>
-    <symbol id="i-wifi" viewBox="0 0 16 16"><path fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" d="M1.8 6.2a9 9 0 0 1 12.4 0M3.9 8.4a6 6 0 0 1 8.2 0M6 10.6a3 3 0 0 1 4 0"/><circle cx="8" cy="12.8" r="1" fill="currentColor"/></symbol>
+    <symbol id="i-arrow-up" viewBox="0 0 16 16"><path fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" d="M8 13V3M4 7l4-4 4 4"/></symbol>
+    <symbol id="i-arrow-down" viewBox="0 0 16 16"><path fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" d="M8 3v10M4 9l4 4 4-4"/></symbol>
+    <symbol id="i-wifi"viewBox="0 0 16 16"><path fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" d="M1.8 6.2a9 9 0 0 1 12.4 0M3.9 8.4a6 6 0 0 1 8.2 0M6 10.6a3 3 0 0 1 4 0"/><circle cx="8" cy="12.8" r="1" fill="currentColor"/></symbol>
     <symbol id="i-volume" viewBox="0 0 16 16"><path fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round" d="M2.5 6h2.5l3.5-3v10L5 10H2.5z"/><path fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" d="M11 5.5a3.5 3.5 0 0 1 0 5M12.8 3.8a6 6 0 0 1 0 8.4"/></symbol>
     <symbol id="i-battery" viewBox="0 0 16 16"><rect x="1.5" y="4.5" width="11.5" height="7" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.2"/><rect x="3" y="6" width="8.5" height="4" rx=".6" fill="currentColor"/><rect x="13.6" y="6.5" width="1.2" height="3" rx=".5" fill="currentColor"/></symbol>
     <symbol id="i-info" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.5" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="M8 7v4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><circle cx="8" cy="4.8" r=".9" fill="currentColor"/></symbol>
@@ -1603,8 +1718,10 @@ td .model { font-family: var(--font-mono); font-size: 12px; }
         <div class="type-row"><span class="type-label">Subtitle · 16/22 · 600</span><span style="font: 600 16px/22px var(--font-ui)">Usage limits</span></div>
         <div class="type-row"><span class="type-label">Body · 14/20 · 400</span><span style="font: 400 14px/20px var(--font-ui)">Windows source is live. WSL Ubuntu-24.04 is running and indexed 4 seconds ago.</span></div>
         <div class="type-row"><span class="type-label">Caption · 12/16 · 400</span><span style="font: 400 12px/16px var(--font-ui); color: var(--ink-muted)">Resets in 1 h 48 min · 14:30</span></div>
-        <div class="type-row"><span class="type-label">Taskbar primary · 13/16 · 600</span><span style="font: 600 13px/16px var(--font-ui)">$142.18 today</span></div>
-        <div class="type-row"><span class="type-label">Taskbar secondary · 11/14 · 400</span><span style="font: 400 11px/14px var(--font-ui)">5h 67% · ↺ 1:48</span></div>
+        <div class="type-row"><span class="type-label">Taskbar primary · 13/16 · 700</span><span style="font: 700 13px/16px var(--font-ui)">$142.18 today</span></div>
+        <div class="type-row"><span class="type-label">Taskbar secondary · 11/14 · 400</span><span style="font: 400 11px/14px var(--font-ui)">5h 67.4% · ↺ 1:48</span></div>
+        <div class="type-row"><span class="type-label">Taskbar Thai · Leelawadee UI</span><span class="lang-th" style="display: grid; line-height: 1.4"><span style="font-weight: 700; font-size: 13px">฿9,811 วันนี้</span><span style="font-size: 11px">สัปดาห์ เต็ม · ↺ พ. 16:59</span></span></div>
+        <p class="note"><b>Taskbar text rendering</b> Taskbar lines are drawn antialiased without grid fitting (no hinting snap), so glyphs keep their shapes at every scale and digits don't shift as they roll. Primary line 13px bold, secondary 11px regular. A line that contains Thai is set in Leelawadee UI (the Windows Thai UI font); Latin-only lines use Segoe UI Variable Text.</p>
         <div class="type-row"><span class="type-label">Mono · 12.5/18 · 400</span><span class="mono">{cost.today:$0.00} · {limit.5h:0%}</span></div>
         <div class="type-row"><span class="type-label">Brand · mincho 800</span><span style="font: 800 40px/1 var(--font-brand); color: var(--accent)">秤 <span style="font: 600 20px var(--font-display); color: var(--ink)">Hakari</span></span></div>
         <div class="type-row"><span class="type-label">App icon · radius 22% · #2f4c8c</span><div class="icon-sizes">
@@ -1657,12 +1774,12 @@ td .model { font-family: var(--font-mono); font-size: 12px; }
             <tbody>
               <tr><td>Money</td><td>2 decimals under $1,000, none above on the taskbar. Currency symbol from settings.</td><td>$142.18 · $3.3k · ฿5,140</td><td>$2,333.92 · ฿119,840.00</td></tr>
               <tr><td>Tokens</td><td>Compact on small surfaces (k, M, B with one decimal), full with separators in tables.</td><td>3.1B</td><td>3,104,552,018</td></tr>
-              <tr><td>Percent</td><td>Whole numbers. Never show more than 100%; past the limit show "Limit".</td><td>62%</td><td>62% of 5-hour limit</td></tr>
+              <tr><td>Percent</td><td>Percent detail setting: whole, one or two decimals (default one). The server reports whole percent; decimals are estimated from what the account spent since the last reading and never pass the next whole percent. Never more than 100%.</td><td>93% · 93.4% · 93.41%</td><td>93.4% of weekly limit</td></tr>
               <tr><td>Reset time</td><td>Countdown under 24 h (h:mm), weekday + time beyond.</td><td>↺ 1:48 · ↺ Wed 16:59</td><td>Resets in 1 h 48 min · 14:30</td></tr>
-              <tr><td>Forecast</td><td>When the recent pace fills a limit before it resets, the reset is replaced by the time it fills.</td><td>5h 82% · full ~18:40</td><td>≈ full at 18:40, before the 19:47 reset</td></tr>
-              <tr><td>Full</td><td>A used-up limit says "full" (never 100%) in the critical tone, with its reset.</td><td>Week full · ↺ Wed 16:59</td><td>Weekly limit full · resets Wed 16:59</td></tr>
+              <tr><td>Forecast</td><td>When the recent pace fills a limit before it resets, the reset is replaced by the time it fills.</td><td>5h 82.3% · full ~18:40</td><td>≈ full at 18:40, before the 19:47 reset</td></tr>
+              <tr><td>Full</td><td>A used-up limit says "full" (never 100%) in the critical tone, with its reset. Its ring becomes a stop disc.</td><td>Week full · ↺ Wed 16:59</td><td>Weekly limit full · resets Wed 16:59</td></tr>
               <tr><td>Rate</td><td>Per hour for money, per minute for tokens.</td><td>$18.6/h</td><td>$18.60 per hour · 412k tokens/min</td></tr>
-              <tr><td>Last known / estimate</td><td>Prefix "≈ " when a value is the last one read (the latest check failed) or estimated from logs rather than read from the account.</td><td>≈ 5h 67% · ↺ 1:48</td><td>≈ 67% (last known, 6 min ago)</td></tr>
+              <tr><td>Last known / estimate</td><td>Prefix "≈ " when a value is the last one read (the latest check failed) or estimated from logs rather than read from the account.</td><td>≈ 5h 67.4% · ↺ 1:48</td><td>≈ 67% (last known, 6 min ago)</td></tr>
               <tr><td>Stale</td><td>Value older than 10 min keeps showing, dimmed, with a dot.</td><td>· $142</td><td>Updated 14 min ago</td></tr>
               <tr><td>Thai locale</td><td>Thai digits off; dates in Buddhist calendar optional.</td><td>วันนี้ $142.18</td><td>รีเซ็ตใน 1 ชม. 48 นาที</td></tr>
             </tbody>
@@ -1714,7 +1831,7 @@ td .model { font-family: var(--font-mono); font-size: 12px; }
           <button type="button" class="motion-card" data-demo="fill"><div class="motion-stage"><div class="meter" style="width: 70%"><i style="width: 64%"></i></div></div><b>Fill</b><span>scaleX · 480ms · decelerate</span></button>
           <button type="button" class="motion-card" data-demo="sweep"><div class="motion-stage"><svg width="44" height="44" viewBox="0 0 26 26" style="color: var(--accent)" id="demo-ring"></svg></div><b>Sweep</b><span>stroke · 480ms · decelerate</span></button>
           <button type="button" class="motion-card" data-demo="draw"><div class="motion-stage"><svg width="120" height="34" viewBox="0 0 56 22" style="color: var(--accent)"><polyline id="demo-spark" class="spark-line m-transform" pathLength="1" fill="none" stroke="currentColor" stroke-width="1.6" points=""/></svg></div><b>Draw</b><span>path · 480ms · standard</span></button>
-          <button type="button" class="motion-card" data-demo="tick"><div class="motion-stage"><b style="font-size: 22px" id="demo-tick">$142.18</b></div><b>Tick</b><span>value · 200ms · decelerate</span></button>
+          <button type="button" class="motion-card" data-demo="tick"><div class="motion-stage"><b style="font-size: 22px" id="demo-tick">$412.80</b></div><b>Odometer</b><span>changed digits · 200ms · decelerate</span></button>
           <button type="button" class="motion-card" data-demo="tone"><div class="motion-stage"><b style="font-size: 20px; transition: color var(--duration-slow) var(--ease-standard)" id="demo-tone">62%</b></div><b>Tone change</b><span>color · 320ms · standard</span></button>
           <button type="button" class="motion-card" data-demo="pulse"><div class="motion-stage"><span class="badge critical" id="demo-pulse">LIMIT</span></div><b>Pulse once</b><span>scale 1.14 · 480ms · spring</span></button>
           <button type="button" class="motion-card" data-demo="slide"><div class="motion-stage"><span class="badge m-slide m-transform">Toast</span></div><b>Slide in</b><span>24px · 320ms · decelerate</span></button>
@@ -1745,15 +1862,16 @@ td .model { font-family: var(--font-mono); font-size: 12px; }
           <table class="spec-table">
             <thead><tr><th>Element</th><th>Trigger</th><th>Full</th><th>Reduced</th><th>Off</th></tr></thead>
             <tbody>
-              <tr><td>Widget value</td><td>New value arrives</td><td>Tick up from below, 200 ms</td><td>Cross-fade</td><td>Swap</td></tr>
+              <tr><td>Widget value (odometer)</td><td>New value arrives</td><td>Only the changed characters roll, 200 ms: old ones slide up and fade (accelerate), new ones come up from below (decelerate). The unchanged start of the line stays still; the unchanged end stays too and slides to its new x if the width changed. <code>$412.80</code> → <code>$412.95</code>: only <code>80</code> → <code>95</code> rolls</td><td>Changed characters cross-fade, nothing moves</td><td>Swap</td></tr>
               <tr><td>Widget tone</td><td>Threshold crossed</td><td>Color cross-fade 320 ms, ring pulses once at critical</td><td>Color cross-fade</td><td>Swap</td></tr>
               <tr><td>Widget ring / bar</td><td>Value change</td><td>Arc and bar ease to the new length</td><td>Fade</td><td>Swap</td></tr>
               <tr><td>Cycling views</td><td>Timer or mouse wheel</td><td>Old view rises out, new rises in, 120 ms</td><td>Cross-fade</td><td>Swap</td></tr>
               <tr><td>Flyout</td><td>Open / close</td><td>Rise 12px + fade, rows staggered 30 ms, meters fill</td><td>Fade</td><td>Appear</td></tr>
+              <tr><td>Flyout account card</td><td>Click the card header</td><td>Limits ease their height to 0 while fading, 200 ms decelerate; chevron rotates −90°; the one-line summary fades in at the right of the header. Header has hover and press fill, no press shrink</td><td>Same, 120 ms</td><td>Instant</td></tr>
               <tr><td>Dashboard page</td><td>Navigation</td><td>Content rises in, cards staggered, charts grow from baseline</td><td>Fade</td><td>Appear</td></tr>
               <tr><td>Nav indicator</td><td>Selection</td><td>Slides to the new item with spring</td><td>Jump</td><td>Jump</td></tr>
               <tr><td>Toggle, segmented, buttons</td><td>Press</td><td>Spring thumb; segmented accent indicator slides 200 ms decelerate, press scale 0.95; buttons press scale + ripple</td><td>Color only</td><td>Instant</td></tr>
-              <tr><td>Take turns (accounts)</td><td>Every 8 s</td><td>Next account's block rises in, 200 ms; ring sweeps to its value</td><td>Cross-fade</td><td>Swap</td></tr>
+              <tr><td>Take turns (accounts)</td><td>Every 4, 8 (default), 15 or 30 s</td><td>Next account's block rises in, 200 ms; ring sweeps to its value</td><td>Cross-fade</td><td>Swap</td></tr>
               <tr><td>Toasts</td><td>Shown</td><td>System slide-in (Windows owns this)</td><td>System</td><td>System</td></tr>
               <tr><td>Loading</td><td>Indexing, skeletons</td><td>Shimmer loop</td><td>Static</td><td>Static</td></tr>
             </tbody>
@@ -1853,16 +1971,19 @@ td .model { font-family: var(--font-mono); font-size: 12px; }
           <div class="desktop-area" style="height: 24px"></div>
           <div class="taskbar dark" id="hero-taskbar-dark"></div>
         </div>
-        <div class="sub-head"><h3>Live</h3><p>The sample below receives a new value every 2.5 seconds and walks through normal, warning and critical, so the tick, tone change, ring ease and pulse can be judged at real size. It stops while this tab is hidden, as the app does.</p></div>
+        <div class="sub-head"><h3>Live</h3><p>The sample below receives a new value every 2.5 seconds and walks through normal, warning and critical, so the odometer (only the changed digits roll), tone change, ring ease, stop disc and pulse can be judged at real size. It stops while this tab is hidden, as the app does.</p></div>
         <div class="strip-pair" id="live-demo"></div>
         <div class="callouts">
-          <div class="callout"><span class="callout-key">1</span><div><b>Ring</b><span>22px, 3px stroke, left of the two lines. Track is faint ink, fill is the accent, warning or critical tone. Shows the most pressing limit by default.</span></div></div>
-          <div class="callout"><span class="callout-key">2</span><div><b>Two-line stack</b><span>Primary 13px semibold over secondary 11px. Fits 40px without clipping at 100–150% scale.</span></div></div>
+          <div class="callout"><span class="callout-key">1</span><div><b>Ring</b><span>22px, 3px stroke, left of the two lines. Track is faint ink, fill is the accent, warning or critical tone. Shows the most pressing limit by default. At 100% it turns into a stop disc.</span></div></div>
+          <div class="callout"><span class="callout-key">2</span><div><b>Two-line stack</b><span>Primary 13px bold over secondary 11px. Fits 40px without clipping at 100–150% scale. Antialiased, no grid fitting; Thai lines in Leelawadee UI.</span></div></div>
           <div class="callout"><span class="callout-key">3</span><div><b>Status tone</b><span>Text and bar take the warning or critical tone only for the metric that crossed a threshold.</span></div></div>
           <div class="callout"><span class="callout-key">4</span><div><b>Hit area</b><span>40px tall, hover fill 5% (light) / 7% (dark). Click opens the flyout, right-click the menu, wheel cycles views.</span></div></div>
         </div>
         <div class="sub-head"><h3>Ring and lines</h3><p>The ring shows the most pressing limit unless the user picks one: a full weekly limit beats an empty 5-hour one. Lines follow the formats below; the reset is a countdown (h:mm) under 24 h, weekday + time beyond.</p></div>
         <div class="template-list" id="line-format-list"></div>
+        <div class="sub-head"><h3>Ring states</h3><p>A full limit (100%) is not drawn as a closed ring: it becomes a solid disc in the critical tone with a short white bar across the middle, a stop sign. The "5h + Week" ring choice draws two concentric rings: the outer one is the weekly limit (22px, 3px stroke), the inner one the 5-hour limit (2.5px stroke, 1.5px gap inside the outer). When the weekly limit is full, only the stop disc is shown. Each sample is at 1:1 and at 3×.</p></div>
+        <div class="ring-specimens" id="ring-specimens"></div>
+        <div class="template-list" id="ring-state-list"></div>
       </div>
     </section>
 
@@ -1881,7 +2002,7 @@ td .model { font-family: var(--font-mono); font-size: 12px; }
         <div class="grid-3">
           <p class="note"><b>Side by side is the default.</b> One block per account, each with its own ring and money, split by a faint 1px divider. At most 3 blocks; further accounts are left to the flyout.</p>
           <p class="note"><b>Together</b> keeps one block and one ring (the most pressing limit across all accounts), with a labelled line per account, most pressing on top.</p>
-          <p class="note"><b>Take turns</b> shows one account at a time and switches every 8 s with the same rise-in as a value change (cross-fade in Reduced, a plain swap when Off). Dots show which account is up.</p>
+          <p class="note"><b>Take turns</b> shows one account at a time and switches every 8 s by default (Switch every: 4, 8, 15 or 30 s) with the same rise-in as a value change (cross-fade in Reduced, a plain swap when Off). Dots show which account is up.</p>
         </div>
         <p class="note"><b>Shown on</b> Main display (default), All displays, or Chosen displays (pick monitors in Settings → Sources → Taskbar displays). Every taskbar shows the same layout.</p>
       </div>
@@ -2004,65 +2125,85 @@ td .model { font-family: var(--font-mono); font-size: 12px; }
         <button class="btn replay" type="button" data-replay="#flyout"><svg><use href="#i-refresh"/></svg>Replay animations</button>
         <span class="eyebrow">Surfaces</span>
         <h2>Flyout</h2>
-        <p>Opens on click, like Quick Settings. Every account gets its own section, most pressing
-          first: a header (nickname, or the email when there is none) with plan, today's spend and
-          freshness, then that account's limits. Below: money, speed, and where the numbers come
-          from. Closes on Esc, focus loss, Close, or a second click on the widget.</p>
+        <p>Opens on click, like Quick Settings. Every account gets its own card, most pressing
+          first: the header is one full-width button (nickname, or the email when there is none,
+          with plan, today's spend and freshness, and a chevron on the right), then that account's
+          limits. Clicking the header folds the card to a one-line summary in the tone color. Below:
+          money in a 2 × 2 grid, speed, and where the numbers come from. Closes on Esc, focus loss,
+          Close, or a second click on the widget.</p>
+      </div>
+      <div class="grid-3">
+        <p class="note"><b>Account card</b> Tile background (surface), 1px line border, 8px radius. Header: name semibold 13px, detail caption 12px faint, chevron 12px. Hover fills 5% ink, press 9% ink; no press shrink (scaling showed a dark rim against the border).</p>
+        <p class="note"><b>Fold</b> The limits ease their height to 0 while fading, 200 ms decelerate (Reduced 120 ms, Off instant). The chevron rotates −90° and the summary (e.g. <code>Week full · ↺ Wed 16:59</code>) fades in at the right of the name. Click Home or Work to try it.</p>
+        <p class="note"><b>Money</b> Today, This week, This month and All time (since the first log, e.g. <code>since Jun 2026</code>), summed over every account.</p>
       </div>
       <div class="flyout-row">
         <div class="flyout-col">
-          <span class="spec">Default · every account, most pressing first</span>
+          <span class="spec">Default · most pressing first · Home folded, Work open</span>
           <div class="flyout" id="flyout-main">
             <div class="flyout-body">
               <div class="flyout-head">
                 <div class="flyout-title"><span class="brand-mark" aria-hidden="true">秤</span><span class="flyout-name">Hakari<span class="flyout-sub">2 accounts</span></span></div>
               </div>
-              <div class="account-section">
-                <div class="account-section-head">
-                  <span class="account-section-name">Home</span>
-                  <span class="account-section-detail">home@example.com · Max 20x · $96.10 today · Updated just now</span>
+              <div class="account-folds">
+                <div class="account-fold is-folded" data-fold>
+                  <button type="button" class="fold-head" aria-expanded="false" aria-controls="fold-home">
+                    <span class="fold-text">
+                      <span class="fold-title"><span class="account-section-name">Home</span><span class="fold-summary critical">Week full · ↺ Wed 16:59</span></span>
+                      <span class="account-section-detail">home@example.com · Max 20x · $96.10 today · Updated just now</span>
+                    </span>
+                    <svg class="fold-chevron" aria-hidden="true"><use href="#i-chevron-up"/></svg>
+                  </button>
+                  <div class="fold-body" id="fold-home"><div class="fold-clip"><div class="fold-inner">
+                    <div class="limit">
+                      <div class="limit-top"><span class="limit-name">5-hour</span><span class="limit-value">0.0%</span></div>
+                      <div class="meter"><i style="width: 0%"></i></div>
+                      <span class="limit-reset">Starts with the next request</span>
+                    </div>
+                    <div class="limit">
+                      <div class="limit-top"><span class="limit-name">Weekly</span><span class="limit-value" style="color: var(--critical)">Full</span></div>
+                      <div class="meter"><i class="critical" style="width: 100%"></i></div>
+                      <span class="limit-reset">Resets Wed 16:59</span>
+                    </div>
+                    <div class="limit">
+                      <div class="limit-top"><span class="limit-name">Weekly · Fable</span><span class="limit-value">64.0%</span></div>
+                      <div class="meter"><i style="width: 64%"></i></div>
+                      <span class="limit-reset">Resets Wed 16:59</span>
+                    </div>
+                  </div></div></div>
                 </div>
-                <div class="limit">
-                  <div class="limit-top"><span class="limit-name">5-hour</span><span class="limit-value">0%</span></div>
-                  <div class="meter"><i style="width: 0%"></i></div>
-                  <span class="limit-reset">Starts with the next request</span>
-                </div>
-                <div class="limit">
-                  <div class="limit-top"><span class="limit-name">Weekly</span><span class="limit-value" style="color: var(--critical)">Full</span></div>
-                  <div class="meter"><i class="critical" style="width: 100%"></i></div>
-                  <span class="limit-reset">Resets Wed 16:59</span>
-                </div>
-                <div class="limit">
-                  <div class="limit-top"><span class="limit-name">Weekly · Fable</span><span class="limit-value">64%</span></div>
-                  <div class="meter"><i style="width: 64%"></i></div>
-                  <span class="limit-reset">Resets Wed 16:59</span>
+                <div class="account-fold" data-fold>
+                  <button type="button" class="fold-head" aria-expanded="true" aria-controls="fold-work">
+                    <span class="fold-text">
+                      <span class="fold-title"><span class="account-section-name">Work</span><span class="fold-summary warn" aria-hidden="true">Week 94.0% · ↺ Tue 22:00</span></span>
+                      <span class="account-section-detail">work@example.com · Team · $412.80 today · Updated just now</span>
+                    </span>
+                    <svg class="fold-chevron" aria-hidden="true"><use href="#i-chevron-up"/></svg>
+                  </button>
+                  <div class="fold-body" id="fold-work"><div class="fold-clip"><div class="fold-inner">
+                    <div class="limit">
+                      <div class="limit-top"><span class="limit-name">5-hour</span><span class="limit-value">15.0%</span></div>
+                      <div class="meter"><i style="width: 15%"></i></div>
+                      <span class="limit-reset">Resets in 1 h 48 min · 14:30</span>
+                    </div>
+                    <div class="limit">
+                      <div class="limit-top"><span class="limit-name">Weekly</span><span class="limit-value">94.0%</span></div>
+                      <div class="meter with-marker"><i class="warn" style="width: 94%"></i><span class="meter-marker" style="left: 71%" title="Where an even pace would be"></span></div>
+                      <div class="limit-top"><span class="limit-reset">Resets Tue 22:00</span><span class="limit-reset">Even pace 71%</span></div>
+                    </div>
+                    <div class="limit">
+                      <div class="limit-top"><span class="limit-name">Weekly · Fable</span><span class="limit-value">48.0%</span></div>
+                      <div class="meter"><i style="width: 48%"></i></div>
+                      <span class="limit-reset">Resets Tue 22:00</span>
+                    </div>
+                  </div></div></div>
                 </div>
               </div>
-              <div class="account-section">
-                <div class="account-section-head">
-                  <span class="account-section-name">Work</span>
-                  <span class="account-section-detail">work@example.com · Team · $412.80 today · Updated just now</span>
-                </div>
-                <div class="limit">
-                  <div class="limit-top"><span class="limit-name">5-hour</span><span class="limit-value">67%</span></div>
-                  <div class="meter"><i style="width: 67%"></i></div>
-                  <span class="limit-reset">Resets in 1 h 48 min · 14:30</span>
-                </div>
-                <div class="limit">
-                  <div class="limit-top"><span class="limit-name">Weekly</span><span class="limit-value">92%</span></div>
-                  <div class="meter with-marker"><i class="warn" style="width: 92%"></i><span class="meter-marker" style="left: 71%" title="Where an even pace would be"></span></div>
-                  <div class="limit-top"><span class="limit-reset">Resets Tue 22:00</span><span class="limit-reset">Even pace 71%</span></div>
-                </div>
-                <div class="limit">
-                  <div class="limit-top"><span class="limit-name">Weekly · Fable</span><span class="limit-value">48%</span></div>
-                  <div class="meter"><i style="width: 48%"></i></div>
-                  <span class="limit-reset">Resets Tue 22:00</span>
-                </div>
-              </div>
-              <div class="stat-grid">
+              <div class="stat-grid money-grid">
                 <div class="stat"><span class="stat-label">Today</span><span class="stat-value">$508.90</span><span class="stat-delta">2 accounts</span></div>
                 <div class="stat"><span class="stat-label">This week</span><span class="stat-value">$1,842</span><span class="stat-delta">Mon–Wed</span></div>
                 <div class="stat"><span class="stat-label">This month</span><span class="stat-value">$4,960</span><span class="stat-delta">≈ $9.9k by 31st</span></div>
+                <div class="stat"><span class="stat-label">All time</span><span class="stat-value">$18,240</span><span class="stat-delta">since Jun 2026</span></div>
               </div>
               <div class="burn">
                 <span>Burn rate</span>
@@ -2097,13 +2238,14 @@ td .model { font-family: var(--font-mono); font-size: 12px; }
                 </div>
               </div>
               <div class="limit">
-                <div class="limit-top"><span class="limit-name">5-hour window (estimate)</span><span class="limit-value">≈ 58%</span></div>
+                <div class="limit-top"><span class="limit-name">5-hour window (estimate)</span><span class="limit-value">≈ 58.0%</span></div>
                 <div class="meter"><i style="width: 58%; opacity: .55"></i></div>
               </div>
-              <div class="stat-grid">
+              <div class="stat-grid money-grid">
                 <div class="stat"><span class="stat-label">Today</span><span class="stat-value">$142.18</span></div>
                 <div class="stat"><span class="stat-label">This week</span><span class="stat-value">$812</span></div>
                 <div class="stat"><span class="stat-label">This month</span><span class="stat-value">$2,334</span></div>
+                <div class="stat"><span class="stat-label">All time</span><span class="stat-value">$8,413</span><span class="stat-delta">since Jun 2026</span></div>
               </div>
             </div>
           </div>
@@ -2122,10 +2264,11 @@ td .model { font-family: var(--font-mono); font-size: 12px; }
                 <div class="meter"><i style="width: 48%"></i></div>
                 <span class="limit-reset">0.9 GB of 1.8 GB · runs at low priority, your work comes first</span>
               </div>
-              <div class="stat-grid">
+              <div class="stat-grid money-grid">
                 <div class="stat"><span class="stat-label">Today</span><div class="skeleton" style="width: 70%; height: 16px"></div></div>
                 <div class="stat"><span class="stat-label">This week</span><div class="skeleton" style="width: 55%; height: 16px"></div></div>
                 <div class="stat"><span class="stat-label">This month</span><div class="skeleton" style="width: 60%; height: 16px"></div></div>
+                <div class="stat"><span class="stat-label">All time</span><div class="skeleton" style="width: 65%; height: 16px"></div></div>
               </div>
             </div>
           </div>
@@ -2415,14 +2558,18 @@ td .model { font-family: var(--font-mono); font-size: 12px; }
           </div>
           <div class="setting-row"><svg><use href="#i-user"/></svg><div><div class="setting-title">Several accounts</div><div class="setting-desc">How accounts share the taskbar</div></div>
             <div class="setting-control"><div class="segmented" role="group" aria-label="Several accounts" id="settings-mode"><button type="button" aria-pressed="false" data-mode="together">Together</button><button type="button" aria-pressed="true" data-mode="side">Side by side</button><button type="button" aria-pressed="false" data-mode="turns">Take turns</button></div></div></div>
+          <div class="setting-row nested" data-turns-choice hidden><svg><use href="#i-refresh"/></svg><div><div class="setting-title">Switch every</div><div class="setting-desc">Only with Take turns</div></div>
+            <div class="setting-control"><div class="segmented" role="group" aria-label="Switch every" id="settings-turn-interval"><button type="button" aria-pressed="false" data-seconds="4">4 s</button><button type="button" aria-pressed="true" data-seconds="8">8 s</button><button type="button" aria-pressed="false" data-seconds="15">15 s</button><button type="button" aria-pressed="false" data-seconds="30">30 s</button></div></div></div>
           <div class="setting-row"><svg><use href="#i-list"/></svg><div><div class="setting-title">Layout for</div><div class="setting-desc">Each account's block can have its own ring and lines.</div></div>
             <div class="setting-control"><div class="dropdown" data-dropdown data-options="All accounts|Work|Home"><button type="button" class="dropdown-button" aria-haspopup="listbox" aria-expanded="false"><span class="dropdown-value">All accounts</span><svg><use href="#i-chevron-up"/></svg></button><span class="dropdown-list" role="listbox" aria-label="Layout for"></span></div></div></div>
-          <div class="setting-row"><svg><use href="#i-chart"/></svg><div><div class="setting-title">Ring</div><div class="setting-desc">Most pressing: a full weekly limit beats an empty 5-hour one</div></div>
-            <div class="setting-control"><div class="segmented" role="group" aria-label="Ring" id="settings-ring"><button type="button" aria-pressed="false" data-ring="off">Off</button><button type="button" aria-pressed="false" data-ring="5h">5h</button><button type="button" aria-pressed="false" data-ring="week">Week</button><button type="button" aria-pressed="true" data-ring="pressing">Most pressing</button></div></div></div>
-          <div class="setting-row"><svg><use href="#i-taskbar"/></svg><div><div class="setting-title">Top line</div></div>
-            <div class="setting-control"><div class="dropdown" data-dropdown><button type="button" class="dropdown-button" aria-haspopup="listbox" aria-expanded="false"><span class="dropdown-value">Automatic</span><svg><use href="#i-chevron-up"/></svg></button><span class="dropdown-list" role="listbox" aria-label="Top line"></span></div></div></div>
+          <div class="setting-row"><svg><use href="#i-chart"/></svg><div><div class="setting-title">Ring</div><div class="setting-desc">Most pressing: a full weekly limit beats an empty 5-hour one. 5h + Week: weekly outside, 5-hour inside.</div></div>
+            <div class="setting-control"><div class="segmented" role="group" aria-label="Ring" id="settings-ring"><button type="button" aria-pressed="false" data-ring="off">Off</button><button type="button" aria-pressed="false" data-ring="5h">5h</button><button type="button" aria-pressed="false" data-ring="week">Week</button><button type="button" aria-pressed="false" data-ring="both">5h + Week</button><button type="button" aria-pressed="true" data-ring="pressing">Most pressing</button></div></div></div>
+          <div class="setting-row"><svg><use href="#i-chart"/></svg><div><div class="setting-title">Percent detail</div><div class="setting-desc">The server reports whole percent; decimals are estimated from what the account spent since the last reading and never pass the next whole percent.</div></div>
+            <div class="setting-control"><div class="segmented" role="group" aria-label="Percent detail" id="settings-percent"><button type="button" aria-pressed="false" data-digits="0">93%</button><button type="button" aria-pressed="true" data-digits="1">93.4%</button><button type="button" aria-pressed="false" data-digits="2">93.41%</button></div></div></div>
+          <div class="setting-row"><svg><use href="#i-taskbar"/></svg><div><div class="setting-title">Top line</div><div class="setting-desc">"Second account" is offered only with Together</div></div>
+            <div class="setting-control"><div class="dropdown" data-dropdown data-line="top"><button type="button" class="dropdown-button" aria-haspopup="listbox" aria-expanded="false"><span class="dropdown-value">Automatic</span><svg><use href="#i-chevron-up"/></svg></button><span class="dropdown-list" role="listbox" aria-label="Top line"></span></div></div></div>
           <div class="setting-row"><svg><use href="#i-taskbar"/></svg><div><div class="setting-title">Bottom line</div><div class="setting-desc">Shown open</div></div>
-            <div class="setting-control"><div class="dropdown is-open" data-dropdown><button type="button" class="dropdown-button" aria-haspopup="listbox" aria-expanded="true"><span class="dropdown-value">Most pressing limit</span><svg><use href="#i-chevron-up"/></svg></button><span class="dropdown-list" role="listbox" aria-label="Bottom line"></span></div></div></div>
+            <div class="setting-control"><div class="dropdown is-open" data-dropdown data-line="bottom"><button type="button" class="dropdown-button" aria-haspopup="listbox" aria-expanded="true"><span class="dropdown-value">Automatic</span><svg><use href="#i-chevron-up"/></svg></button><span class="dropdown-list" role="listbox" aria-label="Bottom line"></span></div></div></div>
         </div>
 
         <div class="sub-head"><h3>Sources</h3></div>
@@ -2439,14 +2586,22 @@ td .model { font-family: var(--font-mono); font-size: 12px; }
 
         <div class="sub-head"><h3>Accounts</h3></div>
         <div class="setting-card">
-          <div class="setting-row"><svg><use href="#i-user"/></svg><div><div class="setting-title">work@example.com</div><div class="setting-desc">Team · Example Co</div></div>
-            <div class="setting-control"><input class="input compact is-rest" value="Work" aria-label="Nickname for work@example.com" placeholder="Nickname"></div></div>
-          <div class="setting-row"><svg><use href="#i-user"/></svg><div><div class="setting-title">home@example.com</div><div class="setting-desc">Max 20x · Personal</div></div>
-            <div class="setting-control"><input class="input compact is-rest" value="Home" aria-label="Nickname for home@example.com" placeholder="Nickname"></div></div>
+          <div class="setting-row"><svg><use href="#i-list"/></svg><div><div class="setting-title">Order</div><div class="setting-desc">On the taskbar and in the flyout. Moving an account switches to My order.</div></div>
+            <div class="setting-control"><div class="segmented" role="group" aria-label="Account order" id="settings-order"><button type="button" aria-pressed="true" data-order="pressing">Most pressing first</button><button type="button" aria-pressed="false" data-order="mine">My order</button></div></div></div>
+          <div class="setting-row account-row" data-account="work"><svg><use href="#i-user"/></svg><div><div class="setting-title">work@example.com</div><div class="setting-desc">Team · Example Co</div></div>
+            <div class="setting-control"><input class="input compact is-rest" value="Work" aria-label="Nickname for work@example.com" placeholder="Nickname" data-nickname>
+              <button class="btn subtle icon icon-small" type="button" data-move="up" aria-label="Move work@example.com up"><svg><use href="#i-arrow-up"/></svg></button>
+              <button class="btn subtle icon icon-small" type="button" data-move="down" aria-label="Move work@example.com down"><svg><use href="#i-arrow-down"/></svg></button>
+              <button class="toggle" type="button" role="switch" aria-checked="true" aria-label="Show work@example.com" data-show-account></button></div></div>
+          <div class="setting-row account-row" data-account="home"><svg><use href="#i-user"/></svg><div><div class="setting-title">home@example.com</div><div class="setting-desc">Max 20x · Personal</div></div>
+            <div class="setting-control"><input class="input compact is-rest" value="Home" aria-label="Nickname for home@example.com" placeholder="Nickname" data-nickname>
+              <button class="btn subtle icon icon-small" type="button" data-move="up" aria-label="Move home@example.com up"><svg><use href="#i-arrow-up"/></svg></button>
+              <button class="btn subtle icon icon-small" type="button" data-move="down" aria-label="Move home@example.com down"><svg><use href="#i-arrow-down"/></svg></button>
+              <button class="toggle" type="button" role="switch" aria-checked="true" aria-label="Show home@example.com" data-show-account></button></div></div>
           <div class="setting-row"><svg><use href="#i-refresh"/></svg><div><div class="setting-title">Renew sign-in automatically</div><div class="setting-desc">When an account's sign-in expires, renew it in the background so its limits keep updating.</div></div>
             <button class="toggle" type="button" role="switch" aria-checked="true" aria-label="Renew sign-in automatically"></button></div>
         </div>
-        <p class="note">Accounts are found automatically: any signed-in <code>.claude*</code> folder in the home folder, <code>CLAUDE_CONFIG_DIR</code>, and running WSL distributions. There is no add-account button; sign in with Claude Code and the account appears. The nickname is optional; without one, the email is shown.</p>
+        <p class="note">Accounts are found automatically: any signed-in <code>.claude*</code> folder in the home folder, <code>CLAUDE_CONFIG_DIR</code>, and running WSL distributions. There is no add-account button; sign in with Claude Code and the account appears. The nickname is optional; without one, the email is shown. Each account row has its nickname, ↑ / ↓ to set My order, and a show / hide switch; a hidden account leaves the taskbar and the flyout. An account that signs out keeps its last known limits, shown with "≈", until you hide it. The preview in the Taskbar card follows these rows.</p>
 
         <div class="sub-head"><h3>General</h3></div>
         <div class="setting-card">
@@ -2632,14 +2787,15 @@ td .model { font-family: var(--font-mono); font-size: 12px; }
             <tr><td>WidgetSlot</td><td>UserControl: TextSlot, BarSlot, RingSlot, SparklineSlot</td><td>auto</td><td>tone (normal / warn / critical / muted)</td><td>Bound to a MetricBinding + format + ThresholdRules.</td></tr>
             <tr><td>Flyout</td><td>Custom popup window, <code>DesktopAcrylicBackdrop</code>, custom templates only</td><td>360 × auto</td><td>default, limits off, first index, warnings</td><td>Anchored 12px above the taskbar; Esc / focus loss closes.</td></tr>
             <tr><td>LimitMeter</td><td>ProgressBar + TextBlocks</td><td>stretch × 6</td><td>normal, warn, critical, estimate (55% opacity), pace marker</td><td>Label + value on one baseline; reset text below.</td></tr>
-            <tr><td>StatTile</td><td>Border + TextBlocks</td><td>1/3 width</td><td>value, loading (skeleton), unpriced (*)</td><td>Tabular figures.</td></tr>
+            <tr><td>AccountCard</td><td>Border (surface, 1px line, 8px radius) + full-width header <code>Button</code> + limits panel whose height is animated</td><td>stretch</td><td>open, folded, header hover / pressed (fill only, no scale)</td><td>Fold: height to 0 + fade 200 ms decelerate (Reduced 120 ms, Off instant), chevron −90°, summary fades in in the tone color.</td></tr>
+            <tr><td>StatTile</td><td>Border + TextBlocks</td><td>1/2 width, 2 × 2</td><td>value, loading (skeleton), unpriced (*)</td><td>Tabular figures.</td></tr>
             <tr><td>InfoBar</td><td><code>InfoBar</code> (Informational, Warning, Error, Success)</td><td>stretch</td><td>with / without actions</td><td>Use the built-in severity colors mapped to tokens.</td></tr>
             <tr><td>DashboardWindow</td><td><code>NavigationView</code> Left, <code>MicaBackdrop</code>, custom title bar</td><td>min 960 × 640</td><td>expanded, compact (&lt; 1000px)</td><td>Remember size, page and filters.</td></tr>
             <tr><td>FilterBar</td><td><code>SelectorBar</code> + <code>ComboBox</code> × 3</td><td>auto</td><td>—</td><td>Shared across pages through one view model.</td></tr>
             <tr><td>DataTable</td><td><code>ItemsRepeater</code> + header grid (or CommunityToolkit DataGrid)</td><td>stretch</td><td>loading, empty, sorted</td><td>Virtualized; sessions list can exceed 10k rows.</td></tr>
             <tr><td>Charts</td><td>Win2D <code>CanvasControl</code></td><td>stretch</td><td>loading, empty, hover readout</td><td>Daily bars, stacked share, heatmap; colors from data tokens.</td></tr>
             <tr><td>SettingsCard</td><td>CommunityToolkit <code>SettingsCard</code> / <code>SettingsExpander</code></td><td>stretch</td><td>—</td><td>Windows 11 settings pattern.</td></tr>
-            <tr><td>AccountBlock</td><td>UserControl: 22px ring + two TextBlocks</td><td>auto × 40</td><td>normal, warn, critical, last known (≈), no ring</td><td>One per account in Side by side (max 3, 1px divider between); one shared block in Together and Take turns.</td></tr>
+            <tr><td>AccountBlock</td><td>UserControl: 22px ring + two TextBlocks</td><td>auto × 40</td><td>normal, warn, critical, full (stop disc), 5h + Week (two rings), last known (≈), no ring</td><td>One per account in Side by side (max 3, 1px divider between); one shared block in Together and Take turns.</td></tr>
             <tr><td>SegmentedControl</td><td>Custom template over <code>SelectorBar</code>; indicator is a composition visual</td><td>auto × 26</td><td>rest, hover (7% ink), pressed (0.95), selected (accent), disabled</td><td>Indicator slides 200 ms decelerate between items; labels never wrap.</td></tr>
             <tr><td>Dropdown</td><td><code>ComboBox</code> with custom template (button + chevron, raised list, check on the chosen item)</td><td>min 180 wide</td><td>closed, open, hover, chosen</td><td>Used for Layout for, Top line and Bottom line.</td></tr>
             <tr><td>LayoutEditor</td><td>ListView with reorder, live <code>TaskbarWidget</code> preview</td><td>stretch</td><td>editing, invalid format</td><td>Format string validated as you type.</td></tr>
@@ -2674,7 +2830,9 @@ td .model { font-family: var(--font-mono); font-size: 12px; }
             <tr><td><code>burn.cost</code> / <code>burn.tokens</code></td><td>Burn rate</td><td>$18.6/h · 412k/min</td><td><code>$0.0/h</code></td><td>Index (last 15 min)</td></tr>
             <tr><td><code>tokens.input</code> / <code>.output</code> / <code>.cacheRead</code> / <code>.cacheWrite</code></td><td>Tokens (period)</td><td>7.2M</td><td><code>0.0a</code> (compact)</td><td>Index</td></tr>
             <tr><td><code>cache.hitRate</code></td><td>Cache hit rate</td><td>98%</td><td><code>0%</code></td><td>Index</td></tr>
-            <tr><td><code>responses.today</code></td><td>Responses today</td><td>1,314</td><td><code>#,0</code></td><td>Index</td></tr>
+            <tr><td><code>tokens.today</code> / <code>tokens.month</code></td><td>Tokens today / this month</td><td>4.2M tokens today · month 120M tokens</td><td><code>0.0a</code> (compact)</td><td>Index</td></tr>
+            <tr><td><code>responses.today</code></td><td>Replies today</td><td>1.8K replies today</td><td><code>0.0a</code> (compact)</td><td>Index</td></tr>
+            <tr><td><code>limit.5h+week</code></td><td>5-hour and weekly limits</td><td>5h 5% · Week 93%</td><td><code>0.0%</code> (Percent detail)</td><td>Account; tone of the worse one</td></tr>
             <tr><td><code>sessions.active</code></td><td>Active sessions</td><td>2</td><td><code>0</code></td><td>Index (written in last 5 min)</td></tr>
             <tr><td><code>model.top</code></td><td>Most used model today</td><td>opus-5-5 · 92%</td><td><code>name · 0%</code></td><td>Index</td></tr>
             <tr><td><code>plan.value</code></td><td>Plan value this month</td><td>53×</td><td><code>0×</code></td><td>Index + plan price</td></tr>
@@ -2777,25 +2935,56 @@ td .model { font-family: var(--font-mono); font-size: 12px; }
       '<text x="13" y="16.5" text-anchor="middle" font-size="8.5" font-weight="700" fill="currentColor" font-family="Segoe UI, sans-serif">' + percent + '</text></svg>';
   }
 
-  /* 22px widget ring: 3px stroke, faint track, tone fill, no digits */
-  function ring22(percent, tone, options) {
-    var radius = 9.5;
-    var circumference = 2 * Math.PI * radius;
-    var offset = circumference - (Math.min(percent, 100) / 100) * circumference;
+  /* 22px widget ring: 3px stroke, faint track, tone fill, no digits. A full limit is a stop disc. */
+  var fullPercent = 100;
+  var ringRadius = 9.5;
+  var ringStroke = 3;
+  var innerRingStroke = 2.5;
+  var innerRingGap = 1.5;
+  var innerRingRadius = ringRadius - ringStroke / 2 - innerRingGap - innerRingStroke / 2;
+
+  function ringClasses(tone, options) {
     var dimClass = options && options.dim ? " is-dim" : "";
-    return '<svg class="w-ring22 ' + tone + dimClass + '" viewBox="0 0 22 22" aria-hidden="true">' +
-      '<circle class="ring-track" cx="11" cy="11" r="' + radius + '" fill="none" stroke-width="3"/>' +
-      '<circle class="ring-arc m-transform" cx="11" cy="11" r="' + radius + '" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" ' +
+    var zoomClass = options && options.zoom ? " is-zoom" : "";
+    return "w-ring22 " + tone + dimClass + zoomClass;
+  }
+
+  function stopDisc(options) {
+    return '<svg class="' + ringClasses("tone-critical", options) + ' ring-stop" viewBox="0 0 22 22" aria-hidden="true">' +
+      '<circle cx="11" cy="11" r="11" fill="currentColor"/>' +
+      '<rect x="6" y="9.75" width="10" height="2.5" rx="1.25" fill="#fff"/></svg>';
+  }
+
+  function ringArc(radius, stroke, percent) {
+    var circumference = 2 * Math.PI * radius;
+    var offset = circumference - (Math.min(percent, fullPercent) / fullPercent) * circumference;
+    return '<circle class="ring-track" cx="11" cy="11" r="' + radius + '" fill="none" stroke-width="' + stroke + '"/>' +
+      '<circle class="ring-arc m-transform" cx="11" cy="11" r="' + radius + '" fill="none" stroke="currentColor" stroke-width="' + stroke + '" stroke-linecap="round" ' +
       'style="--ring-length: ' + circumference.toFixed(2) + '; stroke-dasharray: ' + circumference.toFixed(2) + '; stroke-dashoffset: ' + offset.toFixed(2) + '; ' +
-      'transition: stroke-dashoffset var(--duration-emphasis) var(--ease-decelerate)" transform="rotate(-90 11 11)"/></svg>';
+      'transition: stroke-dashoffset var(--duration-emphasis) var(--ease-decelerate)" transform="rotate(-90 11 11)"/>';
+  }
+
+  function ring22(percent, tone, options) {
+    if (percent >= fullPercent) { return stopDisc(options); }
+    return '<svg class="' + ringClasses(tone, options) + '" viewBox="0 0 22 22" aria-hidden="true">' +
+      ringArc(ringRadius, ringStroke, percent) + '</svg>';
+  }
+
+  /* "5h + Week": outer ring = weekly, inner ring = 5-hour; a full week shows the stop disc only */
+  function ringDual(fiveHour, week, options) {
+    if (week >= fullPercent) { return stopDisc(options); }
+    return '<svg class="' + ringClasses(toneFor(week), options) + '" viewBox="0 0 22 22" aria-hidden="true">' +
+      ringArc(ringRadius, ringStroke, week) +
+      '<g class="' + toneFor(fiveHour) + '">' + ringArc(innerRingRadius, innerRingStroke, fiveHour) + '</g></svg>';
   }
 
   function lines(top, bottom, options) {
     var topTone = options && options.topTone ? " " + options.topTone : "";
     var bottomTone = options && options.bottomTone ? " " + options.bottomTone : " faint";
     var langClass = options && options.lang ? " lang-" + options.lang : "";
-    return '<span class="w-lines' + langClass + '"><span class="w-primary' + topTone + '">' + top + '</span>' +
-      '<span class="w-secondary' + bottomTone + '">' + bottom + '</span></span>';
+    var topLine = top === null ? "" : '<span class="w-primary' + topTone + '">' + top + '</span>';
+    var bottomLine = bottom === null ? "" : '<span class="w-secondary' + bottomTone + '">' + bottom + '</span>';
+    return '<span class="w-lines' + langClass + '">' + topLine + bottomLine + '</span>';
   }
 
   function toneFor(percent) {
@@ -2825,15 +3014,15 @@ td .model { font-family: var(--font-mono); font-size: 12px; }
       name: "Two lines",
       description: "Default. Money on top, limit and reset below.",
       render: function () {
-        return '<span class="w-lines"><span class="w-primary">$142.18 today</span><span class="w-secondary faint">5h 62% · ↺ 1:48</span></span>';
+        return '<span class="w-lines"><span class="w-primary">$142.18 today</span><span class="w-secondary faint">5h 62.4% · ↺ 1:48</span></span>';
       }
     },
     {
       name: "Columns",
       description: "Up to four labelled values side by side.",
       render: function () {
-        return '<span class="w-col"><span class="w-label faint">5h</span><span class="w-value">62%</span></span><span class="w-divider"></span>' +
-          '<span class="w-col"><span class="w-label faint">Week</span><span class="w-value">41%</span></span><span class="w-divider"></span>' +
+        return '<span class="w-col"><span class="w-label faint">5h</span><span class="w-value">62.4%</span></span><span class="w-divider"></span>' +
+          '<span class="w-col"><span class="w-label faint">Week</span><span class="w-value">41.0%</span></span><span class="w-divider"></span>' +
           '<span class="w-col"><span class="w-label faint">Today</span><span class="w-value">$142</span></span>';
       }
     },
@@ -2842,8 +3031,8 @@ td .model { font-family: var(--font-mono); font-size: 12px; }
       description: "Limits as thin bars with the value beside each.",
       render: function () {
         return '<span class="w-lines" style="gap: 3px"><span style="display: flex; gap: 6px; align-items: center"><span class="w-secondary faint" style="width: 24px">5h</span>' + bar(62, "tone-normal") +
-          '<span class="w-secondary" style="font-weight: 600">62%</span></span><span style="display: flex; gap: 6px; align-items: center"><span class="w-secondary faint" style="width: 24px">Wk</span>' +
-          bar(41, "tone-normal") + '<span class="w-secondary" style="font-weight: 600">41%</span></span></span>';
+          '<span class="w-secondary" style="font-weight: 600">62.4%</span></span><span style="display: flex; gap: 6px; align-items: center"><span class="w-secondary faint" style="width: 24px">Wk</span>' +
+          bar(41, "tone-normal") + '<span class="w-secondary" style="font-weight: 600">41.0%</span></span></span>';
       }
     },
     {
@@ -2864,13 +3053,13 @@ td .model { font-family: var(--font-mono); font-size: 12px; }
       name: "Accounts",
       description: "One value per account; wheel or timer cycles.",
       render: function () {
-        return '<span class="w-lines"><span class="w-primary">Work 62% · Home 18%</span><span class="w-secondary faint" style="display: flex; gap: 6px; align-items: center">5-hour limits <span class="w-dots"><i class="on"></i><i></i><i></i></span></span></span>';
+        return '<span class="w-lines"><span class="w-primary">Work 62.4% · Home 18.0%</span><span class="w-secondary faint" style="display: flex; gap: 6px; align-items: center">5-hour limits <span class="w-dots"><i class="on"></i><i></i><i></i></span></span></span>';
       }
     },
     {
       name: "Minimal",
       description: "Icon and one number. Used when space runs out.",
-      render: function () { return '<span class="tone-normal" style="display: flex">' + appIcon + '</span><span class="w-primary">62%</span>'; }
+      render: function () { return '<span class="tone-normal" style="display: flex">' + appIcon + '</span><span class="w-primary">62.4%</span>'; }
     }
   ];
 
@@ -2878,17 +3067,17 @@ td .model { font-family: var(--font-mono); font-size: 12px; }
     {
       name: "Normal",
       description: "All values fresh, under thresholds.",
-      render: function () { return ring22(67, "tone-normal") + lines("$142.18 today", "5h 67% · ↺ 1:48"); }
+      render: function () { return ring22(67, "tone-normal") + lines("$142.18 today", "5h 67.4% · ↺ 1:48"); }
     },
     {
       name: "Warning · 80–94%",
       description: "Only the metric past the threshold changes tone.",
-      render: function () { return ring22(87, "tone-warn") + lines("$168.40 today", "5h 87% · ↺ 0:52", { bottomTone: "tone-warn" }); }
+      render: function () { return ring22(87, "tone-warn") + lines("$168.40 today", "5h 87.2% · ↺ 0:52", { bottomTone: "tone-warn" }); }
     },
     {
       name: "Critical · 95%+",
       description: "Red tone; the reset is replaced by when it fills.",
-      render: function () { return ring22(97, "tone-critical") + lines("$181.02 today", "5h 97% · full ~13:48", { bottomTone: "tone-critical" }); }
+      render: function () { return ring22(97, "tone-critical") + lines("$181.02 today", "5h 97.1% · full ~13:48", { bottomTone: "tone-critical" }); }
     },
     {
       name: "Limit reached",
@@ -2898,7 +3087,7 @@ td .model { font-family: var(--font-mono); font-size: 12px; }
     {
       name: "Last known / estimate",
       description: "Check failed or limits off: ≈ prefix, dimmed ring.",
-      render: function () { return ring22(58, "tone-normal", { dim: true }) + lines("$142.18 today", "≈ 5h 58% · ↺ 1:48"); }
+      render: function () { return ring22(58, "tone-normal", { dim: true }) + lines("$142.18 today", "≈ 5h 58.0% · ↺ 1:48"); }
     },
     {
       name: "Stale",
@@ -2918,7 +3107,7 @@ td .model { font-family: var(--font-mono); font-size: 12px; }
     {
       name: "Hover",
       description: "Hover fill only; tooltip after 600 ms.",
-      render: function () { return ring22(67, "tone-normal") + lines("$142.18 today", "5h 67% · ↺ 1:48"); },
+      render: function () { return ring22(67, "tone-normal") + lines("$142.18 today", "5h 67.4% · ↺ 1:48"); },
       hover: true
     }
   ];
@@ -2944,17 +3133,17 @@ td .model { font-family: var(--font-mono); font-size: 12px; }
     {
       name: "Normal",
       description: "Limit, then the reset countdown (h:mm) under 24 h.",
-      render: function () { return ring22(67, "tone-normal") + lines("$142.18 today", "5h 67% · ↺ 1:48"); }
+      render: function () { return ring22(67, "tone-normal") + lines("$142.18 today", "5h 67.4% · ↺ 1:48"); }
     },
     {
       name: "Reset beyond 24 h",
       description: "Weekday and time instead of a countdown.",
-      render: function () { return ring22(41, "tone-normal") + lines("$142.18 today", "Week 41% · ↺ Wed 16:59"); }
+      render: function () { return ring22(41, "tone-normal") + lines("$142.18 today", "Week 41.0% · ↺ Wed 16:59"); }
     },
     {
       name: "Forecast",
       description: "The recent pace fills it before it resets.",
-      render: function () { return ring22(82, "tone-warn") + lines("$168.40 today", "5h 82% · full ~18:40", { bottomTone: "tone-warn" }); }
+      render: function () { return ring22(82, "tone-warn") + lines("$168.40 today", "5h 82.3% · full ~18:40", { bottomTone: "tone-warn" }); }
     },
     {
       name: "Full",
@@ -2964,66 +3153,222 @@ td .model { font-family: var(--font-mono); font-size: 12px; }
     {
       name: "Most pressing ring",
       description: "Weekly is full, 5-hour is empty: the ring shows the weekly one.",
-      render: function () { return ring22(100, "tone-critical") + lines("5h 0% · ↺ 5:00", "Week full · ↺ Wed 16:59", { bottomTone: "tone-critical" }); }
+      render: function () { return ring22(100, "tone-critical") + lines("5h 0.0% · ↺ 5:00", "Week full · ↺ Wed 16:59", { bottomTone: "tone-critical" }); }
     },
     {
       name: "Last known",
       description: "The latest check failed: \"≈ \" prefix, dimmed ring.",
-      render: function () { return ring22(67, "tone-normal", { dim: true }) + lines("≈ $142.18 today", "≈ 5h 67% · ↺ 1:48"); }
+      render: function () { return ring22(67, "tone-normal", { dim: true }) + lines("≈ $142.18 today", "≈ 5h 67.4% · ↺ 1:48"); }
     }
   ];
   renderRows("line-format-list", lineFormats);
 
-  /* ---------- Several accounts ---------- */
-  var mockAccounts = [
-    { nickname: "Work", today: "$412.80", fiveHour: 67, week: 92, weekLine: "Week 92% · ↺ Tue 22:00", fiveLine: "5h 67% · ↺ 1:48" },
-    { nickname: "Home", today: "$96.10", fiveHour: 0, week: 100, weekLine: "Week full · ↺ Wed 16:59", fiveLine: "5h 0% · ↺ 5:00" }
+  /* ---------- Ring states: stop disc and 5h + Week ---------- */
+  var ringSpecimens = [
+    { name: "Normal · 62.4%", note: "Accent arc on a faint track.", render: function (options) { return ring22(62.4, "tone-normal", options); } },
+    { name: "Critical · 94.0%", note: "Critical tone, still a ring.", render: function (options) { return ring22(94, "tone-critical", options); } },
+    { name: "Full · stop", note: "Critical disc, short white bar.", render: function (options) { return ring22(100, "tone-critical", options); } },
+    { name: "5h + Week", note: "Outer weekly 94.0%, inner 5-hour 15.0%.", render: function (options) { return ringDual(15, 94, options); } },
+    { name: "5h + Week · week full", note: "Stop disc only.", render: function (options) { return ringDual(0, 100, options); } }
   ];
+  document.getElementById("ring-specimens").innerHTML = ringSpecimens.map(function (specimen) {
+    var pair = function (theme) {
+      return '<div class="strip ' + theme + '">' + specimen.render() + specimen.render({ zoom: true }) + '</div>';
+    };
+    return '<figure class="ring-specimen">' + pair("light") + pair("dark") +
+      '<figcaption><b>' + specimen.name + '</b>' + specimen.note + '</figcaption></figure>';
+  }).join("");
+
+  var ringStates = [
+    {
+      name: "Full is a stop sign",
+      description: "Next to a normal ring and a 94.0% critical ring.",
+      render: function () {
+        return ring22(62.4, "tone-normal") + ring22(94, "tone-critical") + ring22(100, "tone-critical") +
+          lines("$96.10 today", "Week full · ↺ Wed 16:59", { bottomTone: "tone-critical" });
+      }
+    },
+    {
+      name: "5h + Week",
+      description: "Weekly outside, 5-hour inside, each in its own tone.",
+      render: function () { return ringDual(15, 94) + lines("$412.80 today", "5h 15.0% · Week 94.0%", { bottomTone: "tone-warn" }); }
+    },
+    {
+      name: "5h + Week · week full",
+      description: "The outer ring is full: only the stop disc.",
+      render: function () { return ringDual(0, 100) + lines("$96.10 today", "5h 0.0% · Week full", { bottomTone: "tone-critical" }); }
+    }
+  ];
+  renderRows("ring-state-list", ringStates);
+
+  /* ---------- Several accounts ---------- */
+  var percentDigits = 1;
+  var mockAccounts = [
+    {
+      id: "work", nickname: "Work", today: "$412.80", month: "$3,120", burn: "$12.4/h", tokensToday: "4.2M",
+      tokensMonth: "120M", repliesToday: "1.8K", fiveHour: 15.03, week: 94.02, fiveReset: "1:48", weekReset: "Tue 22:00"
+    },
+    {
+      id: "home", nickname: "Home", today: "$96.10", month: "$1,840", burn: "$3.2/h", tokensToday: "1.1M",
+      tokensMonth: "38M", repliesToday: "420", fiveHour: 0, week: 100, fiveReset: "5:00", weekReset: "Wed 16:59"
+    }
+  ];
+  var automaticLayout = { top: "Automatic", bottom: "Automatic" };
+  var defaultTurnSeconds = 8;
+  var maxSideBySideBlocks = 3;
+
+  /* Estimated decimals never pass the next whole percent, so the value is floored, not rounded */
+  function formatPercent(value) {
+    var scale = Math.pow(10, percentDigits);
+    return (Math.floor(value * scale) / scale).toFixed(percentDigits) + "%";
+  }
+  function limitValue(value) { return value >= fullPercent ? "full" : formatPercent(value); }
+  function limitLine(label, value, reset) { return label + " " + limitValue(value) + " · ↺ " + reset; }
+  function pressingPercent(account) { return Math.max(account.fiveHour, account.week); }
+  function pressingLimitLine(account) {
+    return account.week >= account.fiveHour
+      ? limitLine("Week", account.week, account.weekReset)
+      : limitLine("5h", account.fiveHour, account.fiveReset);
+  }
+
+  var lineTextByChoice = {
+    "Cost today": function (account) { return { text: account.today + " today" }; },
+    "Cost this month": function (account) { return { text: account.month + " this month" }; },
+    "Burn rate": function (account) { return { text: account.burn }; },
+    "Tokens today": function (account) { return { text: account.tokensToday + " tokens today" }; },
+    "Tokens this month": function (account) { return { text: "month " + account.tokensMonth + " tokens" }; },
+    "Replies today": function (account) { return { text: account.repliesToday + " replies today" }; },
+    "5-hour limit": function (account) {
+      return { text: limitLine("5h", account.fiveHour, account.fiveReset), tone: toneFor(account.fiveHour) };
+    },
+    "Weekly limit": function (account) {
+      return { text: limitLine("Week", account.week, account.weekReset), tone: toneFor(account.week) };
+    },
+    "5-hour and weekly limits": function (account) {
+      return {
+        text: "5h " + limitValue(account.fiveHour) + " · Week " + limitValue(account.week),
+        tone: toneFor(pressingPercent(account))
+      };
+    },
+    "Most pressing limit": function (account) {
+      return { text: pressingLimitLine(account), tone: toneFor(pressingPercent(account)) };
+    }
+  };
+
+  function lineFor(choice, account) {
+    var builder = lineTextByChoice[choice];
+    return builder ? builder(account) : null;
+  }
+
+  function lineTone(line, isBottom) {
+    if (!line.tone || line.tone === "tone-normal") { return isBottom ? "faint" : ""; }
+    return line.tone;
+  }
+
+  /* Two lines, or one when a line is set to Nothing (the remaining one becomes the primary line) */
+  function stack(top, bottom) {
+    if (!top) { top = bottom; bottom = null; }
+    if (!top) { return ""; }
+    return lines(top.text, bottom ? bottom.text : null,
+      { topTone: lineTone(top, false), bottomTone: bottom ? lineTone(bottom, true) : "" });
+  }
+
+  function labelledText(account, text) { return '<span class="w-account">' + account.nickname + '</span> ' + text; }
+
+  function blockLines(account, layout, isLabelled) {
+    var top = layout.top === "Automatic"
+      ? { text: account.nickname + " · " + account.today + " today" }
+      : lineFor(layout.top, account);
+    var bottom = lineFor(layout.bottom === "Automatic" ? "Most pressing limit" : layout.bottom, account);
+    if (isLabelled && top && layout.top !== "Automatic") {
+      top = { text: labelledText(account, top.text), tone: top.tone };
+    }
+    return stack(top, bottom);
+  }
+
   var ringPercentByMode = {
     off: function () { return null; },
     "5h": function (account) { return account.fiveHour; },
     week: function (account) { return account.week; },
-    pressing: function (account) { return Math.max(account.fiveHour, account.week); }
+    pressing: pressingPercent
   };
 
   function accountRing(account, ringMode) {
-    var percent = ringPercentByMode[ringMode || "pressing"](account);
+    var mode = ringMode || "pressing";
+    if (mode === "both") { return ringDual(account.fiveHour, account.week); }
+    var percent = ringPercentByMode[mode](account);
     return percent === null ? "" : ring22(percent, toneFor(percent));
   }
 
-  function accountBlock(account, ringMode) {
+  function accountBlock(account, ringMode, layout, isLabelled) {
     return '<span class="w-block">' + accountRing(account, ringMode) +
-      lines(account.nickname + ' · ' + account.today + ' today', account.weekLine, { bottomTone: toneFor(account.week) }) + '</span>';
+      blockLines(account, layout || automaticLayout, isLabelled) + '</span>';
   }
 
-  function mostPressingFirst() {
-    return mockAccounts.slice().sort(function (first, second) { return second.week - first.week; });
+  function mostPressingFirst(accounts) {
+    return accounts.slice().sort(function (first, second) { return pressingPercent(second) - pressingPercent(first); });
   }
 
-  function togetherBlock(ringMode) {
-    var ordered = mostPressingFirst();
-    var labelled = function (account) { return '<span class="w-account">' + account.nickname + '</span> ' + account.weekLine; };
+  function emptyBlock() { return '<span class="w-secondary faint">No accounts shown</span>'; }
+
+  function togetherLine(choice, ordered, position) {
+    var first = ordered[0];
+    var second = ordered[1];
+    var automaticChoice = position === "top" ? "Most pressing limit" : "Second account";
+    var resolved = choice === "Automatic" ? automaticChoice : choice;
+    if (resolved === "Second account") {
+      if (!second) { return null; }
+      var secondLine = lineFor("Most pressing limit", second);
+      return { text: labelledText(second, secondLine.text), tone: secondLine.tone };
+    }
+    var ownLine = lineFor(resolved, first);
+    return ownLine ? { text: labelledText(first, ownLine.text), tone: ownLine.tone } : null;
+  }
+
+  /* Together: one ring (the first, most pressing account) and a labelled line per account */
+  function togetherBlock(ringMode, accounts, layout) {
+    var ordered = accounts || mostPressingFirst(mockAccounts);
+    if (!ordered.length) { return emptyBlock(); }
+    var currentLayout = layout || automaticLayout;
     return '<span class="w-block">' + accountRing(ordered[0], ringMode) +
-      lines(labelled(ordered[0]), labelled(ordered[1]), { topTone: toneFor(ordered[0].week), bottomTone: toneFor(ordered[1].week) }) + '</span>';
+      stack(togetherLine(currentLayout.top, ordered, "top"), togetherLine(currentLayout.bottom, ordered, "bottom")) +
+      '</span>';
   }
 
-  function sideBySideBlocks(ringMode) {
-    return mockAccounts.map(function (account) { return accountBlock(account, ringMode); }).join('<span class="w-divider"></span>');
+  function sideBySideBlocks(ringMode, accounts, layout) {
+    var shown = (accounts || mostPressingFirst(mockAccounts)).slice(0, maxSideBySideBlocks);
+    if (!shown.length) { return emptyBlock(); }
+    return shown.map(function (account) {
+      return accountBlock(account, ringMode, layout, shown.length > 1);
+    }).join('<span class="w-divider"></span>');
   }
 
-  function turnDots(index) {
-    return '<span class="w-dots" aria-hidden="true">' + mockAccounts.map(function (account, dotIndex) {
-      return '<i' + (dotIndex === index ? ' class="on"' : '') + '></i>';
-    }).join("") + '</span>';
+  function turnDots(index, count) {
+    var dots = [];
+    for (var dotIndex = 0; dotIndex < count; dotIndex++) {
+      dots.push('<i' + (dotIndex === index ? ' class="on"' : '') + '></i>');
+    }
+    return '<span class="w-dots" aria-hidden="true">' + dots.join("") + '</span>';
   }
 
-  function turnBlock(index, ringMode) {
-    return '<span class="w-block turn-block" data-turn="' + index + '" data-ring="' + (ringMode || "pressing") + '">' +
-      turnContent(index, ringMode) + '</span>';
+  function defaultTurnContext() {
+    return {
+      accounts: mostPressingFirst(mockAccounts), ringMode: "pressing",
+      layout: automaticLayout, intervalSeconds: defaultTurnSeconds
+    };
   }
 
-  function turnContent(index, ringMode) {
-    return accountBlock(mockAccounts[index], ringMode).replace(/^<span class="w-block">|<\/span>$/g, "") + turnDots(index);
+  function turnContent(index, context) {
+    var account = context.accounts[index % context.accounts.length];
+    return accountRing(account, context.ringMode) + blockLines(account, context.layout, false) +
+      turnDots(index, context.accounts.length);
+  }
+
+  function turnBlock(index, context) {
+    var turnContext = context || defaultTurnContext();
+    if (!turnContext.accounts.length) { return emptyBlock(); }
+    return '<span class="w-block turn-block" data-turn="' + index + '" data-interval="' + turnContext.intervalSeconds + '">' +
+      turnContent(index, turnContext) + '</span>';
   }
 
   var multiAccountModes = [
@@ -3040,23 +3385,34 @@ td .model { font-family: var(--font-mono); font-size: 12px; }
     {
       name: "Take turns",
       description: "One block that switches account every 8 s (watch this row).",
-      render: function () { return turnBlock(0, "pressing"); }
+      render: function () { return turnBlock(0); }
     }
   ];
   renderRows("multi-account-list", multiAccountModes);
 
-  function advanceTurns() {
+  /* Each Take turns block keeps its own interval; one 1 s ticker drives all of them */
+  function advanceTurn(block) {
+    var context = block.closest("#settings-preview") ? settingsContext() : defaultTurnContext();
+    if (context.accounts.length < 2) { return; }
+    var next = (Number(block.dataset.turn) + 1) % context.accounts.length;
+    block.dataset.turn = String(next);
+    block.innerHTML = turnContent(next, context);
+    var textLines = block.querySelector(".w-lines");
+    if (textLines) { textLines.classList.add("m-turn", "m-transform"); }
+  }
+  function tickTurns() {
     document.querySelectorAll(".turn-block").forEach(function (block) {
-      var next = (Number(block.dataset.turn) + 1) % mockAccounts.length;
-      block.dataset.turn = String(next);
-      block.innerHTML = turnContent(next, block.dataset.ring);
-      var textLines = block.querySelector(".w-lines");
-      if (textLines) { textLines.classList.add("m-turn", "m-transform"); }
+      var elapsed = Number(block.dataset.elapsed || 0) + 1;
+      if (elapsed >= Number(block.dataset.interval)) {
+        advanceTurn(block);
+        elapsed = 0;
+      }
+      block.dataset.elapsed = String(elapsed);
     });
   }
   var turnTimer = null;
-  var turnIntervalMs = 8000;
-  function startTurns() { if (!turnTimer) { turnTimer = setInterval(advanceTurns, turnIntervalMs); } }
+  var turnTickMs = 1000;
+  function startTurns() { if (!turnTimer) { turnTimer = setInterval(tickTurns, turnTickMs); } }
   function stopTurns() { clearInterval(turnTimer); turnTimer = null; }
   document.addEventListener("visibilitychange", function () {
     if (document.hidden) { stopTurns(); } else { startTurns(); }
@@ -3074,7 +3430,7 @@ td .model { font-family: var(--font-mono); font-size: 12px; }
       name: "ไทย · side by side",
       description: "Nicknames stay as typed; numbers keep Western digits.",
       render: function () {
-        return '<span class="w-block">' + ring22(92, "tone-warn") + lines("Work · ฿14,920 วันนี้", "สัปดาห์ 92% · ↺ อ. 22:00", { bottomTone: "tone-warn", lang: "th" }) + '</span>' +
+        return '<span class="w-block">' + ring22(94, "tone-warn") + lines("Work · ฿14,920 วันนี้", "สัปดาห์ 94.0% · ↺ อ. 22:00", { bottomTone: "tone-warn", lang: "th" }) + '</span>' +
           '<span class="w-divider"></span><span class="w-block">' + ring22(100, "tone-critical") +
           lines("Home · ฿3,474 วันนี้", "สัปดาห์ เต็ม · ↺ พ. 16:59", { bottomTone: "tone-critical", lang: "th" }) + '</span>';
       }
@@ -3088,12 +3444,42 @@ td .model { font-family: var(--font-mono); font-size: 12px; }
     var chosen = document.querySelector("#" + groupId + ' button[aria-pressed="true"]');
     return chosen ? chosen.dataset[key] : fallback;
   }
+  function settingsLayout() {
+    var valueOf = function (line) {
+      var value = document.querySelector('[data-line="' + line + '"] .dropdown-value');
+      return value ? value.textContent : "Automatic";
+    };
+    return { top: valueOf("top"), bottom: valueOf("bottom") };
+  }
+  function mockAccountById(id) {
+    return mockAccounts.filter(function (account) { return account.id === id; })[0];
+  }
+  function settingsAccounts() {
+    var rows = Array.prototype.slice.call(document.querySelectorAll(".account-row"));
+    var accounts = rows.filter(function (row) {
+      return row.querySelector("[data-show-account]").getAttribute("aria-checked") === "true";
+    }).map(function (row) {
+      var nickname = row.querySelector("[data-nickname]").value.trim();
+      var email = row.querySelector(".setting-title").textContent;
+      return Object.assign({}, mockAccountById(row.dataset.account), { nickname: nickname || email });
+    });
+    var isPressingFirst = selectedData("settings-order", "order", "pressing") === "pressing";
+    return isPressingFirst ? mostPressingFirst(accounts) : accounts;
+  }
+  function settingsContext() {
+    return {
+      accounts: settingsAccounts(),
+      ringMode: selectedData("settings-ring", "ring", "pressing"),
+      layout: settingsLayout(),
+      intervalSeconds: Number(selectedData("settings-turn-interval", "seconds", String(defaultTurnSeconds)))
+    };
+  }
   function renderSettingsPreview() {
+    var context = settingsContext();
     var mode = selectedData("settings-mode", "mode", "side");
-    var ringMode = selectedData("settings-ring", "ring", "pressing");
-    var inner = mode === "together" ? togetherBlock(ringMode)
-      : mode === "turns" ? turnBlock(0, ringMode)
-      : sideBySideBlocks(ringMode);
+    var inner = mode === "together" ? togetherBlock(context.ringMode, context.accounts, context.layout)
+      : mode === "turns" ? turnBlock(0, context)
+      : sideBySideBlocks(context.ringMode, context.accounts, context.layout);
     settingsPreview.innerHTML = strip("dark", inner);
   }
   renderSettingsPreview();
@@ -3104,6 +3490,26 @@ td .model { font-family: var(--font-mono); font-size: 12px; }
   }
   syncDisplayChoice();
 
+  function syncTurnsChoice() {
+    var isTurns = selectedData("settings-mode", "mode", "side") === "turns";
+    document.querySelectorAll("[data-turns-choice]").forEach(function (row) {
+      row.hidden = !isTurns;
+      if (isTurns) { row.querySelectorAll(".segmented").forEach(snapSegmentIndicator); }
+    });
+  }
+  syncTurnsChoice();
+
+  function onModeChange() {
+    syncTurnsChoice();
+    document.querySelectorAll("[data-line]").forEach(renderDropdownList);
+    renderSettingsPreview();
+  }
+  function onPercentChange() {
+    percentDigits = Number(selectedData("settings-percent", "digits", "1"));
+    document.querySelectorAll("[data-line]").forEach(renderDropdownList);
+    renderSettingsPreview();
+  }
+
   /* ---------- Full taskbar for anatomy ---------- */
   function fullTaskbar(theme) {
     var appColors = ["#3a7bd5", "#e3a51c", "#4caf7a", "#8a5cd0", "#d9534f"];
@@ -3112,7 +3518,7 @@ td .model { font-family: var(--font-mono); font-size: 12px; }
     }).join("");
     return '<span class="spacer"></span><span class="apps">' + apps + '</span><span class="spacer"></span>' +
       '<span class="widget outline-demo" title="Hakari widget">' + ring22(67, "tone-normal") +
-      lines("$142.18 today", "5h 67% · ↺ 1:48") + '</span>' +
+      lines("$142.18 today", "5h 67.4% · ↺ 1:48") + '</span>' +
       '<span class="tray"><span class="tray-item"><svg><use href="#i-chevron-up"/></svg></span>' +
       '<span class="tray-item" style="font-size: 12px">ไทย</span>' +
       '<span class="tray-icons"><svg><use href="#i-wifi"/></svg><svg><use href="#i-volume"/></svg><svg><use href="#i-battery"/></svg></span>' +
@@ -3152,21 +3558,37 @@ td .model { font-family: var(--font-mono); font-size: 12px; }
   function placeAllSegmentIndicators() {
     document.querySelectorAll(".segmented.has-indicator").forEach(placeSegmentIndicator);
   }
+  /* Places the indicator without sliding, e.g. when a hidden row is shown */
+  function snapSegmentIndicator(group) {
+    var indicator = group.querySelector(".seg-indicator");
+    if (!indicator) { return; }
+    indicator.style.transition = "none";
+    placeSegmentIndicator(group);
+    void indicator.offsetWidth;
+    indicator.style.transition = "";
+  }
+  function chooseSegment(groupId, key, value) {
+    var group = document.getElementById(groupId);
+    group.querySelectorAll("button").forEach(function (button) {
+      button.setAttribute("aria-pressed", String(button.dataset[key] === value));
+    });
+    placeSegmentIndicator(group);
+  }
   var segmentChangeHandlers = {
-    "settings-mode": renderSettingsPreview,
+    "settings-mode": onModeChange,
     "settings-ring": renderSettingsPreview,
+    "settings-percent": onPercentChange,
+    "settings-turn-interval": renderSettingsPreview,
+    "settings-order": renderSettingsPreview,
     "settings-displays": syncDisplayChoice
   };
   document.querySelectorAll(".segmented").forEach(function (group) {
     var indicator = document.createElement("span");
     indicator.className = "seg-indicator";
     indicator.setAttribute("aria-hidden", "true");
-    indicator.style.transition = "none";
     group.insertBefore(indicator, group.firstChild);
     group.classList.add("has-indicator");
-    placeSegmentIndicator(group);
-    void indicator.offsetWidth;
-    indicator.style.transition = "";
+    snapSegmentIndicator(group);
     if (group.classList.contains("static")) { return; }
     group.addEventListener("click", function (event) {
       var target = event.target.closest("button");
@@ -3183,14 +3605,29 @@ td .model { font-family: var(--font-mono); font-size: 12px; }
   if (document.fonts && document.fonts.ready) { document.fonts.ready.then(placeAllSegmentIndicators); }
 
   /* ---------- Dropdowns ---------- */
-  var lineChoices = ["Automatic", "Cost today", "Cost this month", "Burn rate", "5-hour limit", "Weekly limit",
-    "Most pressing limit", "Second account", "Nothing"];
+  var lineChoices = ["Automatic", "Cost today", "Cost this month", "Burn rate", "Tokens today", "Tokens this month",
+    "Replies today", "5-hour limit", "Weekly limit", "5-hour and weekly limits", "Most pressing limit",
+    "Second account", "Nothing"];
+  var togetherOnlyChoice = "Second account";
+  function dropdownOptions(dropdown) {
+    if (dropdown.dataset.options) { return dropdown.dataset.options.split("|"); }
+    var isTogether = selectedData("settings-mode", "mode", "side") === "together";
+    return lineChoices.filter(function (choice) { return isTogether || choice !== togetherOnlyChoice; });
+  }
+  function choiceHint(option) {
+    var line = lineFor(option, mockAccounts[0]);
+    return line ? '<small class="dropdown-hint">' + line.text + '</small>' : "";
+  }
   function renderDropdownList(dropdown) {
-    var options = dropdown.dataset.options ? dropdown.dataset.options.split("|") : lineChoices;
-    var chosen = dropdown.querySelector(".dropdown-value").textContent;
+    var options = dropdownOptions(dropdown);
+    var valueElement = dropdown.querySelector(".dropdown-value");
+    if (options.indexOf(valueElement.textContent) < 0) { valueElement.textContent = options[0]; }
+    var chosen = valueElement.textContent;
+    var showHints = !dropdown.dataset.options;
     dropdown.querySelector(".dropdown-list").innerHTML = options.map(function (option) {
-      return '<button type="button" class="dropdown-item" role="option" aria-selected="' + String(option === chosen) + '">' +
-        '<svg><use href="#i-check"/></svg><span>' + option + '</span></button>';
+      return '<button type="button" class="dropdown-item" role="option" data-value="' + option + '" aria-selected="' +
+        String(option === chosen) + '"><svg><use href="#i-check"/></svg><span>' + option +
+        (showHints ? choiceHint(option) : "") + '</span></button>';
     }).join("");
   }
   function setDropdownOpen(dropdown, isOpen) {
@@ -3205,14 +3642,62 @@ td .model { font-family: var(--font-mono); font-size: 12px; }
     dropdown.querySelector(".dropdown-list").addEventListener("click", function (event) {
       var item = event.target.closest(".dropdown-item");
       if (!item) { return; }
-      dropdown.querySelector(".dropdown-value").textContent = item.textContent;
+      dropdown.querySelector(".dropdown-value").textContent = item.dataset.value;
       renderDropdownList(dropdown);
       setDropdownOpen(dropdown, false);
+      if (dropdown.dataset.line) { renderSettingsPreview(); }
     });
   });
   document.querySelectorAll(".toggle").forEach(function (toggle) {
     toggle.addEventListener("click", function () {
       toggle.setAttribute("aria-checked", String(toggle.getAttribute("aria-checked") !== "true"));
+    });
+  });
+
+  /* ---------- Settings: account rows (order, nickname, show / hide) ---------- */
+  function syncAccountMoves() {
+    var rows = document.querySelectorAll(".account-row");
+    rows.forEach(function (row, index) {
+      row.querySelector('[data-move="up"]').disabled = index === 0;
+      row.querySelector('[data-move="down"]').disabled = index === rows.length - 1;
+    });
+  }
+  function afterAccountMove(row, direction) {
+    chooseSegment("settings-order", "order", "mine");
+    syncAccountMoves();
+    renderSettingsPreview();
+    var sameButton = row.querySelector('[data-move="' + direction + '"]');
+    var otherButton = row.querySelector('[data-move="' + (direction === "up" ? "down" : "up") + '"]');
+    (sameButton.disabled ? otherButton : sameButton).focus();
+  }
+  document.querySelectorAll(".account-row").forEach(function (row) {
+    row.querySelector('[data-move="up"]').addEventListener("click", function () {
+      var previous = row.previousElementSibling;
+      if (previous && previous.classList.contains("account-row")) { row.parentNode.insertBefore(row, previous); }
+      afterAccountMove(row, "up");
+    });
+    row.querySelector('[data-move="down"]').addEventListener("click", function () {
+      var next = row.nextElementSibling;
+      if (next && next.classList.contains("account-row")) { row.parentNode.insertBefore(next, row); }
+      afterAccountMove(row, "down");
+    });
+    var showToggle = row.querySelector("[data-show-account]");
+    showToggle.addEventListener("click", function () {
+      row.classList.toggle("is-off", showToggle.getAttribute("aria-checked") !== "true");
+      renderSettingsPreview();
+    });
+    row.querySelector("[data-nickname]").addEventListener("input", renderSettingsPreview);
+  });
+  syncAccountMoves();
+
+  /* ---------- Flyout account cards fold ---------- */
+  document.querySelectorAll("[data-fold]").forEach(function (card) {
+    var head = card.querySelector(".fold-head");
+    var summary = card.querySelector(".fold-summary");
+    head.addEventListener("click", function () {
+      var isFolded = card.classList.toggle("is-folded");
+      head.setAttribute("aria-expanded", String(!isFolded));
+      summary.setAttribute("aria-hidden", String(!isFolded));
     });
   });
 
@@ -3331,18 +3816,62 @@ td .model { font-family: var(--font-mono); font-size: 12px; }
   document.getElementById("demo-spark").setAttribute("points", sparkPoints(hourlyBurn, 54, 22));
   var toneSteps = [["62%", "var(--accent)"], ["87%", "var(--warn)"], ["97%", "var(--critical)"]];
   var toneIndex = 0;
-  function tickValue(element, text) {
-    element.textContent = text;
-    element.classList.remove("m-tick");
-    void element.offsetWidth;
-    element.classList.add("m-tick", "m-transform");
+
+  /* Odometer: only the changed middle of the text rolls; the unchanged end slides to its new x */
+  var rollCleanupMs = 400;
+  function escapeText(text) {
+    return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   }
+  function splitChange(oldText, newText) {
+    var shorter = Math.min(oldText.length, newText.length);
+    var start = 0;
+    while (start < shorter && oldText[start] === newText[start]) { start++; }
+    var end = 0;
+    while (end < shorter - start && oldText[oldText.length - 1 - end] === newText[newText.length - 1 - end]) { end++; }
+    return {
+      keep: newText.slice(0, start),
+      oldPart: oldText.slice(start, oldText.length - end),
+      newPart: newText.slice(start, newText.length - end),
+      tail: newText.slice(newText.length - end)
+    };
+  }
+  function isMovementAllowed() {
+    var prefersLess = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    return root.getAttribute("data-motion") === "full" && !prefersLess;
+  }
+  function rollValue(element, newText) {
+    var oldText = element.dataset.value !== undefined ? element.dataset.value : element.textContent;
+    element.dataset.value = newText;
+    if (oldText === newText) { return; }
+    if (root.getAttribute("data-motion") === "off") { element.textContent = newText; return; }
+    var parts = splitChange(oldText, newText);
+    var keep = '<span class="odo-keep">' + escapeText(parts.keep) + '</span>';
+    var tail = '<span class="odo-tail">' + escapeText(parts.tail) + '</span>';
+    element.innerHTML = keep + '<span class="odo-slot">' + escapeText(parts.oldPart) + '</span>' + tail;
+    var oldTailLeft = element.querySelector(".odo-tail").getBoundingClientRect().left;
+    element.innerHTML = keep + '<span class="odo-slot"><span class="odo-old" aria-hidden="true">' +
+      escapeText(parts.oldPart) + '</span><span class="odo-new">' + escapeText(parts.newPart) + '</span></span>' + tail;
+    var tailElement = element.querySelector(".odo-tail");
+    var shift = oldTailLeft - tailElement.getBoundingClientRect().left;
+    if (shift && isMovementAllowed()) {
+      tailElement.style.transform = "translateX(" + shift + "px)";
+      void tailElement.offsetWidth;
+      tailElement.classList.add("is-sliding");
+      tailElement.style.transform = "";
+    }
+    var oldElement = element.querySelector(".odo-old");
+    var removeOld = function () { if (oldElement.parentNode) { oldElement.remove(); } };
+    oldElement.addEventListener("animationend", removeOld);
+    setTimeout(removeOld, rollCleanupMs);
+  }
+  var odometerSamples = ["$412.80", "$412.95", "$413.10", "$99.70"];
+  var odometerIndex = 0;
   document.querySelectorAll("#motion-demo .motion-card").forEach(function (card) {
     card.addEventListener("click", function () {
       var demo = card.dataset.demo;
       if (demo === "tick") {
-        var amount = (142 + Math.random() * 6).toFixed(2);
-        tickValue(document.getElementById("demo-tick"), "$" + amount);
+        odometerIndex = (odometerIndex + 1) % odometerSamples.length;
+        rollValue(document.getElementById("demo-tick"), odometerSamples[odometerIndex]);
       } else if (demo === "tone") {
         toneIndex = (toneIndex + 1) % toneSteps.length;
         var tone = document.getElementById("demo-tone");
@@ -3361,10 +3890,11 @@ td .model { font-family: var(--font-mono); font-size: 12px; }
 
   /* Live widget: new value every 2.5 s, paused while the tab is hidden */
   var liveSteps = [
-    { percent: 62, cost: 142.18, tone: "tone-normal", detail: "5h 62% · ↺ 1:48" },
-    { percent: 71, cost: 151.02, tone: "tone-normal", detail: "5h 71% · ↺ 1:41" },
-    { percent: 84, cost: 163.47, tone: "tone-warn", detail: "5h 84% · full ~14:58" },
-    { percent: 91, cost: 172.90, tone: "tone-warn", detail: "5h 91% · full ~14:20" },
+    { percent: 62.4, cost: 142.18, tone: "tone-normal", detail: "5h 62.4% · ↺ 1:48" },
+    { percent: 62.9, cost: 142.95, tone: "tone-normal", detail: "5h 62.9% · ↺ 1:47" },
+    { percent: 71.2, cost: 151.02, tone: "tone-normal", detail: "5h 71.2% · ↺ 1:41" },
+    { percent: 84.6, cost: 163.47, tone: "tone-warn", detail: "5h 84.6% · full ~14:58" },
+    { percent: 91.3, cost: 172.90, tone: "tone-warn", detail: "5h 91.3% · full ~14:20" },
     { percent: 100, cost: 181.02, tone: "tone-critical", detail: "5h full · ↺ 1:15" }
   ];
   var liveIndex = 0;
@@ -3380,23 +3910,28 @@ td .model { font-family: var(--font-mono); font-size: 12px; }
     liveIndex = (liveIndex + 1) % liveSteps.length;
     var step = liveSteps[liveIndex];
     liveContainer.querySelectorAll(".widget").forEach(function (widget) {
-      var arc = widget.querySelector(".w-ring22 circle:last-child");
       var ringElement = widget.querySelector(".w-ring22");
-      var length = parseFloat(arc.style.getPropertyValue("--ring-length"));
-      arc.classList.remove("ring-arc");
-      arc.style.strokeDashoffset = String(length - (Math.min(step.percent, 100) / 100) * length);
-      ringElement.classList.remove(previous.tone);
-      ringElement.classList.add(step.tone);
+      if (step.percent >= fullPercent || previous.percent >= fullPercent) {
+        ringElement.outerHTML = ring22(step.percent, step.tone);
+        ringElement = widget.querySelector(".w-ring22");
+      } else {
+        var arc = ringElement.querySelector("circle:last-child");
+        var length = parseFloat(arc.style.getPropertyValue("--ring-length"));
+        arc.classList.remove("ring-arc");
+        arc.style.strokeDashoffset = String(length - (step.percent / fullPercent) * length);
+        ringElement.classList.remove(previous.tone);
+        ringElement.classList.add(step.tone);
+      }
       if (step.tone === "tone-critical") {
         ringElement.classList.remove("m-pulse");
         void ringElement.getBoundingClientRect();
         ringElement.classList.add("m-pulse", "m-transform");
       }
-      tickValue(widget.querySelector(".live-cost"), "$" + step.cost.toFixed(2));
+      rollValue(widget.querySelector(".live-cost"), "$" + step.cost.toFixed(2));
       var detail = widget.querySelector(".live-detail");
       detail.classList.remove("tone-warn", "tone-critical");
       if (step.tone !== "tone-normal") { detail.classList.add(step.tone); }
-      tickValue(detail, step.detail);
+      rollValue(detail, step.detail);
     });
   }
   var liveTimer = null;
@@ -3531,3 +4066,4 @@ td .model { font-family: var(--font-mono); font-size: 12px; }
   applyMotion(savedMotion);
 })();
 </script>
+</html>
