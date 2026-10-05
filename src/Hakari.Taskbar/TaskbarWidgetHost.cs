@@ -17,6 +17,7 @@ public sealed class TaskbarWidgetHost : IDisposable
     private const string TaskbarCreatedMessageName = "TaskbarCreated";
     private const uint ContentChangedMessage = WindowMessages.Application + 1;
     private const uint LayoutChangedMessage = WindowMessages.Application + 2;
+    private const uint ActionPostedMessage = WindowMessages.Application + 3;
     private const uint PlacementTimerInterval = 1000;
 
     /// <summary>The taskbar repaints after a theme change, so its color is checked again.</summary>
@@ -37,6 +38,7 @@ public sealed class TaskbarWidgetHost : IDisposable
     private readonly uint taskbarCreatedMessage;
     private readonly object pendingLock = new();
     private readonly IntPtr hostHandle;
+    private readonly Queue<Action> pendingActions = new();
 
     private WidgetContent content;
     private WidgetContent? pendingContent;
@@ -110,6 +112,17 @@ public sealed class TaskbarWidgetHost : IDisposable
         }
 
         User32.PostMessage(hostHandle, ContentChangedMessage, IntPtr.Zero, IntPtr.Zero);
+    }
+
+    /// <summary>Thread-safe: runs <paramref name="action"/> on the widget thread.</summary>
+    public void PostAction(Action action)
+    {
+        lock (pendingLock)
+        {
+            pendingActions.Enqueue(action);
+        }
+
+        User32.PostMessage(hostHandle, ActionPostedMessage, IntPtr.Zero, IntPtr.Zero);
     }
 
     public void Dispose()
@@ -263,6 +276,22 @@ public sealed class TaskbarWidgetHost : IDisposable
         }
     }
 
+    private void RunPendingActions()
+    {
+        while (TakePendingAction() is { } action)
+        {
+            action();
+        }
+    }
+
+    private Action? TakePendingAction()
+    {
+        lock (pendingLock)
+        {
+            return pendingActions.TryDequeue(out var action) ? action : null;
+        }
+    }
+
     private void ApplyPendingContent()
     {
         lock (pendingLock)
@@ -362,6 +391,9 @@ public sealed class TaskbarWidgetHost : IDisposable
         {
             case ContentChangedMessage:
                 ApplyPendingContent();
+                return IntPtr.Zero;
+            case ActionPostedMessage:
+                RunPendingActions();
                 return IntPtr.Zero;
             case WindowMessages.Timer when wordParameter == AnimationTimerId:
                 DrawAnimationFrames();

@@ -12,6 +12,8 @@ public sealed class SettingsStore(string path)
 {
     public const string FileName = "settings.json";
     private const string TemporarySuffix = ".tmp";
+    private const int ReadAttempts = 4;
+    private static readonly TimeSpan ReadRetryDelay = TimeSpan.FromMilliseconds(25);
 
     private static readonly JsonSerializerOptions SerializerOptions = new()
     {
@@ -34,13 +36,31 @@ public sealed class SettingsStore(string path)
                 return new HakariSettings();
             }
 
-            var json = File.ReadAllText(Path);
-            return JsonSerializer.Deserialize<HakariSettings>(json, SerializerOptions)
+            return JsonSerializer.Deserialize<HakariSettings>(ReadShared(), SerializerOptions)
                 ?? new HakariSettings();
         }
         catch (Exception exception) when (exception is IOException or JsonException)
         {
             return new HakariSettings();
+        }
+    }
+
+    /// <summary>
+    /// Two processes share this file, so a read can land in the middle of the other one's
+    /// replace; it is tried again briefly rather than falling back to defaults.
+    /// </summary>
+    private string ReadShared()
+    {
+        for (var attempt = 1; ; attempt++)
+        {
+            try
+            {
+                return File.ReadAllText(Path);
+            }
+            catch (IOException) when (attempt < ReadAttempts)
+            {
+                Thread.Sleep(ReadRetryDelay);
+            }
         }
     }
 

@@ -1,4 +1,5 @@
 using Hakari.Core.Settings;
+using Hakari.Surfaces.Motion;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -6,7 +7,6 @@ using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Animation;
 using Windows.Graphics;
-using Windows.UI.ViewManagement;
 
 namespace Hakari.Surfaces.Flyout;
 
@@ -26,8 +26,8 @@ public sealed partial class FlyoutWindow : Window
     /// </summary>
     private static readonly TimeSpan ReopenGuard = TimeSpan.FromMilliseconds(400);
 
-    private static readonly TimeSpan FullEntrance = TimeSpan.FromMilliseconds(320);
-    private static readonly TimeSpan ReducedEntrance = TimeSpan.FromMilliseconds(150);
+    private static readonly TimeSpan FullEntrance = SurfaceMotion.Entrance;
+    private static readonly TimeSpan ReducedEntrance = SurfaceMotion.ReducedFade;
     private static readonly TimeSpan MeterFill = TimeSpan.FromMilliseconds(480);
 
     private DateTimeOffset hiddenAt = DateTimeOffset.MinValue;
@@ -45,6 +45,8 @@ public sealed partial class FlyoutWindow : Window
     }
 
     public event EventHandler? Hidden;
+
+    public event EventHandler? SettingsRequested;
 
     public bool IsShowing { get; private set; }
 
@@ -195,7 +197,7 @@ public sealed partial class FlyoutWindow : Window
 
     private void PlayEntrance()
     {
-        var motion = MotionChoice();
+        var motion = SurfaceMotion.Current();
         if (motion == AnimationSetting.Off)
         {
             Root.Opacity = 1;
@@ -249,32 +251,8 @@ public sealed partial class FlyoutWindow : Window
         string property,
         double from,
         double to,
-        TimeSpan duration)
-    {
-        var animation = new DoubleAnimation
-        {
-            From = from,
-            To = to,
-            Duration = duration,
-            EasingFunction = new ExponentialEase { EasingMode = EasingMode.EaseOut, Exponent = 6 },
-            EnableDependentAnimation = true,
-        };
-        Storyboard.SetTarget(animation, target);
-        Storyboard.SetTargetProperty(animation, property);
-        return animation;
-    }
-
-    private static AnimationSetting MotionChoice()
-    {
-        var setting = SettingsStore.Default.Load().Animation;
-        if (setting != AnimationSetting.FollowWindows)
-        {
-            return setting;
-        }
-
-        var animationsEnabled = new UISettings().AnimationsEnabled;
-        return animationsEnabled ? AnimationSetting.Full : AnimationSetting.Reduced;
-    }
+        TimeSpan duration) =>
+        SurfaceMotion.Animate(target, property, from, to, duration);
 
     private void OnActivated(object sender, WindowActivatedEventArgs args)
     {
@@ -296,14 +274,7 @@ public sealed partial class FlyoutWindow : Window
 
     private void OnSettingsClicked(object sender, RoutedEventArgs args)
     {
-        var settings = SettingsStore.Default;
-        if (!File.Exists(settings.Path))
-        {
-            settings.Save(settings.Load());
-        }
-
         HideFlyout();
-        System.Diagnostics.Process.Start(
-            new System.Diagnostics.ProcessStartInfo(settings.Path) { UseShellExecute = true });
+        SettingsRequested?.Invoke(this, EventArgs.Empty);
     }
 }

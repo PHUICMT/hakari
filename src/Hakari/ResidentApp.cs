@@ -1,6 +1,8 @@
 using Hakari.Core.Interprocess;
 using Hakari.Core.Settings;
+using Hakari.Core.Startup;
 using Hakari.Feed;
+using Hakari.Settings;
 using Hakari.Surfaces;
 using Hakari.Taskbar;
 using Hakari.Taskbar.Motion;
@@ -22,11 +24,14 @@ internal sealed class ResidentApp : IDisposable
     private readonly UsageFeed feed;
     private readonly TrayIcon trayIcon;
     private readonly ResidentMenu menu;
+    private readonly SettingsWatcher settingsWatcher;
+    private HakariSettings appliedSettings;
 
     public ResidentApp(SettingsStore settingsStore)
     {
         this.settingsStore = settingsStore;
         var settings = settingsStore.Load();
+        appliedSettings = settings;
 
         var hostOptions = TaskbarWidgetHostOptions.Default with
         {
@@ -35,8 +40,12 @@ internal sealed class ResidentApp : IDisposable
         };
         widgets = new TaskbarWidgetHost(hostOptions, WidgetText.Loading);
         feed = new UsageFeed(settingsStore);
-        menu = new ResidentMenu(settingsStore, Apply);
+        menu = new ResidentMenu(settingsStore, Apply, OpenSettings);
         trayIcon = new TrayIcon(TrayTooltip, menu.Build);
+        settingsWatcher = new SettingsWatcher(settingsStore);
+        settingsWatcher.Changed += (_, _) =>
+            widgets.PostAction(() => Apply(settingsStore.Load()));
+        RecordLocation();
 
         menu.QuitRequested += (_, _) => MessageLoop.Quit();
         widgets.RightClicked += (_, _) => trayIcon.ShowMenu();
@@ -54,6 +63,21 @@ internal sealed class ResidentApp : IDisposable
         ForegroundPermission.GrantForNextWindow();
         var command = new SurfaceCommand(SurfaceKind.Flyout, anchorX, anchorY);
         Task.Run(() => SurfacesLauncher.Show(command));
+    }
+
+    private static void OpenSettings()
+    {
+        ForegroundPermission.GrantForNextWindow();
+        var command = new SurfaceCommand(SurfaceKind.Settings, 0, 0);
+        Task.Run(() => SurfacesLauncher.Show(command));
+    }
+
+    private static void RecordLocation()
+    {
+        if (Environment.ProcessPath is { } executablePath)
+        {
+            ResidentLocation.Record(executablePath);
+        }
     }
 
     private void OpenFlyoutAtWidget()
@@ -82,6 +106,7 @@ internal sealed class ResidentApp : IDisposable
 
     public void Dispose()
     {
+        settingsWatcher.Dispose();
         feed.Dispose();
         trayIcon.Dispose();
         widgets.Dispose();
@@ -95,11 +120,16 @@ internal sealed class ResidentApp : IDisposable
         _ => null,
     };
 
-    /// <summary>Runs on the UI thread after a menu change.</summary>
+    /// <summary>Runs on the UI thread after a menu change or a save in Settings.</summary>
     private void Apply(HakariSettings settings)
     {
         widgets.SetMotion(ToMotion(settings.Animation));
         widgets.SetShowOnSecondaryTaskbars(settings.ShowOnSecondaryTaskbars);
-        feed.ReloadSettings();
+        if (!settings.FeedsSameDataAs(appliedSettings))
+        {
+            feed.ReloadSettings();
+        }
+
+        appliedSettings = settings;
     }
 }

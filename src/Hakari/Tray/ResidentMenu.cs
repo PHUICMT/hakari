@@ -1,12 +1,14 @@
-using System.Diagnostics;
 using Hakari.Core.Settings;
-using Hakari.Startup;
+using Hakari.Core.Startup;
 using Hakari.Taskbar.Tray;
 
 namespace Hakari.Tray;
 
 /// <summary>The menu shared by the tray icon and the widget's right click.</summary>
-internal sealed class ResidentMenu(SettingsStore settingsStore, Action<HakariSettings> apply)
+internal sealed class ResidentMenu(
+    SettingsStore settingsStore,
+    Action<HakariSettings> apply,
+    Action openSettings)
 {
     private static readonly (AnimationSetting Setting, string Label)[] AnimationChoices =
     [
@@ -16,6 +18,8 @@ internal sealed class ResidentMenu(SettingsStore settingsStore, Action<HakariSet
         (AnimationSetting.Off, "Animations: off"),
     ];
 
+    private static string ExecutablePath => Environment.ProcessPath ?? string.Empty;
+
     public event EventHandler? QuitRequested;
 
     public IReadOnlyList<TrayMenuItem> Build()
@@ -23,6 +27,7 @@ internal sealed class ResidentMenu(SettingsStore settingsStore, Action<HakariSet
         var settings = settingsStore.Load();
         var items = new List<TrayMenuItem>
         {
+            new("Settings…", openSettings),
             new("Pause updates", () => Change(current => current with
             {
                 Paused = !current.Paused,
@@ -40,11 +45,11 @@ internal sealed class ResidentMenu(SettingsStore settingsStore, Action<HakariSet
         {
             ShowOnSecondaryTaskbars = !current.ShowOnSecondaryTaskbars,
         }), settings.ShowOnSecondaryTaskbars));
+        var startsWithWindows = StartupRegistration.IsRegistered(ExecutablePath);
         items.Add(new(
             "Start with Windows",
-            StartupRegistration.Toggle,
-            StartupRegistration.IsRegistered()));
-        items.Add(new("Open settings file", OpenSettingsFile));
+            () => StartupRegistration.Set(ExecutablePath, !startsWithWindows),
+            startsWithWindows));
         items.Add(TrayMenuItem.Separator);
         items.Add(new("Quit Hakari", () => QuitRequested?.Invoke(this, EventArgs.Empty)));
         return items;
@@ -52,14 +57,4 @@ internal sealed class ResidentMenu(SettingsStore settingsStore, Action<HakariSet
 
     private void Change(Func<HakariSettings, HakariSettings> change) =>
         apply(settingsStore.Update(change));
-
-    private void OpenSettingsFile()
-    {
-        if (!File.Exists(settingsStore.Path))
-        {
-            settingsStore.Save(settingsStore.Load());
-        }
-
-        Process.Start(new ProcessStartInfo(settingsStore.Path) { UseShellExecute = true });
-    }
 }

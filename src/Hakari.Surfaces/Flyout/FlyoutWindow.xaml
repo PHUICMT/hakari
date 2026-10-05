@@ -5,7 +5,8 @@
     xmlns:local="using:Hakari.Surfaces.Flyout"
     Title="Hakari">
 
-    <Grid x:Name="Root" Background="{ThemeResource HakariSurfaceBrush}" Opacity="0">
+    <Grid x:Name="Root" Background="{ThemeResource HakariSurfaceBrush}" Opacity="0"
+        KeyboardAcceleratorPlacementMode="Hidden">
         <Grid.RenderTransform>
             <TranslateTransform x:Name="RootOffset" Y="0" />
         </Grid.RenderTransform>

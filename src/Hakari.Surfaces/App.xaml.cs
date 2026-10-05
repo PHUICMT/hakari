@@ -1,5 +1,6 @@
 using Hakari.Core.Interprocess;
 using Hakari.Surfaces.Flyout;
+using Hakari.Surfaces.Settings;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 
@@ -17,6 +18,7 @@ public partial class App : Application
     private DispatcherQueue? dispatcher;
     private DispatcherQueueTimer? idleExitTimer;
     private FlyoutWindow? flyout;
+    private SettingsWindow? settings;
 
     public App() => InitializeComponent();
 
@@ -38,11 +40,18 @@ public partial class App : Application
 
     private static SurfaceCommand DefaultCommand() => new(SurfaceKind.Flyout, 0, 0);
 
-    /// <summary>Only the flyout exists so far; other requests open it too.</summary>
+    /// <summary>The dashboard does not exist yet; asking for it opens the flyout.</summary>
     private void Handle(SurfaceCommand command)
     {
         idleExitTimer?.Stop();
-        ShowFlyout(command);
+        if (command.Kind == SurfaceKind.Settings)
+        {
+            ShowSettings();
+        }
+        else
+        {
+            ShowFlyout(command);
+        }
     }
 
     private void ShowFlyout(SurfaceCommand command)
@@ -51,20 +60,38 @@ public partial class App : Application
         {
             flyout = new FlyoutWindow();
             flyout.Hidden += (_, _) => idleExitTimer?.Start();
+            flyout.SettingsRequested += (_, _) => ShowSettings();
         }
 
         flyout.Toggle(command.AnchorX, command.AnchorY);
     }
 
+    /// <summary>A closed window cannot be shown again, so each opening builds a new one.</summary>
+    private void ShowSettings()
+    {
+        idleExitTimer?.Stop();
+        if (settings is null)
+        {
+            settings = new SettingsWindow();
+            settings.Closed += (_, _) =>
+            {
+                settings = null;
+                idleExitTimer?.Start();
+            };
+        }
+
+        settings.Present();
+    }
+
     private void ExitWhenIdle()
     {
-        if (flyout?.IsShowing == true)
+        if (flyout?.IsShowing == true || settings is not null)
         {
             return;
         }
 
-        // Application.Exit leaves the process alive while a hidden window exists. This process
-        // only reads, so ending it directly loses nothing.
+        // Application.Exit leaves the process alive while a hidden window exists. Settings are
+        // saved the moment they change, so ending it directly loses nothing.
         listening.Cancel();
         Environment.Exit(NormalExitCode);
     }

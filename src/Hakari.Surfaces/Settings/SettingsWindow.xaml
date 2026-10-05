@@ -1,0 +1,153 @@
+<Window
+    x:Class="Hakari.Surfaces.Settings.SettingsWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:Hakari.Surfaces.Controls"
+    Title="Hakari settings">
+
+    <Grid x:Name="Root" Background="{ThemeResource HakariSurfaceBrush}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="48" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Title bar: dragging works anywhere on it; the caption buttons stay the system's -->
+        <Grid x:Name="TitleBar" Padding="16,0" ColumnSpacing="10" Background="Transparent">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <TextBlock Text="秤" FontFamily="{StaticResource HakariBrandFont}" FontSize="18"
+                FontWeight="Bold" Foreground="{ThemeResource HakariAccentBrush}"
+                VerticalAlignment="Center" />
+            <TextBlock Grid.Column="1" Text="Hakari settings" FontSize="12.5"
+                Foreground="{ThemeResource HakariInkMutedBrush}" VerticalAlignment="Center" />
+        </Grid>
+
+        <ScrollViewer Grid.Row="1" HorizontalScrollMode="Disabled" HorizontalScrollBarVisibility="Disabled">
+            <StackPanel x:Name="Sections" MaxWidth="720" Padding="24,0,24,28">
+
+                <!-- Sources -->
+                <StackPanel>
+                    <TextBlock Text="Sources" Style="{StaticResource HakariSectionText}" />
+                    <Border Style="{StaticResource HakariCard}">
+                        <StackPanel>
+                            <controls:SettingRow Glyph="&#xE756;" Title="WSL distributions" BorderThickness="0"
+                                Description="Running only never starts a stopped distribution. All can start one, which costs memory.">
+                                <Border Style="{StaticResource HakariSegmentedFrame}">
+                                    <StackPanel Orientation="Horizontal" Spacing="2">
+                                        <controls:HakariSegment x:Name="WslOff" GroupName="Wsl" Content="Off"
+                                            Checked="OnWslChecked" />
+                                        <controls:HakariSegment x:Name="WslRunningOnly" GroupName="Wsl"
+                                            Content="Running only" Checked="OnWslChecked" />
+                                        <controls:HakariSegment x:Name="WslAll" GroupName="Wsl" Content="All"
+                                            Checked="OnWslChecked" />
+                                    </StackPanel>
+                                </Border>
+                            </controls:SettingRow>
+                            <controls:SettingRow Glyph="&#xE8B7;" Title="Extra config folders"
+                                Description="For accounts kept in another CLAUDE_CONFIG_DIR.">
+                                <Button Content="Add folder" Style="{StaticResource HakariButton}"
+                                    Click="OnAddFolderClicked" />
+                            </controls:SettingRow>
+                            <StackPanel x:Name="FolderList" />
+                            <controls:SettingRow Glyph="&#xE7F4;" Title="Show on every display"
+                                Description="Put the meter on the taskbar of each monitor.">
+                                <controls:HakariToggle x:Name="EveryDisplayToggle" Click="OnEveryDisplayClicked" />
+                            </controls:SettingRow>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <!-- Accounts -->
+                <StackPanel>
+                    <TextBlock Text="Accounts" Style="{StaticResource HakariSectionText}" />
+                    <Border Style="{StaticResource HakariCard}">
+                        <StackPanel>
+                            <StackPanel x:Name="AccountList" />
+                            <controls:SettingRow Glyph="&#xE72C;" Title="Renew sign-in automatically"
+                                Description="Keeps limits current after Claude Code has been closed for a long time. It updates Claude Code's sign-in file, and only while Claude Code is not running.">
+                                <controls:HakariToggle x:Name="RenewSignInToggle" Click="OnRenewSignInClicked" />
+                            </controls:SettingRow>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <!-- General -->
+                <StackPanel>
+                    <TextBlock Text="General" Style="{StaticResource HakariSectionText}" />
+                    <Border Style="{StaticResource HakariCard}">
+                        <StackPanel>
+                            <controls:SettingRow x:Name="StartupRow" Glyph="&#xE7E8;" Title="Start with Windows"
+                                BorderThickness="0">
+                                <controls:HakariToggle x:Name="StartupToggle" Click="OnStartupClicked" />
+                            </controls:SettingRow>
+                            <controls:SettingRow Glyph="&#xE768;" Title="Animations"
+                                Description="Off uses the least power. Reduced keeps only short fades.">
+                                <Border Style="{StaticResource HakariSegmentedFrame}">
+                                    <StackPanel Orientation="Horizontal" Spacing="2">
+                                        <controls:HakariSegment x:Name="MotionFollow" GroupName="Motion"
+                                            Content="Windows" Checked="OnMotionChecked" />
+                                        <controls:HakariSegment x:Name="MotionFull" GroupName="Motion"
+                                            Content="Full" Checked="OnMotionChecked" />
+                                        <controls:HakariSegment x:Name="MotionReduced" GroupName="Motion"
+                                            Content="Reduced" Checked="OnMotionChecked" />
+                                        <controls:HakariSegment x:Name="MotionOff" GroupName="Motion"
+                                            Content="Off" Checked="OnMotionChecked" />
+                                    </StackPanel>
+                                </Border>
+                            </controls:SettingRow>
+                            <controls:SettingRow Glyph="&#xE8C7;" Title="Currency"
+                                Description="Amounts are API-equivalent prices, converted from US dollars.">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <Border Style="{StaticResource HakariSegmentedFrame}">
+                                        <StackPanel x:Name="CurrencyChoices" Orientation="Horizontal" Spacing="2" />
+                                    </Border>
+                                    <TextBox x:Name="OtherCurrencyBox" Width="64" MaxLength="3"
+                                        CharacterCasing="Upper" Style="{StaticResource HakariTextBox}"
+                                        ToolTipService.ToolTip="Any other currency code, such as SGD"
+                                        KeyDown="OnOtherCurrencyKeyDown" LostFocus="OnOtherCurrencyLostFocus" />
+                                </StackPanel>
+                            </controls:SettingRow>
+                            <controls:SettingRow Glyph="&#xE774;" Title="Exchange rate"
+                                Description="European Central Bank rates, fetched at most once a day.">
+                                <Border Style="{StaticResource HakariSegmentedFrame}">
+                                    <StackPanel Orientation="Horizontal" Spacing="2">
+                                        <controls:HakariSegment x:Name="RateUsageDay" GroupName="Rate"
+                                            Content="Day of use" Checked="OnRateChecked" />
+                                        <controls:HakariSegment x:Name="RateLatest" GroupName="Rate"
+                                            Content="Latest" Checked="OnRateChecked" />
+                                    </StackPanel>
+                                </Border>
+                            </controls:SettingRow>
+                            <controls:SettingRow Glyph="&#xE769;" Title="Pause updates"
+                                Description="Stops reading logs and checking limits until you turn it back on.">
+                                <controls:HakariToggle x:Name="PauseToggle" Click="OnPauseClicked" />
+                            </controls:SettingRow>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <!-- About -->
+                <StackPanel>
+                    <TextBlock Text="About" Style="{StaticResource HakariSectionText}" />
+                    <Border Style="{StaticResource HakariCard}">
+                        <StackPanel>
+                            <controls:SettingRow x:Name="VersionRow" Glyph="&#xE946;" BorderThickness="0"
+                                Description="Reads token counts from local logs, never prompts or replies. Network use: your account's usage limits and public exchange rates." />
+                            <controls:SettingRow Glyph="&#xEB51;" Title="Support Hakari"
+                                Description="Free builds stay free. A coffee keeps it going.">
+                                <Button Content="Ko-fi" Style="{StaticResource HakariPrimaryButton}"
+                                    Click="OnSupportClicked" />
+                            </controls:SettingRow>
+                            <controls:SettingRow x:Name="DataFolderRow" Glyph="&#xE8A5;" Title="Data folder">
+                                <Button Content="Open" Style="{StaticResource HakariButton}"
+                                    Click="OnOpenDataFolderClicked" />
+                            </controls:SettingRow>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</Window>

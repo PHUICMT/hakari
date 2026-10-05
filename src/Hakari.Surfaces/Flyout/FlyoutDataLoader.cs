@@ -58,8 +58,8 @@ internal static class FlyoutDataLoader
 
     private static string AccountName(AccountInfo account) =>
         account.DisplayName is { Length: > 0 } name
-            ? $"{name} · {account.Plan}"
-            : account.Plan.ToString();
+            ? $"{name} · {PlanNames.Short(account.Plan)}"
+            : PlanNames.Short(account.Plan);
 
     private static string UpdatedText(LimitSnapshot? limits, DateTimeOffset now)
     {
