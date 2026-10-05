@@ -1,0 +1,2970 @@
+<title>Hakari Design Handoff</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@600;800&display=swap">
+<style>
+/* Layout: sticky section index on the left, long handoff sheet on the right; every mock is
+   drawn at 1:1 Windows 11 pixel size so measurements can be read straight off the page. */
+:root {
+  /* Brand + UI palette (light) — neutrals carry a slight indigo bias toward the accent */
+  --ground: #f2f3f7;
+  --surface: #ffffff;
+  --surface-raised: #f8f9fc;
+  --line: #e0e3eb;
+  --line-strong: #c9cedb;
+  --ink: #1a1e29;
+  --ink-muted: #4a5164;
+  --ink-faint: #7b8296;
+  --accent: #2f4c8c;          /* ai-iro, indigo dye — the one brand hue */
+  --accent-strong: #233a6e;
+  --accent-soft: #e5ebf7;
+  --on-accent: #ffffff;
+  --ok: #1d7a4c;
+  --ok-soft: #e2f3ea;
+  --warn: #a96500;
+  --warn-soft: #fbefd9;
+  --critical: #c0322b;
+  --critical-soft: #fbe3e1;
+  --chart-1: #2f4c8c;
+  --chart-2: #6f8fd0;
+  --chart-3: #b9c8ea;
+  --chart-4: #8a6fb8;
+  --chart-5: #3e9a8f;
+  --heat-0: #eceff5;
+  --heat-1: #c9d4ee;
+  --heat-2: #8fa6dc;
+  --heat-3: #4f6fb6;
+  --heat-4: #2f4c8c;
+  --shadow-flyout: 0 8px 32px rgba(20, 26, 44, .18), 0 2px 6px rgba(20, 26, 44, .08);
+  --shadow-card: 0 1px 2px rgba(20, 26, 44, .06);
+  /* Fixed Windows taskbar worlds: shown side by side regardless of page theme */
+  --taskbar-light-bg: #eef0f4;
+  --taskbar-light-ink: #1b1d22;
+  --taskbar-light-faint: #5d6270;
+  --taskbar-dark-bg: #1d2027;
+  --taskbar-dark-ink: #f1f2f5;
+  --taskbar-dark-faint: #a4a9b6;
+  --wallpaper-a: #26324f;
+  --wallpaper-b: #121a2c;
+
+  /* Type */
+  --font-ui: "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-display: "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif;
+  --font-brand: "Shippori Mincho", "Yu Mincho", "Hiragino Mincho ProN", serif;
+  --font-mono: "Cascadia Mono", "Cascadia Code", Consolas, "SFMono-Regular", monospace;
+
+  /* Shape + space (Windows 11: 4px controls, 8px overlays) */
+  --radius-control: 4px;
+  --radius-overlay: 8px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  /* Motion — one vocabulary for every surface; scaled by the user's animation setting */
+  --duration-instant: 80ms;
+  --duration-fast: 120ms;
+  --duration-normal: 200ms;
+  --duration-slow: 320ms;
+  --duration-emphasis: 480ms;
+  --ease-decelerate: cubic-bezier(0, 0, 0, 1);
+  --ease-accelerate: cubic-bezier(.3, 0, 1, 1);
+  --ease-standard: cubic-bezier(.2, 0, 0, 1);
+  --ease-spring: cubic-bezier(.34, 1.56, .64, 1);
+  --stagger: 30ms;
+  --bar-stagger: 14ms;
+  --move: 12px;
+}
+
+/* Animation setting: full (default) · reduced (fades only, short) · off (nothing moves) */
+:root[data-motion="reduced"] {
+  --move: 0px;
+  --stagger: 0ms;
+  --bar-stagger: 0ms;
+  --duration-slow: 150ms;
+  --duration-emphasis: 150ms;
+}
+:root[data-motion="reduced"] .m-transform,
+:root[data-motion="reduced"] .meter > i,
+:root[data-motion="reduced"] .w-bar-fill,
+:root[data-motion="reduced"] .roi-track i,
+:root[data-motion="reduced"] .composition i,
+:root[data-motion="reduced"] .slider-track i {
+  animation-name: fade !important;
+}
+:root[data-motion="reduced"] .btn:active { transform: none; }
+:root[data-motion="reduced"] .m-loop { animation: none !important; }
+:root[data-motion="off"] *,
+:root[data-motion="off"] *::before,
+:root[data-motion="off"] *::after {
+  animation: none !important;
+  transition: none !important;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground: #0f1116;
+    --surface: #171a22;
+    --surface-raised: #1d212b;
+    --line: #2a2f3b;
+    --line-strong: #3a4050;
+    --ink: #e8ebf2;
+    --ink-muted: #a9b0c1;
+    --ink-faint: #7a8297;
+    --accent: #93acea;
+    --accent-strong: #b4c6f1;
+    --accent-soft: #1f2a45;
+    --on-accent: #0f1626;
+    --ok: #4cc38a;
+    --ok-soft: #12291e;
+    --warn: #f0a43a;
+    --warn-soft: #2f2410;
+    --critical: #ff6d63;
+    --critical-soft: #34161a;
+    --chart-1: #93acea;
+    --chart-2: #5f7fc6;
+    --chart-3: #39507f;
+    --chart-4: #b49be0;
+    --chart-5: #5cc0b3;
+    --heat-0: #1e222c;
+    --heat-1: #25345a;
+    --heat-2: #34508f;
+    --heat-3: #5f80cc;
+    --heat-4: #a3b9ef;
+    --shadow-flyout: 0 8px 32px rgba(0, 0, 0, .5), 0 2px 6px rgba(0, 0, 0, .3);
+    --shadow-card: 0 1px 2px rgba(0, 0, 0, .3);
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme="dark"] {
+  --ground: #0f1116;
+  --surface: #171a22;
+  --surface-raised: #1d212b;
+  --line: #2a2f3b;
+  --line-strong: #3a4050;
+  --ink: #e8ebf2;
+  --ink-muted: #a9b0c1;
+  --ink-faint: #7a8297;
+  --accent: #93acea;
+  --accent-strong: #b4c6f1;
+  --accent-soft: #1f2a45;
+  --on-accent: #0f1626;
+  --ok: #4cc38a;
+  --ok-soft: #12291e;
+  --warn: #f0a43a;
+  --warn-soft: #2f2410;
+  --critical: #ff6d63;
+  --critical-soft: #34161a;
+  --chart-1: #93acea;
+  --chart-2: #5f7fc6;
+  --chart-3: #39507f;
+  --chart-4: #b49be0;
+  --chart-5: #5cc0b3;
+  --heat-0: #1e222c;
+  --heat-1: #25345a;
+  --heat-2: #34508f;
+  --heat-3: #5f80cc;
+  --heat-4: #a3b9ef;
+  --shadow-flyout: 0 8px 32px rgba(0, 0, 0, .5), 0 2px 6px rgba(0, 0, 0, .3);
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, .3);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--ground);
+  color: var(--ink);
+  font: 14px/1.5 var(--font-ui);
+  font-variant-numeric: tabular-nums;
+}
+a { color: var(--accent); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+h1, h2, h3, h4 { text-wrap: balance; margin: 0; font-family: var(--font-display); }
+p { margin: 0; }
+code, .mono { font-family: var(--font-mono); font-size: 12.5px; }
+
+/* ---------- Motion library ---------- */
+@keyframes fade { from { opacity: 0; } }
+@keyframes rise { from { opacity: 0; transform: translateY(var(--move)); } }
+@keyframes slide-in-right { from { opacity: 0; transform: translateX(calc(var(--move) * 2)); } }
+@keyframes fill-x { from { transform: scaleX(0); } }
+@keyframes grow-y { from { transform: scaleY(0); } }
+@keyframes sweep { from { stroke-dashoffset: var(--ring-length); } }
+@keyframes draw { from { stroke-dashoffset: 1; } }
+@keyframes tick-in { from { opacity: 0; transform: translateY(45%); } }
+@keyframes pulse-once { 40% { transform: scale(1.14); } }
+@keyframes shimmer { from { background-position: -80px 0; } to { background-position: 80px 0; } }
+@keyframes press-ripple { from { opacity: .35; transform: scale(.6); } to { opacity: 0; transform: scale(1.6); } }
+
+.m-rise {
+  animation: rise var(--duration-slow) var(--ease-decelerate) both;
+  animation-delay: calc(var(--i, 0) * var(--stagger));
+}
+.m-slide {
+  animation: slide-in-right var(--duration-slow) var(--ease-decelerate) both;
+  animation-delay: calc(var(--i, 0) * var(--stagger) * 2);
+}
+.m-tick { display: inline-block; animation: tick-in var(--duration-normal) var(--ease-decelerate) both; }
+.m-pulse { animation: pulse-once var(--duration-emphasis) var(--ease-spring) 1; transform-origin: center; }
+.meter > i, .w-bar-fill, .roi-track i, .composition i, .slider-track i {
+  transform-origin: left center;
+  animation: fill-x var(--duration-emphasis) var(--ease-decelerate) both;
+  animation-delay: calc(var(--i, 0) * var(--stagger) + 60ms);
+}
+.chart .bar {
+  transform-box: fill-box;
+  transform-origin: center bottom;
+  animation: grow-y var(--duration-emphasis) var(--ease-decelerate) both;
+  animation-delay: calc(var(--i, 0) * var(--bar-stagger));
+}
+.heatmap i {
+  animation: fade var(--duration-slow) var(--ease-standard) both;
+  animation-delay: calc(var(--i, 0) * var(--bar-stagger));
+}
+.ring-arc { animation: sweep var(--duration-emphasis) var(--ease-decelerate) both; }
+.spark-line { stroke-dasharray: 1; animation: draw var(--duration-emphasis) var(--ease-standard) both; }
+.widget, .widget * {
+  transition: color var(--duration-slow) var(--ease-standard),
+    background-color var(--duration-fast) var(--ease-standard);
+}
+
+
+/* ---------- Page frame ---------- */
+.page {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  gap: var(--space-6);
+  max-width: 1360px;
+  margin: 0 auto;
+  padding-inline: 24px;
+  padding-block: 32px 96px;
+}
+.index {
+  position: sticky;
+  top: calc(env(safe-area-inset-top, 0px) + 24px);
+  align-self: start;
+  display: grid;
+  gap: var(--space-4);
+}
+.brand { display: flex; align-items: center; gap: var(--space-3); }
+.brand-mark {
+  font-family: var(--font-brand);
+  font-weight: 800;
+  font-size: 34px;
+  line-height: 1;
+  color: var(--accent);
+}
+.brand-name { font-family: var(--font-display); font-weight: 600; font-size: 18px; }
+.brand-sub { color: var(--ink-faint); font-size: 12px; }
+.index nav { display: grid; gap: 2px; }
+.index nav a {
+  color: var(--ink-muted);
+  text-decoration: none;
+  padding: 5px 10px;
+  border-radius: var(--radius-control);
+  font-size: 13px;
+}
+.index nav a:hover { background: var(--surface); color: var(--ink); }
+.index nav .group {
+  margin-top: var(--space-3);
+  padding-inline: 10px;
+  font-size: 11px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.theme-switch { display: flex; gap: 4px; }
+.theme-switch button {
+  flex: 1;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink-muted);
+  border-radius: var(--radius-control);
+  padding: 4px 0;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+.theme-switch button[aria-pressed="true"] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+}
+
+main { display: grid; gap: var(--space-7); min-width: 0; }
+.hero { display: grid; gap: var(--space-3); max-width: 760px; }
+.hero h1 { font-size: 34px; font-weight: 600; letter-spacing: -.01em; }
+.hero p { color: var(--ink-muted); font-size: 15px; max-width: 66ch; }
+.meta-row { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink-muted);
+  font-size: 12px;
+}
+.chip b { color: var(--ink); font-weight: 600; }
+
+section.block { display: grid; gap: var(--space-5); scroll-margin-top: 24px; }
+.block-head { display: grid; gap: 6px; max-width: 760px; }
+.eyebrow {
+  font-size: 11px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--accent);
+  font-weight: 600;
+}
+.block-head h2 { font-size: 24px; font-weight: 600; }
+.block-head p { color: var(--ink-muted); }
+.sub-head { display: grid; gap: 4px; }
+.sub-head h3 { font-size: 16px; font-weight: 600; }
+.sub-head p { color: var(--ink-muted); font-size: 13px; max-width: 72ch; }
+
+.sheet {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-overlay);
+  padding: var(--space-5);
+  display: grid;
+  gap: var(--space-5);
+  min-width: 0;
+}
+.grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-5); }
+.grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-4); }
+.note {
+  font-size: 12.5px;
+  color: var(--ink-muted);
+  border-left: 2px solid var(--line-strong);
+  padding-left: var(--space-3);
+}
+.spec {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--ink-faint);
+}
+
+/* ---------- Tokens ---------- */
+.swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: var(--space-3); }
+.swatch { display: grid; gap: 6px; }
+.swatch-color {
+  height: 56px;
+  border-radius: var(--radius-control);
+  border: 1px solid var(--line);
+}
+.swatch-name { font-size: 12.5px; font-weight: 600; }
+.swatch-value { font-family: var(--font-mono); font-size: 11px; color: var(--ink-faint); }
+.type-scale { display: grid; gap: var(--space-3); }
+.type-row {
+  display: grid;
+  grid-template-columns: 170px minmax(0, 1fr);
+  gap: var(--space-4);
+  align-items: baseline;
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--line);
+}
+.type-row:last-child { border-bottom: 0; padding-bottom: 0; }
+.type-label { font-family: var(--font-mono); font-size: 11.5px; color: var(--ink-faint); }
+.space-row { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--space-4); }
+.space-item { display: grid; gap: 6px; justify-items: start; font-size: 11.5px; color: var(--ink-faint); }
+.space-bar { background: var(--accent); height: 12px; border-radius: 2px; }
+.shape-row { display: flex; flex-wrap: wrap; gap: var(--space-4); }
+.shape {
+  width: 120px;
+  height: 72px;
+  background: var(--surface-raised);
+  border: 1px solid var(--line-strong);
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  color: var(--ink-muted);
+}
+
+/* ---------- Windows taskbar mock ---------- */
+.desktop {
+  border-radius: var(--radius-overlay);
+  overflow: hidden;
+  border: 1px solid var(--line);
+  background: linear-gradient(160deg, var(--wallpaper-a), var(--wallpaper-b));
+  display: grid;
+  min-width: 0;
+}
+.desktop-area { height: 64px; position: relative; }
+.taskbar {
+  height: 48px;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding-inline: 8px 12px;
+  font-size: 12px;
+  overflow: hidden;
+}
+.taskbar.light { background: var(--taskbar-light-bg); color: var(--taskbar-light-ink); }
+.taskbar.dark { background: var(--taskbar-dark-bg); color: var(--taskbar-dark-ink); }
+.taskbar .spacer { flex: 1; }
+.taskbar .apps { display: flex; gap: 4px; margin-inline: auto; }
+.taskbar .app-dot {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-control);
+  display: grid;
+  place-items: center;
+}
+.taskbar .app-dot i {
+  width: 22px;
+  height: 22px;
+  border-radius: 5px;
+  display: block;
+  opacity: .85;
+}
+.taskbar.light .faint { color: var(--taskbar-light-faint); }
+.taskbar.dark .faint { color: var(--taskbar-dark-faint); }
+.tray { display: flex; align-items: center; gap: 2px; flex-shrink: 0; }
+.tray-item {
+  height: 40px;
+  min-width: 28px;
+  padding-inline: 6px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-control);
+}
+.tray-icons { display: flex; gap: 8px; align-items: center; padding-inline: 8px; height: 40px; }
+.tray svg { width: 16px; height: 16px; display: block; }
+.clock { text-align: right; line-height: 1.25; padding-inline: 8px; font-size: 12px; }
+
+/* Hakari widget on the taskbar */
+.widget {
+  height: 40px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-inline: 10px;
+  border-radius: var(--radius-control);
+  flex-shrink: 0;
+  cursor: default;
+  position: relative;
+  white-space: nowrap;
+}
+.taskbar.light .widget:hover { background: rgba(0, 0, 0, .05); }
+.taskbar.dark .widget:hover { background: rgba(255, 255, 255, .07); }
+.widget.outline-demo { outline: 1px dashed currentColor; outline-offset: -1px; }
+.w-lines { display: grid; line-height: 1.2; }
+.w-primary { font-size: 13px; font-weight: 600; letter-spacing: .005em; }
+.w-secondary { font-size: 11px; }
+.w-col { display: grid; justify-items: start; line-height: 1.15; }
+.w-col .w-label { font-size: 10px; letter-spacing: .04em; text-transform: uppercase; }
+.w-col .w-value { font-size: 13px; font-weight: 600; }
+.w-divider { width: 1px; height: 22px; background: currentColor; opacity: .18; }
+.w-bar {
+  width: 64px;
+  height: 4px;
+  border-radius: 2px;
+  background: currentColor;
+  position: relative;
+  overflow: hidden;
+}
+.w-bar::before { content: ""; position: absolute; inset: 0; background: inherit; opacity: 1; }
+.w-bar-track {
+  width: 64px;
+  height: 4px;
+  border-radius: 2px;
+  position: relative;
+  overflow: hidden;
+}
+.taskbar.light .w-bar-track { background: rgba(0, 0, 0, .12); }
+.taskbar.dark .w-bar-track { background: rgba(255, 255, 255, .16); }
+.w-bar-fill { position: absolute; inset: 0 auto 0 0; border-radius: 2px; }
+.taskbar.light .tone-normal { color: #2f4c8c; }
+.taskbar.dark .tone-normal { color: #9fb6ee; }
+.taskbar.light .tone-warn { color: #a96500; }
+.taskbar.dark .tone-warn { color: #f4b14f; }
+.taskbar.light .tone-critical { color: #c0322b; }
+.taskbar.dark .tone-critical { color: #ff7b72; }
+.fill-normal { background: currentColor; }
+.w-ring { width: 26px; height: 26px; flex-shrink: 0; }
+.w-spark { width: 56px; height: 22px; }
+.w-icon { width: 18px; height: 18px; flex-shrink: 0; }
+.w-dots { display: flex; gap: 3px; }
+.w-dots i { width: 4px; height: 4px; border-radius: 50%; background: currentColor; opacity: .3; }
+.w-dots i.on { opacity: 1; }
+.w-pill {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 999px;
+  letter-spacing: .02em;
+}
+.taskbar.light .w-pill { background: rgba(0, 0, 0, .07); }
+.taskbar.dark .w-pill { background: rgba(255, 255, 255, .1); }
+.w-shimmer {
+  width: 64px;
+  height: 4px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, currentColor 0 40%, transparent 40%);
+  opacity: .5;
+}
+
+.template-list { display: grid; gap: var(--space-4); }
+.template {
+  display: grid;
+  grid-template-columns: 210px minmax(0, 1fr);
+  gap: var(--space-4);
+  align-items: center;
+}
+.template-info { display: grid; gap: 2px; }
+.template-info h4 { font-size: 13.5px; font-weight: 600; font-family: var(--font-ui); }
+.template-info p { font-size: 12px; color: var(--ink-muted); }
+.strip-pair { display: grid; gap: 6px; min-width: 0; }
+.strip {
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 2px;
+  padding-inline: 8px;
+  border-radius: var(--radius-control);
+  overflow: hidden;
+  border: 1px solid var(--line);
+}
+.strip.light { background: var(--taskbar-light-bg); color: var(--taskbar-light-ink); }
+.strip.dark { background: var(--taskbar-dark-bg); color: var(--taskbar-dark-ink); }
+.strip.light .faint { color: var(--taskbar-light-faint); }
+.strip.dark .faint { color: var(--taskbar-dark-faint); }
+.strip .widget:hover { background: transparent; }
+.strip .tray-ghost { width: 120px; height: 20px; border-radius: 3px; opacity: .12; background: currentColor; flex-shrink: 0; }
+.strip .light .tone-normal, .strip.light .tone-normal { color: #2f4c8c; }
+.strip.dark .tone-normal { color: #9fb6ee; }
+.strip.light .tone-warn { color: #a96500; }
+.strip.dark .tone-warn { color: #f4b14f; }
+.strip.light .tone-critical { color: #c0322b; }
+.strip.dark .tone-critical { color: #ff7b72; }
+.strip.light .w-bar-track { background: rgba(0, 0, 0, .12); }
+.strip.dark .w-bar-track { background: rgba(255, 255, 255, .16); }
+.strip.light .w-pill { background: rgba(0, 0, 0, .07); }
+.strip.dark .w-pill { background: rgba(255, 255, 255, .1); }
+
+/* Anatomy callouts */
+.anatomy { display: grid; gap: var(--space-4); }
+.anatomy-stage {
+  position: relative;
+  padding-block: 40px 56px;
+  display: flex;
+  justify-content: center;
+  overflow-x: auto;
+}
+.anatomy-stage .strip { width: 520px; flex-shrink: 0; }
+.callouts { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: var(--space-3); }
+.callout { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 8px; font-size: 12.5px; }
+.callout-key {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--on-accent);
+  display: grid;
+  place-items: center;
+  font-size: 11px;
+  font-weight: 700;
+}
+.callout b { display: block; font-size: 12.5px; }
+.callout span { color: var(--ink-muted); }
+
+/* Placement diagram */
+.monitors { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4); }
+.monitor {
+  border: 2px solid var(--line-strong);
+  border-radius: 6px;
+  aspect-ratio: 16 / 9;
+  max-width: 100%;
+  display: grid;
+  grid-template-rows: 1fr auto;
+  background: linear-gradient(160deg, var(--wallpaper-a), var(--wallpaper-b));
+  overflow: hidden;
+}
+.monitor-label { color: #dfe4f0; font-size: 12px; padding: 10px; }
+.monitor-bar {
+  height: 18px;
+  background: var(--taskbar-dark-bg);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding-inline: 6px;
+}
+.monitor-bar .slot { height: 10px; border-radius: 2px; background: #3b4252; }
+.monitor-bar .slot.apps { width: 30%; margin-inline: auto; }
+.monitor-bar .slot.tray { width: 18%; }
+.monitor-bar .slot.hakari { width: 12%; background: #9fb6ee; }
+.monitor-bar .slot.hakari.ghost { background: transparent; outline: 1px dashed #9fb6ee; }
+
+/* ---------- Flyout ---------- */
+.flyout-row { display: flex; flex-wrap: wrap; gap: var(--space-5); align-items: flex-start; }
+.flyout-col { display: grid; gap: var(--space-2); max-width: 100%; }
+.flyout-col .spec { padding-left: 2px; }
+.flyout {
+  width: 360px;
+  max-width: 100%;
+  background: var(--surface-raised);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-overlay);
+  box-shadow: var(--shadow-flyout);
+  display: grid;
+  overflow: hidden;
+}
+.flyout-body { padding: var(--space-4); display: grid; gap: var(--space-4); }
+.flyout-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
+.flyout-title { display: flex; align-items: center; gap: var(--space-2); font-weight: 600; }
+.flyout-title .brand-mark { font-size: 20px; }
+.updated { font-size: 11.5px; color: var(--ink-faint); }
+.segmented {
+  display: inline-flex;
+  padding: 2px;
+  border-radius: var(--radius-control);
+  background: var(--ground);
+  border: 1px solid var(--line);
+  gap: 2px;
+  flex-wrap: wrap;
+}
+.segmented button {
+  border: 0;
+  background: transparent;
+  color: var(--ink-muted);
+  font: inherit;
+  font-size: 12px;
+  padding: 3px 10px;
+  border-radius: 3px;
+  cursor: pointer;
+}
+.segmented button[aria-pressed="true"] {
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: var(--shadow-card);
+  font-weight: 600;
+}
+.limit { display: grid; gap: 6px; }
+.limit-top { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-2); }
+.limit-name { font-size: 12.5px; color: var(--ink-muted); }
+.limit-value { font-size: 15px; font-weight: 600; }
+.limit-reset { font-size: 11.5px; color: var(--ink-faint); }
+.meter { height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; }
+.meter > i { display: block; height: 100%; border-radius: 3px; background: var(--accent); }
+.meter > i.warn { background: var(--warn); }
+.meter > i.critical { background: var(--critical); }
+.meter.with-marker { position: relative; overflow: visible; }
+.meter-marker {
+  position: absolute;
+  top: -3px;
+  width: 2px;
+  height: 12px;
+  background: var(--ink-faint);
+  border-radius: 1px;
+}
+.stat-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-2); }
+.stat {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  padding: 8px 10px;
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+.stat-label { font-size: 11px; color: var(--ink-faint); }
+.stat-value { font-size: 15px; font-weight: 600; }
+.stat-delta { font-size: 11px; color: var(--ink-muted); }
+.burn {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-3);
+  font-size: 12.5px;
+}
+.burn b { font-size: 14px; }
+.sources { display: grid; gap: 6px; }
+.source-row {
+  display: grid;
+  grid-template-columns: 8px minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  font-size: 12.5px;
+}
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); }
+.dot.idle { background: var(--ink-faint); }
+.dot.warn { background: var(--warn); }
+.dot.critical { background: var(--critical); }
+.source-row .muted { color: var(--ink-faint); font-size: 11.5px; }
+.flyout-foot {
+  border-top: 1px solid var(--line);
+  background: var(--surface);
+  padding: 10px var(--space-4);
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+}
+.btn {
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
+  color: var(--ink);
+  border-radius: var(--radius-control);
+  padding: 5px 12px;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+.btn:hover { background: var(--surface-raised); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.btn.primary:hover { background: var(--accent-strong); }
+.btn.subtle { border-color: transparent; background: transparent; color: var(--ink-muted); }
+.btn.icon { padding: 5px 7px; }
+.btn svg { width: 14px; height: 14px; }
+.grow { flex: 1; }
+.infobar {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--radius-control);
+  border: 1px solid var(--line);
+  font-size: 12.5px;
+}
+.infobar svg { width: 16px; height: 16px; margin-top: 2px; }
+.infobar b { display: block; }
+.infobar.info { background: var(--accent-soft); border-color: transparent; }
+.infobar.info svg { color: var(--accent); }
+.infobar.warn { background: var(--warn-soft); border-color: transparent; }
+.infobar.warn svg { color: var(--warn); }
+.infobar.critical { background: var(--critical-soft); border-color: transparent; }
+.infobar.critical svg { color: var(--critical); }
+.infobar.ok { background: var(--ok-soft); border-color: transparent; }
+.infobar.ok svg { color: var(--ok); }
+.infobar .actions { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+.progress-indeterminate {
+  height: 3px;
+  background: var(--line);
+  border-radius: 2px;
+  overflow: hidden;
+  position: relative;
+}
+.progress-indeterminate i {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 48%;
+  background: var(--accent);
+  border-radius: 2px;
+}
+.skeleton { background: var(--line); border-radius: 3px; height: 12px; }
+
+/* ---------- Dashboard window ---------- */
+.window {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-overlay);
+  background: var(--ground);
+  overflow: hidden;
+  box-shadow: var(--shadow-flyout);
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  min-width: 0;
+}
+.titlebar {
+  height: 40px;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding-left: var(--space-3);
+  background: var(--surface-raised);
+  border-bottom: 1px solid var(--line);
+  font-size: 12px;
+}
+.titlebar .brand-mark { font-size: 16px; }
+.titlebar .grow { flex: 1; }
+.caption-buttons { display: flex; height: 100%; }
+.caption-buttons span {
+  width: 46px;
+  display: grid;
+  place-items: center;
+  color: var(--ink-muted);
+}
+.caption-buttons svg { width: 10px; height: 10px; }
+.window-body { display: grid; grid-template-columns: 200px minmax(0, 1fr); min-height: 640px; min-width: 0; }
+.navpane {
+  background: var(--surface-raised);
+  border-right: 1px solid var(--line);
+  padding: var(--space-2);
+  display: grid;
+  align-content: start;
+  gap: 2px;
+}
+.navpane button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 0;
+  background: transparent;
+  color: var(--ink-muted);
+  text-align: left;
+  font: inherit;
+  font-size: 13px;
+  padding: 7px 10px;
+  border-radius: var(--radius-control);
+  position: relative;
+  cursor: pointer;
+}
+.navpane button svg { width: 16px; height: 16px; flex-shrink: 0; }
+.navpane button:hover { background: var(--surface); color: var(--ink); }
+.navpane button[aria-current="page"] { background: var(--surface); color: var(--ink); font-weight: 600; }
+.navpane button[aria-current="page"]::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 9px;
+  bottom: 9px;
+  width: 3px;
+  border-radius: 2px;
+  background: var(--accent);
+}
+.navpane .nav-sep { height: 1px; background: var(--line); margin: 6px 4px; }
+.content {
+  padding: var(--space-5);
+  display: grid;
+  gap: var(--space-5);
+  align-content: start;
+  min-width: 0;
+  overflow-x: hidden;
+}
+.content-head { display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: center; justify-content: space-between; }
+.content-head h3 { font-size: 22px; font-weight: 600; }
+.filters { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; }
+.select {
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
+  border-radius: var(--radius-control);
+  padding: 4px 28px 4px 10px;
+  font-size: 12.5px;
+  color: var(--ink);
+  position: relative;
+  white-space: nowrap;
+}
+.select::after {
+  content: "";
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  width: 6px;
+  height: 6px;
+  border-right: 1.5px solid var(--ink-muted);
+  border-bottom: 1.5px solid var(--ink-muted);
+  transform: translateY(-70%) rotate(45deg);
+}
+.kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-3); }
+.kpi {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-overlay);
+  padding: 12px 14px;
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.kpi-label { font-size: 12px; color: var(--ink-faint); }
+.kpi-value { font-size: 22px; font-weight: 600; font-family: var(--font-display); }
+.kpi-value.money { color: var(--ink); }
+.kpi-foot { font-size: 11.5px; color: var(--ink-muted); }
+.kpi-foot .up { color: var(--critical); }
+.kpi-foot .down { color: var(--ok); }
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-overlay);
+  padding: var(--space-4);
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+}
+.panel-head { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-2); flex-wrap: wrap; }
+.panel-head h4 { font-size: 14px; font-weight: 600; font-family: var(--font-ui); }
+.panel-head span { font-size: 12px; color: var(--ink-faint); }
+.composition { display: flex; height: 10px; border-radius: 5px; overflow: hidden; gap: 2px; }
+.composition i { display: block; height: 100%; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 12px; color: var(--ink-muted); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend i { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+.table-wrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 12.5px; }
+th {
+  text-align: left;
+  font-weight: 600;
+  color: var(--ink-faint);
+  font-size: 11.5px;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+td { padding: 8px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+tr:last-child td { border-bottom: 0; }
+td.num, th.num { text-align: right; }
+td .model { font-family: var(--font-mono); font-size: 12px; }
+.bar-cell { display: flex; align-items: center; gap: 8px; justify-content: flex-end; }
+.bar-cell i { display: block; height: 6px; border-radius: 3px; background: var(--chart-2); }
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.badge.ok { background: var(--ok-soft); color: var(--ok); }
+.badge.warn { background: var(--warn-soft); color: var(--warn); }
+.badge.critical { background: var(--critical-soft); color: var(--critical); }
+.badge.neutral { background: var(--ground); color: var(--ink-muted); }
+.view[hidden] { display: none; }
+.split { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: var(--space-3); }
+.chart { width: 100%; height: auto; display: block; }
+.chart text { fill: var(--ink-faint); font-size: 10px; font-family: var(--font-ui); }
+.chart .grid-line { stroke: var(--line); stroke-width: 1; }
+.heatmap { display: grid; grid-template-columns: 34px repeat(24, minmax(8px, 1fr)); gap: 3px; font-size: 10px; color: var(--ink-faint); }
+.heatmap i { display: block; aspect-ratio: 1; border-radius: 2px; max-width: 100%; }
+.heat-scale { display: flex; gap: 3px; align-items: center; font-size: 11px; color: var(--ink-faint); }
+.heat-scale i { width: 12px; height: 12px; border-radius: 2px; display: block; }
+.account-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-3); }
+.account-card { display: grid; gap: var(--space-3); }
+.account-top { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--space-2); }
+.account-name { font-weight: 600; }
+.account-sub { font-size: 12px; color: var(--ink-faint); }
+.roi-row { display: grid; grid-template-columns: 140px minmax(0, 1fr) 90px; gap: var(--space-3); align-items: center; font-size: 12.5px; }
+.roi-track { height: 18px; background: var(--ground); border-radius: 3px; position: relative; overflow: hidden; }
+.roi-track i { position: absolute; inset: 0 auto 0 0; background: var(--chart-2); border-radius: 3px; }
+.roi-track b {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-right: 2px solid var(--ink);
+}
+
+/* ---------- Settings ---------- */
+.settings-layout { display: grid; gap: var(--space-4); }
+.setting-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-overlay);
+  display: grid;
+}
+.setting-row {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) auto;
+  gap: var(--space-3);
+  align-items: center;
+  padding: 12px var(--space-4);
+  border-bottom: 1px solid var(--line);
+}
+.setting-row:last-child { border-bottom: 0; }
+.setting-row svg { width: 18px; height: 18px; color: var(--ink-muted); }
+.setting-title { font-size: 13.5px; }
+.setting-desc { font-size: 12px; color: var(--ink-faint); }
+.toggle {
+  width: 40px;
+  height: 20px;
+  border-radius: 10px;
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
+  position: relative;
+  flex-shrink: 0;
+  cursor: pointer;
+  padding: 0;
+}
+.toggle::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 4px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--ink-muted);
+  transition: left var(--duration-fast) var(--ease-decelerate);
+}
+.toggle[aria-checked="true"] { background: var(--accent); border-color: var(--accent); }
+.toggle[aria-checked="true"]::after { left: 23px; background: var(--on-accent); }
+.toggle-group { display: flex; gap: 10px; align-items: center; font-size: 12.5px; color: var(--ink-muted); }
+.slider { display: grid; gap: 6px; min-width: 220px; }
+.slider-track { height: 4px; border-radius: 2px; background: var(--line-strong); position: relative; }
+.slider-track i { position: absolute; inset: 0 auto 0 0; border-radius: 2px; background: var(--accent); }
+.slider-thumb {
+  position: absolute;
+  top: 50%;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 4px solid var(--accent);
+  transform: translate(-50%, -50%);
+}
+.slider-labels { display: flex; justify-content: space-between; font-size: 11px; color: var(--ink-faint); }
+.input {
+  border: 1px solid var(--line-strong);
+  border-bottom-width: 2px;
+  border-bottom-color: var(--accent);
+  background: var(--surface);
+  border-radius: var(--radius-control);
+  padding: 6px 10px;
+  font: inherit;
+  font-size: 13px;
+  color: var(--ink);
+  width: 100%;
+}
+.input.mono { font-family: var(--font-mono); font-size: 12.5px; }
+.editor { display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: var(--space-4); }
+.template-picker { display: grid; gap: 6px; }
+.template-option {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  padding: 8px 10px;
+  font-size: 12.5px;
+  background: var(--surface);
+  cursor: pointer;
+  text-align: left;
+  color: var(--ink);
+  font-family: inherit;
+}
+.template-option[aria-pressed="true"] { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.template-option small { color: var(--ink-faint); font-size: 11px; }
+.slots { display: grid; gap: 6px; }
+.slot-item {
+  display: grid;
+  grid-template-columns: 16px 120px minmax(0, 1fr) 110px auto;
+  gap: 10px;
+  align-items: center;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  font-size: 12.5px;
+}
+.grip { color: var(--ink-faint); cursor: grab; }
+.grip svg { width: 14px; height: 14px; display: block; }
+.slot-add {
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius-control);
+  padding: 8px 10px;
+  color: var(--ink-muted);
+  font-size: 12.5px;
+  background: transparent;
+  text-align: left;
+  font-family: inherit;
+}
+.threshold-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 12.5px; }
+.color-dot { width: 14px; height: 14px; border-radius: 50%; display: inline-block; border: 1px solid var(--line-strong); }
+
+/* ---------- Toasts ---------- */
+.toasts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4); }
+.toast {
+  background: var(--surface-raised);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-overlay);
+  box-shadow: var(--shadow-flyout);
+  padding: 12px 14px;
+  display: grid;
+  gap: 8px;
+  max-width: 364px;
+  width: 100%;
+}
+.toast-app { display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--ink-faint); }
+.toast-app .brand-mark { font-size: 13px; }
+.toast-title { font-weight: 600; font-size: 13.5px; }
+.toast-body { font-size: 12.5px; color: var(--ink-muted); }
+.toast-actions { display: flex; gap: 6px; }
+.toast-actions .btn { flex: 1; justify-content: center; }
+.toast .meter { height: 4px; }
+
+/* ---------- Onboarding ---------- */
+.onboard { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-4); }
+.onboard-step {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-overlay);
+  padding: var(--space-4);
+  display: grid;
+  gap: var(--space-3);
+  align-content: start;
+}
+.step-count { font-size: 11.5px; color: var(--ink-faint); }
+.onboard-step h4 { font-size: 16px; font-weight: 600; }
+.check-row {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  font-size: 12.5px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+}
+.checkbox {
+  width: 16px;
+  height: 16px;
+  border-radius: 3px;
+  background: var(--accent);
+  display: grid;
+  place-items: center;
+  color: var(--on-accent);
+}
+.checkbox.off { background: transparent; border: 1px solid var(--line-strong); }
+.checkbox svg { width: 10px; height: 10px; }
+.step-dots { display: flex; gap: 6px; }
+.step-dots i { width: 20px; height: 3px; border-radius: 2px; background: var(--line-strong); }
+.step-dots i.on { background: var(--accent); }
+
+/* ---------- Edge safety: no content may touch or overflow its container ---------- */
+.grid-2 > *, .grid-3 > *, .flyout-row > *, .split > *, .kpis > *, .account-cards > *,
+.toasts > *, .onboard > *, .stat-grid > *, .monitors > *, .callouts > * { min-width: 0; }
+.note, .setting-desc, .toast-body, .infobar, .template-info p, .account-sub {
+  overflow-wrap: anywhere;
+}
+.flyout-col { min-width: 0; flex: 0 1 360px; }
+.stat-value, .kpi-value, .limit-value { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.badge, .w-pill, .chip { white-space: nowrap; }
+/* Control labels never wrap; containers scroll or truncate instead */
+.navpane button, .segmented button, .btn, .select, .tray-item, .clock,
+.limit-name, .stat-label, .kpi-label, th, .setting-title, .theme-switch button,
+.motion-switch button, .index nav a { white-space: nowrap; }
+.navpane button { flex-shrink: 0; }
+.setting-title, .limit-name { overflow: hidden; text-overflow: ellipsis; }
+.segmented { flex-wrap: nowrap; max-width: 100%; overflow-x: auto; }
+
+/* ---------- Interaction motion ---------- */
+.btn {
+  position: relative;
+  overflow: hidden;
+  transition: background-color var(--duration-fast) var(--ease-standard),
+    border-color var(--duration-fast) var(--ease-standard),
+    transform var(--duration-instant) var(--ease-standard);
+}
+.btn:active { transform: scale(.97); }
+.btn .ripple {
+  position: absolute;
+  width: 80px;
+  height: 80px;
+  margin: -40px 0 0 -40px;
+  border-radius: 50%;
+  background: currentColor;
+  pointer-events: none;
+  animation: press-ripple var(--duration-slow) var(--ease-decelerate) forwards;
+}
+.toggle::after {
+  transition: left var(--duration-normal) var(--ease-spring),
+    width var(--duration-fast) var(--ease-standard),
+    background-color var(--duration-fast) var(--ease-standard);
+}
+.toggle { transition: background-color var(--duration-normal) var(--ease-standard), border-color var(--duration-normal); }
+.toggle:active::after { width: 16px; }
+.toggle[aria-checked="true"]:active::after { left: 19px; }
+.segmented button {
+  transition: background-color var(--duration-normal) var(--ease-standard),
+    color var(--duration-normal) var(--ease-standard),
+    box-shadow var(--duration-normal) var(--ease-standard);
+}
+.navpane { position: relative; }
+.nav-indicator {
+  position: absolute;
+  left: 8px;
+  top: 0;
+  width: 3px;
+  height: 18px;
+  border-radius: 2px;
+  background: var(--accent);
+  transition: transform var(--duration-slow) var(--ease-spring);
+}
+.navpane.has-indicator button[aria-current="page"]::before { display: none; }
+.navpane button { transition: background-color var(--duration-fast) var(--ease-standard), color var(--duration-fast); }
+.template-option { transition: border-color var(--duration-fast), box-shadow var(--duration-normal) var(--ease-standard); }
+.w-shimmer, .shimmer {
+  background-image: linear-gradient(90deg, transparent, rgba(255, 255, 255, .45), transparent);
+  background-size: 80px 100%;
+  background-repeat: no-repeat;
+  animation: shimmer 1.4s linear infinite;
+}
+.skeleton.shimmer { background-color: var(--line); }
+.motion-switch { display: flex; gap: 4px; }
+.motion-switch button {
+  flex: 1;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink-muted);
+  border-radius: var(--radius-control);
+  padding: 4px 0;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+.motion-switch button[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--surface); }
+.switch-label { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-faint); }
+.replay { justify-self: start; }
+.motion-demo {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: var(--space-3);
+}
+.motion-card {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-overlay);
+  padding: var(--space-3);
+  display: grid;
+  gap: var(--space-2);
+  background: var(--surface-raised);
+  min-width: 0;
+}
+.motion-stage {
+  height: 64px;
+  border-radius: var(--radius-control);
+  background: var(--ground);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+.motion-card b { font-size: 12.5px; }
+.motion-card span { font-size: 11.5px; color: var(--ink-faint); font-family: var(--font-mono); }
+.control-gallery { display: grid; gap: var(--space-4); }
+.control-row {
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr);
+  gap: var(--space-4);
+  align-items: center;
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--line);
+}
+.control-row:last-child { border-bottom: 0; padding-bottom: 0; }
+.control-row > span { font-size: 12.5px; font-weight: 600; }
+.control-set { display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: center; min-width: 0; }
+.state-label { display: grid; gap: 4px; justify-items: start; font-size: 11px; color: var(--ink-faint); }
+.btn.is-hover { background: var(--surface-raised); }
+.btn.primary.is-hover { background: var(--accent-strong); }
+.btn.is-pressed { transform: scale(.97); }
+.btn:disabled, .btn.is-disabled { opacity: .45; cursor: not-allowed; }
+.input.is-error { border-bottom-color: var(--critical); }
+.field-error { font-size: 11.5px; color: var(--critical); }
+.input.is-rest { border-bottom-color: var(--line-strong); border-bottom-width: 1px; }
+
+/* ---------- Spec tables ---------- */
+.spec-table td { white-space: normal; vertical-align: top; }
+.spec-table td:first-child { white-space: nowrap; font-weight: 600; }
+.spec-table code { color: var(--accent); }
+
+@media (max-width: 1100px) {
+  .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .account-cards { grid-template-columns: minmax(0, 1fr); }
+  .split { grid-template-columns: minmax(0, 1fr); }
+  .editor { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 900px) {
+  .page { grid-template-columns: minmax(0, 1fr); }
+  .index { position: static; }
+  .index nav { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+  .grid-2, .grid-3, .toasts, .onboard, .monitors { grid-template-columns: minmax(0, 1fr); }
+  .template { grid-template-columns: minmax(0, 1fr); }
+  .window-body { grid-template-columns: minmax(0, 1fr); }
+  .navpane { grid-auto-flow: column; overflow-x: auto; border-right: 0; border-bottom: 1px solid var(--line); }
+  .navpane .nav-sep { display: none; }
+  .navpane button[aria-current="page"]::before { left: 10px; right: 10px; top: auto; bottom: 0; width: auto; height: 3px; }
+  .slot-item { grid-template-columns: 16px minmax(0, 1fr) auto; }
+  .slot-item .hide-narrow { display: none; }
+  .type-row { grid-template-columns: minmax(0, 1fr); gap: 4px; }
+}
+@media (max-width: 520px) {
+  .page { padding-inline: 16px; }
+  .kpis, .stat-grid { grid-template-columns: minmax(0, 1fr); }
+  .roi-row { grid-template-columns: minmax(0, 1fr); }
+  .strip { justify-content: flex-start; overflow-x: auto; }
+  .strip .tray-ghost { display: none; }
+}
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-scale" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="M12 3v17M7 20h10M4 7h16M6.5 7 3.5 14a3 3 0 0 0 6 0L6.5 7Zm11 0-3 7a3 3 0 0 0 6 0l-3-7Z"/></symbol>
+    <symbol id="i-chevron-up" viewBox="0 0 16 16"><path fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" d="m4 10 4-4 4 4"/></symbol>
+    <symbol id="i-wifi" viewBox="0 0 16 16"><path fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" d="M1.8 6.2a9 9 0 0 1 12.4 0M3.9 8.4a6 6 0 0 1 8.2 0M6 10.6a3 3 0 0 1 4 0"/><circle cx="8" cy="12.8" r="1" fill="currentColor"/></symbol>
+    <symbol id="i-volume" viewBox="0 0 16 16"><path fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round" d="M2.5 6h2.5l3.5-3v10L5 10H2.5z"/><path fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" d="M11 5.5a3.5 3.5 0 0 1 0 5M12.8 3.8a6 6 0 0 1 0 8.4"/></symbol>
+    <symbol id="i-battery" viewBox="0 0 16 16"><rect x="1.5" y="4.5" width="11.5" height="7" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.2"/><rect x="3" y="6" width="8.5" height="4" rx=".6" fill="currentColor"/><rect x="13.6" y="6.5" width="1.2" height="3" rx=".5" fill="currentColor"/></symbol>
+    <symbol id="i-info" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.5" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="M8 7v4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><circle cx="8" cy="4.8" r=".9" fill="currentColor"/></symbol>
+    <symbol id="i-warn" viewBox="0 0 16 16"><path fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round" d="M8 1.8 14.8 13.5H1.2Z"/><path d="M8 6v3.6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><circle cx="8" cy="11.6" r=".9" fill="currentColor"/></symbol>
+    <symbol id="i-check" viewBox="0 0 16 16"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="m3 8.5 3 3 7-7"/></symbol>
+    <symbol id="i-gear" viewBox="0 0 16 16"><circle cx="8" cy="8" r="2.3" fill="none" stroke="currentColor" stroke-width="1.3"/><path fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" d="M8 1.5v2M8 12.5v2M1.5 8h2M12.5 8h2M3.4 3.4l1.4 1.4M11.2 11.2l1.4 1.4M3.4 12.6l1.4-1.4M11.2 4.8l1.4-1.4"/></symbol>
+    <symbol id="i-open" viewBox="0 0 16 16"><path fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" d="M9 2.5h4.5V7M13.5 2.5 7.5 8.5M12 9.5v3a1 1 0 0 1-1 1H3.5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h3"/></symbol>
+    <symbol id="i-pause" viewBox="0 0 16 16"><path d="M5.5 3.5v9M10.5 3.5v9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
+    <symbol id="i-refresh" viewBox="0 0 16 16"><path fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" d="M13 8a5 5 0 1 1-1.5-3.6M13 2.5v2.8h-2.8"/></symbol>
+    <symbol id="i-home" viewBox="0 0 16 16"><path fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round" d="M2.5 7 8 2.5 13.5 7v6.5h-3.5V10H6v3.5H2.5Z"/></symbol>
+    <symbol id="i-list" viewBox="0 0 16 16"><path fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" d="M5.5 4h8M5.5 8h8M5.5 12h8"/><circle cx="2.8" cy="4" r=".9" fill="currentColor"/><circle cx="2.8" cy="8" r=".9" fill="currentColor"/><circle cx="2.8" cy="12" r=".9" fill="currentColor"/></symbol>
+    <symbol id="i-folder" viewBox="0 0 16 16"><path fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round" d="M1.8 4a1 1 0 0 1 1-1h3.4l1.5 1.6h5.5a1 1 0 0 1 1 1V12a1 1 0 0 1-1 1H2.8a1 1 0 0 1-1-1Z"/></symbol>
+    <symbol id="i-branch" viewBox="0 0 16 16"><circle cx="4.5" cy="3.5" r="1.6" fill="none" stroke="currentColor" stroke-width="1.3"/><circle cx="4.5" cy="12.5" r="1.6" fill="none" stroke="currentColor" stroke-width="1.3"/><circle cx="11.5" cy="5.5" r="1.6" fill="none" stroke="currentColor" stroke-width="1.3"/><path fill="none" stroke="currentColor" stroke-width="1.3" d="M4.5 5.1v5.8M11.5 7.1c0 3-7 2-7 3.8"/></symbol>
+    <symbol id="i-flow" viewBox="0 0 16 16"><rect x="1.8" y="2" width="5" height="4" rx="1" fill="none" stroke="currentColor" stroke-width="1.3"/><rect x="9.2" y="10" width="5" height="4" rx="1" fill="none" stroke="currentColor" stroke-width="1.3"/><path fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" d="M4.3 6v3.2a1 1 0 0 0 1 1h3.9"/></symbol>
+    <symbol id="i-user" viewBox="0 0 16 16"><circle cx="8" cy="5.5" r="2.7" fill="none" stroke="currentColor" stroke-width="1.3"/><path fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" d="M2.8 13.8a5.2 5.2 0 0 1 10.4 0"/></symbol>
+    <symbol id="i-chart" viewBox="0 0 16 16"><path fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" d="M2.5 13.5h11M4.5 11V8M8 11V4M11.5 11V6.5"/></symbol>
+    <symbol id="i-coin" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="1.3"/><path fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" d="M10 5.8C9.6 5.2 8.9 5 8 5c-1.2 0-2 .6-2 1.5 0 2 4 1 4 3 0 .9-.8 1.5-2 1.5-.9 0-1.7-.3-2.1-.9M8 3.8V5M8 11v1.2"/></symbol>
+    <symbol id="i-calendar" viewBox="0 0 16 16"><rect x="2" y="3" width="12" height="11" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.3"/><path stroke="currentColor" stroke-width="1.3" stroke-linecap="round" d="M2 6.5h12M5.5 1.8v2.4M10.5 1.8v2.4"/></symbol>
+    <symbol id="i-grip" viewBox="0 0 16 16"><g fill="currentColor"><circle cx="6" cy="4" r="1"/><circle cx="10" cy="4" r="1"/><circle cx="6" cy="8" r="1"/><circle cx="10" cy="8" r="1"/><circle cx="6" cy="12" r="1"/><circle cx="10" cy="12" r="1"/></g></symbol>
+    <symbol id="i-bell" viewBox="0 0 16 16"><path fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round" d="M4 11.5V7a4 4 0 0 1 8 0v4.5l1.2 1.2H2.8ZM6.5 14a1.6 1.6 0 0 0 3 0"/></symbol>
+    <symbol id="i-sync" viewBox="0 0 16 16"><path fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" d="M2.5 7a5.5 5.5 0 0 1 9.8-2.4M13.5 9a5.5 5.5 0 0 1-9.8 2.4M12.6 2.2v2.6H10M3.4 13.8v-2.6H6"/></symbol>
+    <symbol id="i-globe" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="1.3"/><path fill="none" stroke="currentColor" stroke-width="1.3" d="M2 8h12M8 2c1.8 1.8 2.6 3.8 2.6 6S9.8 12.2 8 14C6.2 12.2 5.4 10.2 5.4 8S6.2 3.8 8 2Z"/></symbol>
+    <symbol id="i-heart" viewBox="0 0 16 16"><path fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round" d="M8 13.5S2 10 2 6a3 3 0 0 1 6-.8A3 3 0 0 1 14 6c0 4-6 7.5-6 7.5Z"/></symbol>
+    <symbol id="i-power" viewBox="0 0 16 16"><path fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" d="M8 2v6M4.6 4.2a5 5 0 1 0 6.8 0"/></symbol>
+    <symbol id="i-taskbar" viewBox="0 0 16 16"><rect x="1.5" y="2.5" width="13" height="11" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.3"/><path stroke="currentColor" stroke-width="1.3" d="M1.5 10.5h13"/><path stroke="currentColor" stroke-width="1.6" stroke-linecap="round" d="M10 12h3"/></symbol>
+    <symbol id="i-min" viewBox="0 0 10 10"><path d="M1 5h8" stroke="currentColor" stroke-width="1"/></symbol>
+    <symbol id="i-max" viewBox="0 0 10 10"><rect x="1" y="1" width="8" height="8" rx="1" fill="none" stroke="currentColor" stroke-width="1"/></symbol>
+    <symbol id="i-close" viewBox="0 0 10 10"><path d="m1 1 8 8M9 1 1 9" stroke="currentColor" stroke-width="1"/></symbol>
+  </defs>
+</svg>
+
+<div class="page">
+  <aside class="index">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">秤</span>
+      <div>
+        <div class="brand-name">Hakari</div>
+        <div class="brand-sub">Design handoff · v0.1</div>
+      </div>
+    </div>
+    <div class="theme-switch" role="group" aria-label="Page theme">
+      <button type="button" data-theme-choice="system" aria-pressed="true">System</button>
+      <button type="button" data-theme-choice="light" aria-pressed="false">Light</button>
+      <button type="button" data-theme-choice="dark" aria-pressed="false">Dark</button>
+    </div>
+    <span class="switch-label">Animations</span>
+    <div class="motion-switch" role="group" aria-label="Animations">
+      <button type="button" data-motion-choice="full" aria-pressed="true">Full</button>
+      <button type="button" data-motion-choice="reduced" aria-pressed="false">Reduced</button>
+      <button type="button" data-motion-choice="off" aria-pressed="false">Off</button>
+    </div>
+    <nav aria-label="Sections">
+      <span class="group">Foundations</span>
+      <a href="#color">Color</a>
+      <a href="#type">Typography</a>
+      <a href="#space">Space &amp; shape</a>
+      <a href="#data">Data formatting</a>
+      <a href="#motion">Motion</a>
+      <a href="#controls">Controls</a>
+      <span class="group">Taskbar</span>
+      <a href="#anatomy">Widget anatomy</a>
+      <a href="#templates">Layout templates</a>
+      <a href="#states">States</a>
+      <a href="#placement">Placement</a>
+      <a href="#fallback">Tooltip &amp; tray fallback</a>
+      <span class="group">Surfaces</span>
+      <a href="#flyout">Flyout</a>
+      <a href="#dashboard">Dashboard</a>
+      <a href="#settings">Settings</a>
+      <a href="#toasts">Notifications</a>
+      <a href="#onboarding">First run</a>
+      <span class="group">Build</span>
+      <a href="#components">Component map</a>
+      <a href="#metrics">Metric catalog</a>
+      <a href="#a11y">Accessibility &amp; motion</a>
+    </nav>
+  </aside>
+
+  <main>
+    <header class="hero">
+      <span class="eyebrow">UI preview + design system</span>
+      <h1>Hakari, a quiet meter for Claude Code usage on the Windows taskbar</h1>
+      <p>Every surface the app ships with, drawn at 1:1 Windows 11 scale: the taskbar widget in all
+        templates and states, the flyout, the dashboard, settings, notifications and first run.
+        Every name, address, path and number on this page is made-up sample data.</p>
+      <div class="meta-row">
+        <span class="chip">Target <b>WinUI 3 · Windows App SDK</b></span>
+        <span class="chip">Scale <b>100% · 48px taskbar</b></span>
+        <span class="chip">Themes <b>Light · Dark · follows Windows</b></span>
+        <span class="chip">Locale <b>EN · ไทย</b></span>
+      </div>
+    </header>
+
+    <!-- ============ COLOR ============ -->
+    <section class="block" id="color">
+      <div class="block-head">
+        <span class="eyebrow">Foundations</span>
+        <h2>Color</h2>
+        <p>One brand hue, ai-iro (藍色, indigo dye), on cool neutrals. Status colors are reserved for
+          limits and alerts and never used as decoration. In the app, the accent can follow the Windows
+          accent color (setting) and falls back to ai-iro.</p>
+      </div>
+      <div class="sheet">
+        <div class="sub-head"><h3>Surface &amp; ink</h3><p>Swatches show the active page theme. Use the switch in the sidebar to compare.</p></div>
+        <div class="swatches" id="swatches-neutral"></div>
+        <div class="sub-head"><h3>Accent &amp; status</h3><p>Status maps to limit usage: normal below 80%, warning from 80%, critical from 95% (thresholds are user settings).</p></div>
+        <div class="swatches" id="swatches-status"></div>
+        <div class="sub-head"><h3>Data</h3><p>Chart series in fixed order: output, cache write 1h, cache write 5m, cache read, input. Heatmap uses a 5-step ramp of the accent.</p></div>
+        <div class="swatches" id="swatches-data"></div>
+        <p class="note">Taskbar text sits on the Windows taskbar, not on Hakari surfaces, so the widget uses its own fixed pair of palettes (taskbar light / dark) chosen by the Windows "app mode" and "Windows mode" settings, independent of the dashboard theme.</p>
+      </div>
+    </section>
+
+    <!-- ============ TYPE ============ -->
+    <section class="block" id="type">
+      <div class="block-head">
+        <span class="eyebrow">Foundations</span>
+        <h2>Typography</h2>
+        <p>Segoe UI Variable for everything the user reads, Cascadia Mono for format strings and model
+          ids. All numbers use tabular figures so digits don't jitter as they tick. The brand mark 秤 is
+          set in a mincho face and used only as the logo.</p>
+      </div>
+      <div class="sheet type-scale">
+        <div class="type-row"><span class="type-label">Display · 28/36 · 600</span><span style="font: 600 28px/36px var(--font-display)">$8,412.90 all time</span></div>
+        <div class="type-row"><span class="type-label">Title · 20/28 · 600</span><span style="font: 600 20px/28px var(--font-display)">Accounts &amp; sources</span></div>
+        <div class="type-row"><span class="type-label">Subtitle · 16/22 · 600</span><span style="font: 600 16px/22px var(--font-ui)">Usage limits</span></div>
+        <div class="type-row"><span class="type-label">Body · 14/20 · 400</span><span style="font: 400 14px/20px var(--font-ui)">Windows source is live. WSL Ubuntu-24.04 is running and indexed 4 seconds ago.</span></div>
+        <div class="type-row"><span class="type-label">Caption · 12/16 · 400</span><span style="font: 400 12px/16px var(--font-ui); color: var(--ink-muted)">Resets in 1 h 48 min · 14:30</span></div>
+        <div class="type-row"><span class="type-label">Taskbar primary · 13/16 · 600</span><span style="font: 600 13px/16px var(--font-ui)">$142.18 today</span></div>
+        <div class="type-row"><span class="type-label">Taskbar secondary · 11/14 · 400</span><span style="font: 400 11px/14px var(--font-ui)">5h 62% · ↺ 1:48</span></div>
+        <div class="type-row"><span class="type-label">Mono · 12.5/18 · 400</span><span class="mono">{cost.today:$0.00} · {limit.5h:0%}</span></div>
+        <div class="type-row"><span class="type-label">Brand · mincho 800</span><span style="font: 800 40px/1 var(--font-brand); color: var(--accent)">秤 <span style="font: 600 20px var(--font-display); color: var(--ink)">Hakari</span></span></div>
+      </div>
+    </section>
+
+    <!-- ============ SPACE ============ -->
+    <section class="block" id="space">
+      <div class="block-head">
+        <span class="eyebrow">Foundations</span>
+        <h2>Space &amp; shape</h2>
+        <p>4px base grid. Corners follow Windows 11: 4px on controls, 8px on overlays and windows.
+          Elevation is used only on surfaces that float above the desktop (flyout, toasts, windows).</p>
+      </div>
+      <div class="sheet">
+        <div class="space-row" id="space-scale"></div>
+        <div class="shape-row">
+          <div class="shape" style="border-radius: var(--radius-control)">Control · 4px</div>
+          <div class="shape" style="border-radius: var(--radius-overlay)">Overlay · 8px</div>
+          <div class="shape" style="border-radius: 999px; width: 140px">Pill · badges</div>
+          <div class="shape" style="border-radius: var(--radius-overlay); box-shadow: var(--shadow-flyout); background: var(--surface-raised)">Flyout shadow</div>
+        </div>
+        <div class="grid-3">
+          <p class="note"><b>Widget height</b> 40px hit area inside the 48px taskbar. Side padding 10px. Gap between slots 10px.</p>
+          <p class="note"><b>Flyout</b> 360px wide, 16px padding, opens 12px above the taskbar, right-aligned with the widget.</p>
+          <p class="note"><b>Dashboard</b> min 960×640, nav pane 200px (compact 48px under 1000px), content padding 24px.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ DATA FORMATTING ============ -->
+    <section class="block" id="data">
+      <div class="block-head">
+        <span class="eyebrow">Foundations</span>
+        <h2>Data formatting</h2>
+        <p>The same number always reads the same way everywhere. Costs are API-equivalent dollars
+          (or the chosen currency), computed from token counts and the price table.</p>
+      </div>
+      <div class="sheet">
+        <div class="table-wrap">
+          <table class="spec-table">
+            <thead><tr><th>Kind</th><th>Rule</th><th>Taskbar</th><th>Flyout / dashboard</th></tr></thead>
+            <tbody>
+              <tr><td>Money</td><td>2 decimals under $1,000, none above on the taskbar. Currency symbol from settings.</td><td>$142.18 · $3.3k · ฿5,140</td><td>$2,333.92 · ฿119,840.00</td></tr>
+              <tr><td>Tokens</td><td>Compact on small surfaces (k, M, B with one decimal), full with separators in tables.</td><td>3.1B</td><td>3,104,552,018</td></tr>
+              <tr><td>Percent</td><td>Whole numbers. Never show more than 100%; past the limit show "Limit".</td><td>62%</td><td>62% of 5-hour limit</td></tr>
+              <tr><td>Reset time</td><td>Countdown under 24 h (h:mm), weekday + time beyond.</td><td>↺ 1:48</td><td>Resets in 1 h 48 min · 14:30</td></tr>
+              <tr><td>Rate</td><td>Per hour for money, per minute for tokens.</td><td>$18.6/h</td><td>$18.60 per hour · 412k tokens/min</td></tr>
+              <tr><td>Estimate</td><td>Prefix ≈ when a value is estimated from logs rather than read from the account.</td><td>≈ 58%</td><td>≈ 58% (estimated from logs)</td></tr>
+              <tr><td>Stale</td><td>Value older than 10 min keeps showing, dimmed, with a dot.</td><td>· $142</td><td>Updated 14 min ago</td></tr>
+              <tr><td>Thai locale</td><td>Thai digits off; dates in Buddhist calendar optional.</td><td>วันนี้ $142.18</td><td>รีเซ็ตใน 1 ชม. 48 นาที</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ MOTION ============ -->
+    <section class="block" id="motion">
+      <div class="block-head">
+        <span class="eyebrow">Foundations</span>
+        <h2>Motion</h2>
+        <p>Every surface animates, always with the same small vocabulary: things rise into place,
+          values fill from zero, numbers tick, colors cross-fade. The Animations setting (Full,
+          Reduced, Off) scales all of it from one place. Try the switch in the sidebar; every demo on
+          this page follows it.</p>
+      </div>
+      <div class="sheet">
+        <div class="sub-head"><h3>Primitives</h3><p>Each card replays its animation when clicked.</p></div>
+        <div class="motion-demo" id="motion-demo">
+          <button type="button" class="motion-card" data-demo="rise"><div class="motion-stage"><span class="badge m-rise m-transform">Rise</span></div><b>Rise</b><span>12px · 320ms · decelerate</span></button>
+          <button type="button" class="motion-card" data-demo="fill"><div class="motion-stage"><div class="meter" style="width: 70%"><i style="width: 64%"></i></div></div><b>Fill</b><span>scaleX · 480ms · decelerate</span></button>
+          <button type="button" class="motion-card" data-demo="sweep"><div class="motion-stage"><svg width="44" height="44" viewBox="0 0 26 26" style="color: var(--accent)" id="demo-ring"></svg></div><b>Sweep</b><span>stroke · 480ms · decelerate</span></button>
+          <button type="button" class="motion-card" data-demo="draw"><div class="motion-stage"><svg width="120" height="34" viewBox="0 0 56 22" style="color: var(--accent)"><polyline id="demo-spark" class="spark-line m-transform" pathLength="1" fill="none" stroke="currentColor" stroke-width="1.6" points=""/></svg></div><b>Draw</b><span>path · 480ms · standard</span></button>
+          <button type="button" class="motion-card" data-demo="tick"><div class="motion-stage"><b style="font-size: 22px" id="demo-tick">$142.18</b></div><b>Tick</b><span>value · 200ms · decelerate</span></button>
+          <button type="button" class="motion-card" data-demo="tone"><div class="motion-stage"><b style="font-size: 20px; transition: color var(--duration-slow) var(--ease-standard)" id="demo-tone">62%</b></div><b>Tone change</b><span>color · 320ms · standard</span></button>
+          <button type="button" class="motion-card" data-demo="pulse"><div class="motion-stage"><span class="badge critical" id="demo-pulse">LIMIT</span></div><b>Pulse once</b><span>scale 1.14 · 480ms · spring</span></button>
+          <button type="button" class="motion-card" data-demo="slide"><div class="motion-stage"><span class="badge m-slide m-transform">Toast</span></div><b>Slide in</b><span>24px · 320ms · decelerate</span></button>
+        </div>
+
+        <div class="sub-head"><h3>Tokens</h3></div>
+        <div class="table-wrap">
+          <table class="spec-table">
+            <thead><tr><th>Token</th><th>Full</th><th>Reduced</th><th>Use</th></tr></thead>
+            <tbody>
+              <tr><td><code>duration.instant</code></td><td>80 ms</td><td>80 ms</td><td>Button press scale</td></tr>
+              <tr><td><code>duration.fast</code></td><td>120 ms</td><td>120 ms</td><td>Hover fills, cross-fades of cycling views</td></tr>
+              <tr><td><code>duration.normal</code></td><td>200 ms</td><td>200 ms</td><td>Value ticks, segmented pill, toggle thumb</td></tr>
+              <tr><td><code>duration.slow</code></td><td>320 ms</td><td>150 ms</td><td>Flyout and page entrance, tone changes</td></tr>
+              <tr><td><code>duration.emphasis</code></td><td>480 ms</td><td>150 ms</td><td>Meter fills, ring sweeps, chart growth</td></tr>
+              <tr><td><code>distance.move</code></td><td>12 px</td><td>0 px</td><td>Rise and slide offsets</td></tr>
+              <tr><td><code>stagger</code></td><td>30 ms / item</td><td>0</td><td>Lists, cards, flyout rows (max 8 items, then together)</td></tr>
+              <tr><td><code>ease.decelerate</code></td><td colspan="2"><code>cubic-bezier(0, 0, 0, 1)</code></td><td>Things arriving</td></tr>
+              <tr><td><code>ease.accelerate</code></td><td colspan="2"><code>cubic-bezier(.3, 0, 1, 1)</code></td><td>Things leaving</td></tr>
+              <tr><td><code>ease.standard</code></td><td colspan="2"><code>cubic-bezier(.2, 0, 0, 1)</code></td><td>Color and in-place changes</td></tr>
+              <tr><td><code>ease.spring</code></td><td colspan="2"><code>cubic-bezier(.34, 1.56, .64, 1)</code></td><td>Toggle thumb, nav indicator, limit pulse</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="sub-head"><h3>Where it's used</h3></div>
+        <div class="table-wrap">
+          <table class="spec-table">
+            <thead><tr><th>Element</th><th>Trigger</th><th>Full</th><th>Reduced</th><th>Off</th></tr></thead>
+            <tbody>
+              <tr><td>Widget value</td><td>New value arrives</td><td>Tick up from below, 200 ms</td><td>Cross-fade</td><td>Swap</td></tr>
+              <tr><td>Widget tone</td><td>Threshold crossed</td><td>Color cross-fade 320 ms, ring pulses once at critical</td><td>Color cross-fade</td><td>Swap</td></tr>
+              <tr><td>Widget ring / bar</td><td>Value change</td><td>Arc and bar ease to the new length</td><td>Fade</td><td>Swap</td></tr>
+              <tr><td>Cycling views</td><td>Timer or mouse wheel</td><td>Old view rises out, new rises in, 120 ms</td><td>Cross-fade</td><td>Swap</td></tr>
+              <tr><td>Flyout</td><td>Open / close</td><td>Rise 12px + fade, rows staggered 30 ms, meters fill</td><td>Fade</td><td>Appear</td></tr>
+              <tr><td>Dashboard page</td><td>Navigation</td><td>Content rises in, cards staggered, charts grow from baseline</td><td>Fade</td><td>Appear</td></tr>
+              <tr><td>Nav indicator</td><td>Selection</td><td>Slides to the new item with spring</td><td>Jump</td><td>Jump</td></tr>
+              <tr><td>Toggle, segmented, buttons</td><td>Press</td><td>Spring thumb, sliding pill, press scale + ripple</td><td>Color only</td><td>Instant</td></tr>
+              <tr><td>Toasts</td><td>Shown</td><td>System slide-in (Windows owns this)</td><td>System</td><td>System</td></tr>
+              <tr><td>Loading</td><td>Indexing, skeletons</td><td>Shimmer loop</td><td>Static</td><td>Static</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="grid-3">
+          <p class="note"><b>Default</b> follows Windows: if "Animation effects" is off, Hakari starts in Reduced. Battery saver switches to Reduced automatically (setting).</p>
+          <p class="note"><b>Cheap by design</b> Only opacity and transform are animated, on the composition thread. Nothing animates while a window is hidden or minimized.</p>
+          <p class="note"><b>Taskbar budget</b> At most one animation per value change on the widget, never a continuous loop except while indexing, and none when Off.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ CONTROLS ============ -->
+    <section class="block" id="controls">
+      <div class="block-head">
+        <span class="eyebrow">Foundations</span>
+        <h2>Controls</h2>
+        <p>Every control is restyled in one theme dictionary (<code>Hakari.Theme.xaml</code>), so no
+          default WinUI look leaks through. Each control shows its states side by side.</p>
+      </div>
+      <div class="sheet control-gallery">
+        <div class="control-row"><span>Button · primary</span><div class="control-set">
+          <span class="state-label"><button class="btn primary" type="button">Open dashboard</button>Rest</span>
+          <span class="state-label"><button class="btn primary is-hover" type="button">Open dashboard</button>Hover</span>
+          <span class="state-label"><button class="btn primary is-pressed" type="button">Open dashboard</button>Pressed</span>
+          <span class="state-label"><button class="btn primary" type="button" disabled>Open dashboard</button>Disabled</span>
+        </div></div>
+        <div class="control-row"><span>Button · standard / subtle</span><div class="control-set">
+          <span class="state-label"><button class="btn" type="button">Check now</button>Rest</span>
+          <span class="state-label"><button class="btn is-hover" type="button">Check now</button>Hover</span>
+          <span class="state-label"><button class="btn subtle" type="button">Customize later</button>Subtle</span>
+          <span class="state-label"><button class="btn icon" type="button" aria-label="Refresh"><svg><use href="#i-refresh"/></svg></button>Icon</span>
+        </div></div>
+        <div class="control-row"><span>Toggle</span><div class="control-set">
+          <span class="state-label"><button class="toggle" type="button" role="switch" aria-checked="false" aria-label="Off sample"></button>Off</span>
+          <span class="state-label"><button class="toggle" type="button" role="switch" aria-checked="true" aria-label="On sample"></button>On</span>
+          <span class="state-label"><button class="toggle" type="button" role="switch" aria-checked="true" aria-label="Disabled sample" disabled style="opacity: .45"></button>Disabled</span>
+        </div></div>
+        <div class="control-row"><span>Segmented</span><div class="control-set">
+          <div class="segmented" role="group" aria-label="Sample periods"><button type="button" aria-pressed="false">Today</button><button type="button" aria-pressed="true">30 days</button><button type="button" aria-pressed="false">All time</button></div>
+        </div></div>
+        <div class="control-row"><span>Text field</span><div class="control-set" style="max-width: 640px">
+          <span class="state-label" style="flex: 1 1 180px"><input class="input is-rest" id="sample-rest" value="Work" aria-label="Rest sample">Rest</span>
+          <span class="state-label" style="flex: 1 1 180px"><input class="input" id="sample-focus" value="Work" aria-label="Focused sample">Focused</span>
+          <span class="state-label" style="flex: 1 1 180px"><input class="input is-error" id="sample-error" value="{cost.todday}" aria-label="Error sample"><span class="field-error">Unknown metric "cost.todday"</span></span>
+        </div></div>
+        <div class="control-row"><span>Select · slider</span><div class="control-set">
+          <span class="select">Running only</span>
+          <div class="slider" aria-hidden="true"><div class="slider-track"><i style="width: 80%"></i><span class="slider-thumb" style="left: 80%"></span></div><div class="slider-labels"><span>50%</span><span>80%</span><span>100%</span></div></div>
+        </div></div>
+        <div class="control-row"><span>Badges</span><div class="control-set">
+          <span class="badge">Limits on</span><span class="badge ok">Live</span><span class="badge warn">High</span><span class="badge critical">Limit</span><span class="badge neutral">Estimate</span>
+        </div></div>
+        <div class="control-row"><span>Meters</span><div class="control-set" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); width: 100%">
+          <span class="state-label" style="justify-items: stretch"><div class="meter"><i style="width: 62%"></i></div>Normal 62%</span>
+          <span class="state-label" style="justify-items: stretch"><div class="meter"><i class="warn" style="width: 87%"></i></div>Warning 87%</span>
+          <span class="state-label" style="justify-items: stretch"><div class="meter"><i class="critical" style="width: 97%"></i></div>Critical 97%</span>
+          <span class="state-label" style="justify-items: stretch"><div class="meter"><i style="width: 58%; opacity: .55"></i></div>Estimate ≈ 58%</span>
+        </div></div>
+        <div class="control-row"><span>Info bars</span><div class="control-set" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); width: 100%">
+          <div class="infobar info"><svg><use href="#i-info"/></svg><div><b>Information</b>Neutral guidance.</div></div>
+          <div class="infobar ok"><svg><use href="#i-check"/></svg><div><b>Success</b>Prices updated.</div></div>
+          <div class="infobar warn"><svg><use href="#i-warn"/></svg><div><b>Warning</b>WSL isn't running.</div></div>
+          <div class="infobar critical"><svg><use href="#i-warn"/></svg><div><b>Error</b>Limit reached.</div></div>
+        </div></div>
+        <div class="control-row"><span>Loading</span><div class="control-set" style="width: 100%">
+          <div class="skeleton shimmer m-loop" style="width: 120px; height: 16px"></div>
+          <div class="skeleton shimmer m-loop" style="width: 80px; height: 16px"></div>
+          <div class="progress-indeterminate" style="width: 160px"><i class="shimmer m-loop"></i></div>
+        </div></div>
+      </div>
+    </section>
+
+    <!-- ============ ANATOMY ============ -->
+    <section class="block" id="anatomy">
+      <div class="block-head">
+        <span class="eyebrow">Taskbar widget</span>
+        <h2>Anatomy</h2>
+        <p>Windows 11 has no deskband API, so the widget is a borderless, non-activating window
+          positioned over free taskbar space, left of the notification area by default (the red box in
+          the request screenshot).</p>
+      </div>
+      <div class="sheet">
+        <div class="desktop">
+          <div class="desktop-area"></div>
+          <div class="taskbar light" id="hero-taskbar"></div>
+        </div>
+        <div class="desktop">
+          <div class="desktop-area" style="height: 24px"></div>
+          <div class="taskbar dark" id="hero-taskbar-dark"></div>
+        </div>
+        <div class="sub-head"><h3>Live</h3><p>The sample below receives a new value every 2.5 seconds and walks through normal, warning and critical, so the tick, tone change, ring ease and pulse can be judged at real size. It stops while this tab is hidden, as the app does.</p></div>
+        <div class="strip-pair" id="live-demo"></div>
+        <div class="callouts">
+          <div class="callout"><span class="callout-key">1</span><div><b>Slot</b><span>One metric rendered as text, bar, ring or sparkline. 1–4 slots per layout.</span></div></div>
+          <div class="callout"><span class="callout-key">2</span><div><b>Two-line stack</b><span>Primary 13px semibold over secondary 11px. Fits 40px without clipping at 100–150% scale.</span></div></div>
+          <div class="callout"><span class="callout-key">3</span><div><b>Status tone</b><span>Text and bar take the warning or critical tone only for the metric that crossed a threshold.</span></div></div>
+          <div class="callout"><span class="callout-key">4</span><div><b>Hit area</b><span>40px tall, hover fill 5% (light) / 7% (dark). Click opens the flyout, right-click the menu, wheel cycles views.</span></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ TEMPLATES ============ -->
+    <section class="block" id="templates">
+      <div class="block-head">
+        <span class="eyebrow">Taskbar widget</span>
+        <h2>Layout templates</h2>
+        <p>Seven starting layouts. Every slot is editable in Settings → Taskbar, and power users can
+          replace any template with a format string. Each template is shown on a light and a dark
+          taskbar.</p>
+      </div>
+      <div class="sheet template-list" id="template-list"></div>
+    </section>
+
+    <!-- ============ STATES ============ -->
+    <section class="block" id="states">
+      <div class="block-head">
+        <span class="eyebrow">Taskbar widget</span>
+        <h2>States</h2>
+        <p>The widget never hides. When it can't show a live value it says why in as few characters as
+          possible, and the tooltip gives the full reason.</p>
+      </div>
+      <div class="sheet template-list" id="state-list"></div>
+    </section>
+
+    <!-- ============ PLACEMENT ============ -->
+    <section class="block" id="placement">
+      <div class="block-head">
+        <span class="eyebrow">Taskbar widget</span>
+        <h2>Placement</h2>
+        <p>Choose the monitor (or all), and left or right of the notification area. The widget
+          re-measures when the taskbar moves, the DPI changes, Explorer restarts or apps are pinned.</p>
+      </div>
+      <div class="sheet">
+        <div class="monitors">
+          <div class="monitor">
+            <div class="monitor-label">Display 1 · primary · <b>left of tray</b> (default)</div>
+            <div class="monitor-bar"><span class="slot apps"></span><span class="slot hakari"></span><span class="slot tray"></span></div>
+          </div>
+          <div class="monitor">
+            <div class="monitor-label">Display 2 · secondary taskbar · <b>mirrored</b> (optional)</div>
+            <div class="monitor-bar"><span class="slot apps"></span><span class="slot hakari ghost"></span><span class="slot tray" style="width: 9%"></span></div>
+          </div>
+        </div>
+        <div class="grid-3">
+          <p class="note"><b>Centered icons</b> If pinned apps grow into the widget's space, the widget switches to its compact template instead of overlapping.</p>
+          <p class="note"><b>Auto-hide taskbar</b> Widget hides and shows with the taskbar. Full-screen apps hide it.</p>
+          <p class="note"><b>Fallback</b> If the overlay can't attach (unsupported shell), Hakari shows the tray icon with digits instead and says so once.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ TOOLTIP & FALLBACK ============ -->
+    <section class="block" id="fallback">
+      <div class="block-head">
+        <span class="eyebrow">Taskbar widget</span>
+        <h2>Tooltip, context menu &amp; tray fallback</h2>
+      </div>
+      <div class="sheet">
+        <div class="grid-3">
+          <div class="flyout-col">
+            <span class="spec">Tooltip · 320px max · 600 ms delay</span>
+            <div class="toast" style="box-shadow: var(--shadow-flyout); max-width: 300px">
+              <div class="toast-title">Work · Team</div>
+              <div class="toast-body" style="display: grid; gap: 2px">
+                <span>5-hour limit 62% · resets 14:30</span>
+                <span>Weekly limit 41% · resets Mon 09:00</span>
+                <span>Today $142.18 · this month $2,333.92</span>
+                <span>Burn $18.60/h · 2 active sessions</span>
+                <span style="color: var(--ink-faint)">Updated 4 s ago · scroll to switch account</span>
+              </div>
+            </div>
+          </div>
+          <div class="flyout-col">
+            <span class="spec">Context menu · right-click</span>
+            <div class="toast" style="max-width: 240px; padding: 4px; gap: 0" role="menu" aria-label="Widget menu">
+              <div class="setting-row" style="grid-template-columns: 20px 1fr; padding: 6px 10px; border: 0"><svg><use href="#i-open"/></svg><span>Open dashboard</span></div>
+              <div class="setting-row" style="grid-template-columns: 20px 1fr; padding: 6px 10px; border: 0"><svg><use href="#i-refresh"/></svg><span>Refresh now</span></div>
+              <div class="setting-row" style="grid-template-columns: 20px 1fr; padding: 6px 10px; border: 0"><svg><use href="#i-taskbar"/></svg><span>Change layout…</span></div>
+              <div class="setting-row" style="grid-template-columns: 20px 1fr; padding: 6px 10px; border: 0"><svg><use href="#i-pause"/></svg><span>Pause for 1 hour</span></div>
+              <div style="height: 1px; background: var(--line); margin: 4px 6px"></div>
+              <div class="setting-row" style="grid-template-columns: 20px 1fr; padding: 6px 10px; border: 0"><svg><use href="#i-gear"/></svg><span>Settings</span></div>
+              <div class="setting-row" style="grid-template-columns: 20px 1fr; padding: 6px 10px; border: 0"><svg><use href="#i-power"/></svg><span>Quit Hakari</span></div>
+            </div>
+          </div>
+          <div class="flyout-col">
+            <span class="spec">Tray fallback · 16×16 @100%, 32×32 @200%</span>
+            <div class="strip dark" style="justify-content: flex-start; gap: 14px; padding-inline: 14px">
+              <svg width="32" height="32" viewBox="0 0 16 16" aria-label="Tray icon at 62 percent">
+                <rect x=".5" y=".5" width="15" height="15" rx="3" fill="#2f4c8c"/>
+                <text x="8" y="11.3" text-anchor="middle" font-size="8.5" font-weight="700" fill="#fff" font-family="Segoe UI, sans-serif">62</text>
+              </svg>
+              <svg width="32" height="32" viewBox="0 0 16 16" aria-label="Tray icon at 91 percent">
+                <rect x=".5" y=".5" width="15" height="15" rx="3" fill="#c98200"/>
+                <text x="8" y="11.3" text-anchor="middle" font-size="8.5" font-weight="700" fill="#1a1205" font-family="Segoe UI, sans-serif">91</text>
+              </svg>
+              <svg width="32" height="32" viewBox="0 0 16 16" aria-label="Tray icon when the limit is reached">
+                <rect x=".5" y=".5" width="15" height="15" rx="3" fill="#c0322b"/>
+                <path d="M4.5 8h7" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+              <svg width="32" height="32" viewBox="0 0 16 16" aria-label="Tray icon showing today's cost">
+                <rect x=".5" y=".5" width="15" height="15" rx="3" fill="none" stroke="#9fb6ee"/>
+                <text x="8" y="7.2" text-anchor="middle" font-size="4.6" font-weight="600" fill="#9fb6ee" font-family="Segoe UI, sans-serif">USD</text>
+                <text x="8" y="12.6" text-anchor="middle" font-size="5.6" font-weight="700" fill="#e9eefb" font-family="Segoe UI, sans-serif" textLength="10" lengthAdjust="spacingAndGlyphs">142</text>
+              </svg>
+            </div>
+            <p class="note">Glyphs keep a 2px inset from the icon edge at every size. Two digits fit at 16px; three digits drop the symbol and stack a unit label; anything longer falls back to the % metric.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ FLYOUT ============ -->
+    <section class="block" id="flyout">
+      <div class="block-head">
+        <button class="btn replay" type="button" data-replay="#flyout"><svg><use href="#i-refresh"/></svg>Replay animations</button>
+        <span class="eyebrow">Surfaces</span>
+        <h2>Flyout</h2>
+        <p>Opens on click, like Quick Settings. Summary first: limits, then money, then speed, then
+          where the numbers come from. Closes on Esc, focus loss, or a second click on the widget.</p>
+      </div>
+      <div class="flyout-row">
+        <div class="flyout-col">
+          <span class="spec">Default · all accounts</span>
+          <div class="flyout" id="flyout-main">
+            <div class="flyout-body">
+              <div class="flyout-head">
+                <div class="flyout-title"><span class="brand-mark" aria-hidden="true">秤</span>Hakari</div>
+                <span class="updated">Updated 4 s ago</span>
+              </div>
+              <div class="segmented" role="group" aria-label="Account">
+                <button type="button" aria-pressed="true">All</button>
+                <button type="button" aria-pressed="false">Work</button>
+                <button type="button" aria-pressed="false">Personal</button>
+              </div>
+              <div class="limit">
+                <div class="limit-top"><span class="limit-name">5-hour limit · Work</span><span class="limit-value">62%</span></div>
+                <div class="meter"><i style="width: 62%"></i></div>
+                <div class="limit-top"><span class="limit-reset">Resets in 1 h 48 min · 14:30</span><span class="limit-reset">≈ 86% at reset</span></div>
+              </div>
+              <div class="limit">
+                <div class="limit-top"><span class="limit-name">Weekly limit · Work</span><span class="limit-value">41%</span></div>
+                <div class="meter with-marker"><i style="width: 41%"></i><span class="meter-marker" style="left: 57%" title="Where an even pace would be"></span></div>
+                <div class="limit-top"><span class="limit-reset">Resets Mon 09:00</span><span class="limit-reset">Even pace 57%</span></div>
+              </div>
+              <div class="stat-grid">
+                <div class="stat"><span class="stat-label">Today</span><span class="stat-value">$142.18</span><span class="stat-delta">+$31 vs avg</span></div>
+                <div class="stat"><span class="stat-label">This week</span><span class="stat-value">$812</span><span class="stat-delta">Mon–Wed</span></div>
+                <div class="stat"><span class="stat-label">This month</span><span class="stat-value">$2,334</span><span class="stat-delta">≈ $9.9k by 31st</span></div>
+              </div>
+              <div class="burn">
+                <span>Burn rate</span>
+                <svg class="w-spark" viewBox="0 0 56 22" aria-hidden="true" style="width: 120px; color: var(--accent)"><polyline id="flyout-spark" fill="none" stroke="currentColor" stroke-width="1.5" points=""/></svg>
+                <b>$18.60/h</b>
+              </div>
+              <div class="sources">
+                <div class="source-row"><span class="dot"></span><span>Windows · .claude</span><span class="muted">live · $6,035</span></div>
+                <div class="source-row"><span class="dot"></span><span>WSL Ubuntu-24.04</span><span class="muted">running · $2,378</span></div>
+                <div class="source-row"><span class="dot idle"></span><span>MacBook (shared folder)</span><span class="muted">synced 2 h ago</span></div>
+              </div>
+            </div>
+            <div class="flyout-foot">
+              <button class="btn primary" type="button"><svg><use href="#i-open"/></svg>Open dashboard</button>
+              <span class="grow"></span>
+              <button class="btn subtle icon" type="button" aria-label="Pause"><svg><use href="#i-pause"/></svg></button>
+              <button class="btn subtle icon" type="button" aria-label="Settings"><svg><use href="#i-gear"/></svg></button>
+            </div>
+          </div>
+        </div>
+
+        <div class="flyout-col">
+          <span class="spec">Limits not turned on for this account</span>
+          <div class="flyout">
+            <div class="flyout-body">
+              <div class="flyout-head">
+                <div class="flyout-title"><span class="brand-mark" aria-hidden="true">秤</span>Hakari</div>
+                <span class="updated">Updated 4 s ago</span>
+              </div>
+              <div class="infobar info">
+                <svg><use href="#i-info"/></svg>
+                <div><b>Show usage limits for Work?</b>Hakari reads this account's sign-in token on this PC to ask for your 5-hour and weekly usage. It isn't copied or stored.
+                  <div class="actions"><button class="btn primary" type="button">Turn on</button><button class="btn" type="button">Use estimate</button></div>
+                </div>
+              </div>
+              <div class="limit">
+                <div class="limit-top"><span class="limit-name">5-hour window (estimate)</span><span class="limit-value">≈ 58%</span></div>
+                <div class="meter"><i style="width: 58%; opacity: .55"></i></div>
+              </div>
+              <div class="stat-grid">
+                <div class="stat"><span class="stat-label">Today</span><span class="stat-value">$142.18</span></div>
+                <div class="stat"><span class="stat-label">This week</span><span class="stat-value">$812</span></div>
+                <div class="stat"><span class="stat-label">This month</span><span class="stat-value">$2,334</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="flyout-col">
+          <span class="spec">First run · indexing in background</span>
+          <div class="flyout">
+            <div class="flyout-body">
+              <div class="flyout-head">
+                <div class="flyout-title"><span class="brand-mark" aria-hidden="true">秤</span>Hakari</div>
+                <span class="updated">Reading logs</span>
+              </div>
+              <div class="limit">
+                <div class="limit-top"><span class="limit-name">Indexing 908 log files</span><span class="limit-value">48%</span></div>
+                <div class="meter"><i style="width: 48%"></i></div>
+                <span class="limit-reset">0.9 GB of 1.8 GB · runs at low priority, your work comes first</span>
+              </div>
+              <div class="stat-grid">
+                <div class="stat"><span class="stat-label">Today</span><div class="skeleton" style="width: 70%; height: 16px"></div></div>
+                <div class="stat"><span class="stat-label">This week</span><div class="skeleton" style="width: 55%; height: 16px"></div></div>
+                <div class="stat"><span class="stat-label">This month</span><div class="skeleton" style="width: 60%; height: 16px"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="flyout-col">
+          <span class="spec">Warnings &amp; errors</span>
+          <div class="flyout">
+            <div class="flyout-body">
+              <div class="infobar critical">
+                <svg><use href="#i-warn"/></svg>
+                <div><b>5-hour limit reached on Work</b>New requests on this account wait until 14:30. Personal still has 82% left.</div>
+              </div>
+              <div class="infobar warn">
+                <svg><use href="#i-warn"/></svg>
+                <div><b>WSL Ubuntu-24.04 isn't running</b>Its usage will appear the next time you start it. Hakari doesn't start WSL on its own.</div>
+              </div>
+              <div class="infobar warn">
+                <svg><use href="#i-info"/></svg>
+                <div><b>1 model has no price yet</b>claude-next-preview is counted in tokens but not in cost. Update prices or set one in Settings.
+                  <div class="actions"><button class="btn" type="button">Update prices</button></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ DASHBOARD ============ -->
+    <section class="block" id="dashboard">
+      <div class="block-head">
+        <button class="btn replay" type="button" data-replay="#dashboard"><svg><use href="#i-refresh"/></svg>Replay animations</button>
+        <span class="eyebrow">Surfaces</span>
+        <h2>Dashboard</h2>
+        <p>A NavigationView window. Every page shares the same filter bar (period, account, source,
+          model) so a question asked on one page carries to the next. Click the nav items to see each
+          page.</p>
+      </div>
+      <div class="window">
+        <div class="titlebar">
+          <span class="brand-mark" aria-hidden="true">秤</span><span>Hakari</span>
+          <span class="grow"></span>
+          <div class="caption-buttons" aria-hidden="true">
+            <span><svg><use href="#i-min"/></svg></span><span><svg><use href="#i-max"/></svg></span><span><svg><use href="#i-close"/></svg></span>
+          </div>
+        </div>
+        <div class="window-body">
+          <nav class="navpane" aria-label="Dashboard pages" id="navpane">
+            <button type="button" data-view="overview" aria-current="page"><svg><use href="#i-home"/></svg>Overview</button>
+            <button type="button" data-view="sessions"><svg><use href="#i-list"/></svg>Sessions</button>
+            <button type="button" data-view="projects"><svg><use href="#i-folder"/></svg>Projects</button>
+            <button type="button" data-view="branches"><svg><use href="#i-branch"/></svg>Branches</button>
+            <button type="button" data-view="workflows"><svg><use href="#i-flow"/></svg>Workflows</button>
+            <span class="nav-sep"></span>
+            <button type="button" data-view="accounts"><svg><use href="#i-user"/></svg>Accounts &amp; sources</button>
+            <button type="button" data-view="charts"><svg><use href="#i-chart"/></svg>Charts</button>
+            <button type="button" data-view="roi"><svg><use href="#i-coin"/></svg>Plan value</button>
+            <span class="nav-sep"></span>
+            <button type="button" data-view="settings-link"><svg><use href="#i-gear"/></svg>Settings</button>
+          </nav>
+
+          <div class="content">
+            <div class="content-head">
+              <h3 id="view-title">Overview</h3>
+              <div class="filters">
+                <div class="segmented" role="group" aria-label="Period" id="period-switch">
+                  <button type="button" aria-pressed="false">Today</button>
+                  <button type="button" aria-pressed="false">7 days</button>
+                  <button type="button" aria-pressed="true">30 days</button>
+                  <button type="button" aria-pressed="false">All time</button>
+                </div>
+                <span class="select">All accounts</span>
+                <span class="select">All sources</span>
+                <button class="btn icon" type="button" aria-label="Refresh"><svg><use href="#i-refresh"/></svg></button>
+              </div>
+            </div>
+
+            <!-- Overview -->
+            <div class="view" data-view-panel="overview">
+              <div style="display: grid; gap: var(--space-4)">
+                <div class="kpis">
+                  <div class="kpi"><span class="kpi-label">Cost · 30 days</span><span class="kpi-value money">$2,333.92</span><span class="kpi-foot"><span class="up">▲ 12%</span> vs previous 30 days</span></div>
+                  <div class="kpi"><span class="kpi-label">Responses</span><span class="kpi-value">28,905</span><span class="kpi-foot">1,314 per day</span></div>
+                  <div class="kpi"><span class="kpi-label">Cache hit rate</span><span class="kpi-value">98%</span><span class="kpi-foot">4.12B read · 0.08B written</span></div>
+                  <div class="kpi"><span class="kpi-label">Output tokens</span><span class="kpi-value">7.2M</span><span class="kpi-foot">Thinking 41% of output</span></div>
+                </div>
+                <div class="panel">
+                  <div class="panel-head"><h4>Where the money goes</h4><span>30 days · all accounts</span></div>
+                  <div class="composition" aria-label="Cost composition">
+                    <i style="flex: 41; background: var(--chart-3)"></i>
+                    <i style="flex: 27; background: var(--chart-2)"></i>
+                    <i style="flex: 22; background: var(--chart-1)"></i>
+                    <i style="flex: 9; background: var(--chart-4)"></i>
+                    <i style="flex: 1; background: var(--chart-5)"></i>
+                  </div>
+                  <div class="legend">
+                    <span><i style="background: var(--chart-3)"></i>Cache read $957 · 41%</span>
+                    <span><i style="background: var(--chart-2)"></i>Cache write 1h $630 · 27%</span>
+                    <span><i style="background: var(--chart-1)"></i>Output $513 · 22%</span>
+                    <span><i style="background: var(--chart-4)"></i>Cache write 5m $210 · 9%</span>
+                    <span><i style="background: var(--chart-5)"></i>Input $24 · 1%</span>
+                  </div>
+                </div>
+                <div class="split">
+                  <div class="panel">
+                    <div class="panel-head"><h4>Daily cost</h4><span>Last 30 days</span></div>
+                    <svg class="chart" id="daily-chart" viewBox="0 0 560 200" role="img" aria-label="Daily cost bars for the last 30 days"></svg>
+                  </div>
+                  <div class="panel">
+                    <div class="panel-head"><h4>By model</h4><span>Cost · share</span></div>
+                    <div class="table-wrap">
+                      <table>
+                        <thead><tr><th>Model</th><th class="num">Responses</th><th class="num">Cost</th></tr></thead>
+                        <tbody id="model-rows"></tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Sessions -->
+            <div class="view" data-view-panel="sessions" hidden>
+              <div class="panel">
+                <div class="panel-head"><h4>Most expensive sessions</h4><span>30 days · sorted by cost</span></div>
+                <div class="table-wrap">
+                  <table>
+                    <thead><tr><th>Session</th><th>Project</th><th>Source</th><th>Model mix</th><th class="num">Duration</th><th class="num">Responses</th><th class="num">Cost</th></tr></thead>
+                    <tbody>
+                      <tr><td>Oct 4 · 09:12</td><td>acme-storefront</td><td><span class="badge neutral">WSL</span></td><td><span class="model">opus-5-5</span> 96%</td><td class="num">6 h 40 m</td><td class="num">2,318</td><td class="num">$214.90 <span class="badge warn">High</span></td></tr>
+                      <tr><td>Oct 5 · 13:42</td><td>side-projects / meter</td><td><span class="badge neutral">Windows</span></td><td><span class="model">opus-5-5</span> 100%</td><td class="num">1 h 05 m</td><td class="num">402</td><td class="num">$61.37</td></tr>
+                      <tr><td>Oct 3 · 20:05</td><td>side-projects / mailbox</td><td><span class="badge neutral">Windows</span></td><td><span class="model">opus-5-5</span> 81%</td><td class="num">3 h 12 m</td><td class="num">1,140</td><td class="num">$58.02</td></tr>
+                      <tr><td>Oct 2 · 10:30</td><td>weather-api</td><td><span class="badge neutral">Windows</span></td><td><span class="model">sonnet-5-5</span> 70%</td><td class="num">2 h 20 m</td><td class="num">866</td><td class="num">$22.48</td></tr>
+                      <tr><td>Oct 1 · 16:48</td><td>acme-storefront</td><td><span class="badge neutral">WSL</span></td><td><span class="model">opus-5</span> 64%</td><td class="num">48 m</td><td class="num">219</td><td class="num">$19.85</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+                <p class="note">Rows open a session detail sheet: per-response timeline, subagent (sidechain) share, cache efficiency, and the working directory. Prompt text is never shown or stored.</p>
+              </div>
+            </div>
+
+            <!-- Projects -->
+            <div class="view" data-view-panel="projects" hidden>
+              <div class="panel">
+                <div class="panel-head"><h4>Projects</h4><span>Working directory, grouped across sources</span></div>
+                <div class="table-wrap">
+                  <table>
+                    <thead><tr><th>Project</th><th class="num">Sessions</th><th class="num">Responses</th><th class="num">Hit %</th><th class="num">Cost</th></tr></thead>
+                    <tbody id="project-rows"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <!-- Branches -->
+            <div class="view" data-view-panel="branches" hidden>
+              <div class="panel">
+                <div class="panel-head"><h4>Branches</h4><span>Git branch at the time of each response</span></div>
+                <div class="table-wrap">
+                  <table>
+                    <thead><tr><th>Branch</th><th>Project</th><th class="num">Responses</th><th class="num">Cost</th></tr></thead>
+                    <tbody>
+                      <tr><td><span class="model">main</span></td><td>acme-storefront</td><td class="num">8,420</td><td class="num">$1,102.40</td></tr>
+                      <tr><td><span class="model">feature/checkout-redesign</span></td><td>acme-storefront</td><td class="num">3,980</td><td class="num">$611.15</td></tr>
+                      <tr><td><span class="model">main</span></td><td>side-projects / mailbox</td><td class="num">5,214</td><td class="num">$402.88</td></tr>
+                      <tr><td><span class="model">fix/inbox-sync</span></td><td>side-projects / mailbox</td><td class="num">1,305</td><td class="num">$96.10</td></tr>
+                      <tr><td><span class="model">(no branch)</span></td><td>scratch</td><td class="num">2,077</td><td class="num">$88.32</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <!-- Workflows -->
+            <div class="view" data-view-panel="workflows" hidden>
+              <div class="panel">
+                <div class="panel-head"><h4>Workflows &amp; subagents</h4><span>Responses logged as sidechains</span></div>
+                <div class="kpis">
+                  <div class="kpi"><span class="kpi-label">Main thread</span><span class="kpi-value">$2,710</span><span class="kpi-foot">82% of cost</span></div>
+                  <div class="kpi"><span class="kpi-label">Subagents</span><span class="kpi-value">$613</span><span class="kpi-foot">18% of cost</span></div>
+                  <div class="kpi"><span class="kpi-label">Subagent runs</span><span class="kpi-value">1,284</span><span class="kpi-foot">$0.48 each</span></div>
+                  <div class="kpi"><span class="kpi-label">Largest run</span><span class="kpi-value">$14.20</span><span class="kpi-foot">Explore · Oct 4</span></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Accounts -->
+            <div class="view" data-view-panel="accounts" hidden>
+              <div style="display: grid; gap: var(--space-4)">
+                <div class="account-cards">
+                  <div class="panel account-card">
+                    <div class="account-top"><div><div class="account-name">Work</div><div class="account-sub">alex@example.com · Team</div></div><span class="badge">Limits on</span></div>
+                    <div class="limit"><div class="limit-top"><span class="limit-name">5-hour</span><span class="limit-value">62%</span></div><div class="meter"><i style="width: 62%"></i></div></div>
+                    <div class="limit"><div class="limit-top"><span class="limit-name">Weekly</span><span class="limit-value">41%</span></div><div class="meter"><i style="width: 41%"></i></div></div>
+                    <div class="burn"><span>30 days</span><b>$2,208.77</b></div>
+                  </div>
+                  <div class="panel account-card">
+                    <div class="account-top"><div><div class="account-name">Personal</div><div class="account-sub">sample · Max 20x</div></div><span class="badge neutral">Estimate</span></div>
+                    <div class="limit"><div class="limit-top"><span class="limit-name">5-hour</span><span class="limit-value">≈ 18%</span></div><div class="meter"><i style="width: 18%; opacity: .55"></i></div></div>
+                    <div class="limit"><div class="limit-top"><span class="limit-name">Weekly</span><span class="limit-value">≈ 9%</span></div><div class="meter"><i style="width: 9%; opacity: .55"></i></div></div>
+                    <div class="burn"><span>30 days</span><b>$125.15</b></div>
+                  </div>
+                  <div class="panel account-card">
+                    <div class="account-top"><div><div class="account-name">All accounts</div><div class="account-sub">2 accounts · 3 sources</div></div><span class="badge ok">In sync</span></div>
+                    <div class="burn"><span>All time</span><b style="font-size: 20px">$8,412.90</b></div>
+                    <div class="burn"><span>30 days</span><b>$2,333.92</b></div>
+                    <div class="burn"><span>Today</span><b>$142.18</b></div>
+                  </div>
+                </div>
+                <div class="panel">
+                  <div class="panel-head"><h4>Sources</h4><span>Where usage is read from</span></div>
+                  <div class="table-wrap">
+                    <table>
+                      <thead><tr><th>Source</th><th>Account</th><th>Status</th><th class="num">Files</th><th class="num">Size</th><th class="num">All time</th></tr></thead>
+                      <tbody>
+                        <tr><td>Windows · C:\Users\alex\.claude</td><td>Work</td><td><span class="badge ok">Live</span></td><td class="num">812</td><td class="num">1.4 GB</td><td class="num">$6,035.12</td></tr>
+                        <tr><td>WSL Ubuntu-24.04 · /home/alex/.claude</td><td>Work</td><td><span class="badge ok">Running</span></td><td class="num">96</td><td class="num">380 MB</td><td class="num">$2,377.78</td></tr>
+                        <tr><td>MacBook · shared folder</td><td>Personal</td><td><span class="badge neutral">Synced 2 h ago</span></td><td class="num">—</td><td class="num">12 KB</td><td class="num">sample</td></tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Charts -->
+            <div class="view" data-view-panel="charts" hidden>
+              <div style="display: grid; gap: var(--space-4)">
+                <div class="panel">
+                  <div class="panel-head"><h4>When you work</h4><span>Cost by weekday and hour · 30 days</span></div>
+                  <div class="heatmap" id="heatmap"></div>
+                  <div class="heat-scale">Less <i style="background: var(--heat-0)"></i><i style="background: var(--heat-1)"></i><i style="background: var(--heat-2)"></i><i style="background: var(--heat-3)"></i><i style="background: var(--heat-4)"></i> More</div>
+                </div>
+                <div class="panel">
+                  <div class="panel-head"><h4>Model mix over time</h4><span>Share of daily cost</span></div>
+                  <svg class="chart" id="mix-chart" viewBox="0 0 560 160" role="img" aria-label="Stacked share of model cost per day"></svg>
+                  <div class="legend">
+                    <span><i style="background: var(--chart-1)"></i>opus-5-5</span>
+                    <span><i style="background: var(--chart-2)"></i>opus-5</span>
+                    <span><i style="background: var(--chart-5)"></i>sonnet-5-5</span>
+                    <span><i style="background: var(--chart-4)"></i>other</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- ROI -->
+            <div class="view" data-view-panel="roi" hidden>
+              <div class="panel">
+                <div class="panel-head"><h4>Plan value</h4><span>API-equivalent cost compared with what the plan costs per month</span></div>
+                <div style="display: grid; gap: 10px">
+                  <div class="roi-row"><span>Work · Team (Oct)</span><div class="roi-track"><i style="width: 100%"></i><b style="width: 1.9%"></b></div><span class="num"><b>37×</b> $2,209</span></div>
+                  <div class="roi-row"><span>Work · Team (Sep)</span><div class="roi-track"><i style="width: 88%"></i><b style="width: 1.9%"></b></div><span class="num"><b>33×</b> $1,950</span></div>
+                  <div class="roi-row"><span>Personal · Max 20x</span><div class="roi-track"><i style="width: 4%"></i><b style="width: 6.2%"></b></div><span class="num"><b>0.6×</b> $125</span></div>
+                </div>
+                <p class="note">The dark tick is the plan price. A value under 1× means the plan cost more than the same usage would on the API. Plan prices are editable per account.</p>
+              </div>
+            </div>
+
+            <!-- Settings link -->
+            <div class="view" data-view-panel="settings-link" hidden>
+              <p class="note">Settings opens as its own page. See the Settings section below.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ SETTINGS ============ -->
+    <section class="block" id="settings">
+      <div class="block-head">
+        <span class="eyebrow">Surfaces</span>
+        <h2>Settings</h2>
+        <p>Windows 11 settings pattern: grouped cards, one row per setting, the control on the right.
+          The taskbar editor shows a live preview while you change it.</p>
+      </div>
+
+      <div class="sheet">
+        <div class="sub-head"><h3>Taskbar layout editor</h3><p>Pick a template, then reorder, swap or restyle slots. Changes preview instantly and apply on Save.</p></div>
+        <div class="editor">
+          <div class="template-picker" id="template-picker"></div>
+          <div style="display: grid; gap: var(--space-3); min-width: 0">
+            <div class="strip-pair" id="editor-preview"></div>
+            <div class="slots">
+              <div class="slot-item"><span class="grip"><svg><use href="#i-grip"/></svg></span><b class="hide-narrow">Slot 1</b><span>5-hour limit · Work</span><span class="select hide-narrow">Ring</span><button class="btn subtle" type="button">Edit</button></div>
+              <div class="slot-item"><span class="grip"><svg><use href="#i-grip"/></svg></span><b class="hide-narrow">Slot 2</b><span>Cost today · all accounts</span><span class="select hide-narrow">Text</span><button class="btn subtle" type="button">Edit</button></div>
+              <div class="slot-item"><span class="grip"><svg><use href="#i-grip"/></svg></span><b class="hide-narrow">Slot 3</b><span>Burn rate</span><span class="select hide-narrow">Sparkline</span><button class="btn subtle" type="button">Edit</button></div>
+              <button class="slot-add" type="button">+ Add slot (max 4)</button>
+            </div>
+            <label class="setting-desc" for="format-string">Custom format (overrides the template)</label>
+            <input class="input mono" id="format-string" value="{cost.today:$0.00} · {limit.5h:0%} ↺{limit.5h.reset:h\:mm}">
+            <div class="threshold-row">
+              <span>Threshold colors</span>
+              <span class="color-dot" style="background: var(--accent)"></span><span>under 80%</span>
+              <span class="color-dot" style="background: var(--warn)"></span><span>80–94%</span>
+              <span class="color-dot" style="background: var(--critical)"></span><span>95% +</span>
+              <span class="grow"></span>
+              <span class="toggle-group">Cycle views every 8 s <button class="toggle" type="button" role="switch" aria-checked="true" aria-label="Cycle views"></button></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="settings-layout">
+          <div class="sub-head"><h3>Sources</h3></div>
+          <div class="setting-card">
+            <div class="setting-row"><svg><use href="#i-folder"/></svg><div><div class="setting-title">Windows · .claude</div><div class="setting-desc">C:\Users\alex\.claude · Work</div></div><button class="toggle" type="button" role="switch" aria-checked="true" aria-label="Windows source"></button></div>
+            <div class="setting-row"><svg><use href="#i-folder"/></svg><div><div class="setting-title">WSL distributions</div><div class="setting-desc">Only read distributions that are already running</div></div><span class="select">Running only</span></div>
+            <div class="setting-row"><svg><use href="#i-folder"/></svg><div><div class="setting-title">Extra config folders</div><div class="setting-desc">For accounts kept in another CLAUDE_CONFIG_DIR</div></div><button class="btn" type="button">Add folder</button></div>
+            <div class="setting-row"><svg><use href="#i-sync"/></svg><div><div class="setting-title">Shared folder sync</div><div class="setting-desc">OneDrive\Hakari · writes totals only, never logs</div></div><button class="toggle" type="button" role="switch" aria-checked="true" aria-label="Shared folder sync"></button></div>
+          </div>
+
+          <div class="sub-head"><h3>Accounts</h3></div>
+          <div class="setting-card">
+            <div class="setting-row"><svg><use href="#i-user"/></svg><div><div class="setting-title">Work</div><div class="setting-desc">alex@example.com · Team · limits on</div></div><button class="btn" type="button">Edit</button></div>
+            <div class="setting-row"><svg><use href="#i-user"/></svg><div><div class="setting-title">Personal</div><div class="setting-desc">Max 20x · estimate only</div></div><button class="btn" type="button">Edit</button></div>
+          </div>
+
+          <div class="sub-head"><h3>Alerts</h3></div>
+          <div class="setting-card">
+            <div class="setting-row"><svg><use href="#i-bell"/></svg><div><div class="setting-title">Limit warnings</div><div class="setting-desc">Notify at 80%, 90% and 100%</div></div>
+              <div class="slider" aria-hidden="true"><div class="slider-track"><i style="width: 80%"></i><span class="slider-thumb" style="left: 80%"></span></div><div class="slider-labels"><span>50%</span><span>80%</span><span>100%</span></div></div></div>
+            <div class="setting-row"><svg><use href="#i-refresh"/></svg><div><div class="setting-title">Tell me when a limit resets</div></div><button class="toggle" type="button" role="switch" aria-checked="true" aria-label="Reset notification"></button></div>
+            <div class="setting-row"><svg><use href="#i-coin"/></svg><div><div class="setting-title">Budget</div><div class="setting-desc">$150 a day · $4,000 a month (API-equivalent)</div></div><button class="btn" type="button">Edit</button></div>
+            <div class="setting-row"><svg><use href="#i-warn"/></svg><div><div class="setting-title">Unusual sessions</div><div class="setting-desc">One session over $50, or burn 3× the 7-day median</div></div><button class="toggle" type="button" role="switch" aria-checked="true" aria-label="Unusual sessions"></button></div>
+          </div>
+        </div>
+
+        <div class="settings-layout">
+          <div class="sub-head"><h3>General</h3></div>
+          <div class="setting-card">
+            <div class="setting-row"><svg><use href="#i-power"/></svg><div><div class="setting-title">Start with Windows</div></div><button class="toggle" type="button" role="switch" aria-checked="true" aria-label="Start with Windows"></button></div>
+            <div class="setting-row"><svg><use href="#i-flow"/></svg><div><div class="setting-title">Animations</div><div class="setting-desc">Off uses the least power. Reduced keeps only short fades.</div></div>
+              <div class="segmented" role="group" aria-label="Animations setting"><button type="button" aria-pressed="true">Full</button><button type="button" aria-pressed="false">Reduced</button><button type="button" aria-pressed="false">Off</button></div></div>
+            <div class="setting-row"><svg><use href="#i-taskbar"/></svg><div><div class="setting-title">Follow Windows animation effects</div><div class="setting-desc">Use Reduced when Windows animations are off</div></div><button class="toggle" type="button" role="switch" aria-checked="true" aria-label="Follow Windows animation effects"></button></div>
+            <div class="setting-row"><svg><use href="#i-battery"/></svg><div><div class="setting-title">Reduce on battery saver</div></div><button class="toggle" type="button" role="switch" aria-checked="true" aria-label="Reduce on battery saver"></button></div>
+            <div class="setting-row"><svg><use href="#i-globe"/></svg><div><div class="setting-title">Language</div></div><span class="select">English</span></div>
+            <div class="setting-row"><svg><use href="#i-coin"/></svg><div><div class="setting-title">Currency</div><div class="setting-desc">1 USD = 36.15 THB · updated today</div></div><span class="select">THB ฿</span></div>
+            <div class="setting-row"><svg><use href="#i-calendar"/></svg><div><div class="setting-title">Week starts on</div></div><span class="select">Monday</span></div>
+            <div class="setting-row"><svg><use href="#i-taskbar"/></svg><div><div class="setting-title">Widget position</div><div class="setting-desc">Display 1 · left of the notification area</div></div><span class="select">Left of tray</span></div>
+          </div>
+
+          <div class="sub-head"><h3>Prices</h3></div>
+          <div class="setting-card">
+            <div class="setting-row"><svg><use href="#i-refresh"/></svg><div><div class="setting-title">Price table</div><div class="setting-desc">Official pricing page · checked Oct 5, 2026 · 22 models</div></div><button class="btn" type="button">Check now</button></div>
+            <div class="setting-row"><svg><use href="#i-list"/></svg><div><div class="setting-title">Custom prices</div><div class="setting-desc">Override a model or add one that isn't listed yet</div></div><button class="btn" type="button">Open</button></div>
+          </div>
+
+          <div class="sub-head"><h3>About</h3></div>
+          <div class="setting-card">
+            <div class="setting-row"><span class="brand-mark" style="font-size: 20px" aria-hidden="true">秤</span><div><div class="setting-title">Hakari 1.0.0</div><div class="setting-desc">Reads usage only. Prompt and response text is never read or stored. Not affiliated with Anthropic.</div></div><button class="btn" type="button">Privacy</button></div>
+            <div class="setting-row"><svg><use href="#i-heart"/></svg><div><div class="setting-title">Support Hakari</div><div class="setting-desc">Opens the project's Ko-fi page</div></div><button class="btn primary" type="button">Ko-fi</button></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ TOASTS ============ -->
+    <section class="block" id="toasts">
+      <div class="block-head">
+        <button class="btn replay" type="button" data-replay="#toasts"><svg><use href="#i-refresh"/></svg>Replay animations</button>
+        <span class="eyebrow">Surfaces</span>
+        <h2>Notifications</h2>
+        <p>Windows toasts, one per event, grouped under Hakari in the notification center. Each says
+          what happened and what the user can do next.</p>
+      </div>
+      <div class="toasts">
+        <div class="toast">
+          <div class="toast-app"><span class="brand-mark" aria-hidden="true">秤</span>Hakari · now</div>
+          <div class="toast-title">Work is at 80% of its 5-hour limit</div>
+          <div class="toast-body">At this pace you'll reach it around 13:55, 35 minutes before it resets.</div>
+          <div class="meter"><i class="warn" style="width: 80%"></i></div>
+          <div class="toast-actions"><button class="btn" type="button">Open Hakari</button><button class="btn" type="button">Mute today</button></div>
+        </div>
+        <div class="toast">
+          <div class="toast-app"><span class="brand-mark" aria-hidden="true">秤</span>Hakari · now</div>
+          <div class="toast-title">Work reached its 5-hour limit</div>
+          <div class="toast-body">It resets at 14:30. Personal has 82% left.</div>
+          <div class="meter"><i class="critical" style="width: 100%"></i></div>
+        </div>
+        <div class="toast">
+          <div class="toast-app"><span class="brand-mark" aria-hidden="true">秤</span>Hakari · now</div>
+          <div class="toast-title">Your 5-hour limit has reset</div>
+          <div class="toast-body">Work is back to 0%. Weekly usage is at 46%.</div>
+        </div>
+        <div class="toast">
+          <div class="toast-app"><span class="brand-mark" aria-hidden="true">秤</span>Hakari · 2 min ago</div>
+          <div class="toast-title">Today's spend passed your $150 budget</div>
+          <div class="toast-body">$153.40 so far today, API-equivalent. Most of it came from acme-storefront.</div>
+          <div class="toast-actions"><button class="btn" type="button">See sessions</button><button class="btn" type="button">Change budget</button></div>
+        </div>
+        <div class="toast">
+          <div class="toast-app"><span class="brand-mark" aria-hidden="true">秤</span>Hakari · 5 min ago</div>
+          <div class="toast-title">One session is costing more than usual</div>
+          <div class="toast-body">The session in acme-storefront passed $50 in 40 minutes, 3.4× your usual rate.</div>
+          <div class="toast-actions"><button class="btn" type="button">Show session</button></div>
+        </div>
+        <div class="toast">
+          <div class="toast-app"><span class="brand-mark" aria-hidden="true">秤</span>Hakari · ภาษาไทย</div>
+          <div class="toast-title">บัญชี Work ใช้ไป 80% ของโควตา 5 ชั่วโมงแล้ว</div>
+          <div class="toast-body">ด้วยความเร็วนี้จะเต็มประมาณ 13:55 ก่อนรีเซ็ต 35 นาที</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ ONBOARDING ============ -->
+    <section class="block" id="onboarding">
+      <div class="block-head">
+        <button class="btn replay" type="button" data-replay="#onboarding"><svg><use href="#i-refresh"/></svg>Replay animations</button>
+        <span class="eyebrow">Surfaces</span>
+        <h2>First run</h2>
+        <p>Three steps, all skippable. Indexing starts as soon as step one shows, so the numbers are
+          ready by the time the user finishes.</p>
+      </div>
+      <div class="onboard">
+        <div class="onboard-step">
+          <div class="step-dots"><i class="on"></i><i></i><i></i></div>
+          <span class="step-count">Step 1 of 3</span>
+          <h4>We found your usage</h4>
+          <div class="check-row"><span class="checkbox"><svg><use href="#i-check"/></svg></span><span>Windows · .claude</span><span class="setting-desc">812 files</span></div>
+          <div class="check-row"><span class="checkbox"><svg><use href="#i-check"/></svg></span><span>WSL Ubuntu-24.04</span><span class="setting-desc">running</span></div>
+          <div class="check-row"><span class="checkbox off"></span><span>docker-desktop</span><span class="setting-desc">no usage</span></div>
+          <div class="progress-indeterminate"><i></i></div>
+          <span class="setting-desc">Reading in the background at low priority.</span>
+        </div>
+        <div class="onboard-step">
+          <div class="step-dots"><i class="on"></i><i class="on"></i><i></i></div>
+          <span class="step-count">Step 2 of 3</span>
+          <h4>Name your accounts</h4>
+          <label class="setting-desc" for="alias-1">alex@example.com · Team</label>
+          <input class="input" id="alias-1" value="Work">
+          <div class="toggle-group">Show usage limits for this account <button class="toggle" type="button" role="switch" aria-checked="true" aria-label="Show limits for Work"></button></div>
+          <p class="setting-desc">Hakari reads this account's sign-in token on this PC only to ask for its limits. Turn it off any time.</p>
+        </div>
+        <div class="onboard-step">
+          <div class="step-dots"><i class="on"></i><i class="on"></i><i class="on"></i></div>
+          <span class="step-count">Step 3 of 3</span>
+          <h4>Pick a taskbar look</h4>
+          <div class="strip-pair" id="onboard-preview"></div>
+          <div class="segmented" role="group" aria-label="Starting layout">
+            <button type="button" aria-pressed="true">Two lines</button>
+            <button type="button" aria-pressed="false">Columns</button>
+            <button type="button" aria-pressed="false">Minimal</button>
+          </div>
+          <div style="display: flex; gap: 8px"><button class="btn primary" type="button">Finish</button><button class="btn subtle" type="button">Customize later</button></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ COMPONENT MAP ============ -->
+    <section class="block" id="components">
+      <div class="block-head">
+        <span class="eyebrow">Build</span>
+        <h2>Component map</h2>
+        <p>What each piece is built from in WinUI 3, with sizes and the states it must handle.</p>
+      </div>
+      <div class="sheet table-wrap">
+        <table class="spec-table">
+          <thead><tr><th>Component</th><th>Built from</th><th>Size</th><th>States</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td>Hakari.Theme.xaml</td><td>ResourceDictionary with a custom <code>ControlTemplate</code> for every control used (Button, ToggleSwitch, SelectorBar, ComboBox, TextBox, Slider, ProgressBar, InfoBar, NavigationViewItem, ToolTip, MenuFlyout)</td><td>—</td><td>Light, Dark, High contrast</td><td>Tokens on this page map 1:1 to theme resources. Motion tokens live here too, read by a <code>MotionService</code> that applies the Full / Reduced / Off setting.</td></tr>
+            <tr><td>MotionService</td><td>Composition <code>ImplicitAnimationCollection</code> + <code>KeyFrameAnimation</code>s built from motion tokens</td><td>—</td><td>Full, Reduced, Off</td><td>Listens to <code>UISettings.AnimationsEnabled</code> and battery saver; stops all animations on hidden windows.</td></tr>
+            <tr><td>TaskbarWidgetWindow</td><td>Win32 <code>WS_POPUP | WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE</code>, parented to <code>Shell_TrayWnd</code>, XAML Island content</td><td>auto × 40</td><td>normal, warn, critical, limit, stale, paused, indexing, error, hover</td><td>Re-attach on <code>TaskbarCreated</code>; DPI aware per monitor; never takes focus.</td></tr>
+            <tr><td>WidgetSlot</td><td>UserControl: TextSlot, BarSlot, RingSlot, SparklineSlot</td><td>auto</td><td>tone (normal / warn / critical / muted)</td><td>Bound to a MetricBinding + format + ThresholdRules.</td></tr>
+            <tr><td>Flyout</td><td>Custom popup window, <code>DesktopAcrylicBackdrop</code>, custom templates only</td><td>360 × auto</td><td>default, limits off, first index, warnings</td><td>Anchored 12px above the taskbar; Esc / focus loss closes.</td></tr>
+            <tr><td>LimitMeter</td><td>ProgressBar + TextBlocks</td><td>stretch × 6</td><td>normal, warn, critical, estimate (55% opacity), pace marker</td><td>Label + value on one baseline; reset text below.</td></tr>
+            <tr><td>StatTile</td><td>Border + TextBlocks</td><td>1/3 width</td><td>value, loading (skeleton), unpriced (*)</td><td>Tabular figures.</td></tr>
+            <tr><td>InfoBar</td><td><code>InfoBar</code> (Informational, Warning, Error, Success)</td><td>stretch</td><td>with / without actions</td><td>Use the built-in severity colors mapped to tokens.</td></tr>
+            <tr><td>DashboardWindow</td><td><code>NavigationView</code> Left, <code>MicaBackdrop</code>, custom title bar</td><td>min 960 × 640</td><td>expanded, compact (&lt; 1000px)</td><td>Remember size, page and filters.</td></tr>
+            <tr><td>FilterBar</td><td><code>SelectorBar</code> + <code>ComboBox</code> × 3</td><td>auto</td><td>—</td><td>Shared across pages through one view model.</td></tr>
+            <tr><td>DataTable</td><td><code>ItemsRepeater</code> + header grid (or CommunityToolkit DataGrid)</td><td>stretch</td><td>loading, empty, sorted</td><td>Virtualized; sessions list can exceed 10k rows.</td></tr>
+            <tr><td>Charts</td><td>Win2D <code>CanvasControl</code></td><td>stretch</td><td>loading, empty, hover readout</td><td>Daily bars, stacked share, heatmap; colors from data tokens.</td></tr>
+            <tr><td>SettingsCard</td><td>CommunityToolkit <code>SettingsCard</code> / <code>SettingsExpander</code></td><td>stretch</td><td>—</td><td>Windows 11 settings pattern.</td></tr>
+            <tr><td>LayoutEditor</td><td>ListView with reorder, live <code>TaskbarWidget</code> preview</td><td>stretch</td><td>editing, invalid format</td><td>Format string validated as you type.</td></tr>
+            <tr><td>Toast</td><td><code>AppNotificationBuilder</code></td><td>system</td><td>with / without buttons, progress</td><td>Windows draws toasts, so they keep system style; Hakari controls text, logo, buttons and progress only.</td></tr>
+            <tr><td>Context menu</td><td>Custom popup (not the shell menu) so it matches the theme and motion</td><td>240 × auto</td><td>hover, pressed, disabled</td><td>Rises 8px on open; keyboard navigable.</td></tr>
+            <tr><td>TrayIcon</td><td><code>Shell_NotifyIcon</code> with rendered 16/20/24/32px bitmaps</td><td>16 × 16 @100%</td><td>normal, warn, critical, limit</td><td>Only when overlay isn't available, or by choice.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ============ METRICS ============ -->
+    <section class="block" id="metrics">
+      <div class="block-head">
+        <span class="eyebrow">Build</span>
+        <h2>Metric catalog</h2>
+        <p>Every value the widget can show. Format strings use <code>{id:format}</code>. Every metric
+          takes an optional account scope, e.g. <code>{limit.5h@work}</code>.</p>
+      </div>
+      <div class="sheet table-wrap">
+        <table class="spec-table">
+          <thead><tr><th>Id</th><th>Label</th><th>Example</th><th>Default format</th><th>Source</th></tr></thead>
+          <tbody>
+            <tr><td><code>cost.today</code></td><td>Cost today</td><td>$142.18</td><td><code>$0.00</code></td><td>Index</td></tr>
+            <tr><td><code>cost.week</code> / <code>cost.month</code> / <code>cost.all</code></td><td>Cost this week / month / all time</td><td>$812 / $2,334 / $8,413</td><td><code>$0</code></td><td>Index</td></tr>
+            <tr><td><code>cost.session</code></td><td>Current session</td><td>$61.37</td><td><code>$0.00</code></td><td>Index (latest active session)</td></tr>
+            <tr><td><code>cost.projection.month</code></td><td>Month-end projection</td><td>≈ $9.9k</td><td><code>≈$0.0k</code></td><td>Index (30-day trend)</td></tr>
+            <tr><td><code>budget.remaining.day</code></td><td>Budget left today</td><td>$7.82</td><td><code>$0.00</code></td><td>Settings + index</td></tr>
+            <tr><td><code>limit.5h</code> / <code>limit.week</code> / <code>limit.week.opus</code></td><td>Limit used</td><td>62% / 41% / 55%</td><td><code>0%</code></td><td>Account (opt-in) or estimate</td></tr>
+            <tr><td><code>limit.5h.reset</code> / <code>limit.week.reset</code></td><td>Time to reset</td><td>1:48 / Mon 09:00</td><td><code>h\:mm</code></td><td>Account or estimate</td></tr>
+            <tr><td><code>limit.5h.projection</code></td><td>Usage at reset at current pace</td><td>≈ 86%</td><td><code>≈0%</code></td><td>Derived</td></tr>
+            <tr><td><code>burn.cost</code> / <code>burn.tokens</code></td><td>Burn rate</td><td>$18.6/h · 412k/min</td><td><code>$0.0/h</code></td><td>Index (last 15 min)</td></tr>
+            <tr><td><code>tokens.input</code> / <code>.output</code> / <code>.cacheRead</code> / <code>.cacheWrite</code></td><td>Tokens (period)</td><td>7.2M</td><td><code>0.0a</code> (compact)</td><td>Index</td></tr>
+            <tr><td><code>cache.hitRate</code></td><td>Cache hit rate</td><td>98%</td><td><code>0%</code></td><td>Index</td></tr>
+            <tr><td><code>responses.today</code></td><td>Responses today</td><td>1,314</td><td><code>#,0</code></td><td>Index</td></tr>
+            <tr><td><code>sessions.active</code></td><td>Active sessions</td><td>2</td><td><code>0</code></td><td>Index (written in last 5 min)</td></tr>
+            <tr><td><code>model.top</code></td><td>Most used model today</td><td>opus-5-5 · 92%</td><td><code>name · 0%</code></td><td>Index</td></tr>
+            <tr><td><code>plan.value</code></td><td>Plan value this month</td><td>53×</td><td><code>0×</code></td><td>Index + plan price</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ============ A11Y ============ -->
+    <section class="block" id="a11y">
+      <div class="block-head">
+        <span class="eyebrow">Build</span>
+        <h2>Accessibility &amp; motion</h2>
+      </div>
+      <div class="grid-3">
+        <div class="sheet">
+          <div class="sub-head"><h3>Contrast &amp; color</h3></div>
+          <p class="note">Text ≥ 4.5:1 on every surface in both themes, including on the taskbar. Status is never color only: warn and critical also change the label ("Limit", "≈") or add a pill. High-contrast themes swap to system colors.</p>
+        </div>
+        <div class="sheet">
+          <div class="sub-head"><h3>Keyboard &amp; screen readers</h3></div>
+          <p class="note">Widget is reachable with Win+B then arrows (tray order). Its accessible name reads the full tooltip. Flyout traps focus, starts on the account switcher, and Esc returns focus. Every chart has a table view.</p>
+        </div>
+        <div class="sheet">
+          <div class="sub-head"><h3>Motion</h3></div>
+          <p class="note">Animations setting: Full, Reduced (short fades, no movement), Off (nothing moves, lowest power). Starts in Reduced when Windows "Animation effects" is off. No animation carries information on its own; the final state is always readable.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var root = document.documentElement;
+
+  /* ---------- Theme switch ---------- */
+  var themeButtons = document.querySelectorAll("[data-theme-choice]");
+  function applyTheme(choice) {
+    if (choice === "system") { root.removeAttribute("data-theme"); }
+    else { root.setAttribute("data-theme", choice); }
+    themeButtons.forEach(function (button) {
+      button.setAttribute("aria-pressed", String(button.dataset.themeChoice === choice));
+    });
+    renderSwatches();
+    try { localStorage.setItem("hakari-handoff-theme", choice); } catch (error) { /* storage blocked */ }
+  }
+  themeButtons.forEach(function (button) {
+    button.addEventListener("click", function () { applyTheme(button.dataset.themeChoice); });
+  });
+
+  /* ---------- Swatches ---------- */
+  var swatchGroups = {
+    "swatches-neutral": ["ground", "surface", "surface-raised", "line", "line-strong", "ink", "ink-muted", "ink-faint"],
+    "swatches-status": ["accent", "accent-strong", "accent-soft", "ok", "ok-soft", "warn", "warn-soft", "critical", "critical-soft"],
+    "swatches-data": ["chart-1", "chart-2", "chart-3", "chart-4", "chart-5", "heat-0", "heat-2", "heat-4"]
+  };
+  function renderSwatches() {
+    var styles = getComputedStyle(root);
+    Object.keys(swatchGroups).forEach(function (containerId) {
+      var container = document.getElementById(containerId);
+      container.innerHTML = swatchGroups[containerId].map(function (token) {
+        var value = styles.getPropertyValue("--" + token).trim();
+        return '<div class="swatch"><div class="swatch-color" style="background: var(--' + token + ')"></div>' +
+          '<span class="swatch-name">--' + token + '</span><span class="swatch-value">' + value + '</span></div>';
+      }).join("");
+    });
+  }
+
+  /* ---------- Space scale ---------- */
+  document.getElementById("space-scale").innerHTML = [4, 8, 12, 16, 24, 32, 48].map(function (size, index) {
+    return '<div class="space-item"><div class="space-bar" style="width: ' + size + 'px"></div>space-' + (index + 1) + ' · ' + size + 'px</div>';
+  }).join("");
+
+  /* ---------- Widget builders ---------- */
+  var hourlyBurn = [6, 9, 7, 12, 15, 11, 14, 19, 17, 21, 18, 23];
+
+  function sparkPoints(values, width, height) {
+    var max = Math.max.apply(null, values);
+    var min = Math.min.apply(null, values);
+    var step = width / (values.length - 1);
+    return values.map(function (value, index) {
+      var y = height - 2 - ((value - min) / (max - min || 1)) * (height - 4);
+      return (index * step).toFixed(1) + "," + y.toFixed(1);
+    }).join(" ");
+  }
+
+  function ring(percent, tone) {
+    var radius = 10;
+    var circumference = 2 * Math.PI * radius;
+    var dash = (Math.min(percent, 100) / 100) * circumference;
+    var offset = circumference - dash;
+    return '<svg class="w-ring ' + tone + '" viewBox="0 0 26 26" aria-hidden="true">' +
+      '<circle cx="13" cy="13" r="' + radius + '" fill="none" stroke="currentColor" stroke-opacity=".2" stroke-width="3"/>' +
+      '<circle class="ring-arc m-transform" cx="13" cy="13" r="' + radius + '" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" ' +
+      'style="--ring-length: ' + circumference.toFixed(2) + '; stroke-dasharray: ' + circumference.toFixed(2) + '; stroke-dashoffset: ' + offset.toFixed(2) + '; ' +
+      'transition: stroke-dashoffset var(--duration-emphasis) var(--ease-decelerate)" transform="rotate(-90 13 13)"/>' +
+      '<text x="13" y="16.5" text-anchor="middle" font-size="8.5" font-weight="700" fill="currentColor" font-family="Segoe UI, sans-serif">' + percent + '</text></svg>';
+  }
+
+  function bar(percent, tone) {
+    return '<span class="w-bar-track"><span class="w-bar-fill fill-normal ' + tone + '" style="width: ' + Math.min(percent, 100) + '%"></span></span>';
+  }
+
+  function spark(tone) {
+    return '<svg class="w-spark ' + tone + '" viewBox="0 0 56 22" aria-hidden="true"><polyline class="spark-line m-transform" pathLength="1" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" points="' +
+      sparkPoints(hourlyBurn, 54, 22) + '"/><circle cx="54" cy="2" r="2" fill="currentColor"/></svg>';
+  }
+
+  var appIcon = '<svg class="w-icon" aria-hidden="true"><use href="#i-scale"/></svg>';
+
+  var templates = [
+    {
+      name: "Single line",
+      description: "One metric, the smallest footprint.",
+      render: function () { return '<span class="w-primary">$142.18 <span class="faint" style="font-weight: 400">today</span></span>'; }
+    },
+    {
+      name: "Two lines",
+      description: "Default. Money on top, limit and reset below.",
+      render: function () {
+        return '<span class="w-lines"><span class="w-primary">$142.18 today</span><span class="w-secondary faint">5h 62% · ↺ 1:48</span></span>';
+      }
+    },
+    {
+      name: "Columns",
+      description: "Up to four labelled values side by side.",
+      render: function () {
+        return '<span class="w-col"><span class="w-label faint">5h</span><span class="w-value">62%</span></span><span class="w-divider"></span>' +
+          '<span class="w-col"><span class="w-label faint">Week</span><span class="w-value">41%</span></span><span class="w-divider"></span>' +
+          '<span class="w-col"><span class="w-label faint">Today</span><span class="w-value">$142</span></span>';
+      }
+    },
+    {
+      name: "Bars",
+      description: "Limits as thin bars with the value beside each.",
+      render: function () {
+        return '<span class="w-lines" style="gap: 3px"><span style="display: flex; gap: 6px; align-items: center"><span class="w-secondary faint" style="width: 24px">5h</span>' + bar(62, "tone-normal") +
+          '<span class="w-secondary" style="font-weight: 600">62%</span></span><span style="display: flex; gap: 6px; align-items: center"><span class="w-secondary faint" style="width: 24px">Wk</span>' +
+          bar(41, "tone-normal") + '<span class="w-secondary" style="font-weight: 600">41%</span></span></span>';
+      }
+    },
+    {
+      name: "Ring + text",
+      description: "Limit ring with money and burn rate.",
+      render: function () {
+        return ring(62, "tone-normal") + '<span class="w-lines"><span class="w-primary">$142.18</span><span class="w-secondary faint">$18.6/h</span></span>';
+      }
+    },
+    {
+      name: "Sparkline",
+      description: "Last 12 hours of spend, with today's total.",
+      render: function () {
+        return spark("tone-normal") + '<span class="w-lines"><span class="w-primary">$142</span><span class="w-secondary faint">12 h</span></span>';
+      }
+    },
+    {
+      name: "Accounts",
+      description: "One value per account; wheel or timer cycles.",
+      render: function () {
+        return '<span class="w-lines"><span class="w-primary">Work 62% · Personal 18%</span><span class="w-secondary faint" style="display: flex; gap: 6px; align-items: center">5-hour limits <span class="w-dots"><i class="on"></i><i></i><i></i></span></span></span>';
+      }
+    },
+    {
+      name: "Minimal",
+      description: "Icon and one number. Used when space runs out.",
+      render: function () { return '<span class="tone-normal" style="display: flex">' + appIcon + '</span><span class="w-primary">62%</span>'; }
+    }
+  ];
+
+  var states = [
+    {
+      name: "Normal",
+      description: "All values fresh, under thresholds.",
+      render: function () { return ring(62, "tone-normal") + '<span class="w-lines"><span class="w-primary">$142.18</span><span class="w-secondary faint">5h · ↺ 1:48</span></span>'; }
+    },
+    {
+      name: "Warning · 80–94%",
+      description: "Only the metric past the threshold changes tone.",
+      render: function () { return ring(87, "tone-warn") + '<span class="w-lines"><span class="w-primary">$168.40</span><span class="w-secondary tone-warn">5h 87% · ↺ 0:52</span></span>'; }
+    },
+    {
+      name: "Critical · 95%+",
+      description: "Red tone plus projected time to hit the limit.",
+      render: function () { return ring(97, "tone-critical") + '<span class="w-lines"><span class="w-primary">$181.02</span><span class="w-secondary tone-critical">Full in ~6 min</span></span>'; }
+    },
+    {
+      name: "Limit reached",
+      description: "Says \"Limit\" instead of 100%, with reset countdown.",
+      render: function () { return '<span class="w-pill tone-critical">LIMIT</span><span class="w-lines"><span class="w-primary">Work · resets 0:42</span><span class="w-secondary faint">Personal 18%</span></span>'; }
+    },
+    {
+      name: "Estimate",
+      description: "Limits not turned on: ≈ prefix, dimmed ring.",
+      render: function () { return '<span style="opacity: .6; display: flex">' + ring(58, "tone-normal") + '</span><span class="w-lines"><span class="w-primary">$142.18</span><span class="w-secondary faint">≈ 5h 58%</span></span>'; }
+    },
+    {
+      name: "Stale",
+      description: "No update for 10+ minutes (PC asleep, source offline).",
+      render: function () { return '<span class="w-lines" style="opacity: .55"><span class="w-primary">· $142.18 today</span><span class="w-secondary">updated 14 min ago</span></span>'; }
+    },
+    {
+      name: "Indexing",
+      description: "First run or rebuild; shows progress, not zeros.",
+      render: function () { return '<span class="tone-normal" style="display: flex">' + appIcon + '</span><span class="w-lines"><span class="w-primary">Reading logs 48%</span><span class="w-secondary faint">0.9 of 1.8 GB</span></span>'; }
+    },
+    {
+      name: "Paused",
+      description: "User paused updates from the menu.",
+      render: function () { return '<span class="w-pill">PAUSED</span><span class="w-secondary faint">until 15:10</span>'; }
+    },
+    {
+      name: "Hover",
+      description: "Hover fill only; tooltip after 600 ms.",
+      render: function () { return '<span class="w-lines"><span class="w-primary">$142.18 today</span><span class="w-secondary faint">5h 62% · ↺ 1:48</span></span>'; },
+      hover: true
+    }
+  ];
+
+  function strip(theme, inner, options) {
+    var hoverStyle = options && options.hover
+      ? (theme === "light" ? ' style="background: rgba(0,0,0,.05)"' : ' style="background: rgba(255,255,255,.07)"')
+      : "";
+    return '<div class="strip ' + theme + '"><span class="widget"' + hoverStyle + '>' + inner + '</span><span class="tray-ghost" aria-hidden="true"></span></div>';
+  }
+
+  function renderRows(containerId, items) {
+    document.getElementById(containerId).innerHTML = items.map(function (item) {
+      return '<div class="template"><div class="template-info"><h4>' + item.name + '</h4><p>' + item.description + '</p></div>' +
+        '<div class="strip-pair">' + strip("light", item.render(), item) + strip("dark", item.render(), item) + '</div></div>';
+    }).join("");
+  }
+  renderRows("template-list", templates);
+  renderRows("state-list", states);
+
+  /* ---------- Full taskbar for anatomy ---------- */
+  function fullTaskbar(theme) {
+    var appColors = ["#3a7bd5", "#e3a51c", "#4caf7a", "#8a5cd0", "#d9534f"];
+    var apps = appColors.map(function (color) {
+      return '<span class="app-dot"><i style="background: ' + color + '"></i></span>';
+    }).join("");
+    return '<span class="spacer"></span><span class="apps">' + apps + '</span><span class="spacer"></span>' +
+      '<span class="widget outline-demo" title="Hakari widget"><span class="w-lines"><span class="w-primary">$142.18 today</span>' +
+      '<span class="w-secondary faint">5h 62% · ↺ 1:48</span></span>' + ring(62, "tone-normal") + '</span>' +
+      '<span class="tray"><span class="tray-item"><svg><use href="#i-chevron-up"/></svg></span>' +
+      '<span class="tray-item" style="font-size: 12px">ไทย</span>' +
+      '<span class="tray-icons"><svg><use href="#i-wifi"/></svg><svg><use href="#i-volume"/></svg><svg><use href="#i-battery"/></svg></span>' +
+      '<span class="clock">13:42<br>05/10/2026</span></span>';
+  }
+  document.getElementById("hero-taskbar").innerHTML = fullTaskbar("light");
+  document.getElementById("hero-taskbar-dark").innerHTML = fullTaskbar("dark");
+
+  /* ---------- Editor + onboarding previews ---------- */
+  var picker = document.getElementById("template-picker");
+  var editorPreview = document.getElementById("editor-preview");
+  function selectTemplate(index) {
+    picker.querySelectorAll("button").forEach(function (button, buttonIndex) {
+      button.setAttribute("aria-pressed", String(buttonIndex === index));
+    });
+    var template = templates[index];
+    editorPreview.innerHTML = strip("light", template.render()) + strip("dark", template.render());
+  }
+  picker.innerHTML = templates.map(function (template) {
+    return '<button type="button" class="template-option" aria-pressed="false"><span>' + template.name +
+      '<br><small>' + template.description + '</small></span></button>';
+  }).join("");
+  picker.querySelectorAll("button").forEach(function (button, index) {
+    button.addEventListener("click", function () { selectTemplate(index); });
+  });
+  selectTemplate(4);
+  document.getElementById("onboard-preview").innerHTML = strip("dark", templates[1].render());
+
+  /* ---------- Segmented buttons and toggles ---------- */
+  document.querySelectorAll(".segmented").forEach(function (group) {
+    group.addEventListener("click", function (event) {
+      var target = event.target.closest("button");
+      if (!target) { return; }
+      group.querySelectorAll("button").forEach(function (button) {
+        button.setAttribute("aria-pressed", String(button === target));
+      });
+    });
+  });
+  document.querySelectorAll(".toggle").forEach(function (toggle) {
+    toggle.addEventListener("click", function () {
+      toggle.setAttribute("aria-checked", String(toggle.getAttribute("aria-checked") !== "true"));
+    });
+  });
+
+  /* ---------- Flyout sparkline ---------- */
+  document.getElementById("flyout-spark").setAttribute("points", sparkPoints(hourlyBurn, 56, 22));
+
+  /* ---------- Dashboard navigation ---------- */
+  var titles = {
+    overview: "Overview", sessions: "Sessions", projects: "Projects", branches: "Branches",
+    workflows: "Workflows", accounts: "Accounts & sources", charts: "Charts", roi: "Plan value", "settings-link": "Settings"
+  };
+  var navButtons = document.querySelectorAll("#navpane button");
+  navButtons.forEach(function (button) {
+    button.addEventListener("click", function () {
+      var view = button.dataset.view;
+      navButtons.forEach(function (other) {
+        if (other === button) { other.setAttribute("aria-current", "page"); }
+        else { other.removeAttribute("aria-current"); }
+      });
+      document.querySelectorAll("[data-view-panel]").forEach(function (panel) {
+        panel.hidden = panel.dataset.viewPanel !== view;
+        if (!panel.hidden) { enterView(panel); }
+      });
+      document.getElementById("view-title").textContent = titles[view];
+      moveNavIndicator(button);
+    });
+  });
+
+  /* ---------- Motion ---------- */
+  var motionButtons = document.querySelectorAll("[data-motion-choice]");
+  function applyMotion(choice) {
+    root.setAttribute("data-motion", choice);
+    motionButtons.forEach(function (button) {
+      button.setAttribute("aria-pressed", String(button.dataset.motionChoice === choice));
+    });
+    try { localStorage.setItem("hakari-handoff-motion", choice); } catch (error) { /* storage blocked */ }
+    replay(document.querySelector("main"));
+  }
+  motionButtons.forEach(function (button) {
+    button.addEventListener("click", function () { applyMotion(button.dataset.motionChoice); });
+  });
+
+  function replay(container) {
+    if (!container || !container.getAnimations) { return; }
+    container.getAnimations({ subtree: true }).forEach(function (animation) {
+      if (animation instanceof CSSAnimation) { animation.cancel(); animation.play(); }
+    });
+  }
+
+  function staggerChildren(container, className) {
+    Array.prototype.forEach.call(container.children, function (child, index) {
+      child.classList.add(className, "m-transform");
+      child.style.setProperty("--i", String(Math.min(index, 8)));
+    });
+  }
+
+  function enterView(panel) {
+    var wrapper = panel.firstElementChild;
+    if (!wrapper) { return; }
+    staggerChildren(wrapper.classList.contains("panel") ? panel : wrapper, "m-rise");
+    panel.querySelectorAll(".kpis, .account-cards").forEach(function (group) { staggerChildren(group, "m-rise"); });
+    replay(panel);
+  }
+
+  document.querySelectorAll(".flyout").forEach(function (flyout) {
+    flyout.classList.add("m-rise", "m-transform");
+    var body = flyout.querySelector(".flyout-body");
+    if (body) { staggerChildren(body, "m-rise"); }
+  });
+  document.querySelectorAll(".toast").forEach(function (toast, index) {
+    toast.classList.add("m-slide", "m-transform");
+    toast.style.setProperty("--i", String(index));
+  });
+  document.querySelectorAll(".onboard-step, .composition i").forEach(function (element, index) {
+    element.style.setProperty("--i", String(index % 6));
+  });
+  document.querySelectorAll(".onboard").forEach(function (group) { staggerChildren(group, "m-rise"); });
+  enterView(document.querySelector('[data-view-panel="overview"]'));
+
+  document.querySelectorAll("[data-replay]").forEach(function (button) {
+    button.addEventListener("click", function () { replay(document.querySelector(button.dataset.replay)); });
+  });
+
+  /* Nav indicator slides between items */
+  var navPane = document.getElementById("navpane");
+  var indicator = document.createElement("span");
+  indicator.className = "nav-indicator";
+  indicator.setAttribute("aria-hidden", "true");
+  navPane.appendChild(indicator);
+  function moveNavIndicator(button) {
+    var isHorizontal = getComputedStyle(navPane).gridAutoFlow.indexOf("column") === 0;
+    navPane.classList.toggle("has-indicator", !isHorizontal);
+    indicator.hidden = isHorizontal;
+    indicator.style.transform = "translateY(" + (button.offsetTop + (button.offsetHeight - 18) / 2) + "px)";
+  }
+  moveNavIndicator(navPane.querySelector('[aria-current="page"]'));
+  window.addEventListener("resize", function () {
+    moveNavIndicator(navPane.querySelector('[aria-current="page"]'));
+  });
+
+  /* Press ripple on buttons */
+  document.addEventListener("pointerdown", function (event) {
+    var button = event.target.closest(".btn");
+    if (!button || button.disabled || root.getAttribute("data-motion") !== "full") { return; }
+    var bounds = button.getBoundingClientRect();
+    var ripple = document.createElement("span");
+    ripple.className = "ripple";
+    ripple.style.left = (event.clientX - bounds.left) + "px";
+    ripple.style.top = (event.clientY - bounds.top) + "px";
+    button.appendChild(ripple);
+    ripple.addEventListener("animationend", function () { ripple.remove(); });
+  });
+
+  /* Motion primitive demos */
+  document.getElementById("demo-ring").innerHTML = ring(62, "").replace(/^<svg[^>]*>|<\/svg>$/g, "");
+  document.getElementById("demo-spark").setAttribute("points", sparkPoints(hourlyBurn, 54, 22));
+  var toneSteps = [["62%", "var(--accent)"], ["87%", "var(--warn)"], ["97%", "var(--critical)"]];
+  var toneIndex = 0;
+  function tickValue(element, text) {
+    element.textContent = text;
+    element.classList.remove("m-tick");
+    void element.offsetWidth;
+    element.classList.add("m-tick", "m-transform");
+  }
+  document.querySelectorAll("#motion-demo .motion-card").forEach(function (card) {
+    card.addEventListener("click", function () {
+      var demo = card.dataset.demo;
+      if (demo === "tick") {
+        var amount = (142 + Math.random() * 6).toFixed(2);
+        tickValue(document.getElementById("demo-tick"), "$" + amount);
+      } else if (demo === "tone") {
+        toneIndex = (toneIndex + 1) % toneSteps.length;
+        var tone = document.getElementById("demo-tone");
+        tone.textContent = toneSteps[toneIndex][0];
+        tone.style.color = toneSteps[toneIndex][1];
+      } else if (demo === "pulse") {
+        var pulse = document.getElementById("demo-pulse");
+        pulse.classList.remove("m-pulse");
+        void pulse.offsetWidth;
+        pulse.classList.add("m-pulse", "m-transform");
+      } else {
+        replay(card);
+      }
+    });
+  });
+
+  /* Live widget: new value every 2.5 s, paused while the tab is hidden */
+  var liveSteps = [
+    { percent: 62, cost: 142.18, tone: "tone-normal", detail: "5h · ↺ 1:48" },
+    { percent: 71, cost: 151.02, tone: "tone-normal", detail: "5h · ↺ 1:41" },
+    { percent: 84, cost: 163.47, tone: "tone-warn", detail: "5h 84% · ↺ 1:30" },
+    { percent: 91, cost: 172.90, tone: "tone-warn", detail: "5h 91% · ↺ 1:22" },
+    { percent: 97, cost: 181.02, tone: "tone-critical", detail: "Full in ~6 min" }
+  ];
+  var liveIndex = 0;
+  var liveContainer = document.getElementById("live-demo");
+  function liveWidget(step) {
+    return ring(step.percent, step.tone) + '<span class="w-lines"><span class="w-primary"><span class="live-cost">$' +
+      step.cost.toFixed(2) + '</span></span><span class="w-secondary faint ' + (step.tone === "tone-normal" ? "" : step.tone) +
+      ' live-detail">' + step.detail + '</span></span>';
+  }
+  liveContainer.innerHTML = strip("light", liveWidget(liveSteps[0])) + strip("dark", liveWidget(liveSteps[0]));
+  function advanceLive() {
+    var previous = liveSteps[liveIndex];
+    liveIndex = (liveIndex + 1) % liveSteps.length;
+    var step = liveSteps[liveIndex];
+    liveContainer.querySelectorAll(".widget").forEach(function (widget) {
+      var arc = widget.querySelector(".ring-arc");
+      var ringElement = widget.querySelector(".w-ring");
+      var length = parseFloat(arc.style.getPropertyValue("--ring-length"));
+      arc.classList.remove("ring-arc");
+      arc.style.strokeDashoffset = String(length - (step.percent / 100) * length);
+      ringElement.classList.remove(previous.tone);
+      ringElement.classList.add(step.tone);
+      ringElement.querySelector("text").textContent = String(step.percent);
+      if (step.tone === "tone-critical") {
+        ringElement.classList.remove("m-pulse");
+        void ringElement.getBoundingClientRect();
+        ringElement.classList.add("m-pulse", "m-transform");
+      }
+      tickValue(widget.querySelector(".live-cost"), "$" + step.cost.toFixed(2));
+      var detail = widget.querySelector(".live-detail");
+      detail.classList.remove("tone-warn", "tone-critical");
+      if (step.tone !== "tone-normal") { detail.classList.add(step.tone); }
+      tickValue(detail, step.detail);
+    });
+  }
+  var liveTimer = null;
+  function startLive() { if (!liveTimer) { liveTimer = setInterval(advanceLive, 2500); } }
+  function stopLive() { clearInterval(liveTimer); liveTimer = null; }
+  document.addEventListener("visibilitychange", function () {
+    if (document.hidden) { stopLive(); } else { startLive(); }
+  });
+  startLive();
+
+  /* ---------- Model rows ---------- */
+  var models = [
+    ["opus-5-5", 24120, 1962.40], ["opus-5", 1810, 301.25], ["sonnet-5-5", 2240, 64.10],
+    ["haiku-4-5", 640, 3.12], ["sonnet-5", 95, 2.05]
+  ];
+  var topCost = models[0][2];
+  document.getElementById("model-rows").innerHTML = models.map(function (model) {
+    var width = Math.max(2, Math.round((model[2] / topCost) * 70));
+    return '<tr><td><span class="model">' + model[0] + '</span></td><td class="num">' + model[1].toLocaleString("en-US") +
+      '</td><td class="num"><span class="bar-cell"><i style="width: ' + width + 'px"></i>$' +
+      model[2].toLocaleString("en-US", { minimumFractionDigits: 2 }) + '</span></td></tr>';
+  }).join("");
+
+  /* ---------- Project rows ---------- */
+  var projects = [
+    ["acme-storefront", 62, 14210, "98%", 1713.55], ["side-projects / mailbox", 41, 7820, "97%", 498.98],
+    ["side-projects / meter", 4, 1120, "98%", 188.40], ["weather-api", 18, 3906, "96%", 142.10], ["scratch", 22, 2077, "95%", 88.32]
+  ];
+  document.getElementById("project-rows").innerHTML = projects.map(function (project) {
+    return '<tr><td>' + project[0] + '</td><td class="num">' + project[1] + '</td><td class="num">' + project[2].toLocaleString("en-US") +
+      '</td><td class="num">' + project[3] + '</td><td class="num">$' + project[4].toLocaleString("en-US", { minimumFractionDigits: 2 }) + '</td></tr>';
+  }).join("");
+
+  /* ---------- Daily chart ---------- */
+  var dailyCost = [62, 88, 140, 121, 35, 18, 96, 132, 150, 118, 141, 22, 9, 104, 127, 162, 139, 155, 41, 26,
+    118, 146, 171, 133, 160, 52, 30, 149, 214, 142];
+  (function drawDaily() {
+    var svg = document.getElementById("daily-chart");
+    var width = 560, height = 200, left = 36, bottom = 22, top = 10;
+    var maxValue = 250;
+    var plotHeight = height - bottom - top;
+    var slot = (width - left) / dailyCost.length;
+    var parts = [];
+    [0, 50, 100, 150, 200, 250].forEach(function (tick) {
+      var y = top + plotHeight - (tick / maxValue) * plotHeight;
+      parts.push('<line class="grid-line" x1="' + left + '" x2="' + width + '" y1="' + y + '" y2="' + y + '"/>');
+      parts.push('<text x="' + (left - 6) + '" y="' + (y + 3) + '" text-anchor="end">$' + tick + '</text>');
+    });
+    dailyCost.forEach(function (value, index) {
+      var barHeight = (value / maxValue) * plotHeight;
+      var x = left + index * slot + slot * 0.18;
+      var isLast = index === dailyCost.length - 1;
+      parts.push('<rect x="' + x.toFixed(1) + '" y="' + (top + plotHeight - barHeight).toFixed(1) + '" width="' + (slot * 0.64).toFixed(1) +
+        '" height="' + barHeight.toFixed(1) + '" rx="2" class="bar m-transform" style="--i: ' + index + '" fill="var(' +
+        (isLast ? "--chart-1" : "--chart-2") + ')"/>');
+    });
+    ["Sep 6", "Sep 13", "Sep 20", "Sep 27", "Oct 5"].forEach(function (label, index) {
+      var dayIndex = [0, 7, 14, 21, 29][index];
+      var x = left + dayIndex * slot + slot / 2;
+      parts.push('<text x="' + x.toFixed(1) + '" y="' + (height - 6) + '" text-anchor="middle">' + label + '</text>');
+    });
+    svg.innerHTML = parts.join("");
+  })();
+
+  /* ---------- Model mix chart ---------- */
+  (function drawMix() {
+    var svg = document.getElementById("mix-chart");
+    var width = 560, height = 160, left = 36, top = 6, bottom = 20;
+    var plotHeight = height - top - bottom;
+    var days = 30;
+    var slot = (width - left) / days;
+    var parts = [];
+    [0, 50, 100].forEach(function (tick) {
+      var y = top + plotHeight - (tick / 100) * plotHeight;
+      parts.push('<text x="' + (left - 6) + '" y="' + (y + 3) + '" text-anchor="end">' + tick + '%</text>');
+    });
+    for (var day = 0; day < days; day++) {
+      var opusNew = Math.min(96, 40 + day * 2);
+      var opusOld = Math.max(2, 50 - day * 1.7);
+      var sonnet = 3 + (day % 4);
+      var other = Math.max(0, 100 - opusNew - opusOld - sonnet);
+      var shares = [[opusNew, "--chart-1"], [opusOld, "--chart-2"], [sonnet, "--chart-5"], [other, "--chart-4"]];
+      var total = shares.reduce(function (sum, share) { return sum + share[0]; }, 0);
+      var y = top + plotHeight;
+      parts.push('<g class="bar m-transform" style="--i: ' + day + '">');
+      shares.forEach(function (share) {
+        var segment = (share[0] / total) * plotHeight;
+        y -= segment;
+        parts.push('<rect x="' + (left + day * slot + 1).toFixed(1) + '" y="' + y.toFixed(1) + '" width="' + (slot - 2).toFixed(1) +
+          '" height="' + segment.toFixed(1) + '" fill="var(' + share[1] + ')"/>');
+      });
+      parts.push('</g>');
+    }
+    parts.push('<text x="' + (left + slot / 2) + '" y="' + (height - 5) + '" text-anchor="middle">Sep 6</text>');
+    parts.push('<text x="' + (width - slot / 2) + '" y="' + (height - 5) + '" text-anchor="middle">Oct 5</text>');
+    svg.innerHTML = parts.join("");
+  })();
+
+  /* ---------- Heatmap ---------- */
+  (function drawHeatmap() {
+    var container = document.getElementById("heatmap");
+    var dayNames = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+    var cells = ['<span></span>'];
+    for (var hour = 0; hour < 24; hour++) {
+      cells.push('<span style="text-align: center">' + (hour % 6 === 0 ? hour : "") + '</span>');
+    }
+    dayNames.forEach(function (dayName, dayIndex) {
+      cells.push('<span>' + dayName + '</span>');
+      for (var hour = 0; hour < 24; hour++) {
+        var weekday = dayIndex < 5;
+        var working = hour >= 9 && hour <= 18;
+        var evening = hour >= 20 && hour <= 23;
+        var level = 0;
+        if (weekday && working) { level = 2 + ((hour + dayIndex) % 3 === 0 ? 2 : (hour % 2)); }
+        else if (evening) { level = weekday ? 2 : 1; }
+        else if (!weekday && hour >= 13 && hour <= 17) { level = 1; }
+        if (hour >= 1 && hour <= 7) { level = 0; }
+        cells.push('<i style="--i: ' + hour + '; background: var(--heat-' + Math.min(level, 4) + ')" title="' + dayName + ' ' + hour + ':00"></i>');
+      }
+    });
+    container.innerHTML = cells.join("");
+  })();
+
+  /* ---------- Restore theme ---------- */
+  var savedTheme = "system";
+  try { savedTheme = localStorage.getItem("hakari-handoff-theme") || "system"; } catch (error) { /* storage blocked */ }
+  applyTheme(savedTheme);
+
+  var prefersReduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var savedMotion = prefersReduced ? "reduced" : "full";
+  try { savedMotion = localStorage.getItem("hakari-handoff-motion") || savedMotion; } catch (error) { /* storage blocked */ }
+  applyMotion(savedMotion);
+})();
+</script>
