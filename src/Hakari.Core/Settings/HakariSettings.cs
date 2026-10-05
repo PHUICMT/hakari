@@ -52,6 +52,8 @@ public sealed record HakariSettings
 
     public TaskbarDisplays Displays { get; init; } = TaskbarDisplays.All;
 
+    public TrayIconStyle TrayIcon { get; init; } = TrayIconStyle.Automatic;
+
     /// <summary><see cref="DisplayInfo.Id"/> values, used when Displays is Chosen.</summary>
     public IReadOnlyList<string> ChosenDisplays { get; init; } = [];
 
@@ -68,6 +70,11 @@ public sealed record HakariSettings
 
     public bool Paused { get; init; }
 
+    /// <summary>A pause that ends by itself, such as the menu's "pause for 1 hour".</summary>
+    public DateTimeOffset? PausedUntil { get; init; }
+
+    public bool IsPausedAt(DateTimeOffset now) => Paused || PausedUntil > now;
+
     /// <summary>
     /// True when the background feed would read and show the same data under both, so a
     /// change of animations or displays alone does not restart it.
@@ -80,7 +87,8 @@ public sealed record HakariSettings
         && string.Equals(Currency, other.Currency, StringComparison.OrdinalIgnoreCase)
         && RateMode == other.RateMode
         && RefreshSignInAutomatically == other.RefreshSignInAutomatically
-        && Paused == other.Paused;
+        && Paused == other.Paused
+        && PausedUntil == other.PausedUntil;
 
     /// <summary>True when the widget would word and lay out the same data the same way.</summary>
     public bool PresentsSameAs(HakariSettings other) =>

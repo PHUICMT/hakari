@@ -145,6 +145,17 @@
                                 </controls:HakariSegmented>
                             </controls:SettingRow>
                             <StackPanel x:Name="DisplayList" Visibility="Collapsed" />
+                            <controls:SettingRow Glyph="&#xE8B9;" Title="{l:Text Key=settings.trayIcon}"
+                                Description="{l:Text Key=settings.trayIcon.description}">
+                                <controls:HakariSegmented>
+                                    <controls:HakariSegment x:Name="TrayAutomatic" GroupName="TrayIcon"
+                                        Content="{l:Text Key=settings.trayIcon.automatic}" Checked="OnTrayIconChecked" />
+                                    <controls:HakariSegment x:Name="TrayLogo" GroupName="TrayIcon"
+                                        Content="{l:Text Key=settings.trayIcon.logo}" Checked="OnTrayIconChecked" />
+                                    <controls:HakariSegment x:Name="TrayLimit" GroupName="TrayIcon"
+                                        Content="{l:Text Key=settings.trayIcon.limit}" Checked="OnTrayIconChecked" />
+                                </controls:HakariSegmented>
+                            </controls:SettingRow>
                         </StackPanel>
                     </Border>
                 </StackPanel>

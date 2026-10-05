@@ -19,7 +19,8 @@ public sealed class TrayIcon : IDisposable
     private readonly Func<IReadOnlyList<TrayMenuItem>> buildMenu;
     private readonly uint taskbarCreatedMessage;
     private readonly IntPtr windowHandle;
-    private readonly IntPtr iconHandle;
+    private IntPtr iconHandle;
+    private TrayBadge? shownBadge;
     private string tooltip;
 
     public TrayIcon(string tooltip, Func<IReadOnlyList<TrayMenuItem>> buildMenu)
@@ -53,6 +54,24 @@ public sealed class TrayIcon : IDisposable
         tooltip = text;
         var data = CreateData(NotifyIconConstants.TipFlag | NotifyIconConstants.ShowTipFlag);
         Shell32.Shell_NotifyIcon(NotifyIconConstants.Modify, ref data);
+    }
+
+    /// <summary>Shows a limit on the icon, or the logo with null. Unchanged is free.</summary>
+    public void SetBadge(TrayBadge? badge)
+    {
+        if (badge == shownBadge)
+        {
+            return;
+        }
+
+        shownBadge = badge;
+        var previous = iconHandle;
+        iconHandle = badge is null
+            ? TrayIconArtwork.CreateIcon()
+            : TrayIconArtwork.CreateBadge(badge);
+        var data = CreateData(NotifyIconConstants.IconFlag);
+        Shell32.Shell_NotifyIcon(NotifyIconConstants.Modify, ref data);
+        User32.DestroyIcon(previous);
     }
 
     /// <summary>Shows the menu at the pointer; also used for the widget's right click.</summary>

@@ -42,17 +42,13 @@ public static class WidgetFactsBuilder
             PercentDecimals: percentDecimals);
     }
 
-    /// <summary>Only live readings: a last-known one is too old to build on.</summary>
+    /// <summary>From any reading, live or last known: it builds on when it was taken.</summary>
     private static Dictionary<string, double>? EstimatesOf(
         UsageQuery query,
         WidgetAccount account,
         DateTimeOffset now)
     {
         var snapshot = account.Snapshot.ProjectedTo(now);
-        if (snapshot.Freshness != LimitFreshness.Live)
-        {
-            return null;
-        }
 
         decimal CostBetween(DateTimeOffset from, DateTimeOffset to) => query.Total(
             new UsageFilter(From: from, To: to, AccountId: account.AccountId)).Cost;

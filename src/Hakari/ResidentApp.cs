@@ -19,6 +19,7 @@ namespace Hakari;
 internal sealed class ResidentApp : IDisposable
 {
     private const string TrayTooltip = "Hakari";
+    private static readonly TimeSpan PauseLength = TimeSpan.FromHours(1);
 
     private readonly SettingsStore settingsStore;
     private readonly TaskbarWidgetHost widgets;
@@ -26,7 +27,10 @@ internal sealed class ResidentApp : IDisposable
     private readonly TrayIcon trayIcon;
     private readonly ResidentMenu menu;
     private readonly SettingsWatcher settingsWatcher;
+    private readonly WidgetSurfaces widgetSurfaces;
+    private readonly CancellationTokenSource listening = new();
     private HakariSettings appliedSettings;
+    private TrayBadge? lastBadge;
 
     public ResidentApp(SettingsStore settingsStore)
     {
@@ -50,7 +54,10 @@ internal sealed class ResidentApp : IDisposable
         RecordLocation();
 
         menu.QuitRequested += (_, _) => MessageLoop.Quit();
-        widgets.RightClicked += (_, _) => trayIcon.ShowMenu();
+        widgetSurfaces = new WidgetSurfaces(widgets);
+        _ = ResidentChannel.ListenAsync(
+            command => widgets.PostAction(() => Handle(command)),
+            listening.Token);
         widgets.Clicked += (_, click) =>
             OpenFlyout(click.WidgetBounds.Right, click.TaskbarBounds.Top);
         trayIcon.Selected += (_, _) => OpenFlyoutAtWidget();
@@ -82,6 +89,26 @@ internal sealed class ResidentApp : IDisposable
         }
     }
 
+    /// <summary>Runs on the widget thread; asked for from the widget's menu.</summary>
+    private void Handle(ResidentCommand command)
+    {
+        switch (command)
+        {
+            case ResidentCommand.RefreshNow:
+                feed.RefreshNow();
+                break;
+            case ResidentCommand.PauseForAnHour:
+                Apply(settingsStore.Update(current => current with
+                {
+                    PausedUntil = DateTimeOffset.UtcNow + PauseLength,
+                }));
+                break;
+            case ResidentCommand.Quit:
+                MessageLoop.Quit();
+                break;
+        }
+    }
+
     private void OpenFlyoutAtWidget()
     {
         if (widgets.PrimaryWidgetAnchor() is { } anchor)
@@ -100,6 +127,7 @@ internal sealed class ResidentApp : IDisposable
         if (startFeed)
         {
             feed.Updated += content => widgets.PostContent(content);
+            feed.BadgeUpdated += badge => widgets.PostAction(() => ShowBadge(badge));
             feed.Start();
         }
 
@@ -108,6 +136,8 @@ internal sealed class ResidentApp : IDisposable
 
     public void Dispose()
     {
+        listening.Cancel();
+        widgetSurfaces.Dispose();
         settingsWatcher.Dispose();
         feed.Dispose();
         trayIcon.Dispose();
@@ -138,5 +168,22 @@ internal sealed class ResidentApp : IDisposable
         }
 
         appliedSettings = settings;
+        ShowBadge(lastBadge);
+    }
+
+    /// <summary>
+    /// Runs on the widget thread. Automatic shows the limit only when no widget is on any
+    /// taskbar, so the meter is never missing.
+    /// </summary>
+    private void ShowBadge(TrayBadge? badge)
+    {
+        lastBadge = badge;
+        var showLimit = appliedSettings.TrayIcon switch
+        {
+            TrayIconStyle.Limit => true,
+            TrayIconStyle.Logo => false,
+            _ => widgets.WidgetCount == 0,
+        };
+        trayIcon.SetBadge(showLimit ? badge : null);
     }
 }

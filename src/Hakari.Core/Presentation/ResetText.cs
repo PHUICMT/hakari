@@ -7,7 +7,7 @@ namespace Hakari.Core.Presentation;
 public static class ResetText
 {
     private const string WeekdayAndTime = "ddd HH:mm";
-    private const string Clock = "HH:mm";
+    private const string Clock24 = "HH:mm";
     private static readonly TimeSpan CountdownLimit = TimeSpan.FromHours(24);
 
     public static string Short(DateTimeOffset resetsAt, DateTimeOffset now)
@@ -34,11 +34,17 @@ public static class ResetText
             return Texts.Get("reset.now");
         }
 
-        var clock = resetsAt.ToLocalTime().ToString(Clock, CultureInfo.InvariantCulture);
+        var clock = resetsAt.ToLocalTime().ToString(Clock24, CultureInfo.InvariantCulture);
         return remaining < CountdownLimit
             ? Texts.Format("reset.in", (int)remaining.TotalHours, remaining.Minutes, clock)
             : Weekday(resetsAt);
     }
+
+    /// <summary>When, as a clock: "14:30" today, or "Mon 09:00" further out.</summary>
+    public static string Clock(DateTimeOffset resetsAt, DateTimeOffset now) =>
+        resetsAt - now < CountdownLimit
+            ? resetsAt.ToLocalTime().ToString(Clock24, CultureInfo.InvariantCulture)
+            : Weekday(resetsAt);
 
     /// <summary>The weekday in the chosen language; the time stays 24-hour.</summary>
     private static string Weekday(DateTimeOffset resetsAt) =>

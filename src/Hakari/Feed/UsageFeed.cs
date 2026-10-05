@@ -9,6 +9,7 @@ using Hakari.Core.Settings;
 using Hakari.Core.Sources;
 using Hakari.Core.Watching;
 using Hakari.Taskbar.Rendering;
+using Hakari.Taskbar.Tray;
 
 namespace Hakari.Feed;
 
@@ -30,6 +31,7 @@ internal sealed class UsageFeed : IDisposable
     private readonly AutoResetEvent settingsSignal = new(initialState: false);
     private volatile bool settingsChanged;
     private volatile bool layoutChanged;
+    private volatile bool refreshRequested;
     private volatile HakariSettings presentation = new();
     private ChangeTracker? changeTracker;
 
@@ -41,6 +43,9 @@ internal sealed class UsageFeed : IDisposable
 
     public event Action<WidgetContent>? Updated;
 
+    /// <summary>The limit for the tray icon, raised with each new set of facts.</summary>
+    public event Action<TrayBadge?>? BadgeUpdated;
+
     public FeedDiagnostics Diagnostics { get; } = new();
 
     public void Start() => worker.Start();
@@ -50,6 +55,13 @@ internal sealed class UsageFeed : IDisposable
     {
         settingsChanged = true;
         settingsSignal.Set();
+        changeTracker?.Wake();
+    }
+
+    /// <summary>Thread-safe: asks for limits now instead of at the next scheduled poll.</summary>
+    public void RefreshNow()
+    {
+        refreshRequested = true;
         changeTracker?.Wake();
     }
 
@@ -79,10 +91,10 @@ internal sealed class UsageFeed : IDisposable
             settingsChanged = false;
             var settings = settingsStore.Load();
             presentation = settings;
-            if (settings.Paused)
+            if (settings.IsPausedAt(DateTimeOffset.UtcNow))
             {
                 Updated?.Invoke(WidgetText.Paused);
-                WaitForSettingsChange();
+                WaitForSettingsChange(settings.Paused ? null : settings.PausedUntil);
                 continue;
             }
 
@@ -131,6 +143,12 @@ internal sealed class UsageFeed : IDisposable
                 limits.NoteUsage(now);
             }
 
+            if (refreshRequested)
+            {
+                refreshRequested = false;
+                limits.PollSoon();
+            }
+
             var limitsChanged = limits.PollIfDue(now);
             Diagnostics.LimitPolls = limits.Polls;
             var due = now - lastPublished >= ContentRefreshInterval;
@@ -138,6 +156,7 @@ internal sealed class UsageFeed : IDisposable
             {
                 layoutChanged = false;
                 facts = WidgetText.Facts(query, limits, presentation);
+                BadgeUpdated?.Invoke(WidgetText.Badge(facts));
                 lastPublished = now;
             }
 
@@ -181,9 +200,11 @@ internal sealed class UsageFeed : IDisposable
             ? presentation.TurnLength
             : ContentRefreshInterval;
 
-    private void WaitForSettingsChange()
+    /// <param name="resumeAt">When a timed pause ends, or null to wait for a change.</param>
+    private void WaitForSettingsChange(DateTimeOffset? resumeAt)
     {
-        while (!settingsChanged && !cancellation.IsCancellationRequested)
+        while (!settingsChanged && !cancellation.IsCancellationRequested
+            && (resumeAt is null || DateTimeOffset.UtcNow < resumeAt))
         {
             settingsSignal.WaitOne(ContentRefreshInterval);
         }

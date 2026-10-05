@@ -1,5 +1,6 @@
 using System.Drawing;
 using System.Drawing.Drawing2D;
+using Hakari.Taskbar.Rendering;
 
 namespace Hakari.Taskbar.Tray;
 
@@ -11,6 +12,87 @@ internal static class TrayIconArtwork
     private const float StrokeWidth = 2.4f;
     private static readonly Color Background = ColorTranslator.FromHtml("#2f4c8c");
     private static readonly Color Glyph = Color.White;
+
+    private const float BadgeRadius = 6f;
+    private const float BadgeFontPixels = 17f;
+    private const float StopBarHalfWidth = 7f;
+    private const float StopBarStroke = 4f;
+    private const string BadgeFont = "Segoe UI";
+    private static readonly Color NormalBadge = ColorTranslator.FromHtml("#2f4c8c");
+    private static readonly Color WarningBadge = ColorTranslator.FromHtml("#c98200");
+    private static readonly Color WarningInk = ColorTranslator.FromHtml("#1a1205");
+    private static readonly Color CriticalBadge = ColorTranslator.FromHtml("#c0322b");
+
+    /// <summary>
+    /// The percent on its tone color, or a bar across when full, as in the design's tray
+    /// fallback. Drawn at 32 px; Windows scales it to the tray size.
+    /// </summary>
+    public static IntPtr CreateBadge(TrayBadge badge)
+    {
+        using var bitmap = new Bitmap(Size, Size);
+        using (var graphics = Graphics.FromImage(bitmap))
+        {
+            graphics.SmoothingMode = SmoothingMode.AntiAlias;
+            graphics.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAlias;
+            var (fill, ink) = ColorsOf(badge);
+            using var path = RoundedSquare(BadgeRadius);
+            using var brush = new SolidBrush(fill);
+            graphics.FillPath(brush, path);
+            if (badge.IsFull)
+            {
+                DrawStopBar(graphics, ink);
+            }
+            else
+            {
+                DrawNumber(graphics, Math.Clamp(badge.Percent, 0, TrayBadge.FullPercent - 1), ink);
+            }
+        }
+
+        return bitmap.GetHicon();
+    }
+
+    private static (Color Fill, Color Ink) ColorsOf(TrayBadge badge) =>
+        badge.IsFull || badge.Tone == WidgetTone.Critical ? (CriticalBadge, Glyph)
+            : badge.Tone == WidgetTone.Warning ? (WarningBadge, WarningInk)
+            : (NormalBadge, Glyph);
+
+    private static void DrawNumber(Graphics graphics, int percent, Color ink)
+    {
+        using var font = new Font(BadgeFont, BadgeFontPixels, FontStyle.Bold, GraphicsUnit.Pixel);
+        using var brush = new SolidBrush(ink);
+        using var format = new StringFormat
+        {
+            Alignment = StringAlignment.Center,
+            LineAlignment = StringAlignment.Center,
+        };
+        var text = percent.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        graphics.DrawString(text, font, brush, new RectangleF(0, 0, Size, Size), format);
+    }
+
+    private static void DrawStopBar(Graphics graphics, Color ink)
+    {
+        using var pen = new Pen(ink, StopBarStroke)
+        {
+            StartCap = LineCap.Round,
+            EndCap = LineCap.Round,
+        };
+        var middle = Size / 2f;
+        var left = middle - StopBarHalfWidth;
+        graphics.DrawLine(pen, left, middle, middle + StopBarHalfWidth, middle);
+    }
+
+    private static GraphicsPath RoundedSquare(float radius)
+    {
+        var diameter = radius * 2;
+        var edge = Size - 1 - diameter;
+        var path = new GraphicsPath();
+        path.AddArc(0, 0, diameter, diameter, 180, 90);
+        path.AddArc(edge, 0, diameter, diameter, 270, 90);
+        path.AddArc(edge, edge, diameter, diameter, 0, 90);
+        path.AddArc(0, edge, diameter, diameter, 90, 90);
+        path.CloseFigure();
+        return path;
+    }
 
     /// <summary>Returns an icon handle; the caller destroys it with DestroyIcon.</summary>
     public static IntPtr CreateIcon()

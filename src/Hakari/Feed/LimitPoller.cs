@@ -52,6 +52,9 @@ internal sealed class LimitPoller : IDisposable
 
     public void NoteUsage(DateTimeOffset now) => lastUsage = now;
 
+    /// <summary>The next pass reads limits, whatever the schedule says.</summary>
+    public void PollSoon() => nextPoll = DateTimeOffset.MinValue;
+
     /// <summary>Returns true when new limits were read.</summary>
     public bool PollIfDue(DateTimeOffset now)
     {

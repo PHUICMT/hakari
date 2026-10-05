@@ -66,6 +66,9 @@ public sealed partial class SettingsWindow
         DisplaysAll.IsChecked = settings.Displays == TaskbarDisplays.All;
         DisplaysChosen.IsChecked = settings.Displays == TaskbarDisplays.Chosen;
         FillDisplays(settings);
+        TrayAutomatic.IsChecked = settings.TrayIcon == TrayIconStyle.Automatic;
+        TrayLogo.IsChecked = settings.TrayIcon == TrayIconStyle.Logo;
+        TrayLimit.IsChecked = settings.TrayIcon == TrayIconStyle.Limit;
     }
 
     /// <summary>One switch per connected display, shown only while choosing.</summary>

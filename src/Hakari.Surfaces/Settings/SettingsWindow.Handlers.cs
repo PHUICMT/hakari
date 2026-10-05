@@ -90,6 +90,14 @@ public sealed partial class SettingsWindow
         RevealDisplayList();
     }
 
+    private void OnTrayIconChecked(object sender, RoutedEventArgs args)
+    {
+        var style = ReferenceEquals(sender, TrayLogo) ? TrayIconStyle.Logo
+            : ReferenceEquals(sender, TrayLimit) ? TrayIconStyle.Limit
+            : TrayIconStyle.Automatic;
+        Save(current => current with { TrayIcon = style });
+    }
+
     private void SetDisplayChosen(string displayId, bool chosen) =>
         Save(current => current with
         {

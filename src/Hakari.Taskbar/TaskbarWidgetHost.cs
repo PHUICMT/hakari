@@ -62,7 +62,12 @@ public sealed class TaskbarWidgetHost : IDisposable
 
     public event EventHandler<WidgetClickedEventArgs>? Clicked;
 
-    public event EventHandler? RightClicked;
+    public event EventHandler<WidgetClickedEventArgs>? RightClicked;
+
+    /// <summary>The pointer came onto a widget; for the hover card.</summary>
+    public event EventHandler<WidgetClickedEventArgs>? HoverStarted;
+
+    public event EventHandler? HoverEnded;
 
     public WidgetDiagnostics Diagnostics { get; } = new();
 
@@ -232,8 +237,19 @@ public sealed class TaskbarWidgetHost : IDisposable
     {
         var widget = WidgetWindow.Create(target, taskbarHandle, options.Mode);
         widget.Clicked += (_, _) => RaiseClicked(widget);
-        widget.RightClicked += (_, _) => RightClicked?.Invoke(this, EventArgs.Empty);
-        widget.HoverChanged += (_, _) => StartHoverTransition(widget);
+        widget.RightClicked += (_, _) => Raise(RightClicked, widget);
+        widget.HoverChanged += (_, _) =>
+        {
+            StartHoverTransition(widget);
+            if (widget.IsHovered)
+            {
+                Raise(HoverStarted, widget);
+            }
+            else
+            {
+                HoverEnded?.Invoke(this, EventArgs.Empty);
+            }
+        };
         return widget;
     }
 
@@ -247,12 +263,14 @@ public sealed class TaskbarWidgetHost : IDisposable
             : new System.Drawing.Point(widget.ScreenBounds.Right, taskbar.Bounds.Top);
     }
 
-    private void RaiseClicked(WidgetWindow widget)
+    private void RaiseClicked(WidgetWindow widget) => Raise(Clicked, widget);
+
+    private void Raise(EventHandler<WidgetClickedEventArgs>? handler, WidgetWindow widget)
     {
         var taskbar = TaskbarLocator.Describe(widget.Target, layoutMonitor);
         if (taskbar is not null)
         {
-            Clicked?.Invoke(this, new WidgetClickedEventArgs(widget.ScreenBounds, taskbar.Bounds));
+            handler?.Invoke(this, new WidgetClickedEventArgs(widget.ScreenBounds, taskbar.Bounds));
         }
     }
 

@@ -127,7 +127,7 @@ internal static class FlyoutDataLoader
         UsageQuery query,
         DateTimeOffset now)
     {
-        if (settings.PercentDecimals <= 0 || entry.Snapshot.Freshness != LimitFreshness.Live)
+        if (settings.PercentDecimals <= 0)
         {
             return limit => limit.Percent;
         }

@@ -2,6 +2,7 @@ using Hakari.Core.Interprocess;
 using Hakari.Core.Localization;
 using Hakari.Core.Settings;
 using Hakari.Surfaces.Flyout;
+using Hakari.Surfaces.Popups;
 using Hakari.Surfaces.Settings;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
@@ -21,6 +22,8 @@ public partial class App : Application
     private DispatcherQueueTimer? idleExitTimer;
     private FlyoutWindow? flyout;
     private SettingsWindow? settings;
+    private TooltipWindow? tooltip;
+    private MenuWindow? menu;
 
     public App() => InitializeComponent();
 
@@ -47,15 +50,40 @@ public partial class App : Application
     {
         idleExitTimer?.Stop();
         ApplyLanguage();
-        if (command.Kind == SurfaceKind.Settings)
+        switch (command.Kind)
         {
-            ShowSettings();
-        }
-        else
-        {
-            ShowFlyout(command);
+            case SurfaceKind.Settings:
+                ShowSettings();
+                break;
+            case SurfaceKind.Menu:
+                tooltip?.HidePopup();
+                Menu.ShowAt(command.AnchorX, command.AnchorY);
+                break;
+            case SurfaceKind.Tooltip:
+                if (menu?.IsShowing != true && flyout?.IsShowing != true)
+                {
+                    Tooltip.ShowAt(command.AnchorX, command.AnchorY);
+                }
+
+                break;
+            case SurfaceKind.HideTooltip:
+                tooltip?.HidePopup();
+                idleExitTimer?.Start();
+                break;
+            case SurfaceKind.Warm:
+                idleExitTimer?.Start();
+                break;
+            default:
+                tooltip?.HidePopup();
+                ShowFlyout(command);
+                break;
         }
     }
+
+    /// <summary>Built once and reused: the hover card fills itself each time it shows.</summary>
+    private TooltipWindow Tooltip => tooltip ??= new TooltipWindow();
+
+    private MenuWindow Menu => menu ??= new MenuWindow(ShowSettings);
 
     private void ShowFlyout(SurfaceCommand command)
     {
@@ -114,7 +142,8 @@ public partial class App : Application
 
     private void ExitWhenIdle()
     {
-        if (flyout?.IsShowing == true || settings is not null)
+        if (flyout?.IsShowing == true || settings is not null
+            || menu?.IsShowing == true || tooltip?.IsShowing == true)
         {
             return;
         }

@@ -4,6 +4,7 @@ using Hakari.Core.Presentation.Widget;
 using Hakari.Core.Querying;
 using Hakari.Core.Settings;
 using Hakari.Taskbar.Rendering;
+using Hakari.Taskbar.Tray;
 
 namespace Hakari.Feed;
 
@@ -53,6 +54,22 @@ internal static class WidgetText
             presentation.TurnLength);
         var contents = panels.Select(ToContent).ToList();
         return contents[0] with { MorePanels = contents.Count > 1 ? contents[1..] : null };
+    }
+
+    /// <summary>The first shown account's most pressing limit, for the tray icon.</summary>
+    public static TrayBadge? Badge(WidgetFacts facts)
+    {
+        if (facts.Accounts.FirstOrDefault() is not { } account)
+        {
+            return null;
+        }
+
+        var snapshot = account.Snapshot.ProjectedTo(DateTimeOffset.Now);
+        return LimitPriority.MostPressing(snapshot) is { } limit
+            ? new TrayBadge(
+                (int)Math.Floor(account.PercentOf(limit)),
+                ToWidgetTone(WidgetComposer.ToneOf(limit, snapshot.Freshness)))
+            : null;
     }
 
     private static WidgetContent ToContent(ComposedWidget widget) => new(
