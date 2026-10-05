@@ -29,6 +29,14 @@ public sealed record HakariSettings
     public IReadOnlyDictionary<string, WidgetLayout> AccountLayouts { get; init; } =
         new Dictionary<string, WidgetLayout>();
 
+    public AccountOrder AccountOrdering { get; init; } = AccountOrder.MostPressing;
+
+    /// <summary>Account ids in the user's order, used when the ordering is Custom.</summary>
+    public IReadOnlyList<string> CustomAccountOrder { get; init; } = [];
+
+    /// <summary>Accounts kept out of the taskbar and flyout, such as an old sign-in.</summary>
+    public IReadOnlyList<string> HiddenAccounts { get; init; } = [];
+
     /// <summary>Names the user gave accounts, keyed by account id.</summary>
     public IReadOnlyDictionary<string, string> AccountNicknames { get; init; } =
         new Dictionary<string, string>();
@@ -70,6 +78,9 @@ public sealed record HakariSettings
         Widget == other.Widget
         && AccountsMode == other.AccountsMode
         && TurnSeconds == other.TurnSeconds
+        && AccountOrdering == other.AccountOrdering
+        && CustomAccountOrder.SequenceEqual(other.CustomAccountOrder)
+        && HiddenAccounts.SequenceEqual(other.HiddenAccounts)
         && AccountLayouts.Count == other.AccountLayouts.Count
         && AccountLayouts.All(entry =>
             other.AccountLayouts.TryGetValue(entry.Key, out var layout) && layout == entry.Value)

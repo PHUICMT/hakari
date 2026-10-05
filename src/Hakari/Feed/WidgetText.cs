@@ -1,3 +1,4 @@
+using Hakari.Core.Limits;
 using Hakari.Core.Localization;
 using Hakari.Core.Presentation.Widget;
 using Hakari.Core.Querying;
@@ -24,9 +25,14 @@ internal static class WidgetText
         HakariSettings presentation)
     {
         var now = DateTimeOffset.Now;
+        var arranged = AccountArrangement.Arrange(
+            limits.Accounts,
+            account => account.AccountId,
+            account => LimitPriority.Rank(account.Snapshot),
+            presentation);
         var accounts = presentation.AccountsMode == MultiAccountMode.Together
-            ? limits.Accounts
-            : [.. limits.Accounts.Select(account => account with
+            ? arranged
+            : [.. arranged.Select(account => account with
             {
                 Costs = CostsOf(query, account.AccountId, now),
             })];

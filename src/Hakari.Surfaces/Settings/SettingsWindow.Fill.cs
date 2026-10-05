@@ -10,6 +10,7 @@ using Hakari.Core.Startup;
 using Hakari.Surfaces.Controls;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Media;
 
 namespace Hakari.Surfaces.Settings;
 
@@ -19,7 +20,11 @@ public sealed partial class SettingsWindow
     private const string FolderGlyph = "";
     private const string AccountGlyph = "";
     private const string DisplayGlyph = "";
-    private const double NicknameBoxWidth = 120;
+    private const string MoveUpGlyph = "";
+    private const string MoveDownGlyph = "";
+    private const double MoveGlyphSize = 11;
+    private const double AccountControlSpacing = 4;
+    private const double NicknameBoxWidth = 110;
     private const int NicknameMaximumLength = 12;
     private const string CurrencyGroup = "Currency";
     private const string ProjectsFolderName = "projects";
@@ -117,6 +122,9 @@ public sealed partial class SettingsWindow
         return button;
     }
 
+    /// <summary>Account ids as listed in the Accounts card, for moving one up or down.</summary>
+    private IReadOnlyList<string> shownAccountOrder = [];
+
     private void FillAccounts(HakariSettings settings)
     {
         AccountList.Children.Clear();
@@ -132,26 +140,50 @@ public sealed partial class SettingsWindow
             });
         }
 
-        foreach (var account in accounts)
+        // Every account, hidden ones too, in the order the taskbar would use.
+        var ordered = AccountArrangement.Arrange(
+            accounts,
+            account => account.AccountId,
+            account => 0,
+            settings with { HiddenAccounts = [], AccountOrdering = AccountOrder.Custom });
+        shownAccountOrder = [.. ordered.Select(account => account.AccountId)];
+        foreach (var account in ordered)
         {
             var isFirst = AccountList.Children.Count == 0;
             AccountList.Children.Add(AccountRow(account, settings, isFirst));
         }
 
+        OrderPressing.IsChecked = settings.AccountOrdering == AccountOrder.MostPressing;
+        OrderCustom.IsChecked = settings.AccountOrdering == AccountOrder.Custom;
         RenewSignInToggle.IsChecked = settings.RefreshSignInAutomatically;
     }
 
-    /// <summary>The email stays the title; the nickname field on the right renames it.</summary>
+    /// <summary>
+    /// The email stays the title. On the right: the nickname field, up and down to reorder,
+    /// and whether the account shows at all, which keeps a signed-out account available.
+    /// </summary>
     private SettingRow AccountRow(AccountInfo account, HakariSettings settings, bool isFirst)
     {
         var details = new[] { PlanNames.Short(account.Plan), account.OrganizationName }
             .Where(detail => !string.IsNullOrWhiteSpace(detail));
+        var controls = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            Spacing = AccountControlSpacing,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+        var nickname = settings.NicknameOf(account.AccountId);
+        controls.Children.Add(NicknameBox(account.AccountId, nickname));
+        controls.Children.Add(MoveButton(account.AccountId, MoveUpGlyph, steps: -1));
+        controls.Children.Add(MoveButton(account.AccountId, MoveDownGlyph, steps: 1));
+        controls.Children.Add(ShowToggle(account.AccountId, settings));
+
         var row = new SettingRow
         {
             Glyph = AccountGlyph,
             Title = AccountLabels.Full(account),
             Description = string.Join(DetailSeparator, details),
-            Content = NicknameBox(account.AccountId, settings.NicknameOf(account.AccountId)),
+            Content = controls,
         };
         if (isFirst)
         {
@@ -159,6 +191,33 @@ public sealed partial class SettingsWindow
         }
 
         return row;
+    }
+
+    private Button MoveButton(string accountId, string glyph, int steps)
+    {
+        var button = new Button
+        {
+            Content = new FontIcon
+            {
+                Glyph = glyph,
+                FontSize = MoveGlyphSize,
+                FontFamily = (FontFamily)Application.Current.Resources["HakariIconFont"],
+            },
+            Style = (Style)Application.Current.Resources["HakariSubtleButton"],
+        };
+        ToolTipService.SetToolTip(button, Texts.Get(steps < 0
+            ? "settings.accounts.moveUp"
+            : "settings.accounts.moveDown"));
+        button.Click += (_, _) => MoveAccount(accountId, steps);
+        return button;
+    }
+
+    private HakariToggle ShowToggle(string accountId, HakariSettings settings)
+    {
+        var toggle = new HakariToggle { IsChecked = !settings.HiddenAccounts.Contains(accountId) };
+        ToolTipService.SetToolTip(toggle, Texts.Get("settings.accounts.show"));
+        toggle.Click += (_, _) => SetAccountShown(accountId, toggle.IsChecked == true);
+        return toggle;
     }
 
     private TextBox NicknameBox(string accountId, string? nickname)

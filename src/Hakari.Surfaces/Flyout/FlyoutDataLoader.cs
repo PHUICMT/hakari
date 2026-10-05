@@ -30,7 +30,11 @@ internal static class FlyoutDataLoader
         var query = new UsageQuery(store, pricing, StoredConverter(store, settings));
         var now = DateTimeOffset.Now;
 
-        var accounts = AccountsWithLimits(store, now);
+        var accounts = AccountArrangement.Arrange(
+            AccountsWithLimits(store, now),
+            entry => entry.Account.AccountId,
+            entry => LimitPriority.Rank(entry.Snapshot),
+            settings).ToList();
         var newest = accounts.Count == 0
             ? null
             : accounts.MaxBy(account => account.Snapshot.FetchedAt).Snapshot;
@@ -57,8 +61,7 @@ internal static class FlyoutDataLoader
             .. new AccountRepository(store).ListAccounts()
                 .Select(account => (Account: account, Snapshot: cache.Load(account.AccountId)))
                 .Where(entry => entry.Snapshot is not null)
-                .Select(entry => (entry.Account, Snapshot: entry.Snapshot!.ProjectedTo(now)))
-                .OrderByDescending(entry => LimitPriority.Rank(entry.Snapshot)),
+                .Select(entry => (entry.Account, Snapshot: entry.Snapshot!.ProjectedTo(now))),
         ];
     }
 

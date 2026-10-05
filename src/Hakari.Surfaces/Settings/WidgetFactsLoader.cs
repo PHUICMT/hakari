@@ -49,9 +49,12 @@ internal static class WidgetFactsLoader
                     snapshot,
                     CostsOf(query, account.AccountId, now))
                 : null)
-            .OfType<WidgetAccount>()
-            .OrderByDescending(account => LimitPriority.Rank(account.Snapshot))
-            .ToList();
+            .OfType<WidgetAccount>();
+        var arranged = AccountArrangement.Arrange(
+            accounts,
+            account => account.AccountId,
+            account => LimitPriority.Rank(account.Snapshot),
+            settings);
 
         var total = CostsOf(query, null, now);
         return new WidgetFacts(
@@ -59,7 +62,7 @@ internal static class WidgetFactsLoader
             CostThisMonth: total.ThisMonth,
             CostLastHour: total.LastHour,
             Currency: query.Currency,
-            Accounts: accounts,
+            Accounts: arranged,
             Nicknames: settings.AccountNicknames);
     }
 

@@ -107,6 +107,66 @@ public sealed partial class SettingsWindow
         }
     }
 
+    /// <summary>Moving switches to the user's own order, starting from what is shown now.</summary>
+    private void MoveAccount(string accountId, int steps)
+    {
+        var order = AccountArrangement.Move(shownAccountOrder, accountId, steps);
+        var updated = store.Update(current => current with
+        {
+            AccountOrdering = AccountOrder.Custom,
+            CustomAccountOrder = order,
+        });
+        RefreshAccounts(updated);
+    }
+
+    private void SetAccountShown(string accountId, bool shown)
+    {
+        var updated = store.Update(current => current with
+        {
+            HiddenAccounts = shown
+                ? [.. current.HiddenAccounts.Where(id => id != accountId)]
+                : [.. current.HiddenAccounts.Append(accountId).Distinct()],
+        });
+        RefreshAccounts(updated);
+    }
+
+    private void OnAccountOrderChecked(object sender, RoutedEventArgs args)
+    {
+        if (filling)
+        {
+            return;
+        }
+
+        var ordering = ReferenceEquals(sender, OrderCustom)
+            ? AccountOrder.Custom
+            : AccountOrder.MostPressing;
+        var updated = store.Update(current => current with
+        {
+            AccountOrdering = ordering,
+            CustomAccountOrder = current.CustomAccountOrder.Count == 0
+                ? shownAccountOrder
+                : current.CustomAccountOrder,
+        });
+        RefreshAccounts(updated);
+    }
+
+    /// <summary>The rows, the "layout for" list and the preview all follow the new order.</summary>
+    private void RefreshAccounts(HakariSettings settings)
+    {
+        filling = true;
+        try
+        {
+            FillAccounts(settings);
+        }
+        finally
+        {
+            filling = false;
+        }
+
+        previewFacts = null;
+        FillTaskbarAfterAccountChange(settings);
+    }
+
     /// <summary>An empty name removes the nickname. The preview shows it at once.</summary>
     private void SaveNickname(string accountId, string text)
     {

@@ -140,7 +140,19 @@
                     <TextBlock Text="{l:Text Key=settings.accounts}" Style="{StaticResource HakariSectionText}" />
                     <Border Style="{StaticResource HakariCard}">
                         <StackPanel>
-                            <StackPanel x:Name="AccountList" />                            <controls:SettingRow Glyph="&#xE72C;" Title="{l:Text Key=settings.renew}"
+                            <controls:SettingRow Glyph="&#xE8CB;" Title="{l:Text Key=settings.accounts.order}"
+                                Description="{l:Text Key=settings.accounts.order.description}" BorderThickness="0">
+                                <controls:HakariSegmented>
+                                    <controls:HakariSegment x:Name="OrderPressing" GroupName="AccountOrder"
+                                        Content="{l:Text Key=settings.accounts.order.pressing}"
+                                        Checked="OnAccountOrderChecked" />
+                                    <controls:HakariSegment x:Name="OrderCustom" GroupName="AccountOrder"
+                                        Content="{l:Text Key=settings.accounts.order.custom}"
+                                        Checked="OnAccountOrderChecked" />
+                                </controls:HakariSegmented>
+                            </controls:SettingRow>
+                            <StackPanel x:Name="AccountList" BorderThickness="0,1,0,0"
+                                BorderBrush="{ThemeResource HakariLineBrush}" />                            <controls:SettingRow Glyph="&#xE72C;" Title="{l:Text Key=settings.renew}"
                                 Description="{l:Text Key=settings.renew.description}">
                                 <controls:HakariToggle x:Name="RenewSignInToggle" Click="OnRenewSignInClicked" />
                             </controls:SettingRow>

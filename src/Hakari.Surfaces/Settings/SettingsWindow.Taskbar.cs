@@ -124,6 +124,23 @@ public sealed partial class SettingsWindow
         ShowPreview(updated);
     }
 
+    private void FillTaskbarAfterAccountChange(HakariSettings settings)
+    {
+        previewFacts = WidgetFactsLoader.Load(DateTimeOffset.Now);
+        filling = true;
+        try
+        {
+            LayoutTargetSelect.SetChoices(LayoutTargets(settings), layoutTarget);
+            FillLayoutRows(settings);
+        }
+        finally
+        {
+            filling = false;
+        }
+
+        ShowPreview(settings);
+    }
+
     private void OnTurnSpeedChecked(object sender, RoutedEventArgs args)
     {
         if (filling || sender is not HakariSegment { Tag: string tag }
