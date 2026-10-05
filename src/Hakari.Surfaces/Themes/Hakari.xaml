@@ -12,6 +12,7 @@
             <Color x:Key="HakariLineColor">#E0E3EB</Color>
             <Color x:Key="HakariLineStrongColor">#C5CAD6</Color>
             <Color x:Key="HakariGroundColor">#EEF0F5</Color>
+            <Color x:Key="HakariTaskbarColor">#F3F3F3</Color>
             <Color x:Key="HakariInkColor">#1A1E29</Color>
             <Color x:Key="HakariInkMutedColor">#4A5164</Color>
             <Color x:Key="HakariInkFaintColor">#7B8296</Color>
@@ -30,6 +31,7 @@
             <Color x:Key="HakariLineColor">#2A2F3B</Color>
             <Color x:Key="HakariLineStrongColor">#3C4352</Color>
             <Color x:Key="HakariGroundColor">#13161D</Color>
+            <Color x:Key="HakariTaskbarColor">#1C1C1C</Color>
             <Color x:Key="HakariInkColor">#E8EBF2</Color>
             <Color x:Key="HakariInkMutedColor">#A9B0C1</Color>
             <Color x:Key="HakariInkFaintColor">#7A8297</Color>
@@ -50,6 +52,7 @@
     <SolidColorBrush x:Key="HakariLineBrush" Color="{ThemeResource HakariLineColor}" />
     <SolidColorBrush x:Key="HakariLineStrongBrush" Color="{ThemeResource HakariLineStrongColor}" />
     <SolidColorBrush x:Key="HakariGroundBrush" Color="{ThemeResource HakariGroundColor}" />
+    <SolidColorBrush x:Key="HakariTaskbarBrush" Color="{ThemeResource HakariTaskbarColor}" />
     <SolidColorBrush x:Key="HakariInkBrush" Color="{ThemeResource HakariInkColor}" />
     <SolidColorBrush x:Key="HakariInkMutedBrush" Color="{ThemeResource HakariInkMutedColor}" />
     <SolidColorBrush x:Key="HakariInkFaintBrush" Color="{ThemeResource HakariInkFaintColor}" />
@@ -110,7 +113,7 @@
                             CornerRadius="{TemplateBinding CornerRadius}" />
                         <ContentPresenter
                             Padding="{TemplateBinding Padding}"
-                            HorizontalContentAlignment="Center"
+                            HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
                             VerticalContentAlignment="Center"
                             Foreground="{TemplateBinding Foreground}"
                             Content="{TemplateBinding Content}" />
@@ -155,6 +158,24 @@
     </Style>
 
     <FontFamily x:Key="HakariIconFont">Segoe Fluent Icons, Segoe MDL2 Assets</FontFamily>
+
+    <!-- Drop-down list: a raised card with full-width rows -->
+    <Style x:Key="HakariListPresenter" TargetType="FlyoutPresenter">
+        <Setter Property="Background" Value="{ThemeResource HakariTileBrush}" />
+        <Setter Property="BorderBrush" Value="{ThemeResource HakariLineStrongBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="{StaticResource HakariOverlayRadius}" />
+        <Setter Property="Padding" Value="4" />
+        <Setter Property="MinWidth" Value="0" />
+        <Setter Property="IsDefaultShadowEnabled" Value="True" />
+    </Style>
+
+    <Style x:Key="HakariListItemButton" TargetType="Button" BasedOn="{StaticResource HakariButton}">
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+        <Setter Property="HorizontalContentAlignment" Value="Left" />
+        <Setter Property="Padding" Value="10,7" />
+    </Style>
 
     <Style x:Key="HakariSectionText" TargetType="TextBlock">
         <Setter Property="FontSize" Value="14" />

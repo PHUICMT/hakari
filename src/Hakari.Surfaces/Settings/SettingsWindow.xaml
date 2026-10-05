@@ -28,6 +28,40 @@
             HorizontalScrollMode="Disabled" HorizontalScrollBarVisibility="Disabled">
             <StackPanel x:Name="Sections" MaxWidth="720" Padding="24,0,24,28">
 
+                <!-- Taskbar layout, with the live preview on top -->
+                <StackPanel>
+                    <TextBlock Text="Taskbar" Style="{StaticResource HakariSectionText}" />
+                    <Border Style="{StaticResource HakariCard}">
+                        <StackPanel>
+                            <StackPanel Padding="16" Spacing="8" CornerRadius="8,8,0,0"
+                                Background="{ThemeResource HakariGroundBrush}">
+                                <TextBlock Text="Preview" Style="{StaticResource HakariCaptionText}" />
+                                <controls:WidgetPreview x:Name="Preview" />
+                            </StackPanel>
+                            <controls:SettingRow Glyph="&#xE9D9;" Title="Ring"
+                                Description="The limit that fills the ring left of the text.">
+                                <controls:HakariSegmented>
+                                    <controls:HakariSegment x:Name="RingOff" GroupName="Ring"
+                                        Content="Off" Checked="OnRingChecked" />
+                                    <controls:HakariSegment x:Name="RingSession" GroupName="Ring"
+                                        Content="5h" Checked="OnRingChecked" />
+                                    <controls:HakariSegment x:Name="RingWeekly" GroupName="Ring"
+                                        Content="Week" Checked="OnRingChecked" />
+                                    <controls:HakariSegment x:Name="RingPressing" GroupName="Ring"
+                                        Content="Most pressing" Checked="OnRingChecked" />
+                                </controls:HakariSegmented>
+                            </controls:SettingRow>
+                            <controls:SettingRow Glyph="&#xE8E4;" Title="Top line">
+                                <controls:HakariSelect x:Name="TopSelect" />
+                            </controls:SettingRow>
+                            <controls:SettingRow Glyph="&#xE8E4;" Title="Bottom line"
+                                Description="Automatic gives each of two signed-in accounts its own line.">
+                                <controls:HakariSelect x:Name="BottomSelect" />
+                            </controls:SettingRow>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
                 <!-- Sources -->
                 <StackPanel>
                     <TextBlock Text="Sources" Style="{StaticResource HakariSectionText}" />

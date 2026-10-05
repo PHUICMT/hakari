@@ -38,6 +38,7 @@ public sealed partial class SettingsWindow
         try
         {
             var settings = store.Load();
+            FillTaskbar(settings);
             FillSources(settings);
             FillAccounts(settings);
             FillGeneral(settings);

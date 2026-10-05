@@ -1,5 +1,6 @@
 using Hakari.Core.Currency;
 using Hakari.Core.Displays;
+using Hakari.Core.Presentation.Widget;
 using Hakari.Core.Sources;
 
 namespace Hakari.Core.Settings;
@@ -8,6 +9,8 @@ namespace Hakari.Core.Settings;
 public sealed record HakariSettings
 {
     public AnimationSetting Animation { get; init; } = AnimationSetting.FollowWindows;
+
+    public WidgetLayout Widget { get; init; } = new();
 
     public TaskbarDisplays Displays { get; init; } = TaskbarDisplays.All;
 

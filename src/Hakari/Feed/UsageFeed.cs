@@ -2,6 +2,7 @@ using Hakari.Core.Configuration;
 using Hakari.Core.Currency;
 using Hakari.Core.Indexing;
 using Hakari.Core.Performance;
+using Hakari.Core.Presentation.Widget;
 using Hakari.Core.Pricing;
 using Hakari.Core.Querying;
 using Hakari.Core.Settings;
@@ -25,6 +26,8 @@ internal sealed class UsageFeed : IDisposable
     private readonly Thread worker;
     private readonly AutoResetEvent settingsSignal = new(initialState: false);
     private volatile bool settingsChanged;
+    private volatile bool layoutChanged;
+    private volatile WidgetLayout layout = new();
     private ChangeTracker? changeTracker;
 
     public UsageFeed(SettingsStore settingsStore)
@@ -47,6 +50,14 @@ internal sealed class UsageFeed : IDisposable
         changeTracker?.Wake();
     }
 
+    /// <summary>Thread-safe: redraws with the new layout without restarting anything.</summary>
+    public void SetLayout(WidgetLayout newLayout)
+    {
+        layout = newLayout;
+        layoutChanged = true;
+        changeTracker?.Wake();
+    }
+
     public void Dispose()
     {
         cancellation.Cancel();
@@ -64,6 +75,7 @@ internal sealed class UsageFeed : IDisposable
         {
             settingsChanged = false;
             var settings = settingsStore.Load();
+            layout = settings.Widget;
             if (settings.Paused)
             {
                 Updated?.Invoke(WidgetText.Paused);
@@ -105,9 +117,11 @@ internal sealed class UsageFeed : IDisposable
 
             var limitsChanged = limits.PollIfDue(now);
             Diagnostics.LimitPolls = limits.Polls;
-            if (recordsChanged || limitsChanged || now - lastPublished >= ContentRefreshInterval)
+            var due = now - lastPublished >= ContentRefreshInterval;
+            if (recordsChanged || limitsChanged || layoutChanged || due)
             {
-                Updated?.Invoke(WidgetText.Build(query, limits));
+                layoutChanged = false;
+                Updated?.Invoke(WidgetText.Build(query, limits, layout));
                 lastPublished = now;
             }
 

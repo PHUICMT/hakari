@@ -1,6 +1,7 @@
 using Hakari.Core.Accounts;
 using Hakari.Core.Indexing;
 using Hakari.Core.Limits;
+using Hakari.Core.Presentation.Widget;
 using Hakari.Core.Sources;
 
 namespace Hakari.Feed;
@@ -42,7 +43,7 @@ internal sealed class LimitPoller : IDisposable
     }
 
     /// <summary>Every signed-in account with known limits, the most pressing first.</summary>
-    public IReadOnlyList<AccountLimits> Accounts { get; private set; } = [];
+    public IReadOnlyList<WidgetAccount> Accounts { get; private set; } = [];
 
     public int Polls { get; private set; }
 
@@ -63,8 +64,8 @@ internal sealed class LimitPoller : IDisposable
         [
             .. accountTracker.SourcesByCurrentAccount(sources)
                 .Select(account => Read(account.Key, account.Value, details))
-                .OfType<AccountLimits>()
-                .OrderByDescending(account => PressingRank(account.Snapshot)),
+                .OfType<WidgetAccount>()
+                .OrderByDescending(account => LimitPriority.Rank(account.Snapshot)),
         ];
 
         var active = now - lastUsage < ActiveWindow;
@@ -79,7 +80,7 @@ internal sealed class LimitPoller : IDisposable
 
     public void Dispose() => httpClient.Dispose();
 
-    private AccountLimits? Read(
+    private WidgetAccount? Read(
         string accountId,
         IReadOnlyList<UsageSource> accountSources,
         IReadOnlyDictionary<string, AccountInfo> details)
@@ -94,11 +95,6 @@ internal sealed class LimitPoller : IDisposable
         }
 
         forecaster.Record(accountId, snapshot);
-        return new AccountLimits(accountId, details.GetValueOrDefault(accountId), snapshot);
+        return new WidgetAccount(accountId, details.GetValueOrDefault(accountId), snapshot);
     }
-
-    private static int PressingRank(LimitSnapshot snapshot) =>
-        LimitPriority.MostPressing(snapshot) is { } limit
-            ? LimitPriority.SeverityRank(limit.Severity) * 1000 + limit.Percent
-            : -1;
 }

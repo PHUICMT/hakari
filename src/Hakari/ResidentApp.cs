@@ -129,6 +129,10 @@ internal sealed class ResidentApp : IDisposable
         {
             feed.ReloadSettings();
         }
+        else if (settings.Widget != appliedSettings.Widget)
+        {
+            feed.SetLayout(settings.Widget);
+        }
 
         appliedSettings = settings;
     }

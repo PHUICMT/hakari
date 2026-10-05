@@ -43,7 +43,8 @@ internal static class FlyoutDataLoader
                 : null);
     }
 
-    private static CurrencyConverter? StoredConverter(IndexStore store, HakariSettings settings)
+    /// <summary>Rates Hakari.exe already stored; opening a window never fetches any.</summary>
+    internal static CurrencyConverter? StoredConverter(IndexStore store, HakariSettings settings)
     {
         if (settings.Currency == CurrencyCodes.Dollar)
         {
