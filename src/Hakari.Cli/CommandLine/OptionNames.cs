@@ -9,4 +9,6 @@ public static class OptionNames
     public const string ConfigDirectory = "--config-dir";
     public const string Rebuild = "--rebuild";
     public const string Limit = "--limit";
+    public const string Currency = "--currency";
+    public const string RateMode = "--rate";
 }

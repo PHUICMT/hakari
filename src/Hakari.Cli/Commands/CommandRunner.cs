@@ -53,5 +53,7 @@ public static class CommandRunner
         Console.WriteLine($"  {OptionNames.Wsl} off|runningonly|all");
         Console.WriteLine($"  {OptionNames.ConfigDirectory} <path>   extra config directory");
         Console.WriteLine($"  {OptionNames.Rebuild}               re-index from scratch");
+        Console.WriteLine($"  {OptionNames.Currency} <code>     convert costs, e.g. THB");
+        Console.WriteLine($"  {OptionNames.RateMode} day|latest       rate per usage day");
     }
 }

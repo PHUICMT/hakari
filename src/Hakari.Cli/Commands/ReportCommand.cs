@@ -26,18 +26,25 @@ internal sealed class ReportCommand : ICliCommand
         using var store = CommandContext.OpenStore(arguments);
         CommandContext.RunIndexer(store, CommandContext.DiscoverSources(arguments), rebuild: false);
 
-        var query = new UsageQuery(store, PricingTable.LoadBundled());
-        WriteSummaries(query.Summarize(filter, groupBy).Take(rowLimit), groupBy);
-        WriteTotal(query.Total(filter));
+        var pricing = PricingTable.LoadBundled();
+        var converter = CurrencyContext.CreateConverter(arguments, store, pricing);
+        var query = new UsageQuery(store, pricing, converter);
+
+        WriteSummaries(query.Summarize(filter, groupBy).Take(rowLimit), groupBy, query.Currency);
+        WriteTotal(query.Total(filter), query.Currency);
+        CurrencyContext.WriteRateNote(converter);
         WriteUnpricedWarning(query.FindUnpricedModels());
         return ExitCodes.Success;
     }
 
-    private static void WriteSummaries(IEnumerable<UsageSummary> summaries, GroupBy groupBy)
+    private static void WriteSummaries(
+        IEnumerable<UsageSummary> summaries,
+        GroupBy groupBy,
+        string currency)
     {
         var table = new TableWriter(
             groupBy.ToString(), "Messages", "Input", "Output",
-            "Write 5m", "Write 1h", "Cache read", "Hit %", "Searches", "Cost $");
+            "Write 5m", "Write 1h", "Cache read", "Hit %", "Searches", $"Cost {currency}");
 
         foreach (var summary in summaries)
         {
@@ -64,9 +71,9 @@ internal sealed class ReportCommand : ICliCommand
         return DisplayFormat.Cost(summary.Cost) + marker;
     }
 
-    private static void WriteTotal(UsageSummary total) =>
+    private static void WriteTotal(UsageSummary total, string currency) =>
         Console.WriteLine(
-            $"{Environment.NewLine}Total ${DisplayFormat.Cost(total.Cost)} · "
+            $"{Environment.NewLine}Total {DisplayFormat.Cost(total.Cost)} {currency} · "
             + $"{DisplayFormat.Number(total.Messages)} messages · "
             + $"cache hit {DisplayFormat.Percent(total.Tokens.CacheHitRate)}");
 

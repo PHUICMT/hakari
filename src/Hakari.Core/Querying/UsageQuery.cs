@@ -1,3 +1,4 @@
+using Hakari.Core.Currency;
 using Hakari.Core.Indexing;
 using Hakari.Core.Pricing;
 using Hakari.Core.Usage;
@@ -5,9 +6,29 @@ using Microsoft.Data.Sqlite;
 
 namespace Hakari.Core.Querying;
 
-public sealed class UsageQuery(IndexStore store, PricingTable pricing)
+/// <param name="converter">Converts dollar costs per usage day; null keeps US dollars.</param>
+public sealed class UsageQuery(
+    IndexStore store,
+    PricingTable pricing,
+    CurrencyConverter? converter = null)
 {
     private const long MillisecondsPerDay = 86_400_000;
+
+    public string Currency => converter?.Currency ?? CurrencyCodes.Dollar;
+
+    public DateOnly? FirstUsageDay()
+    {
+        using var command = store.Connection.CreateCommand();
+        command.CommandText = "SELECT min(timestamp_ms) FROM usage_records";
+        var firstTimestamp = command.ExecuteScalar();
+        if (firstTimestamp is not long milliseconds)
+        {
+            return null;
+        }
+
+        var firstUsage = DateTimeOffset.FromUnixTimeMilliseconds(milliseconds);
+        return DateOnly.FromDateTime(firstUsage.UtcDateTime);
+    }
 
     public IReadOnlyList<UsageSummary> Summarize(UsageFilter filter, GroupBy groupBy)
     {
@@ -95,14 +116,18 @@ public sealed class UsageQuery(IndexStore store, PricingTable pricing)
             CacheRead: reader.GetInt64(10));
         var webSearchRequests = reader.GetInt64(11);
 
+        var utcDay = ToUtcDay(reader.GetInt64(4));
         var pricedUsage = new PricedUsage(
             Model: reader.GetString(1),
             Speed: reader.GetString(2),
             InferenceGeography: reader.IsDBNull(3) ? null : reader.GetString(3),
-            UtcDay: ToUtcDay(reader.GetInt64(4)),
+            UtcDay: utcDay,
             Tokens: tokens,
             WebSearchRequests: webSearchRequests);
-        var cost = pricing.Cost(pricedUsage);
+        var dollarCost = pricing.Cost(pricedUsage);
+        var cost = dollarCost is { } dollars && converter is not null
+            ? converter.Convert(dollars, utcDay)
+            : dollarCost;
 
         return new UsageSummary(
             Key: reader.GetString(0),

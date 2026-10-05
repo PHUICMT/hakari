@@ -34,7 +34,7 @@ App: TaskbarWidget / Flyout / Dashboard bind to Snapshot
 
 - `PricingService`: merges bundled → remote (`raw.githubusercontent.com/<org>/hakari/main/data/pricing.json`, ETag cached daily) → LiteLLM fallback → user overrides. Cost is computed at query time from token columns, so price changes re-price history with no reindex.
 - `LimitProvider` (opt-in): `OAuthUsageLimitProvider` with a fallback to `EstimatedLimitProvider`.
-- `CurrencyService`: daily FX rate (e.g. exchangerate.host or frankfurter.app), cached.
+- `ExchangeRateService`: free, keyless rates. Frankfurter (ECB reference rates, with history) is the primary source and open.er-api.com (latest only) the fallback. Rates are stored in `exchange_rates` in the index database, survive index rebuilds, and are fetched only when missing or older than 4 days. Two modes: the latest rate, or the rate of each usage day (weekends and holidays use the previous business day).
 - `SyncService`: writes `<shared>/Hakari/machines/<machineId>.json` (hourly rollups only) and reads the files from other machines. Snapshot schema is versioned.
 
 ## Taskbar overlay (Win11)

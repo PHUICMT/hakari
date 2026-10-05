@@ -2,7 +2,10 @@ namespace Hakari.Core.Indexing;
 
 internal static class IndexSchema
 {
-    /// <summary>Bump when columns change; an index with another version is rebuilt.</summary>
+    /// <summary>
+    /// Bump when usage columns change; an index with another version is rebuilt from the logs.
+    /// Exchange rates are kept across rebuilds because they come from the network.
+    /// </summary>
     public const int CurrentVersion = 2;
 
     public const string ConnectionPragmas = """
@@ -52,6 +55,14 @@ internal static class IndexSchema
 
         CREATE INDEX IF NOT EXISTS index_usage_source_timestamp
             ON usage_records (source_id, timestamp_ms);
+
+        CREATE TABLE IF NOT EXISTS exchange_rates (
+            currency TEXT NOT NULL,
+            day TEXT NOT NULL,
+            units_per_dollar TEXT NOT NULL,
+            source TEXT NOT NULL,
+            PRIMARY KEY (currency, day)
+        );
         """;
 
     public const string DeleteAll = """
