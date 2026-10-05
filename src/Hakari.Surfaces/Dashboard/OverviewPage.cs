@@ -47,7 +47,11 @@ internal sealed partial class OverviewPage : UserControl
         content.Children.Add(Header());
         content.Children.Add(body);
         Content = new ScrollViewer { Content = content };
-        loader = new PageLoader<OverviewData>(body, OverviewData.Load, Build);
+        loader = new PageLoader<OverviewData>(
+            body,
+            OverviewData.Load,
+            Build,
+            LoadingSkeleton.Overview);
         filterBar.Changed += (_, _) => loader.Load(force: true);
         loader.Load();
     }

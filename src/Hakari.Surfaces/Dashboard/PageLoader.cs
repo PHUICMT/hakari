@@ -16,7 +16,8 @@ namespace Hakari.Surfaces.Dashboard;
 internal sealed class PageLoader<T>(
     ContentControl body,
     Func<DashboardFilter, T> read,
-    Func<T, UIElement> build)
+    Func<T, UIElement> build,
+    Func<UIElement> skeleton)
 {
     private const double LoadingOpacity = 0.55;
     private const double RiseDistance = 12;
@@ -37,14 +38,19 @@ internal sealed class PageLoader<T>(
             return;
         }
 
+        // Three cases: the first read shows a skeleton and then rises in; a refresh or a new
+        // filter dims and then fades the new numbers in; a stale page being revisited only
+        // updates quietly in place, so coming back never flashes.
         var mine = ++generation;
-        if (hasData)
+        var firstRead = !hasData;
+        var asked = force || filter != loadedFilter;
+        if (firstRead)
+        {
+            body.Content = skeleton();
+        }
+        else if (asked)
         {
             SurfaceMotion.Settle(body, "Opacity", LoadingOpacity);
-        }
-        else
-        {
-            body.Content = LoadingSkeleton.Create();
         }
 
         var data = await Task.Run(() => read(filter));
@@ -57,8 +63,16 @@ internal sealed class PageLoader<T>(
 
         var view = build(data);
         body.Content = view;
-        body.Opacity = 1;
-        Reveal(view);
+        if (firstRead)
+        {
+            body.Opacity = 1;
+            Reveal(view);
+        }
+        else if (asked)
+        {
+            SurfaceMotion.Settle(body, "Opacity", 1);
+        }
+
         hasData = true;
         loadedFilter = filter;
         loadedAt = DateTimeOffset.UtcNow;

@@ -47,7 +47,7 @@ internal sealed partial class BreakdownPage : UserControl
         content.Children.Add(header);
         content.Children.Add(body);
         Content = new ScrollViewer { Content = content };
-        loader = new PageLoader<BreakdownRows>(body, Read, Build);
+        loader = new PageLoader<BreakdownRows>(body, Read, Build, LoadingSkeleton.Table);
         filterBar.Changed += (_, _) => loader.Load(force: true);
         Loaded += (_, _) => loader.Load();
     }
