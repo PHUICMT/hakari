@@ -11,4 +11,5 @@ public static class OptionNames
     public const string Limit = "--limit";
     public const string Currency = "--currency";
     public const string RateMode = "--rate";
+    public const string RefreshSignIn = "--refresh-sign-in";
 }

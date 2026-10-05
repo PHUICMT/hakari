@@ -56,6 +56,12 @@ internal static class IndexSchema
         CREATE INDEX IF NOT EXISTS index_usage_source_timestamp
             ON usage_records (source_id, timestamp_ms);
 
+        CREATE TABLE IF NOT EXISTS account_limits (
+            source_id TEXT PRIMARY KEY,
+            snapshot_json TEXT NOT NULL,
+            fetched_at_ms INTEGER NOT NULL
+        );
+
         CREATE TABLE IF NOT EXISTS exchange_rates (
             currency TEXT NOT NULL,
             day TEXT NOT NULL,

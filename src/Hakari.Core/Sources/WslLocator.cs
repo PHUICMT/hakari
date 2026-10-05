@@ -119,6 +119,20 @@ public static class WslLocator
         return homes;
     }
 
+    /// <summary>The distribution a \\wsl.localhost\name\... path belongs to.</summary>
+    public static string? DistributionOf(string path)
+    {
+        var prefix = NetworkRoot + Path.DirectorySeparatorChar;
+        if (!path.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+        {
+            return null;
+        }
+
+        var remainder = path[prefix.Length..];
+        var separator = remainder.IndexOf(Path.DirectorySeparatorChar);
+        return separator > 0 ? remainder[..separator] : remainder;
+    }
+
     private static bool IsIgnored(string distribution) =>
         IgnoredDistributionPrefixes.Any(prefix =>
             distribution.StartsWith(prefix, StringComparison.OrdinalIgnoreCase));
