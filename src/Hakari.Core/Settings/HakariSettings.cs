@@ -40,6 +40,9 @@ public sealed record HakariSettings
     /// <summary>Accounts folded in the flyout, showing only their summary line.</summary>
     public IReadOnlyList<string> CollapsedAccounts { get; init; } = [];
 
+    /// <summary>Settings sections folded shut, by their key such as "sources".</summary>
+    public IReadOnlyList<string> CollapsedSettingsSections { get; init; } = [];
+
     /// <summary>Accounts kept out of the taskbar and flyout, such as an old sign-in.</summary>
     public IReadOnlyList<string> HiddenAccounts { get; init; } = [];
 

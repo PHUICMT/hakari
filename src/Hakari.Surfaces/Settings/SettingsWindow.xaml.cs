@@ -41,6 +41,7 @@ public sealed partial class SettingsWindow : Window
         ConfigureChrome();
         BuildCurrencyChoices();
         Fill();
+        MakeSectionsFoldable();
         AddEscapeToClose();
     }
 
