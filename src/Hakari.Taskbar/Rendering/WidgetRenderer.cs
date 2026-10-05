@@ -13,6 +13,8 @@ public sealed class WidgetRenderer : IDisposable
 {
     private const float FullCircleDegrees = 360f;
     private const float TopDegrees = -90f;
+    private const char ThaiBlockStart = '฀';
+    private const char ThaiBlockEnd = '๿';
 
     /// <summary>At this share or more a ring is full; a hair below still shows as a ring.</summary>
     private const double FullFraction = 0.999;
@@ -20,17 +22,20 @@ public sealed class WidgetRenderer : IDisposable
     /// <summary>Typographic layout that keeps trailing spaces, so pieces join up.</summary>
     private static readonly StringFormat PieceFormat = CreatePieceFormat();
 
-    private readonly FontFamily fontFamily = PickFontFamily();
+    private readonly FontFamily fontFamily = PickFontFamily(WidgetMetrics.FontFamilies);
+    private readonly FontFamily thaiFontFamily = PickFontFamily(WidgetMetrics.ThaiFontFamilies);
     private readonly Bitmap measuringSurface = new(1, 1);
     private readonly Graphics measuringGraphics;
     private Font? primaryFont;
     private Font? secondaryFont;
+    private Font? primaryThaiFont;
+    private Font? secondaryThaiFont;
     private double fontScale;
 
     public WidgetRenderer()
     {
         measuringGraphics = Graphics.FromImage(measuringSurface);
-        measuringGraphics.TextRenderingHint = TextRenderingHint.AntiAliasGridFit;
+        measuringGraphics.TextRenderingHint = TextRenderingHint.AntiAlias;
     }
 
     public Bitmap Render(
@@ -123,7 +128,7 @@ public sealed class WidgetRenderer : IDisposable
         var bitmap = new Bitmap(width, height, PixelFormat.Format32bppPArgb);
         using var graphics = Graphics.FromImage(bitmap);
         graphics.SmoothingMode = SmoothingMode.AntiAlias;
-        graphics.TextRenderingHint = TextRenderingHint.AntiAliasGridFit;
+        graphics.TextRenderingHint = TextRenderingHint.AntiAlias;
         DrawBackground(graphics, palette, width, height, scale, frame.HoverAmount);
 
         var inset = (float)(WidgetMetrics.MinimumInset * scale);
@@ -153,6 +158,9 @@ public sealed class WidgetRenderer : IDisposable
     {
         primaryFont?.Dispose();
         secondaryFont?.Dispose();
+        primaryThaiFont?.Dispose();
+        secondaryThaiFont?.Dispose();
+        thaiFontFamily.Dispose();
         measuringGraphics.Dispose();
         measuringSurface.Dispose();
         fontFamily.Dispose();
@@ -312,6 +320,7 @@ public sealed class WidgetRenderer : IDisposable
         float left,
         float top)
     {
+        font = FontFor(font, line.Current + line.Previous);
         var color = ColorBlend.Mix(colors.From, colors.To, frame.ToneProgress);
         if (line.Previous is null)
         {
@@ -418,8 +427,30 @@ public sealed class WidgetRenderer : IDisposable
         return format;
     }
 
-    private SizeF Measure(string text, Font font) =>
-        measuringGraphics.MeasureString(text, font, int.MaxValue, StringFormat.GenericTypographic);
+    private SizeF Measure(string text, Font font) => measuringGraphics.MeasureString(
+        text,
+        FontFor(font, text),
+        int.MaxValue,
+        StringFormat.GenericTypographic);
+
+    /// <summary>
+    /// Thai has no glyphs in Segoe UI, and the fallback GDI+ picks looks rough, so a line
+    /// with Thai in it is drawn whole in the Windows Thai UI font.
+    /// </summary>
+    private Font FontFor(Font font, string text)
+    {
+        var alreadyThai = ReferenceEquals(font, primaryThaiFont)
+            || ReferenceEquals(font, secondaryThaiFont);
+        if (alreadyThai || !text.Any(IsThai))
+        {
+            return font;
+        }
+
+        return ReferenceEquals(font, primaryFont) ? primaryThaiFont! : secondaryThaiFont!;
+    }
+
+    private static bool IsThai(char character) =>
+        character >= ThaiBlockStart && character <= ThaiBlockEnd;
 
     private void EnsureFonts(double scale)
     {
@@ -430,6 +461,18 @@ public sealed class WidgetRenderer : IDisposable
 
         primaryFont?.Dispose();
         secondaryFont?.Dispose();
+        primaryThaiFont?.Dispose();
+        secondaryThaiFont?.Dispose();
+        primaryThaiFont = new Font(
+            thaiFontFamily,
+            (float)(WidgetMetrics.PrimaryFontPixels * scale),
+            FontStyle.Bold,
+            GraphicsUnit.Pixel);
+        secondaryThaiFont = new Font(
+            thaiFontFamily,
+            (float)(WidgetMetrics.SecondaryFontPixels * scale),
+            FontStyle.Regular,
+            GraphicsUnit.Pixel);
         primaryFont = CreateFont((float)(WidgetMetrics.PrimaryFontPixels * scale), FontStyle.Bold);
         secondaryFont = CreateFont(
             (float)(WidgetMetrics.SecondaryFontPixels * scale),
@@ -440,11 +483,11 @@ public sealed class WidgetRenderer : IDisposable
     private Font CreateFont(float pixels, FontStyle style) =>
         new(fontFamily, pixels, style, GraphicsUnit.Pixel);
 
-    private static FontFamily PickFontFamily()
+    private static FontFamily PickFontFamily(string[] preferred)
     {
         using var installed = new InstalledFontCollection();
         var installedNames = installed.Families.Select(family => family.Name).ToHashSet();
-        var name = WidgetMetrics.FontFamilies.FirstOrDefault(installedNames.Contains);
+        var name = preferred.FirstOrDefault(installedNames.Contains);
         return name is null ? FontFamily.GenericSansSerif : new FontFamily(name);
     }
 

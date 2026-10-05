@@ -39,4 +39,7 @@ internal static class WidgetMetrics
     public const int ClickableBackgroundAlpha = 1;
 
     public static readonly string[] FontFamilies = ["Segoe UI Variable Text", "Segoe UI"];
+
+    /// <summary>The Windows UI font for Thai, then older fallbacks.</summary>
+    public static readonly string[] ThaiFontFamilies = ["Leelawadee UI", "Leelawadee", "Tahoma"];
 }

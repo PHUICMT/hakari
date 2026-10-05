@@ -33,7 +33,6 @@ public sealed partial class FlyoutWindow : Window
     private DateTimeOffset hiddenAt = DateTimeOffset.MinValue;
     private (int AnchorX, int AnchorY, double Scale)? pendingFit;
     private (int AnchorX, int AnchorY, double Scale)? lastAnchor;
-    private bool refittingOnly;
 
     private const int StatColumns = 2;
     private const double FoldedChevronAngle = -90;
@@ -105,7 +104,6 @@ public sealed partial class FlyoutWindow : Window
         var placement = FlyoutPlacement.Above(anchorX, anchorY, outer, scale);
         AppWindow.Move(new PointInt32(placement.X, placement.Y));
         IsShowing = true;
-        refittingOnly = false;
         lastAnchor = (anchorX, anchorY, scale);
         pendingFit = (anchorX, anchorY, scale);
         Root.LayoutUpdated += FitAfterLayout;
@@ -142,12 +140,6 @@ public sealed partial class FlyoutWindow : Window
         Root.LayoutUpdated -= FitAfterLayout;
         pendingFit = null;
         fitAttempts = 0;
-        if (refittingOnly)
-        {
-            refittingOnly = false;
-            return;
-        }
-
         PlayEntrance();
     }
 
@@ -208,41 +200,50 @@ public sealed partial class FlyoutWindow : Window
             return;
         }
 
-        var limits = card.Children[1];
+        if (card.Children[1] is not FrameworkElement limits)
+        {
+            return;
+        }
+
         var folding = limits.Visibility == Visibility.Visible;
-        limits.Visibility = folding ? Visibility.Collapsed : Visibility.Visible;
-        headerGrid.Children[1].Visibility = folding ? Visibility.Visible : Visibility.Collapsed;
+        var summary = headerGrid.Children[1];
+        summary.Visibility = Visibility.Visible;
+        summary.Opacity = folding ? 0 : 1;
+        SurfaceMotion.Settle(summary, OpacityPath, folding ? 1 : 0);
         if (headerGrid.Children[2] is FrameworkElement { RenderTransform: RotateTransform turn })
         {
             SurfaceMotion.Settle(turn, AnglePath, folding ? FoldedChevronAngle : 0);
         }
 
-        if (!folding)
-        {
-            limits.Opacity = 0;
-            SurfaceMotion.Settle(limits, OpacityPath, 1);
-        }
-
+        CardFold.Run(limits, folding, FitWindowNow);
         SettingsStore.Default.Update(current => current with
         {
             CollapsedAccounts = folding
                 ? [.. current.CollapsedAccounts.Append(accountId).Distinct()]
                 : [.. current.CollapsedAccounts.Where(id => id != accountId)],
         });
-        RefitAfterChange();
     }
 
-    private void RefitAfterChange()
+    /// <summary>
+    /// Lays out now and sets size and place in one call, so the window and its content change
+    /// in the same frame. The bottom edge stays on the taskbar; the top moves.
+    /// </summary>
+    private void FitWindowNow()
     {
         if (lastAnchor is not var (anchorX, anchorY, scale))
         {
             return;
         }
 
-        refittingOnly = true;
-        pendingFit = (anchorX, anchorY, scale);
-        Root.LayoutUpdated -= FitAfterLayout;
-        Root.LayoutUpdated += FitAfterLayout;
+        Root.UpdateLayout();
+        var clientHeight = (int)Math.Ceiling((Body.ActualHeight + Footer.ActualHeight) * scale);
+        var frameWidth = AppWindow.Size.Width - AppWindow.ClientSize.Width;
+        var frameHeight = AppWindow.Size.Height - AppWindow.ClientSize.Height;
+        var outer = new SizeInt32(
+            AppWindow.ClientSize.Width + frameWidth,
+            clientHeight + frameHeight);
+        var placement = FlyoutPlacement.Above(anchorX, anchorY, outer, scale);
+        AppWindow.MoveAndResize(new RectInt32(placement.X, placement.Y, outer.Width, outer.Height));
     }
 
     private SizeInt32 MeasureSize(double scale)

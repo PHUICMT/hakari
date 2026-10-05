@@ -58,7 +58,7 @@
                     <DataTemplate x:DataType="local:AccountLimitGroup">
                         <Border Style="{StaticResource HakariCard}">
                             <StackPanel>
-                                <Button Style="{StaticResource HakariListItemButton}" Padding="12,10"
+                                <Button Style="{StaticResource HakariCardHeaderButton}"
                                     Tag="{x:Bind AccountId}" Click="OnAccountHeaderClicked">
                                     <Grid ColumnSpacing="8">
                                         <Grid.ColumnDefinitions>
@@ -84,7 +84,7 @@
                                         </FontIcon>
                                     </Grid>
                                 </Button>
-                                <ItemsControl ItemsSource="{x:Bind Limits}" Margin="12,2,12,12"
+                                <ItemsControl ItemsSource="{x:Bind Limits}" Padding="12,2,12,12"
                                     Visibility="{x:Bind LimitsVisibility}">
                                     <ItemsControl.ItemsPanel>
                                         <ItemsPanelTemplate>
