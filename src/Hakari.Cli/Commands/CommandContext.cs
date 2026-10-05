@@ -1,4 +1,5 @@
 using Hakari.Cli.CommandLine;
+using Hakari.Core.Accounts;
 using Hakari.Core.Configuration;
 using Hakari.Core.Indexing;
 using Hakari.Core.Performance;
@@ -31,7 +32,20 @@ internal static class CommandContext
         }
 
         using var backgroundMode = BackgroundThreadMode.Enter();
+        CreateAccountTracker(store).Observe(sources);
         return new Indexer(store).Index(sources);
+    }
+
+    public static AccountTracker CreateAccountTracker(IndexStore store) =>
+        new(new AccountRepository(store), TimeProvider.System);
+
+    /// <summary>Email if known, else the account id, for display.</summary>
+    public static string AccountLabel(IndexStore store, string accountId)
+    {
+        var account = new AccountRepository(store).ListAccounts()
+            .FirstOrDefault(candidate => candidate.AccountId == accountId);
+        var label = account?.Email ?? accountId;
+        return account is null ? label : $"{label} · {account.Plan}";
     }
 
     private static WslScanMode ParseWslMode(string? value)

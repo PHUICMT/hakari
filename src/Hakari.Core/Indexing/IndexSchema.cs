@@ -6,7 +6,7 @@ internal static class IndexSchema
     /// Bump when usage columns change; an index with another version is rebuilt from the logs.
     /// Exchange rates are kept across rebuilds because they come from the network.
     /// </summary>
-    public const int CurrentVersion = 2;
+    public const int CurrentVersion = 3;
 
     public const string ConnectionPragmas = """
         PRAGMA journal_mode = WAL;
@@ -17,9 +17,14 @@ internal static class IndexSchema
 
     public const string WriteVersionFormat = "PRAGMA user_version = {0};";
 
+    /// <summary>
+    /// Tables rebuilt from the logs, and caches, are dropped. Account history can't be rebuilt
+    /// from the logs, so it survives a schema change.
+    /// </summary>
     public const string DropTables = """
         DROP TABLE IF EXISTS usage_records;
         DROP TABLE IF EXISTS tracked_files;
+        DROP TABLE IF EXISTS account_limits;
         """;
 
     public const string CreateTables = """
@@ -57,10 +62,26 @@ internal static class IndexSchema
             ON usage_records (source_id, timestamp_ms);
 
         CREATE TABLE IF NOT EXISTS account_limits (
-            source_id TEXT PRIMARY KEY,
+            account_id TEXT PRIMARY KEY,
             snapshot_json TEXT NOT NULL,
             fetched_at_ms INTEGER NOT NULL
         );
+
+        CREATE TABLE IF NOT EXISTS accounts (
+            account_id TEXT PRIMARY KEY,
+            email TEXT,
+            display_name TEXT,
+            organization_name TEXT,
+            plan TEXT NOT NULL,
+            last_seen_ms INTEGER NOT NULL
+        );
+
+        CREATE TABLE IF NOT EXISTS account_periods (
+            source_id TEXT NOT NULL,
+            account_id TEXT NOT NULL,
+            started_at_ms INTEGER NOT NULL,
+            PRIMARY KEY (source_id, started_at_ms)
+        ) WITHOUT ROWID;
 
         CREATE TABLE IF NOT EXISTS exchange_rates (
             currency TEXT NOT NULL,

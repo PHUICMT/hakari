@@ -4,9 +4,9 @@ using Hakari.Core.Sources;
 namespace Hakari.Core.Limits;
 
 /// <summary>
-/// Gets a source's usage limits: live while its sign-in is valid, otherwise the last known
-/// values projected forward (a window past its reset time shows zero). With automatic sign-in
-/// refresh turned on, an expired sign-in is renewed only while Claude Code is not running.
+/// Gets an account's usage limits: live while a sign-in for it is valid, otherwise the last
+/// known values projected forward (a window past its reset time shows zero). With automatic
+/// sign-in refresh turned on, an expired sign-in is renewed only while Claude Code is not running.
 /// </summary>
 public sealed class LimitService(
     UsageLimitClient client,
@@ -15,26 +15,49 @@ public sealed class LimitService(
     LimitServiceOptions options,
     TimeProvider timeProvider)
 {
-    public async Task<LimitResult> GetAsync(UsageSource source, CancellationToken cancellationToken)
+    /// <summary>
+    /// One request per account, however many sources share it. A source with a valid sign-in
+    /// is preferred, so a Windows and a WSL sign-in for the same account need no refresh.
+    /// </summary>
+    public async Task<LimitResult> GetForAccountAsync(
+        string accountId,
+        IReadOnlyList<UsageSource> signedInSources,
+        CancellationToken cancellationToken)
     {
-        var file = CredentialsFile.For(source);
-        if (file.Read() is not var (credentials, fingerprint))
+        var now = timeProvider.GetUtcNow();
+        var candidates = signedInSources
+            .Select(source => (Source: source, File: CredentialsFile.For(source)))
+            .Select(candidate => (candidate.Source, candidate.File, Read: candidate.File.Read()))
+            .Where(candidate => candidate.Read is not null)
+            .OrderByDescending(candidate =>
+                candidate.Read!.Value.Credentials.IsAccessTokenValid(now))
+            .ToList();
+
+        if (candidates.Count == 0)
         {
-            return FromCache(source, LimitFailure.NoCredentials);
+            return FromCache(accountId, LimitFailure.NoCredentials);
         }
 
-        var now = timeProvider.GetUtcNow();
-        if (!credentials.IsAccessTokenValid(now))
+        var (source, file, read) = candidates[0];
+        var (credentials, fingerprint) = read!.Value;
+        return await GetWithCredentialsAsync(
+            accountId,
+            new SignIn(source, file, credentials, fingerprint),
+            cancellationToken);
+    }
+
+    private async Task<LimitResult> GetWithCredentialsAsync(
+        string accountId,
+        SignIn signIn,
+        CancellationToken cancellationToken)
+    {
+        var credentials = signIn.Credentials;
+        if (!credentials.IsAccessTokenValid(timeProvider.GetUtcNow()))
         {
-            var renewed = await TryRefreshAsync(
-                source,
-                file,
-                credentials,
-                fingerprint,
-                cancellationToken);
+            var renewed = await TryRefreshAsync(signIn, cancellationToken);
             if (renewed is null)
             {
-                return FromCache(source, LimitFailure.SignInExpired);
+                return FromCache(accountId, LimitFailure.SignInExpired);
             }
 
             credentials = renewed;
@@ -43,24 +66,22 @@ public sealed class LimitService(
         var result = await client.FetchAsync(credentials, cancellationToken);
         if (result.Snapshot is { } snapshot)
         {
-            cache.Save(source.Id, snapshot);
+            cache.Save(accountId, snapshot);
             return result;
         }
 
-        return FromCache(source, result.Failure);
+        return FromCache(accountId, result.Failure);
     }
 
     private async Task<OAuthCredentials?> TryRefreshAsync(
-        UsageSource source,
-        CredentialsFile file,
-        OAuthCredentials credentials,
-        string fingerprint,
+        SignIn signIn,
         CancellationToken cancellationToken)
     {
         var now = timeProvider.GetUtcNow();
+        var credentials = signIn.Credentials;
         if (!options.RefreshSignInAutomatically
             || !credentials.CanRefresh(now)
-            || activity.IsRunning(source))
+            || activity.IsRunning(signIn.Source))
         {
             return null;
         }
@@ -71,7 +92,7 @@ public sealed class LimitService(
             return null;
         }
 
-        if (file.TryWriteTokens(grant, fingerprint))
+        if (signIn.File.TryWriteTokens(grant, signIn.Fingerprint))
         {
             return credentials with
             {
@@ -82,12 +103,13 @@ public sealed class LimitService(
         }
 
         // Claude Code wrote the file meanwhile; its tokens win, use them if valid.
-        return file.Read() is var (latest, _) && latest.IsAccessTokenValid(now) ? latest : null;
+        var latest = signIn.File.Read()?.Credentials;
+        return latest is not null && latest.IsAccessTokenValid(now) ? latest : null;
     }
 
-    private LimitResult FromCache(UsageSource source, LimitFailure failure)
+    private LimitResult FromCache(string accountId, LimitFailure failure)
     {
-        var cached = cache.Load(source.Id);
+        var cached = cache.Load(accountId);
         if (cached is null)
         {
             return LimitResult.Failed(failure);
@@ -99,4 +121,10 @@ public sealed class LimitService(
         };
         return new LimitResult(projected, failure);
     }
+
+    private sealed record SignIn(
+        UsageSource Source,
+        CredentialsFile File,
+        OAuthCredentials Credentials,
+        string Fingerprint);
 }

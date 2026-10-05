@@ -30,7 +30,14 @@ internal sealed class ReportCommand : ICliCommand
         var converter = CurrencyContext.CreateConverter(arguments, store, pricing);
         var query = new UsageQuery(store, pricing, converter);
 
-        WriteSummaries(query.Summarize(filter, groupBy).Take(rowLimit), groupBy, query.Currency);
+        var summaries = query.Summarize(filter, groupBy).Take(rowLimit);
+        if (groupBy == GroupBy.Account)
+        {
+            summaries = summaries.Select(summary =>
+                summary with { Key = CommandContext.AccountLabel(store, summary.Key) });
+        }
+
+        WriteSummaries(summaries, groupBy, query.Currency);
         WriteTotal(query.Total(filter), query.Currency);
         CurrencyContext.WriteRateNote(converter);
         WriteUnpricedWarning(query.FindUnpricedModels());

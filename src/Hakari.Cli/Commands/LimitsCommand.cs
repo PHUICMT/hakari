@@ -1,7 +1,6 @@
 using Hakari.Cli.CommandLine;
 using Hakari.Cli.Output;
 using Hakari.Core.Limits;
-using Hakari.Core.Limits.Credentials;
 
 namespace Hakari.Cli.Commands;
 
@@ -16,41 +15,39 @@ internal sealed class LimitsCommand : ICliCommand
     public string Name => "limits";
 
     public string Description =>
-        $"Show usage limits per source ({OptionNames.RefreshSignIn} renews expired sign-ins)";
+        $"Show usage limits per account ({OptionNames.RefreshSignIn} renews expired sign-ins)";
 
     public int Execute(CliArguments arguments)
     {
         using var store = CommandContext.OpenStore(arguments);
         using var httpClient = new HttpClient { Timeout = RequestTimeout };
-        var options = new LimitServiceOptions(arguments.HasFlag(OptionNames.RefreshSignIn));
+        var sources = CommandContext.DiscoverSources(arguments);
+        var tracker = CommandContext.CreateAccountTracker(store);
+        tracker.Observe(sources);
+
         var service = new LimitService(
             new UsageLimitClient(httpClient, TimeProvider.System),
             new LimitCache(store),
             new ClaudeCodeActivity(),
-            options,
+            new LimitServiceOptions(arguments.HasFlag(OptionNames.RefreshSignIn)),
             TimeProvider.System);
 
-        foreach (var source in CommandContext.DiscoverSources(arguments))
+        foreach (var (accountId, accountSources) in tracker.SourcesByCurrentAccount(sources))
         {
-            var credentials = CredentialsFile.For(source).Read()?.Credentials;
-            var result = service.GetAsync(source, CancellationToken.None).GetAwaiter().GetResult();
-            WriteSource(source.Id, credentials, result);
+            var result = service
+                .GetForAccountAsync(accountId, accountSources, CancellationToken.None)
+                .GetAwaiter()
+                .GetResult();
+            var sourceList = string.Join(", ", accountSources.Select(source => source.Id));
+            Console.WriteLine($"{CommandContext.AccountLabel(store, accountId)} · {sourceList}");
+            WriteResult(result);
         }
 
         return ExitCodes.Success;
     }
 
-    private static void WriteSource(
-        string sourceId,
-        OAuthCredentials? credentials,
-        LimitResult result)
+    private static void WriteResult(LimitResult result)
     {
-        var tier = credentials?.RateLimitTier ?? "unknown plan";
-        var signIn = credentials is null
-            ? "no sign-in"
-            : $"sign-in valid until {credentials.ExpiresAt.ToLocalTime():yyyy-MM-dd HH:mm}";
-        Console.WriteLine($"{sourceId} · {tier} · {signIn}");
-
         if (result.Snapshot is not { } snapshot)
         {
             Console.WriteLine($"    no limits known ({result.Failure})");

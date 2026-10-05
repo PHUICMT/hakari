@@ -14,6 +14,7 @@ internal static class GroupByExpressions
         GroupBy.Project => "coalesce(project, '')",
         GroupBy.Session => "session_id",
         GroupBy.Branch => "coalesce(git_branch, '')",
+        GroupBy.Account => AccountSql.AccountOfRecord,
         _ => throw new ArgumentOutOfRangeException(nameof(groupBy), groupBy, null),
     };
 }

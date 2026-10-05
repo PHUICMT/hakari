@@ -10,4 +10,5 @@ public enum GroupBy
     Project,
     Session,
     Branch,
+    Account,
 }

@@ -10,6 +10,7 @@ namespace Hakari.Core.Tests.Limits;
 
 public sealed class LimitServiceTests : IDisposable
 {
+    private const string AccountId = "account-a";
     private static readonly DateTimeOffset Now = new(2026, 10, 5, 9, 0, 0, TimeSpan.Zero);
 
     private readonly TemporaryDirectory directory = new();
@@ -34,7 +35,7 @@ public sealed class LimitServiceTests : IDisposable
         WriteCredentials(expiresAt: Now.AddHours(3));
         http.Respond(UsageLimitEndpoints.UsageUrl, HttpStatusCode.OK, SampleLimits.UsageResponse);
 
-        var result = await CreateService(refreshAutomatically: false).GetAsync(source, default);
+        var result = await GetLimitsAsync(refreshAutomatically: false);
 
         Assert.Equal(LimitFreshness.Live, result.Snapshot?.Freshness);
         Assert.Equal(LimitFailure.None, result.Failure);
@@ -46,7 +47,7 @@ public sealed class LimitServiceTests : IDisposable
         await PrimeCacheWithLiveRead();
         WriteCredentials(expiresAt: Now.AddMinutes(-5));
 
-        var result = await CreateService(refreshAutomatically: false).GetAsync(source, default);
+        var result = await GetLimitsAsync(refreshAutomatically: false);
 
         Assert.Equal(LimitFreshness.LastKnown, result.Snapshot?.Freshness);
         Assert.Equal(LimitFailure.SignInExpired, result.Failure);
@@ -59,7 +60,7 @@ public sealed class LimitServiceTests : IDisposable
         WriteCredentials(expiresAt: Now.AddMinutes(-5));
         activity.Running = true;
 
-        await CreateService(refreshAutomatically: true).GetAsync(source, default);
+        await GetLimitsAsync(refreshAutomatically: true);
 
         Assert.DoesNotContain(UsageLimitEndpoints.TokenUrl, http.RequestedUrls);
     }
@@ -71,7 +72,7 @@ public sealed class LimitServiceTests : IDisposable
         http.Respond(UsageLimitEndpoints.TokenUrl, HttpStatusCode.OK, SampleLimits.TokenResponse);
         http.Respond(UsageLimitEndpoints.UsageUrl, HttpStatusCode.OK, SampleLimits.UsageResponse);
 
-        var result = await CreateService(refreshAutomatically: true).GetAsync(source, default);
+        var result = await GetLimitsAsync(refreshAutomatically: true);
 
         Assert.Equal(LimitFreshness.Live, result.Snapshot?.Freshness);
         var saved = JsonNode.Parse(File.ReadAllText(credentialsPath))!;
@@ -87,7 +88,7 @@ public sealed class LimitServiceTests : IDisposable
         await PrimeCacheWithLiveRead();
         http.Respond(UsageLimitEndpoints.UsageUrl, HttpStatusCode.ServiceUnavailable, "{}");
 
-        var result = await CreateService(refreshAutomatically: false).GetAsync(source, default);
+        var result = await GetLimitsAsync(refreshAutomatically: false);
 
         Assert.Equal(LimitFreshness.LastKnown, result.Snapshot?.Freshness);
         Assert.Equal(LimitFailure.ServiceUnavailable, result.Failure);
@@ -104,8 +105,11 @@ public sealed class LimitServiceTests : IDisposable
     {
         WriteCredentials(expiresAt: Now.AddHours(3));
         http.Respond(UsageLimitEndpoints.UsageUrl, HttpStatusCode.OK, SampleLimits.UsageResponse);
-        await CreateService(refreshAutomatically: false).GetAsync(source, default);
+        await GetLimitsAsync(refreshAutomatically: false);
     }
+
+    private Task<LimitResult> GetLimitsAsync(bool refreshAutomatically) =>
+        CreateService(refreshAutomatically).GetForAccountAsync(AccountId, [source], default);
 
     private void WriteCredentials(DateTimeOffset expiresAt) =>
         File.WriteAllText(credentialsPath, SampleLimits.CredentialsJson(expiresAt));

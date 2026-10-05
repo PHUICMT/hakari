@@ -34,6 +34,12 @@ internal static class UsageFilterSql
             command.Parameters.AddWithValue("$project", project);
         }
 
+        if (filter.AccountId is { } accountId)
+        {
+            conditions.Add($"{AccountSql.AccountOfRecord} = $accountId");
+            command.Parameters.AddWithValue("$accountId", accountId);
+        }
+
         if (filter.SourceIds is { Count: > 0 } sourceIds)
         {
             conditions.Add(BuildSourceCondition(sourceIds, command));
