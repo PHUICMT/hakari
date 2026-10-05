@@ -3621,7 +3621,10 @@ td .model { font-family: var(--font-mono); font-size: 12px; }
   function renderDropdownList(dropdown) {
     var options = dropdownOptions(dropdown);
     var valueElement = dropdown.querySelector(".dropdown-value");
-    if (options.indexOf(valueElement.textContent) < 0) { valueElement.textContent = options[0]; }
+    if (options.indexOf(valueElement.textContent) < 0) {
+      /* As in the app: a block shows one account, so "Second account" becomes its most pressing limit */
+      valueElement.textContent = valueElement.textContent === togetherOnlyChoice ? "Most pressing limit" : options[0];
+    }
     var chosen = valueElement.textContent;
     var showHints = !dropdown.dataset.options;
     dropdown.querySelector(".dropdown-list").innerHTML = options.map(function (option) {

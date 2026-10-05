@@ -39,6 +39,15 @@ public sealed partial class SettingsWindow
     private string layoutTarget = SharedLayout;
     private DispatcherQueueTimer? turnTimer;
 
+    /// <summary>
+    /// What a block really shows for the saved choice: one account's block turns "second
+    /// account" into its most pressing limit, so the list names that instead of nothing.
+    /// </summary>
+    private static WidgetItem Shown(WidgetItem item, MultiAccountMode mode) =>
+        mode != MultiAccountMode.Together && item == WidgetItem.SecondAccount
+            ? WidgetItem.MostPressingLimit
+            : item;
+
     /// <summary>"Second account" only makes sense while all accounts share one block.</summary>
     private static IEnumerable<(object Value, string Text)> LineChoicesFor(MultiAccountMode mode) =>
         LineChoiceKeys
@@ -106,8 +115,8 @@ public sealed partial class SettingsWindow
         RingPressing.IsChecked = layout.Ring == WidgetRingSource.MostPressing;
         RingBoth.IsChecked = layout.Ring == WidgetRingSource.SessionAndWeekly;
         var choices = LineChoicesFor(settings.AccountsMode).ToList();
-        TopSelect.SetChoices(choices, layout.Top);
-        BottomSelect.SetChoices(choices, layout.Bottom);
+        TopSelect.SetChoices(choices, Shown(layout.Top, settings.AccountsMode));
+        BottomSelect.SetChoices(choices, Shown(layout.Bottom, settings.AccountsMode));
         filling = wasFilling;
     }
 
