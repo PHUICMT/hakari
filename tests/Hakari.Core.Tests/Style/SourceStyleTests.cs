@@ -5,7 +5,7 @@ public class SourceStyleTests
     private const int MaximumLineLength = 100;
     private const string SolutionFileName = "Hakari.sln";
 
-    private static readonly string[] CheckedDirectories = ["src", "tests"];
+    private static readonly string[] CheckedDirectories = ["src", "tests", "spikes"];
     private static readonly string[] ExcludedDirectoryNames = ["bin", "obj"];
 
     [Fact]

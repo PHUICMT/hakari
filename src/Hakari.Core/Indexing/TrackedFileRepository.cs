@@ -10,6 +10,12 @@ internal sealed class TrackedFileRepository(SqliteConnection connection)
         WHERE source_id = $sourceId
         """;
 
+    private const string SelectByPathSql = """
+        SELECT path, source_id, size, modified_ticks, indexed_offset
+        FROM tracked_files
+        WHERE path = $path
+        """;
+
     private const string UpsertSql = """
         INSERT INTO tracked_files (path, source_id, size, modified_ticks, indexed_offset)
         VALUES ($path, $sourceId, $size, $modifiedTicks, $indexedOffset)
@@ -30,16 +36,27 @@ internal sealed class TrackedFileRepository(SqliteConnection connection)
         using var reader = command.ExecuteReader();
         while (reader.Read())
         {
-            var file = new TrackedFile(
-                Path: reader.GetString(0),
-                SourceId: reader.GetString(1),
-                Size: reader.GetInt64(2),
-                ModifiedTicks: reader.GetInt64(3),
-                IndexedOffset: reader.GetInt64(4));
+            var file = ReadFile(reader);
             files[file.Path] = file;
         }
 
         return files;
+    }
+
+    private static TrackedFile ReadFile(SqliteDataReader reader) => new(
+        Path: reader.GetString(0),
+        SourceId: reader.GetString(1),
+        Size: reader.GetInt64(2),
+        ModifiedTicks: reader.GetInt64(3),
+        IndexedOffset: reader.GetInt64(4));
+
+    public TrackedFile? Find(string path)
+    {
+        using var command = connection.CreateCommand();
+        command.CommandText = SelectByPathSql;
+        command.Parameters.AddWithValue("$path", path);
+        using var reader = command.ExecuteReader();
+        return reader.Read() ? ReadFile(reader) : null;
     }
 
     public void Save(TrackedFile file, SqliteTransaction? transaction = null)

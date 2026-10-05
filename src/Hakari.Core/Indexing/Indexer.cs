@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using Hakari.Core.Parsing;
 using Hakari.Core.Sources;
+using Hakari.Core.Watching;
 
 namespace Hakari.Core.Indexing;
 
@@ -22,16 +23,33 @@ public sealed class Indexer
         trackedFiles = new TrackedFileRepository(store.Connection);
     }
 
+    /// <summary>Scans every log of every source, reading only bytes appended since.</summary>
     public IndexStatistics Index(
         IEnumerable<UsageSource> sources,
         CancellationToken cancellationToken = default)
     {
+        return Index(PendingWork.FullScansOf(sources), cancellationToken);
+    }
+
+    /// <summary>Indexes what a change tracker reported: whole sources or single files.</summary>
+    public IndexStatistics Index(PendingWork work, CancellationToken cancellationToken = default)
+    {
         var stopwatch = Stopwatch.StartNew();
         var totals = new RunningTotals();
 
-        foreach (var source in sources)
+        foreach (var source in work.FullScans)
         {
             IndexSource(source, totals, cancellationToken);
+        }
+
+        foreach (var (source, files) in work.ChangedFiles)
+        {
+            foreach (var logFile in files)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                totals.FilesScanned++;
+                IndexFileIfChanged(source.Id, logFile, trackedFiles.Find(logFile), totals);
+            }
         }
 
         return new IndexStatistics(
