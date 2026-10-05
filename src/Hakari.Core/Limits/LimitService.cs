@@ -64,10 +64,11 @@ public sealed class LimitService(
         }
 
         var result = await client.FetchAsync(credentials, cancellationToken);
-        if (result.Snapshot is { } snapshot)
+        if (result.Snapshot is { } fetched)
         {
+            var snapshot = PercentAnchors.Carry(cache.Load(accountId), fetched);
             cache.Save(accountId, snapshot);
-            return result;
+            return result with { Snapshot = snapshot };
         }
 
         return FromCache(accountId, result.Failure);

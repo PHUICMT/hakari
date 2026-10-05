@@ -53,6 +53,24 @@ public sealed class PercentEstimatorTests
             PercentEstimator.Estimate(Session(40), ReadAt, ReadAt.AddMinutes(5), (_, _) => 0m));
     }
 
+    [Fact]
+    public void A_later_reading_of_the_same_percent_does_not_pull_it_back()
+    {
+        // $20 by the first 40% reading, $0.40 more by a second one ten minutes later.
+        var anchored = Session(40) with { PercentSince = ReadAt, RoseAtSince = true };
+        var secondReading = ReadAt.AddMinutes(10);
+        decimal Cost(DateTimeOffset from, DateTimeOffset to) =>
+            to <= ReadAt ? 20m : from >= ReadAt ? 0.4m : 20.4m;
+
+        var estimate = PercentEstimator.Estimate(
+            anchored,
+            secondReading,
+            secondReading.AddSeconds(1),
+            Cost);
+
+        Assert.Equal(40.8, estimate, precision: 6);
+    }
+
     private static UsageLimit Session(int percent) =>
         new("session", "session", percent, "normal", ResetsAt, null, IsActive: true);
 }

@@ -2,9 +2,9 @@ namespace Hakari.Core.Limits;
 
 /// <summary>
 /// The server reports limits in whole percent. The finer share is estimated from the
-/// account's own spending in the window: what one percent cost so far, applied to all that
-/// was spent up to now. It stays within the whole percent last read, so it can never get
-/// ahead of (or fall behind) the next real reading.
+/// account's own spending in the window: what one percent cost up to the moment this whole
+/// percent was first read, applied to all that was spent up to now. It stays within the
+/// whole percent last read, so it can never get ahead of the next real reading.
 /// </summary>
 public static class PercentEstimator
 {
@@ -35,16 +35,19 @@ public static class PercentEstimator
             return limit.Percent;
         }
 
-        var spentByReading = (double)costBetween(resetsAt - window, readAt);
-        if (spentByReading <= 0)
+        var anchor = limit.PercentSince is { } since && since <= readAt ? since : readAt;
+        var spentByAnchor = (double)costBetween(resetsAt - window, anchor);
+        if (spentByAnchor <= 0)
         {
             return limit.Percent;
         }
 
-        // A whole-percent reading means somewhere in [P, P+1); taking the middle keeps the
-        // estimate from sitting on ".0" every time a fresh reading arrives.
-        var costPerPercent = spentByReading / (limit.Percent + ReadingMidpoint);
-        var spentNow = spentByReading + (double)costBetween(readAt, now);
+        // Seen rising from the percent below, the share had just reached P at the anchor.
+        // Otherwise it was somewhere in [P, P+1), and the middle is the fairest guess. The
+        // anchor stays put while the percent does, so the estimate only ever climbs.
+        var shareAtAnchor = limit.Percent + (limit.RoseAtSince ? 0 : ReadingMidpoint);
+        var costPerPercent = spentByAnchor / shareAtAnchor;
+        var spentNow = spentByAnchor + (double)costBetween(anchor, now);
         var estimate = spentNow / costPerPercent;
         var ceiling = Math.Min(limit.Percent + MaximumGain, FullPercent);
         return Math.Clamp(estimate, limit.Percent, ceiling);
