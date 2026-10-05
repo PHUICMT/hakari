@@ -49,6 +49,12 @@ public sealed class TrayIcon : IDisposable
     /// <summary>Left click on the icon.</summary>
     public event EventHandler? Selected;
 
+    /// <summary>
+    /// Right click, with the pointer's screen position. When nobody handles it, the system
+    /// menu shows instead.
+    /// </summary>
+    public event EventHandler<System.Drawing.Point>? MenuRequested;
+
     public void SetTooltip(string text)
     {
         tooltip = text;
@@ -184,6 +190,18 @@ public sealed class TrayIcon : IDisposable
         return User32.DefWindowProc(handle, message, wordParameter, longParameter);
     }
 
+    private void RequestMenu()
+    {
+        if (MenuRequested is null)
+        {
+            ShowMenu();
+            return;
+        }
+
+        User32.GetCursorPos(out var cursor);
+        MenuRequested(this, new System.Drawing.Point(cursor.X, cursor.Y));
+    }
+
     private void HandleIconEvent(uint iconEvent)
     {
         switch (iconEvent)
@@ -194,7 +212,7 @@ public sealed class TrayIcon : IDisposable
                 break;
             case NotifyIconConstants.ContextMenuEvent:
             case WindowMessages.RightButtonUp:
-                ShowMenu();
+                RequestMenu();
                 break;
         }
     }

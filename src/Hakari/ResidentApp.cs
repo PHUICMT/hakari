@@ -55,6 +55,7 @@ internal sealed class ResidentApp : IDisposable
 
         menu.QuitRequested += (_, _) => MessageLoop.Quit();
         widgetSurfaces = new WidgetSurfaces(widgets);
+        trayIcon.MenuRequested += (_, pointer) => widgetSurfaces.OpenMenu((pointer.X, pointer.Y));
         _ = ResidentChannel.ListenAsync(
             command => widgets.PostAction(() => Handle(command)),
             listening.Token);

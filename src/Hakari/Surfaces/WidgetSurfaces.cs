@@ -53,7 +53,7 @@ internal sealed class WidgetSurfaces : IDisposable
     }
 
     /// <summary>The menu takes focus so a click elsewhere closes it, like the flyout.</summary>
-    private void OpenMenu((int X, int Y) menuAnchor)
+    public void OpenMenu((int X, int Y) menuAnchor)
     {
         OnHoverEnded();
         ForegroundPermission.GrantForNextWindow();
