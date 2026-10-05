@@ -1,0 +1,23 @@
+{
+  "schema": 1,
+  "updated": "2026-10-05",
+  "currency": "USD",
+  "unit": "per_1m_tokens",
+  "notes": "cacheWrite5m = 1.25x input, cacheWrite1h = 2x input unless overridden. Verify against https://www.anthropic.com/pricing before release.",
+  "models": {
+    "claude-fable-5-1":  { "input": 10.0, "output": 50.0, "cacheWrite5m": 12.5, "cacheWrite1h": 20.0, "cacheRead": 0.25 },
+    "claude-fable-5":    { "input": 10.0, "output": 50.0, "cacheWrite5m": 12.5, "cacheWrite1h": 20.0, "cacheRead": 1.0 },
+    "claude-opus-5-5":   { "input": 4.0,  "output": 20.0, "cacheWrite5m": 5.0,  "cacheWrite1h": 8.0,  "cacheRead": 0.20, "fast": { "input": 8.0,  "output": 40.0 } },
+    "claude-opus-5":     { "input": 5.0,  "output": 25.0, "cacheWrite5m": 6.25, "cacheWrite1h": 10.0, "cacheRead": 0.50, "fast": { "input": 10.0, "output": 50.0 } },
+    "claude-opus-4-8":   { "input": 5.0,  "output": 25.0, "cacheWrite5m": 6.25, "cacheWrite1h": 10.0, "cacheRead": 0.50 },
+    "claude-opus-4-7":   { "input": 5.0,  "output": 25.0, "cacheWrite5m": 6.25, "cacheWrite1h": 10.0, "cacheRead": 0.50 },
+    "claude-opus-4-6":   { "input": 5.0,  "output": 25.0, "cacheWrite5m": 6.25, "cacheWrite1h": 10.0, "cacheRead": 0.50 },
+    "claude-sonnet-5-5": { "input": 2.0,  "output": 10.0, "cacheWrite5m": 2.5,  "cacheWrite1h": 4.0,  "cacheRead": 0.20 },
+    "claude-sonnet-5":   { "input": 2.0,  "output": 10.0, "cacheWrite5m": 2.5,  "cacheWrite1h": 4.0,  "cacheRead": 0.20 },
+    "claude-sonnet-4-6": { "input": 3.0,  "output": 15.0, "cacheWrite5m": 3.75, "cacheWrite1h": 6.0,  "cacheRead": 0.30 },
+    "claude-haiku-4-5":  { "input": 1.0,  "output": 5.0,  "cacheWrite5m": 1.25, "cacheWrite1h": 2.0,  "cacheRead": 0.10 }
+  },
+  "aliases": {
+    "claude-haiku-4-5-20251001": "claude-haiku-4-5"
+  }
+}

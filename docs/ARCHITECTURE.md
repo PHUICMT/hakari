@@ -1,0 +1,59 @@
+# Architecture
+
+```
+hakari/
+├─ src/
+│  ├─ Hakari.Core/        # net9.0 lib — no UI. Parsing, index, pricing, aggregation, sources, sync
+│  ├─ Hakari.App/         # WinUI 3 app (MSIX) — taskbar overlay, flyout, dashboard, settings, toasts
+│  ├─ Hakari.Cli/         # dev/verification CLI: `hakari scan`, `hakari report --by model`
+│  └─ Hakari.SyncAgent/   # tiny cross-platform agent (Mac/Linux) → writes machine snapshot to shared folder
+├─ tests/Hakari.Core.Tests/
+├─ data/pricing.json      # bundled price table (also served raw from GitHub for remote update)
+└─ docs/
+```
+
+## Core pipeline
+
+```
+ISource (Windows | Wsl | ConfigDir | SharedFolderMachine)
+   │  enumerates *.jsonl, knows its AccountRef
+   ▼
+FileTracker  ── FileSystemWatcher (NTFS) / PollingWatcher (\\wsl.localhost, 9P)
+   │  per file: lastOffset, size, mtime → read only appended bytes
+   ▼
+UsageLineParser  (System.Text.Json Utf8JsonReader, skip non-assistant lines fast)
+   │  → UsageRecord(msgId, requestId, ts, model, sessionId, cwd, branch, tokens…, speed, sidechain)
+   ▼
+IndexStore (SQLite, WAL)   UNIQUE(msgId, requestId) → dedupe for free
+   │  + hourly rollups table (account, source, model, project, hour)
+   ▼
+Aggregator  → Snapshot (immutable) → IObservable<Snapshot>  (debounced 500 ms)
+   ▼
+App: TaskbarWidget / Flyout / Dashboard bind to Snapshot
+```
+
+- `PricingService`: merges bundled → remote (`raw.githubusercontent.com/<org>/hakari/main/data/pricing.json`, ETag cached daily) → LiteLLM fallback → user overrides. Cost is computed at query time from token columns, so price changes re-price history with no reindex.
+- `LimitProvider` (opt-in): `OAuthUsageLimitProvider` with a fallback to `EstimatedLimitProvider`.
+- `CurrencyService`: daily FX rate (e.g. exchangerate.host or frankfurter.app), cached.
+- `SyncService`: writes `<shared>/Hakari/machines/<machineId>.json` (hourly rollups only) and reads the files from other machines. Snapshot schema is versioned.
+
+## Taskbar overlay (Win11)
+
+- Find `Shell_TrayWnd` (primary) / `Shell_SecondaryTrayWnd` (others), and `TrayNotifyWnd` for the tray rect.
+- Create a WS_POPUP | WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE | WS_EX_LAYERED window. Either `SetParent` it into the taskbar (TrafficMonitor style) or keep it topmost and reposition on `EVENT_OBJECT_LOCATIONCHANGE` (SetWinEventHook). Spike both; parenting survives z-order fights better.
+- Handle: `RegisterWindowMessage("TaskbarCreated")` (explorer restart), DPI change, auto-hide taskbar, taskbar alignment (centered icons can collide → compute free space), full-screen apps.
+- Render via Win2D or Composition visuals for crisp text, bars, and sparklines at taskbar height.
+- The widget renderer is a small layout engine: `LayoutTemplate → Slot[] → (MetricBinding, Visual, Format, ThresholdRules)`, serialized as JSON in settings so layouts can be exported and shared.
+
+## Settings & storage
+
+- `%LOCALAPPDATA%\Hakari\settings.json` (MSIX: `ApplicationData.Current.LocalFolder`)
+- `index.db` is rebuildable (Settings → "Rebuild index").
+
+## Risks / spikes to do first
+
+1. Taskbar overlay reliability on current Win11 builds (24H2/25H2) and multi-monitor setups.
+2. WSL 9P read throughput for 846 MB on first index. Option: run a tiny helper inside WSL via `wsl.exe -e` that streams only usage lines.
+3. OAuth usage endpoint shape and stability (undocumented).
+4. MSIX + `runFullTrust` + reading `\\wsl.localhost` paths from a packaged app.
+5. Store certification with an overlay window and reading files outside the package.

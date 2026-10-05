@@ -1,0 +1,11 @@
+#!/bin/sh
+local_exclude_file="$(git rev-parse --git-dir)/info/exclude"
+[ -f "$local_exclude_file" ] || exit 0
+
+blocked_files=$(git ls-files --cached --ignored --exclude-from="$local_exclude_file")
+if [ -n "$blocked_files" ]; then
+  printf 'pre-commit: locally excluded files are staged:\n%s\n' "$blocked_files" >&2
+  exit 1
+fi
+
+exit 0

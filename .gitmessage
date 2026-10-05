@@ -1,0 +1,8 @@
+
+# <type>(<scope>): <subject>   (max 72 chars, imperative, lowercase, no period)
+#
+# type:  feat fix perf refactor test docs build ci chore style revert
+# scope: core app cli sync pricing taskbar dashboard store i18n deps
+#
+# Body: why this change (wrap at 72)
+# Footer: BREAKING CHANGE: ... | Refs: #123

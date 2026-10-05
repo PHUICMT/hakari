@@ -1,0 +1,31 @@
+#!/bin/sh
+message_file="$1"
+message=$(grep -v '^#' "$message_file")
+header=$(printf '%s\n' "$message" | sed -n '/./{p;q;}')
+allowed_types='feat|fix|perf|refactor|test|docs|build|ci|chore|style|revert'
+max_header_length=72
+required_email='icmtchannel@gmail.com'
+
+fail() {
+  printf 'commit-msg: %s\n' "$1" >&2
+  exit 1
+}
+
+printf '%s' "$header" \
+  | grep -Eq "^($allowed_types)(\([a-z0-9-]+\))?!?: [a-z0-9].*[^.]$" \
+  || fail "header must be '<type>(<scope>): <subject>' (see docs/COMMIT-CONVENTION.md)"
+
+[ "${#header}" -le "$max_header_length" ] \
+  || fail "header longer than $max_header_length characters"
+
+blocked_pattern=$(git config --get hakari.commit.blockedPattern)
+if [ -n "$blocked_pattern" ] \
+  && printf '%s\n' "$message" | grep -Eiq "$blocked_pattern"; then
+  fail "message contains a blocked term (git config hakari.commit.blockedPattern)"
+fi
+
+current_email=$(git config user.email)
+[ "$current_email" = "$required_email" ] \
+  || fail "user.email must be $required_email (is '$current_email')"
+
+exit 0
