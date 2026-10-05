@@ -57,6 +57,8 @@ public sealed partial class FlyoutWindow : Window
 
     public event EventHandler? SettingsRequested;
 
+    public event EventHandler? DashboardRequested;
+
     public bool IsShowing { get; private set; }
 
     public void Toggle(int anchorX, int anchorY)
@@ -359,6 +361,12 @@ public sealed partial class FlyoutWindow : Window
     }
 
     private void OnCloseClicked(object sender, RoutedEventArgs args) => HideFlyout();
+
+    private void OnDashboardClicked(object sender, RoutedEventArgs args)
+    {
+        HideFlyout();
+        DashboardRequested?.Invoke(this, EventArgs.Empty);
+    }
 
     private void OnSettingsClicked(object sender, RoutedEventArgs args)
     {

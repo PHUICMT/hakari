@@ -13,7 +13,7 @@ namespace Hakari.Surfaces.Settings;
 /// The taskbar layout card: how several accounts share the widget, which layout is being
 /// edited (everyone's or one account's), the ring and lines, and the live preview.
 /// </summary>
-public sealed partial class SettingsWindow
+public sealed partial class SettingsPage
 {
     /// <summary>The "layout for" choice that edits the layout every account shares.</summary>
     private const string SharedLayout = "";
@@ -283,7 +283,7 @@ public sealed partial class SettingsWindow
             turnTimer = DispatcherQueue.CreateTimer();
             turnTimer.Interval = settings.TurnLength;
             turnTimer.Tick += (_, _) => ShowPreview(store.Load());
-            Closed += (_, _) => turnTimer.Stop();
+            Unloaded += (_, _) => turnTimer.Stop();
         }
 
         turnTimer.Interval = settings.TurnLength;

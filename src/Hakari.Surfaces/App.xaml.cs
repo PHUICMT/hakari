@@ -3,7 +3,7 @@ using Hakari.Core.Localization;
 using Hakari.Core.Settings;
 using Hakari.Surfaces.Flyout;
 using Hakari.Surfaces.Popups;
-using Hakari.Surfaces.Settings;
+using Hakari.Surfaces.Dashboard;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 
@@ -21,14 +21,27 @@ public partial class App : Application
     private DispatcherQueue? dispatcher;
     private DispatcherQueueTimer? idleExitTimer;
     private FlyoutWindow? flyout;
-    private SettingsWindow? settings;
+    private DashboardWindow? dashboard;
     private TooltipWindow? tooltip;
     private MenuWindow? menu;
 
-    public App() => InitializeComponent();
+    public App()
+    {
+        InitializeComponent();
+        UnhandledException += (_, args) => CrashLog.Write(args.Exception, args.Message);
+    }
 
     protected override void OnLaunched(LaunchActivatedEventArgs args)
     {
+        // One window process at a time: a second one hands its request to the first and goes.
+        var commandLine = Environment.GetCommandLineArgs().Skip(1).ToArray();
+        var command = SurfaceCommand.Parse(commandLine) ?? DefaultCommand();
+        if (SurfaceChannel.TrySend(command))
+        {
+            Environment.Exit(NormalExitCode);
+            return;
+        }
+
         dispatcher = DispatcherQueue.GetForCurrentThread();
         idleExitTimer = dispatcher.CreateTimer();
         idleExitTimer.Interval = IdleExitDelay;
@@ -39,13 +52,11 @@ public partial class App : Application
             command => dispatcher.TryEnqueue(() => Handle(command)),
             listening.Token);
 
-        var commandLine = Environment.GetCommandLineArgs().Skip(1).ToArray();
-        Handle(SurfaceCommand.Parse(commandLine) ?? DefaultCommand());
+        Handle(command);
     }
 
     private static SurfaceCommand DefaultCommand() => new(SurfaceKind.Flyout, 0, 0);
 
-    /// <summary>The dashboard does not exist yet; asking for it opens the flyout.</summary>
     private void Handle(SurfaceCommand command)
     {
         idleExitTimer?.Stop();
@@ -54,6 +65,10 @@ public partial class App : Application
         {
             case SurfaceKind.Settings:
                 ShowSettings();
+                break;
+            case SurfaceKind.Dashboard:
+                tooltip?.HidePopup();
+                ShowDashboard(DashboardPage.Overview);
                 break;
             case SurfaceKind.Menu:
                 tooltip?.HidePopup();
@@ -83,7 +98,9 @@ public partial class App : Application
     /// <summary>Built once and reused: the hover card fills itself each time it shows.</summary>
     private TooltipWindow Tooltip => tooltip ??= new TooltipWindow();
 
-    private MenuWindow Menu => menu ??= new MenuWindow(ShowSettings);
+    private MenuWindow Menu => menu ??= new MenuWindow(
+        ShowSettings,
+        () => ShowDashboard(DashboardPage.Overview));
 
     private void ShowFlyout(SurfaceCommand command)
     {
@@ -92,45 +109,48 @@ public partial class App : Application
             flyout = new FlyoutWindow();
             flyout.Hidden += (_, _) => idleExitTimer?.Start();
             flyout.SettingsRequested += (_, _) => ShowSettings();
+            flyout.DashboardRequested += (_, _) => ShowDashboard(DashboardPage.Overview);
         }
 
         flyout.Toggle(command.AnchorX, command.AnchorY);
     }
 
+    private void ShowSettings() => ShowDashboard(DashboardPage.Settings);
+
     /// <summary>A closed window cannot be shown again, so each opening builds a new one.</summary>
-    private void ShowSettings()
+    private void ShowDashboard(DashboardPage page)
     {
         idleExitTimer?.Stop();
-        if (settings is null)
+        if (dashboard is null)
         {
-            settings = new SettingsWindow();
-            var window = settings;
-            settings.Closed += (_, _) =>
+            dashboard = new DashboardWindow();
+            var window = dashboard;
+            dashboard.Closed += (_, _) =>
             {
-                if (settings == window)
+                if (dashboard == window)
                 {
-                    settings = null;
+                    dashboard = null;
                     idleExitTimer?.Start();
                 }
             };
-            settings.LanguageChanged += (_, _) => RebuildForLanguage(window);
+            dashboard.LanguageChanged += (_, _) => RebuildForLanguage(window);
         }
 
-        settings.Present();
+        dashboard.Present(page);
     }
 
     /// <summary>
-    /// Window text is read when a window is built, so a new language means new windows. The
-    /// settings window reopens where the user was working.
+    /// Window text is read when a window is built, so a new language means a new window. It
+    /// reopens on the page the user was on.
     /// </summary>
-    private void RebuildForLanguage(SettingsWindow oldWindow)
+    private void RebuildForLanguage(DashboardWindow oldWindow)
     {
         ApplyLanguage();
-        settings = null;
-        ShowSettings();
+        var page = oldWindow.CurrentPage;
+        dashboard = null;
+        ShowDashboard(page);
         oldWindow.Close();
     }
-
     private void ApplyLanguage()
     {
         if (Texts.Use(SettingsStore.Default.Load().Language) && flyout is not null)
@@ -142,7 +162,7 @@ public partial class App : Application
 
     private void ExitWhenIdle()
     {
-        if (flyout?.IsShowing == true || settings is not null
+        if (flyout?.IsShowing == true || dashboard is not null
             || menu?.IsShowing == true || tooltip?.IsShowing == true)
         {
             return;

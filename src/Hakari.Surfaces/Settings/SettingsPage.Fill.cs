@@ -15,7 +15,7 @@ using Microsoft.UI.Xaml.Media;
 namespace Hakari.Surfaces.Settings;
 
 /// <summary>Setting the controls from the saved settings and the index.</summary>
-public sealed partial class SettingsWindow
+public sealed partial class SettingsPage
 {
     private const string FolderGlyph = "";
     private const string AccountGlyph = "";
@@ -302,7 +302,7 @@ public sealed partial class SettingsWindow
 
     private void FillAbout()
     {
-        var version = typeof(SettingsWindow).Assembly.GetName().Version;
+        var version = typeof(SettingsPage).Assembly.GetName().Version;
         VersionRow.Title = Texts.Format("settings.version", version?.ToString(VersionParts));
         DataFolderRow.Description = HakariPaths.DataDirectory;
     }

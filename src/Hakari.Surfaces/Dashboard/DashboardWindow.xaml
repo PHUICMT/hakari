@@ -1,0 +1,41 @@
+<Window
+    x:Class="Hakari.Surfaces.Dashboard.DashboardWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:l="using:Hakari.Surfaces.Localization">
+
+    <Grid x:Name="Root" Background="{ThemeResource HakariSurfaceBrush}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="48" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="220" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <!-- Title bar: dragging works anywhere on it; the caption buttons stay the system's -->
+        <Grid x:Name="TitleBar" Grid.ColumnSpan="2" Padding="16,0" ColumnSpacing="10"
+            Background="Transparent">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <TextBlock Text="秤" FontFamily="{StaticResource HakariBrandFont}" FontSize="18"
+                FontWeight="Bold" Foreground="{ThemeResource HakariAccentBrush}"
+                VerticalAlignment="Center" />
+            <TextBlock Grid.Column="1" Text="Hakari" FontSize="12.5"
+                Foreground="{ThemeResource HakariInkMutedBrush}" VerticalAlignment="Center" />
+        </Grid>
+
+        <!-- Navigation: the pages, with Settings set apart at the bottom of the list -->
+        <StackPanel x:Name="Navigation" Grid.Row="1" Padding="8,4,8,12" Spacing="2" />
+
+        <!-- The current page; each keeps its own scrolling -->
+        <Border Grid.Row="1" Grid.Column="1" BorderThickness="1,1,0,0" CornerRadius="8,0,0,0"
+            BorderBrush="{ThemeResource HakariLineBrush}" Background="{ThemeResource HakariGroundBrush}">
+            <ContentControl x:Name="PageHost" HorizontalContentAlignment="Stretch"
+                VerticalContentAlignment="Stretch" IsTabStop="False" />
+        </Border>
+    </Grid>
+</Window>

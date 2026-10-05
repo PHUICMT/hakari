@@ -10,7 +10,7 @@ namespace Hakari.Surfaces.Settings;
 /// Each section's title folds its card away, like the flyout's account cards. Which
 /// sections are folded is remembered.
 /// </summary>
-public sealed partial class SettingsWindow
+public sealed partial class SettingsPage
 {
     private const string ChevronGlyph = "";
     private const double ChevronSize = 11;

@@ -13,6 +13,11 @@
             <Color x:Key="HakariLineStrongColor">#C5CAD6</Color>
             <Color x:Key="HakariGroundColor">#EEF0F5</Color>
             <Color x:Key="HakariTaskbarColor">#F3F3F3</Color>
+            <Color x:Key="HakariChart1Color">#23417F</Color>
+            <Color x:Key="HakariChart2Color">#4A6FC0</Color>
+            <Color x:Key="HakariChart3Color">#8AA5E6</Color>
+            <Color x:Key="HakariChart4Color">#A985D6</Color>
+            <Color x:Key="HakariChart5Color">#2FA98F</Color>
             <Color x:Key="HakariInkColor">#1A1E29</Color>
             <Color x:Key="HakariInkMutedColor">#4A5164</Color>
             <Color x:Key="HakariInkFaintColor">#7B8296</Color>
@@ -32,6 +37,11 @@
             <Color x:Key="HakariLineStrongColor">#3C4352</Color>
             <Color x:Key="HakariGroundColor">#13161D</Color>
             <Color x:Key="HakariTaskbarColor">#1C1C1C</Color>
+            <Color x:Key="HakariChart1Color">#34548F</Color>
+            <Color x:Key="HakariChart2Color">#5B7CCB</Color>
+            <Color x:Key="HakariChart3Color">#A6BDF2</Color>
+            <Color x:Key="HakariChart4Color">#C3A3E8</Color>
+            <Color x:Key="HakariChart5Color">#4FD0B3</Color>
             <Color x:Key="HakariInkColor">#E8EBF2</Color>
             <Color x:Key="HakariInkMutedColor">#A9B0C1</Color>
             <Color x:Key="HakariInkFaintColor">#7A8297</Color>
@@ -53,6 +63,11 @@
     <SolidColorBrush x:Key="HakariLineStrongBrush" Color="{ThemeResource HakariLineStrongColor}" />
     <SolidColorBrush x:Key="HakariGroundBrush" Color="{ThemeResource HakariGroundColor}" />
     <SolidColorBrush x:Key="HakariTaskbarBrush" Color="{ThemeResource HakariTaskbarColor}" />
+    <SolidColorBrush x:Key="HakariChart1Brush" Color="{ThemeResource HakariChart1Color}" />
+    <SolidColorBrush x:Key="HakariChart2Brush" Color="{ThemeResource HakariChart2Color}" />
+    <SolidColorBrush x:Key="HakariChart3Brush" Color="{ThemeResource HakariChart3Color}" />
+    <SolidColorBrush x:Key="HakariChart4Brush" Color="{ThemeResource HakariChart4Color}" />
+    <SolidColorBrush x:Key="HakariChart5Brush" Color="{ThemeResource HakariChart5Color}" />
     <SolidColorBrush x:Key="HakariInkBrush" Color="{ThemeResource HakariInkColor}" />
     <SolidColorBrush x:Key="HakariInkMutedBrush" Color="{ThemeResource HakariInkMutedColor}" />
     <SolidColorBrush x:Key="HakariInkFaintBrush" Color="{ThemeResource HakariInkFaintColor}" />
@@ -158,6 +173,7 @@
     </Style>
 
     <FontFamily x:Key="HakariIconFont">Segoe Fluent Icons, Segoe MDL2 Assets</FontFamily>
+    <FontFamily x:Key="HakariMonoFont">Cascadia Mono, Consolas</FontFamily>
 
     <!-- Drop-down list: a raised card with full-width rows -->
     <Style x:Key="HakariListPresenter" TargetType="FlyoutPresenter">
@@ -205,6 +221,78 @@
                                     </VisualState.Setters>
                                 </VisualState>
                                 <VisualState x:Name="Disabled" />
+                            </VisualStateGroup>
+                        </VisualStateManager.VisualStateGroups>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Dashboard navigation: icon and label; the chosen page gets a raised fill and an
+         accent bar on the left that grows in -->
+    <Style x:Key="HakariNavItem" TargetType="RadioButton">
+        <Setter Property="Foreground" Value="{ThemeResource HakariInkMutedBrush}" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="Padding" Value="12,8" />
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+        <Setter Property="HorizontalContentAlignment" Value="Left" />
+        <Setter Property="UseSystemFocusVisuals" Value="True" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="RadioButton">
+                    <Grid x:Name="Root" Background="Transparent" CornerRadius="{StaticResource HakariControlRadius}">
+                        <Border x:Name="StateFill" Background="Transparent"
+                            CornerRadius="{StaticResource HakariControlRadius}" />
+                        <Border x:Name="Indicator" Width="3" Height="16" CornerRadius="1.5"
+                            HorizontalAlignment="Left" Background="{ThemeResource HakariAccentBrush}"
+                            RenderTransformOrigin="0.5,0.5" Opacity="0">
+                            <Border.RenderTransform>
+                                <ScaleTransform x:Name="IndicatorScale" ScaleY="0.3" />
+                            </Border.RenderTransform>
+                        </Border>
+                        <ContentPresenter x:Name="Label" Padding="{TemplateBinding Padding}"
+                            HorizontalContentAlignment="Left" VerticalContentAlignment="Center"
+                            Foreground="{TemplateBinding Foreground}" Content="{TemplateBinding Content}" />
+                        <VisualStateManager.VisualStateGroups>
+                            <VisualStateGroup x:Name="CommonStates">
+                                <VisualState x:Name="Normal" />
+                                <VisualState x:Name="PointerOver">
+                                    <VisualState.Setters>
+                                        <Setter Target="StateFill.Background" Value="{ThemeResource HakariHoverBrush}" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                                <VisualState x:Name="Pressed">
+                                    <VisualState.Setters>
+                                        <Setter Target="StateFill.Background" Value="{ThemeResource HakariPressedBrush}" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                                <VisualState x:Name="Disabled">
+                                    <VisualState.Setters>
+                                        <Setter Target="Root.Opacity" Value="0.45" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                            </VisualStateGroup>
+                            <VisualStateGroup x:Name="CheckStates">
+                                <VisualState x:Name="Checked">
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="Indicator" Storyboard.TargetProperty="Opacity"
+                                            To="1" Duration="0:0:0.12" />
+                                        <DoubleAnimation Storyboard.TargetName="IndicatorScale" Storyboard.TargetProperty="ScaleY"
+                                            To="1" Duration="0:0:0.2">
+                                            <DoubleAnimation.EasingFunction>
+                                                <ExponentialEase EasingMode="EaseOut" Exponent="6" />
+                                            </DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                    </Storyboard>
+                                    <VisualState.Setters>
+                                        <Setter Target="Root.Background" Value="{ThemeResource HakariTileBrush}" />
+                                        <Setter Target="Label.Foreground" Value="{ThemeResource HakariInkBrush}" />
+                                        <Setter Target="Label.FontWeight" Value="SemiBold" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                                <VisualState x:Name="Unchecked" />
+                                <VisualState x:Name="Indeterminate" />
                             </VisualStateGroup>
                         </VisualStateManager.VisualStateGroups>
                     </Grid>

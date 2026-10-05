@@ -16,7 +16,7 @@ using Windows.System;
 namespace Hakari.Surfaces.Settings;
 
 /// <summary>What each control does when the user changes it.</summary>
-public sealed partial class SettingsWindow
+public sealed partial class SettingsPage
 {
     private const string SupportAddress = "https://ko-fi.com/phuicmt";
     private const string AnyFileType = "*";
@@ -35,7 +35,7 @@ public sealed partial class SettingsWindow
     {
         var picker = new FolderPicker { SuggestedStartLocation = PickerLocationId.ComputerFolder };
         picker.FileTypeFilter.Add(AnyFileType);
-        WinRT.Interop.InitializeWithWindow.Initialize(picker, WindowHandle);
+        WinRT.Interop.InitializeWithWindow.Initialize(picker, HostWindowHandle);
         var folder = await picker.PickSingleFolderAsync();
         if (folder is null)
         {

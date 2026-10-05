@@ -22,11 +22,13 @@ public sealed partial class MenuWindow : PopupWindow
     private static readonly Thickness DividerMargin = new(6, 4, 6, 4);
 
     private readonly Action openSettings;
+    private readonly Action openDashboard;
 
-    public MenuWindow(Action openSettings)
+    public MenuWindow(Action openSettings, Action openDashboard)
         : base(MenuWidth)
     {
         this.openSettings = openSettings;
+        this.openDashboard = openDashboard;
         Activated += (_, args) =>
         {
             if (args.WindowActivationState == WindowActivationState.Deactivated && IsShowing)
@@ -41,6 +43,7 @@ public sealed partial class MenuWindow : PopupWindow
     public void ShowAt(int anchorX, int anchorY)
     {
         var items = new StackPanel();
+        items.Children.Add(Item("", "menu.dashboard", openDashboard));
         items.Children.Add(Item("", "menu.refresh", () => Send(ResidentCommand.RefreshNow)));
         items.Children.Add(Item("", "menu.changeLayout", openSettings));
         items.Children.Add(Item("", "menu.pauseHour", () => Send(ResidentCommand.PauseForAnHour)));

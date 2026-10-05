@@ -1,0 +1,112 @@
+using Hakari.Core.Localization;
+using Hakari.Core.Presentation;
+using Hakari.Core.Settings;
+using Hakari.Surfaces.Controls;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Media;
+
+namespace Hakari.Surfaces.Dashboard;
+
+/// <summary>Period, account and source, plus refresh. Every page shows the same bar.</summary>
+internal sealed partial class DashboardFilterBar : StackPanel
+{
+    private const string AllChoice = "";
+    private const string RefreshGlyph = "";
+    private const double RefreshGlyphSize = 12;
+    private const double BarSpacing = 8;
+    private static readonly Thickness RefreshPadding = new(9, 7, 9, 7);
+
+    private static readonly (DashboardPeriod Period, string TextKey)[] Periods =
+    [
+        (DashboardPeriod.Today, "dashboard.period.today"),
+        (DashboardPeriod.SevenDays, "dashboard.period.week"),
+        (DashboardPeriod.ThirtyDays, "dashboard.period.month"),
+        (DashboardPeriod.AllTime, "dashboard.period.all"),
+    ];
+
+    private readonly HakariSelect accountSelect = new();
+    private readonly HakariSelect sourceSelect = new();
+
+    public DashboardFilterBar()
+    {
+        Orientation = Orientation.Horizontal;
+        Spacing = BarSpacing;
+        HorizontalAlignment = HorizontalAlignment.Right;
+        VerticalAlignment = VerticalAlignment.Center;
+        Children.Add(PeriodChoices());
+        Children.Add(accountSelect);
+        Children.Add(sourceSelect);
+        Children.Add(RefreshButton());
+        FillSelects();
+        accountSelect.Selected += (_, value) => Change(DashboardFilter.Current with
+        {
+            AccountId = (string)value == AllChoice ? null : (string)value,
+        });
+        sourceSelect.Selected += (_, value) => Change(DashboardFilter.Current with
+        {
+            SourceId = (string)value == AllChoice ? null : (string)value,
+        });
+    }
+
+    /// <summary>The filter changed (or refresh was asked for); the page reads again.</summary>
+    public event EventHandler? Changed;
+
+    private HakariSegmented PeriodChoices()
+    {
+        var choices = new HakariSegmented();
+        foreach (var (period, textKey) in Periods)
+        {
+            var choice = new HakariSegment
+            {
+                GroupName = "DashboardPeriod" + GetHashCode(),
+                Content = Texts.Get(textKey),
+                IsChecked = DashboardFilter.Current.Period == period,
+            };
+            choice.Checked += (_, _) => Change(DashboardFilter.Current with { Period = period });
+            choices.Children.Add(choice);
+        }
+
+        return choices;
+    }
+
+    private void FillSelects()
+    {
+        var settings = SettingsStore.Default.Load();
+        var accounts = DashboardData.Accounts()
+            .Select(account => ((object)account.AccountId, AccountLabels.Full(
+                account,
+                settings.NicknameOf(account.AccountId))))
+            .Prepend((AllChoice, Texts.Get("dashboard.allAccounts")));
+        accountSelect.SetChoices(accounts, DashboardFilter.Current.AccountId ?? AllChoice);
+
+        var sources = DashboardData.SourceIds()
+            .Select(sourceId => ((object)sourceId, SourceNames.Display(sourceId)))
+            .Prepend((AllChoice, Texts.Get("dashboard.allSources")));
+        sourceSelect.SetChoices(sources, DashboardFilter.Current.SourceId ?? AllChoice);
+    }
+
+    private Button RefreshButton()
+    {
+        var button = new Button
+        {
+            Content = new FontIcon
+            {
+                Glyph = RefreshGlyph,
+                FontSize = RefreshGlyphSize,
+                FontFamily = (FontFamily)Application.Current.Resources["HakariIconFont"],
+            },
+            Style = (Style)Application.Current.Resources["HakariButton"],
+            Padding = RefreshPadding,
+        };
+        ToolTipService.SetToolTip(button, Texts.Get("dashboard.refresh"));
+        button.Click += (_, _) => Changed?.Invoke(this, EventArgs.Empty);
+        return button;
+    }
+
+    private void Change(DashboardFilter filter)
+    {
+        DashboardFilter.Current = filter;
+        Changed?.Invoke(this, EventArgs.Empty);
+    }
+}
