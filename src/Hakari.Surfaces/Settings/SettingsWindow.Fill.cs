@@ -1,6 +1,7 @@
 using Hakari.Core.Accounts;
 using Hakari.Core.Configuration;
 using Hakari.Core.Currency;
+using Hakari.Core.Displays;
 using Hakari.Core.Presentation;
 using Hakari.Core.Settings;
 using Hakari.Core.Sources;
@@ -16,11 +17,15 @@ public sealed partial class SettingsWindow
 {
     private const string FolderGlyph = "";
     private const string AccountGlyph = "";
+    private const string DisplayGlyph = "";
     private const string CurrencyGroup = "Currency";
     private const string ProjectsFolderName = "projects";
     private const string DetailSeparator = " · ";
     private const string VersionFormat = "Hakari {0}";
     private const int VersionParts = 3;
+
+    /// <summary>Indented under the row that opened them.</summary>
+    private static readonly Thickness NestedRowPadding = new(40, 10, 16, 10);
 
     private static readonly string[] CommonCurrencies =
     [
@@ -50,7 +55,33 @@ public sealed partial class SettingsWindow
         WslRunningOnly.IsChecked = settings.WslMode == WslScanMode.RunningOnly;
         WslAll.IsChecked = settings.WslMode == WslScanMode.All;
         FillFolders(settings.ExtraConfigDirectories);
-        EveryDisplayToggle.IsChecked = settings.ShowOnSecondaryTaskbars;
+        DisplaysPrimary.IsChecked = settings.Displays == TaskbarDisplays.Primary;
+        DisplaysAll.IsChecked = settings.Displays == TaskbarDisplays.All;
+        DisplaysChosen.IsChecked = settings.Displays == TaskbarDisplays.Chosen;
+        FillDisplays(settings);
+    }
+
+    /// <summary>One switch per connected display, shown only while choosing.</summary>
+    private void FillDisplays(HakariSettings settings)
+    {
+        DisplayList.Children.Clear();
+        DisplayList.Visibility = settings.Displays == TaskbarDisplays.Chosen
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+        var chosen = settings.ChosenDisplays.ToHashSet(StringComparer.OrdinalIgnoreCase);
+        foreach (var display in DisplayCatalog.List())
+        {
+            var toggle = new HakariToggle { IsChecked = chosen.Contains(display.Id) };
+            toggle.Click += (_, _) => SetDisplayChosen(display.Id, toggle.IsChecked == true);
+            DisplayList.Children.Add(new SettingRow
+            {
+                Glyph = DisplayGlyph,
+                Title = display.Name,
+                Description = display.IsPrimary ? "Main display" : string.Empty,
+                Content = toggle,
+                Padding = NestedRowPadding,
+            });
+        }
     }
 
     private void FillFolders(IReadOnlyList<string> folders)

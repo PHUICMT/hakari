@@ -89,17 +89,10 @@ public sealed class TaskbarWidgetHost : IDisposable
         motion = ResolveMotion();
     }
 
-    /// <summary>Adds or removes the widgets on secondary displays.</summary>
-    public void SetShowOnSecondaryTaskbars(bool show)
+    /// <summary>Changes which displays get a widget (see TaskbarWidgetHostOptions).</summary>
+    public void SetDisplayFilter(Func<string, bool>? showOnDisplay)
     {
-        options = options with { ShowOnSecondaryTaskbars = show };
-        foreach (var widget in widgets.Where(widget => !show && !widget.Target.IsPrimary).ToList())
-        {
-            widget.Dispose();
-            widgets.Remove(widget);
-            states.Remove(widget);
-        }
-
+        options = options with { ShowOnDisplay = showOnDisplay };
         SynchronizeWidgets(renderAll: true);
     }
 
@@ -164,7 +157,9 @@ public sealed class TaskbarWidgetHost : IDisposable
     private void SynchronizeWidgets(bool renderAll)
     {
         RemoveDeadWidgets();
-        AddMissingWidgets();
+        var wanted = WantedTargets();
+        RemoveUnwantedWidgets(wanted);
+        AddMissingWidgets(wanted);
 
         foreach (var widget in widgets)
         {
@@ -194,9 +189,9 @@ public sealed class TaskbarWidgetHost : IDisposable
         }
     }
 
-    private void AddMissingWidgets()
+    private void AddMissingWidgets(IReadOnlyList<TaskbarTarget> wanted)
     {
-        foreach (var target in WantedTargets())
+        foreach (var target in wanted)
         {
             var taskbarHandle = target.Resolve();
             var exists = widgets.Any(widget => widget.Target == target);
@@ -209,8 +204,29 @@ public sealed class TaskbarWidgetHost : IDisposable
         }
     }
 
-    private IEnumerable<TaskbarTarget> WantedTargets() =>
-        options.ShowOnSecondaryTaskbars ? TaskbarTarget.All() : [TaskbarTarget.Primary];
+    private IReadOnlyList<TaskbarTarget> WantedTargets()
+    {
+        var all = TaskbarTarget.All();
+        if (options.ShowOnDisplay is not { } showOnDisplay)
+        {
+            return all;
+        }
+
+        var wanted = all
+            .Where(target => target.DisplayDeviceName() is { } device && showOnDisplay(device))
+            .ToList();
+        return wanted.Count > 0 ? wanted : [TaskbarTarget.Primary];
+    }
+
+    private void RemoveUnwantedWidgets(IReadOnlyList<TaskbarTarget> wanted)
+    {
+        foreach (var unwanted in widgets.Where(widget => !wanted.Contains(widget.Target)).ToList())
+        {
+            unwanted.Dispose();
+            widgets.Remove(unwanted);
+            states.Remove(unwanted);
+        }
+    }
 
     private WidgetWindow CreateWidget(TaskbarTarget target, IntPtr taskbarHandle)
     {

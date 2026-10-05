@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using Hakari.Taskbar.Interop;
 
 namespace Hakari.Taskbar.Placement;
@@ -10,6 +11,7 @@ public sealed record TaskbarTarget(bool IsPrimary, int SecondaryIndex)
 {
     public const string PrimaryClass = "Shell_TrayWnd";
     public const string SecondaryClass = "Shell_SecondaryTrayWnd";
+    private const uint NearestMonitor = 2;
 
     public static TaskbarTarget Primary { get; } = new(IsPrimary: true, SecondaryIndex: -1);
 
@@ -34,6 +36,23 @@ public sealed record TaskbarTarget(bool IsPrimary, int SecondaryIndex)
 
         var secondaries = FindSecondaryHandles();
         return SecondaryIndex < secondaries.Count ? secondaries[SecondaryIndex] : IntPtr.Zero;
+    }
+
+    /// <summary>The device name of this taskbar's display, or null when it is gone.</summary>
+    public string? DisplayDeviceName()
+    {
+        var taskbar = Resolve();
+        if (taskbar == IntPtr.Zero)
+        {
+            return null;
+        }
+
+        var monitor = User32.MonitorFromWindow(taskbar, NearestMonitor);
+        var information = new MonitorInformation
+        {
+            Size = Marshal.SizeOf<MonitorInformation>(),
+        };
+        return User32.GetMonitorInfo(monitor, ref information) ? information.DeviceName : null;
     }
 
     private static List<IntPtr> FindSecondaryHandles()

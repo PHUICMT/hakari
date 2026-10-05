@@ -79,6 +79,12 @@ internal static class User32
     [DllImport(Library)]
     public static extern bool GetWindowRect(IntPtr windowHandle, out NativeRectangle rectangle);
 
+    [DllImport(Library)]
+    public static extern IntPtr MonitorFromWindow(IntPtr windowHandle, uint flags);
+
+    [DllImport(Library, CharSet = CharSet.Unicode)]
+    public static extern bool GetMonitorInfo(IntPtr monitor, ref MonitorInformation information);
+
     [DllImport(Library, CharSet = CharSet.Unicode)]
     public static extern IntPtr FindWindow(string? className, string? windowName);
 

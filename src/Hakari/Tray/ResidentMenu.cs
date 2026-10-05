@@ -1,3 +1,4 @@
+using Hakari.Core.Displays;
 using Hakari.Core.Settings;
 using Hakari.Core.Startup;
 using Hakari.Taskbar.Tray;
@@ -41,10 +42,11 @@ internal sealed class ResidentMenu(
             settings.Animation == choice.Setting)));
 
         items.Add(TrayMenuItem.Separator);
+        var onEveryDisplay = settings.Displays == TaskbarDisplays.All;
         items.Add(new("Show on every display", () => Change(current => current with
         {
-            ShowOnSecondaryTaskbars = !current.ShowOnSecondaryTaskbars,
-        }), settings.ShowOnSecondaryTaskbars));
+            Displays = onEveryDisplay ? TaskbarDisplays.Primary : TaskbarDisplays.All,
+        }), onEveryDisplay));
         var startsWithWindows = StartupRegistration.IsRegistered(ExecutablePath);
         items.Add(new(
             "Start with Windows",

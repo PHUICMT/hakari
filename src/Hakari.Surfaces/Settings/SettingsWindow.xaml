@@ -50,10 +50,18 @@
                                     Click="OnAddFolderClicked" />
                             </controls:SettingRow>
                             <StackPanel x:Name="FolderList" />
-                            <controls:SettingRow Glyph="&#xE7F4;" Title="Show on every display"
-                                Description="Put the meter on the taskbar of each monitor.">
-                                <controls:HakariToggle x:Name="EveryDisplayToggle" Click="OnEveryDisplayClicked" />
+                            <controls:SettingRow Glyph="&#xE7F4;" Title="Taskbar displays"
+                                Description="Which taskbars show the meter.">
+                                <controls:HakariSegmented>
+                                    <controls:HakariSegment x:Name="DisplaysPrimary" GroupName="Displays"
+                                        Content="Main" Checked="OnDisplaysChecked" />
+                                    <controls:HakariSegment x:Name="DisplaysAll" GroupName="Displays"
+                                        Content="All" Checked="OnDisplaysChecked" />
+                                    <controls:HakariSegment x:Name="DisplaysChosen" GroupName="Displays"
+                                        Content="Choose" Checked="OnDisplaysChecked" />
+                                </controls:HakariSegmented>
                             </controls:SettingRow>
+                            <StackPanel x:Name="DisplayList" Visibility="Collapsed" />
                         </StackPanel>
                     </Border>
                 </StackPanel>

@@ -1,4 +1,5 @@
 using Hakari.Core.Currency;
+using Hakari.Core.Displays;
 using Hakari.Core.Sources;
 
 namespace Hakari.Core.Settings;
@@ -8,7 +9,10 @@ public sealed record HakariSettings
 {
     public AnimationSetting Animation { get; init; } = AnimationSetting.FollowWindows;
 
-    public bool ShowOnSecondaryTaskbars { get; init; } = true;
+    public TaskbarDisplays Displays { get; init; } = TaskbarDisplays.All;
+
+    /// <summary><see cref="DisplayInfo.Id"/> values, used when Displays is Chosen.</summary>
+    public IReadOnlyList<string> ChosenDisplays { get; init; } = [];
 
     public WslScanMode WslMode { get; init; } = WslScanMode.RunningOnly;
 

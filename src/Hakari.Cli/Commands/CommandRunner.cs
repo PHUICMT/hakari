@@ -12,6 +12,7 @@ public static class CommandRunner
         new IndexCommand(),
         new ReportCommand(),
         new LimitsCommand(),
+        new DisplaysCommand(),
     ];
 
     public static int Run(CliArguments arguments)

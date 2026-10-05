@@ -12,7 +12,7 @@ public sealed class HakariSettingsTests
         var after = before with
         {
             Animation = AnimationSetting.Off,
-            ShowOnSecondaryTaskbars = false,
+            Displays = Hakari.Core.Displays.TaskbarDisplays.Primary,
             ExtraConfigDirectories = [@"d:\other"],
         };
 

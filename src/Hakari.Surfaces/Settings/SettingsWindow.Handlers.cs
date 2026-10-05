@@ -1,6 +1,8 @@
 using System.Diagnostics;
 using Hakari.Core.Configuration;
 using Hakari.Core.Currency;
+using Hakari.Core.Displays;
+using Hakari.Surfaces.Motion;
 using Hakari.Core.Settings;
 using Hakari.Core.Sources;
 using Hakari.Core.Startup;
@@ -64,11 +66,45 @@ public sealed partial class SettingsWindow
         FillFolders(updated.ExtraConfigDirectories);
     }
 
-    private void OnEveryDisplayClicked(object sender, RoutedEventArgs args) =>
+    /// <summary>Choosing starts from the main display, which is what was shown before.</summary>
+    private void OnDisplaysChecked(object sender, RoutedEventArgs args)
+    {
+        if (filling)
+        {
+            return;
+        }
+
+        var displays = ReferenceEquals(sender, DisplaysPrimary) ? TaskbarDisplays.Primary
+            : ReferenceEquals(sender, DisplaysChosen) ? TaskbarDisplays.Chosen
+            : TaskbarDisplays.All;
+        var updated = store.Update(current => current with
+        {
+            Displays = displays,
+            ChosenDisplays = displays == TaskbarDisplays.Chosen && current.ChosenDisplays.Count == 0
+                ? [.. DisplayCatalog.List().Where(display => display.IsPrimary)
+                    .Select(display => display.Id)]
+                : current.ChosenDisplays,
+        });
+        FillDisplays(updated);
+        RevealDisplayList();
+    }
+
+    private void SetDisplayChosen(string displayId, bool chosen) =>
         Save(current => current with
         {
-            ShowOnSecondaryTaskbars = EveryDisplayToggle.IsChecked == true,
+            ChosenDisplays = chosen
+                ? [.. current.ChosenDisplays.Append(displayId).Distinct()]
+                : [.. current.ChosenDisplays.Where(id => id != displayId)],
         });
+
+    private void RevealDisplayList()
+    {
+        if (DisplayList.Visibility == Visibility.Visible)
+        {
+            DisplayList.Opacity = 0;
+            SurfaceMotion.Settle(DisplayList, "Opacity", 1);
+        }
+    }
 
     private void OnRenewSignInClicked(object sender, RoutedEventArgs args) =>
         Save(current => current with

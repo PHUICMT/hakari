@@ -36,7 +36,7 @@ internal sealed class ResidentApp : IDisposable
         var hostOptions = TaskbarWidgetHostOptions.Default with
         {
             Motion = ToMotion(settings.Animation),
-            ShowOnSecondaryTaskbars = settings.ShowOnSecondaryTaskbars,
+            ShowOnDisplay = DisplayFilter.From(settings),
         };
         widgets = new TaskbarWidgetHost(hostOptions, WidgetText.Loading);
         feed = new UsageFeed(settingsStore);
@@ -124,7 +124,7 @@ internal sealed class ResidentApp : IDisposable
     private void Apply(HakariSettings settings)
     {
         widgets.SetMotion(ToMotion(settings.Animation));
-        widgets.SetShowOnSecondaryTaskbars(settings.ShowOnSecondaryTaskbars);
+        widgets.SetDisplayFilter(DisplayFilter.From(settings));
         if (!settings.FeedsSameDataAs(appliedSettings))
         {
             feed.ReloadSettings();
