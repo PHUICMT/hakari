@@ -17,6 +17,9 @@ public sealed class WidgetRenderer : IDisposable
     /// <summary>At this share or more a ring is full; a hair below still shows as a ring.</summary>
     private const double FullFraction = 0.999;
 
+    /// <summary>Typographic layout that keeps trailing spaces, so pieces join up.</summary>
+    private static readonly StringFormat PieceFormat = CreatePieceFormat();
+
     private readonly FontFamily fontFamily = PickFontFamily();
     private readonly Bitmap measuringSurface = new(1, 1);
     private readonly Graphics measuringGraphics;
@@ -300,7 +303,7 @@ public sealed class WidgetRenderer : IDisposable
     /// An unchanged line is drawn once. A changed line draws the old text leaving and the new
     /// text arriving: sliding upward when motion is full, cross-fading in place otherwise.
     /// </summary>
-    private static void DrawLine(
+    private void DrawLine(
         Graphics graphics,
         WidgetFrame frame,
         LineChange line,
@@ -316,6 +319,39 @@ public sealed class WidgetRenderer : IDisposable
             return;
         }
 
+        var diff = TextDiff.Between(line.Previous, line.Current);
+        if (!diff.SharesAnything)
+        {
+            DrawRolling(
+                graphics, frame, font, colors, color, line.Previous, line.Current, left, top);
+            return;
+        }
+
+        // Only the changed middle rolls; the end of the line slides to its new place.
+        var prefixWidth = MeasurePiece(diff.Prefix, font);
+        DrawText(graphics, diff.Prefix, font, color, left, top);
+        var middleLeft = left + prefixWidth;
+        DrawRolling(
+            graphics, frame, font, colors, color, diff.OldMiddle, diff.NewMiddle, middleLeft, top);
+
+        var oldWidth = MeasurePiece(diff.OldMiddle, font);
+        var newWidth = MeasurePiece(diff.NewMiddle, font);
+        var suffixLeft = middleLeft + oldWidth + (newWidth - oldWidth) * (float)frame.ValueProgress;
+        DrawText(graphics, diff.Suffix, font, color, suffixLeft, top);
+    }
+
+    /// <summary>The old text leaves upward as the new arrives from below, or they fade.</summary>
+    private static void DrawRolling(
+        Graphics graphics,
+        WidgetFrame frame,
+        Font font,
+        (Color From, Color To) colors,
+        Color color,
+        string leaving,
+        string arriving,
+        float left,
+        float top)
+    {
         var progress = frame.ValueProgress;
         var travel = frame.MovesText ? font.GetHeight(graphics) * WidgetMetrics.ValueTravel : 0f;
         var leavingTop = top - travel * (float)progress;
@@ -323,9 +359,15 @@ public sealed class WidgetRenderer : IDisposable
 
         var leavingColor = ColorBlend.WithOpacity(colors.From, 1 - progress);
         var arrivingColor = ColorBlend.WithOpacity(color, progress);
-        DrawText(graphics, line.Previous, font, leavingColor, left, leavingTop);
-        DrawText(graphics, line.Current, font, arrivingColor, left, arrivingTop);
+        DrawText(graphics, leaving, font, leavingColor, left, leavingTop);
+        DrawText(graphics, arriving, font, arrivingColor, left, arrivingTop);
     }
+
+    /// <summary>Counts trailing spaces, so the piece after one is placed correctly.</summary>
+    private float MeasurePiece(string text, Font font) =>
+        text.Length == 0
+            ? 0
+            : measuringGraphics.MeasureString(text, font, int.MaxValue, PieceFormat).Width;
 
     private float MeasureWidestText(WidgetLines lines) =>
         new[]
@@ -366,7 +408,14 @@ public sealed class WidgetRenderer : IDisposable
         }
 
         using var brush = new SolidBrush(color);
-        graphics.DrawString(text, font, brush, left, top, StringFormat.GenericTypographic);
+        graphics.DrawString(text, font, brush, left, top, PieceFormat);
+    }
+
+    private static StringFormat CreatePieceFormat()
+    {
+        var format = (StringFormat)StringFormat.GenericTypographic.Clone();
+        format.FormatFlags |= StringFormatFlags.MeasureTrailingSpaces;
+        return format;
     }
 
     private SizeF Measure(string text, Font font) =>
