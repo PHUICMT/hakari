@@ -70,6 +70,7 @@ void Report()
         $"recreated {diagnostics.WidgetsRecreated}",
         $"layout reads {widget.LayoutRefreshes}",
         $"index passes {feed.IndexPasses}",
+        $"limit polls {feed.LimitPolls}",
         $"last index {feed.LastIndexDuration.TotalMilliseconds:N0} ms",
     ];
     Console.WriteLine(string.Join(" | ", parts));

@@ -1,6 +1,7 @@
 using System.Globalization;
 using Hakari.Core.Configuration;
 using Hakari.Core.Indexing;
+using Hakari.Core.Limits;
 using Hakari.Core.Performance;
 using Hakari.Core.Pricing;
 using Hakari.Core.Querying;
@@ -34,6 +35,8 @@ internal sealed class UsageFeed : IDisposable
 
     public int IndexPasses { get; private set; }
 
+    public int LimitPolls { get; private set; }
+
     public void Start() => worker.Start();
 
     public void Dispose()
@@ -53,16 +56,25 @@ internal sealed class UsageFeed : IDisposable
             sources,
             ChangeTrackerOptions.Default,
             TimeProvider.System);
+        using var limits = new LimitPoller(store, sources);
         var lastPublished = DateTimeOffset.MinValue;
 
         while (!cancellation.IsCancellationRequested)
         {
+            var now = DateTimeOffset.UtcNow;
             var recordsChanged = IndexPendingWork(indexer, tracker);
-            var refreshDue = DateTimeOffset.UtcNow - lastPublished >= ContentRefreshInterval;
-            if (recordsChanged || refreshDue)
+            if (recordsChanged)
             {
-                Updated?.Invoke(BuildContent(query));
-                lastPublished = DateTimeOffset.UtcNow;
+                limits.NoteUsage(now);
+            }
+
+            var limitsChanged = limits.PollIfDue(now);
+            LimitPolls = limits.Polls;
+            var refreshDue = now - lastPublished >= ContentRefreshInterval;
+            if (recordsChanged || limitsChanged || refreshDue)
+            {
+                Updated?.Invoke(BuildContent(query, limits.Latest));
+                lastPublished = now;
             }
 
             var untilScan = tracker.TimeUntilNextScan();
@@ -85,15 +97,23 @@ internal sealed class UsageFeed : IDisposable
         return statistics.RecordsChanged > 0;
     }
 
-    private static WidgetContent BuildContent(UsageQuery query)
+    /// <summary>Money on top; below, the most pressing limit, else the burn rate.</summary>
+    private static WidgetContent BuildContent(UsageQuery query, LimitResult? limits)
     {
         var now = DateTimeOffset.Now;
         var today = query.Total(new UsageFilter(From: TimePeriods.StartOfToday(now)));
-        var month = query.Total(new UsageFilter(From: TimePeriods.StartOfMonth(now)));
-        var lastHour = query.Total(new UsageFilter(From: now.AddHours(-1)));
-
         var primary = string.Create(Culture, $"${today.Cost:N2} today");
-        var secondary = string.Create(Culture, $"${lastHour.Cost:N1}/h · month ${month.Cost:N0}");
+
+        if (limits is not null && LimitLine.From(limits, now) is var (text, tone))
+        {
+            return new WidgetContent(primary, text, tone);
+        }
+
+        var lastHour = query.Total(new UsageFilter(From: now.AddHours(-1)));
+        var month = query.Total(new UsageFilter(From: TimePeriods.StartOfMonth(now)));
+        var secondary = string.Create(
+            Culture,
+            $"${lastHour.Cost:N1}/h · month ${month.Cost:N0}");
         return new WidgetContent(primary, secondary);
     }
 }
