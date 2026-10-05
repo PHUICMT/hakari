@@ -21,7 +21,7 @@ public sealed partial class DashboardWindow : Window
 {
     private const double LogicalWidth = 1100;
     private const double LogicalHeight = 780;
-    private const double MinimumLogicalWidth = 820;
+    private const double MinimumLogicalWidth = 640;
     private const double MinimumLogicalHeight = 520;
     private const double ScreenMargin = 48;
     private const double DefaultDpi = 96;
@@ -29,6 +29,9 @@ public sealed partial class DashboardWindow : Window
     private const double IconColumn = 22;
     private const double ItemSpacing = 10;
     private const double PageRise = 10;
+    private const double NavigationWidth = 220;
+    private const double CompactNavigationWidth = 60;
+    private const double FullNavigationWidth = 1040;
     private const string NavGroup = "DashboardPages";
     private static readonly Thickness DividerMargin = new(8, 8, 8, 8);
 
@@ -52,6 +55,20 @@ public sealed partial class DashboardWindow : Window
         Title = Texts.Get("dashboard.windowTitle");
         ConfigureChrome();
         BuildNavigation();
+        WidthSteps.Watch(Root, [FullNavigationWidth], level => SetNavigationCompact(level == 0));
+    }
+
+    /// <summary>A narrow window keeps only the icons, so the page has the room.</summary>
+    private void SetNavigationCompact(bool compact)
+    {
+        NavigationColumn.Width = new GridLength(compact ? CompactNavigationWidth : NavigationWidth);
+        foreach (var item in navItems.Values)
+        {
+            if (item.Content is Grid { Children.Count: 2 } row)
+            {
+                row.Children[1].Visibility = compact ? Visibility.Collapsed : Visibility.Visible;
+            }
+        }
     }
 
     public event EventHandler? LanguageChanged;
@@ -92,6 +109,7 @@ public sealed partial class DashboardWindow : Window
                 Style = (Style)Application.Current.Resources["HakariNavItem"],
                 Content = NavContent(glyph, Texts.Get(textKey)),
             };
+            ToolTipService.SetToolTip(item, Texts.Get(textKey));
             item.Checked += (_, _) =>
             {
                 if (!choosing)

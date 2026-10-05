@@ -25,6 +25,8 @@ internal sealed partial class DashboardFilterBar : StackPanel
         (DashboardPeriod.AllTime, "dashboard.period.all"),
     ];
 
+    private readonly StackPanel firstLine = Line();
+    private readonly StackPanel secondLine = Line();
     private readonly HakariSelect accountSelect = new();
     private readonly HakariSelect sourceSelect = new();
 
@@ -34,10 +36,12 @@ internal sealed partial class DashboardFilterBar : StackPanel
         Spacing = BarSpacing;
         HorizontalAlignment = HorizontalAlignment.Right;
         VerticalAlignment = VerticalAlignment.Center;
-        Children.Add(PeriodChoices());
-        Children.Add(accountSelect);
-        Children.Add(sourceSelect);
-        Children.Add(RefreshButton());
+        firstLine.Children.Add(PeriodChoices());
+        firstLine.Children.Add(RefreshButton());
+        secondLine.Children.Add(accountSelect);
+        secondLine.Children.Add(sourceSelect);
+        Children.Add(firstLine);
+        Children.Add(secondLine);
         FillSelects();
         accountSelect.Selected += (_, value) => Change(DashboardFilter.Current with
         {
@@ -48,6 +52,13 @@ internal sealed partial class DashboardFilterBar : StackPanel
             SourceId = (string)value == AllChoice ? null : (string)value,
         });
     }
+
+    private static StackPanel Line() =>
+        new() { Orientation = Orientation.Horizontal, Spacing = BarSpacing };
+
+    /// <summary>One line when there is room; account and source go under it when not.</summary>
+    public void SetTwoLines(bool twoLines) =>
+        Orientation = twoLines ? Orientation.Vertical : Orientation.Horizontal;
 
     /// <summary>The filter changed (or refresh was asked for); the page reads again.</summary>
     public event EventHandler? Changed;

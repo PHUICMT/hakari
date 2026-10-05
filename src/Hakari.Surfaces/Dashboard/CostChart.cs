@@ -28,7 +28,8 @@ internal static class CostChart
     {
         var highest = bars.Count == 0 ? 0 : (double)bars.Max(bar => bar.Cost);
         var top = NiceTop(highest);
-        var chart = new Grid { ColumnSpacing = 8 };
+        // Headroom above the top gridline, so its label is never clipped.
+        var chart = new Grid { ColumnSpacing = 8, Padding = new Thickness(0, LabelSize, 0, 0) };
         chart.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(AxisWidth) });
         chart.ColumnDefinitions.Add(new ColumnDefinition());
         chart.RowDefinitions.Add(new RowDefinition { Height = new GridLength(ChartHeight) });

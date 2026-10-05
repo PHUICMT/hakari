@@ -42,6 +42,7 @@ internal sealed partial class BreakdownPage : UserControl
             VerticalAlignment = VerticalAlignment.Center,
         });
         header.Children.Add(filterBar);
+        DashboardHeader.WrapWhenNarrow(header, filterBar);
         content.Children.Add(header);
         content.Children.Add(body);
         Content = new ScrollViewer { Content = content };

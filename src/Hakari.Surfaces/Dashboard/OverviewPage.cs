@@ -65,6 +65,7 @@ internal sealed partial class OverviewPage : UserControl
             VerticalAlignment = VerticalAlignment.Center,
         });
         header.Children.Add(filterBar);
+        DashboardHeader.WrapWhenNarrow(header, filterBar);
         return header;
     }
 
@@ -84,9 +85,9 @@ internal sealed partial class OverviewPage : UserControl
             Texts.Get("dashboard.byModel"),
             Texts.Get("dashboard.costShare"),
             ModelTable(data));
-        Grid.SetColumn(models, 1);
         lower.Children.Add(chart);
         lower.Children.Add(models);
+        StackWhenNarrow(lower, chart, models);
         page.Children.Add(lower);
         return page;
     }
@@ -96,6 +97,27 @@ internal sealed partial class OverviewPage : UserControl
 
     private static ColumnDefinition StarColumn(double share) =>
         new() { Width = new GridLength(share, GridUnitType.Star) };
+
+    /// <summary>Side by side when there is room; the table goes under the chart when not.</summary>
+    private static void StackWhenNarrow(Grid lower, FrameworkElement chart, FrameworkElement models)
+    {
+        lower.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+        lower.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+        WidthSteps.Watch(lower, [SideBySideWidth], level =>
+        {
+            var sideBySide = level >= 1;
+            lower.ColumnDefinitions[1].Width = sideBySide
+                ? new GridLength(TableShare, GridUnitType.Star)
+                : new GridLength(0);
+            lower.ColumnSpacing = sideBySide ? SectionSpacing : 0;
+            lower.RowSpacing = sideBySide ? 0 : SectionSpacing;
+            Grid.SetColumn(models, sideBySide ? 1 : 0);
+            Grid.SetRow(models, sideBySide ? 0 : 1);
+        });
+    }
+
+    private const double SideBySideWidth = 980;
+    private const double FourTilesWidth = 760;
 
     private static Grid Tiles(OverviewData data)
     {
@@ -129,13 +151,29 @@ internal sealed partial class OverviewPage : UserControl
                     "dashboard.tile.perResponse",
                     TokenText.Format(total.Messages == 0 ? 0 : tokens.Output / total.Messages))),
         };
-        for (var index = 0; index < values.Length; index++)
+        tiles.RowSpacing = TileSpacing;
+        foreach (var tile in values)
         {
             tiles.ColumnDefinitions.Add(new ColumnDefinition());
-            Grid.SetColumn(values[index], index);
-            tiles.Children.Add(values[index]);
+            tiles.Children.Add(tile);
         }
 
+        tiles.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+        tiles.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+
+        // Four across when there is room, two by two when not.
+        WidthSteps.Watch(tiles, [FourTilesWidth], level =>
+        {
+            var across = level >= 1 ? values.Length : values.Length / 2;
+            for (var index = 0; index < values.Length; index++)
+            {
+                Grid.SetColumn(values[index], index % across);
+                Grid.SetRow(values[index], index / across);
+                tiles.ColumnDefinitions[index].Width = index < across
+                    ? new GridLength(1, GridUnitType.Star)
+                    : new GridLength(0);
+            }
+        });
         return tiles;
     }
 

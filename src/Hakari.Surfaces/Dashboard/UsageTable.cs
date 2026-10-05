@@ -29,6 +29,11 @@ internal static class UsageTable
     private const double FoldedAngle = -90;
     private const double ChildIndent = 22;
     private const string AnglePath = "Angle";
+    private const string RowTag = "usage-row";
+    private const string ShareTag = "usage-share";
+    private const double CompactWidth = 420;
+    private const double FullWidth = 560;
+    private const double NarrowCostWidth = 96;
     private static readonly Thickness CellPadding = new(0, 8, 12, 8);
 
     public static UIElement Create(
@@ -50,7 +55,7 @@ internal static class UsageTable
             table.Children.Add(Row(row, totalCost, currency, NameCell(nameOf(row)), divider: true));
         }
 
-        return table;
+        return Responsive(table);
     }
 
     /// <summary>
@@ -82,7 +87,7 @@ internal static class UsageTable
             table.Children.Add(section.Build(totalCost, currency, nameOf));
         }
 
-        return table;
+        return Responsive(table);
     }
 
     private sealed record GroupSection(
@@ -148,6 +153,53 @@ internal static class UsageTable
         };
     }
 
+    /// <summary>
+    /// In a narrow card the tokens column goes first, then responses and the share bars, so
+    /// the name and the cost always have room.
+    /// </summary>
+    private static StackPanel Responsive(StackPanel table)
+    {
+        WidthSteps.Watch(table, [CompactWidth, FullWidth], level =>
+        {
+            foreach (var element in Descendants(table))
+            {
+                if (element is Grid { Tag: RowTag } row)
+                {
+                    var responses = level >= 1 ? ResponsesWidth : 0;
+                    row.ColumnDefinitions[1].Width = new GridLength(responses);
+                    row.ColumnDefinitions[2].Width = new GridLength(level >= 2 ? TokensWidth : 0);
+                    row.ColumnDefinitions[3].Width = new GridLength(
+                        level >= 1 ? CostWidth : NarrowCostWidth);
+                }
+                else if (element is Grid { Tag: ShareTag } track)
+                {
+                    track.Visibility = level >= 1 ? Visibility.Visible : Visibility.Collapsed;
+                }
+            }
+        });
+        return table;
+    }
+
+    /// <summary>Every element below, through panels and button contents, built or not.</summary>
+    private static IEnumerable<UIElement> Descendants(UIElement element)
+    {
+        var children = element switch
+        {
+            Panel panel => panel.Children.ToList(),
+            ContentControl { Content: UIElement content } => [content],
+            Border { Child: { } child } => [child],
+            _ => [],
+        };
+        foreach (var child in children)
+        {
+            yield return child;
+            foreach (var nested in Descendants(child))
+            {
+                yield return nested;
+            }
+        }
+    }
+
     private static UsageSummary Sum(string key, IEnumerable<UsageSummary> rows) =>
         rows.Aggregate(UsageSummary.Empty with { Key = key }, (sum, row) => sum.Merge(row));
 
@@ -181,7 +233,7 @@ internal static class UsageTable
 
     private static Grid Columns(params FrameworkElement[] cells)
     {
-        var grid = new Grid();
+        var grid = new Grid { Tag = RowTag };
         grid.ColumnDefinitions.Add(new ColumnDefinition());
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(ResponsesWidth) });
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(TokensWidth) });
@@ -265,6 +317,7 @@ internal static class UsageTable
         };
         var track = new Grid
         {
+            Tag = ShareTag,
             Width = ShareBarWidth,
             VerticalAlignment = VerticalAlignment.Center,
         };
