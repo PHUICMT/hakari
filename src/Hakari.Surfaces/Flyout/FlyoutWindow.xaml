@@ -84,11 +84,12 @@
                                         </FontIcon>
                                     </Grid>
                                 </Button>
-                                <ItemsControl ItemsSource="{x:Bind Limits}" Padding="12,2,12,12"
+                                <!-- Spacing sits on the panel: ItemsControl ignores Padding -->
+                                <ItemsControl ItemsSource="{x:Bind Limits}"
                                     Visibility="{x:Bind LimitsVisibility}">
                                     <ItemsControl.ItemsPanel>
                                         <ItemsPanelTemplate>
-                                            <StackPanel Spacing="12" />
+                                            <StackPanel Spacing="12" Margin="12,2,12,12" />
                                         </ItemsPanelTemplate>
                                     </ItemsControl.ItemsPanel>
                                     <ItemsControl.ItemTemplate>
