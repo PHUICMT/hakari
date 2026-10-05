@@ -43,11 +43,7 @@ internal static class WidgetFactsLoader
         var cache = new LimitCache(store);
         var accounts = new AccountRepository(store).ListAccounts()
             .Select(account => cache.Load(account.AccountId) is { } snapshot
-                ? new WidgetAccount(
-                    account.AccountId,
-                    account,
-                    snapshot,
-                    CostsOf(query, account.AccountId, now))
+                ? new WidgetAccount(account.AccountId, account, snapshot)
                 : null)
             .OfType<WidgetAccount>();
         var arranged = AccountArrangement.Arrange(
@@ -55,25 +51,11 @@ internal static class WidgetFactsLoader
             account => account.AccountId,
             account => LimitPriority.Rank(account.Snapshot),
             settings);
-
-        var total = CostsOf(query, null, now);
-        return new WidgetFacts(
-            CostToday: total.Today,
-            CostThisMonth: total.ThisMonth,
-            CostLastHour: total.LastHour,
-            Currency: query.Currency,
-            Accounts: arranged,
-            Nicknames: settings.AccountNicknames);
-    }
-
-    private static AccountCosts CostsOf(UsageQuery query, string? accountId, DateTimeOffset now)
-    {
-        decimal Since(DateTimeOffset from) =>
-            query.Total(new UsageFilter(From: from, AccountId: accountId)).Cost;
-
-        return new AccountCosts(
-            Since(TimePeriods.StartOfToday(now)),
-            Since(TimePeriods.StartOfMonth(now)),
-            Since(now.AddHours(-1)));
+        return WidgetFactsBuilder.Build(
+            query,
+            arranged,
+            withAccountUsage: true,
+            settings.AccountNicknames,
+            now);
     }
 }

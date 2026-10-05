@@ -47,6 +47,12 @@ public static class WidgetComposer
             WidgetItem.CostToday => Today(facts),
             WidgetItem.CostThisMonth => Month(facts),
             WidgetItem.BurnRate => PerHour(facts),
+            WidgetItem.TokensToday => Money(
+                Texts.Format("widget.tokensToday", TokenText.Format(facts.TokensToday))),
+            WidgetItem.TokensThisMonth => Money(
+                Texts.Format("widget.tokensMonth", TokenText.Format(facts.TokensThisMonth))),
+            WidgetItem.RepliesToday => Money(
+                Texts.Format("widget.repliesToday", TokenText.Format(facts.RepliesToday))),
             WidgetItem.SessionLimit => LimitLine(first, Session, labelled, facts, now),
             WidgetItem.WeeklyLimit => LimitLine(first, Weekly, labelled, facts, now),
             WidgetItem.MostPressingLimit =>

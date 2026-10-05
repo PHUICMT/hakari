@@ -74,6 +74,9 @@ public static class WidgetPanels
             CostToday = costs.Today,
             CostThisMonth = costs.ThisMonth,
             CostLastHour = costs.LastHour,
+            TokensToday = costs.TokensToday,
+            TokensThisMonth = costs.TokensThisMonth,
+            RepliesToday = costs.RepliesToday,
             Accounts = [account],
         };
         var widget = WidgetComposer.Compose(WithoutSecondAccount(layout), own, now);

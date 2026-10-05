@@ -30,20 +30,13 @@ internal static class WidgetText
             account => account.AccountId,
             account => LimitPriority.Rank(account.Snapshot),
             presentation);
-        var accounts = presentation.AccountsMode == MultiAccountMode.Together
-            ? arranged
-            : [.. arranged.Select(account => account with
-            {
-                Costs = CostsOf(query, account.AccountId, now),
-            })];
-        return new WidgetFacts(
-            CostToday: CostSince(query, TimePeriods.StartOfToday(now), null),
-            CostThisMonth: CostSince(query, TimePeriods.StartOfMonth(now), null),
-            CostLastHour: CostSince(query, now.AddHours(-1), null),
-            Currency: query.Currency,
-            Accounts: accounts,
-            FullAt: limits.FullAt,
-            Nicknames: presentation.AccountNicknames);
+        return WidgetFactsBuilder.Build(
+            query,
+            arranged,
+            withAccountUsage: presentation.AccountsMode != MultiAccountMode.Together,
+            presentation.AccountNicknames,
+            now,
+            limits.FullAt);
     }
 
     /// <summary>The cheap part: lays the facts out, such as for the next account's turn.</summary>
@@ -60,15 +53,6 @@ internal static class WidgetText
         var contents = panels.Select(ToContent).ToList();
         return contents[0] with { MorePanels = contents.Count > 1 ? contents[1..] : null };
     }
-
-    private static AccountCosts CostsOf(UsageQuery query, string accountId, DateTimeOffset now) =>
-        new(
-            CostSince(query, TimePeriods.StartOfToday(now), accountId),
-            CostSince(query, TimePeriods.StartOfMonth(now), accountId),
-            CostSince(query, now.AddHours(-1), accountId));
-
-    private static decimal CostSince(UsageQuery query, DateTimeOffset from, string? accountId) =>
-        query.Total(new UsageFilter(From: from, AccountId: accountId)).Cost;
 
     private static WidgetContent ToContent(ComposedWidget widget) => new(
         widget.Top.Text,
