@@ -11,6 +11,9 @@ namespace Hakari.Taskbar.Rendering;
 /// </summary>
 public sealed class WidgetRenderer : IDisposable
 {
+    private const float FullCircleDegrees = 360f;
+    private const float TopDegrees = -90f;
+
     private readonly FontFamily fontFamily = PickFontFamily();
     private readonly Bitmap measuringSurface = new(1, 1);
     private readonly Graphics measuringGraphics;
@@ -40,7 +43,10 @@ public sealed class WidgetRenderer : IDisposable
         var secondaryHeight = Measure(frame.Current.SecondaryText, secondaryFont!).Height;
 
         var padding = (float)(WidgetMetrics.HorizontalPadding * scale);
-        var width = (int)Math.Ceiling(MeasureWidestText(lines) + padding * 2);
+        var ringSpace = frame.Current.Ring is null
+            ? 0f
+            : (float)((WidgetMetrics.RingDiameter + WidgetMetrics.RingGap) * scale);
+        var width = (int)Math.Ceiling(MeasureWidestText(lines) + ringSpace + padding * 2);
         var height = (int)Math.Round(WidgetMetrics.Height * scale);
 
         var bitmap = new Bitmap(width, height, PixelFormat.Format32bppPArgb);
@@ -54,8 +60,10 @@ public sealed class WidgetRenderer : IDisposable
 
         var lineGap = (float)(WidgetMetrics.LineGap * scale);
         var top = (height - (primaryHeight + lineGap + secondaryHeight)) / 2f;
-        var primaryColors = (palette.PrimaryText, palette.PrimaryText);
-        DrawLine(graphics, frame, lines.Primary, primaryFont!, primaryColors, padding, top);
+        DrawRing(graphics, frame, palette, scale, padding, height);
+        var textLeft = padding + ringSpace;
+        var primaryColors = PrimaryColors(frame, palette);
+        DrawLine(graphics, frame, lines.Primary, primaryFont!, primaryColors, textLeft, top);
 
         var secondaryColors = SecondaryColors(frame, palette);
         var secondaryTop = top + primaryHeight + lineGap;
@@ -65,7 +73,7 @@ public sealed class WidgetRenderer : IDisposable
             lines.Secondary,
             secondaryFont!,
             secondaryColors,
-            padding,
+            textLeft,
             secondaryTop);
         return bitmap;
     }
@@ -77,6 +85,66 @@ public sealed class WidgetRenderer : IDisposable
         measuringGraphics.Dispose();
         measuringSurface.Dispose();
         fontFamily.Dispose();
+    }
+
+    /// <summary>
+    /// A track circle with the filled share drawn clockwise from the top. While content
+    /// changes, the fill and its color move from the old value to the new one.
+    /// </summary>
+    private static void DrawRing(
+        Graphics graphics,
+        WidgetFrame frame,
+        WidgetPalette palette,
+        double scale,
+        float left,
+        int height)
+    {
+        if (frame.Current.Ring is not { } ring)
+        {
+            return;
+        }
+
+        var previous = frame.Previous?.Ring ?? ring;
+        var fraction = previous.Fraction
+            + (ring.Fraction - previous.Fraction) * frame.ValueProgress;
+        var color = ColorBlend.Mix(
+            palette.ForRingTone(previous.Tone),
+            palette.ForRingTone(ring.Tone),
+            frame.ToneProgress);
+
+        var stroke = (float)(WidgetMetrics.RingStroke * scale);
+        var diameter = (float)(WidgetMetrics.RingDiameter * scale) - stroke;
+        var bounds = new RectangleF(
+            left + stroke / 2,
+            (height - diameter) / 2f,
+            diameter,
+            diameter);
+        using var trackPen = new Pen(palette.RingTrack, stroke);
+        graphics.DrawEllipse(trackPen, bounds);
+
+        var sweep = (float)(Math.Clamp(fraction, 0, 1) * FullCircleDegrees);
+        if (sweep <= 0)
+        {
+            return;
+        }
+
+        using var fillPen = new Pen(color, stroke)
+        {
+            StartCap = LineCap.Round,
+            EndCap = LineCap.Round,
+        };
+        graphics.DrawArc(fillPen, bounds, TopDegrees, sweep);
+    }
+
+    private static (Color From, Color To) PrimaryColors(
+        WidgetFrame frame,
+        WidgetPalette palette)
+    {
+        var target = palette.ForPrimaryTone(frame.Current.PrimaryTone);
+        var origin = frame.Previous is { } previous
+            ? palette.ForPrimaryTone(previous.PrimaryTone)
+            : target;
+        return (origin, target);
     }
 
     private static (Color From, Color To) SecondaryColors(

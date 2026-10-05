@@ -20,6 +20,8 @@ internal sealed class LimitPoller : IDisposable
     private readonly HttpClient httpClient = new() { Timeout = RequestTimeout };
     private readonly AccountTracker accountTracker;
     private readonly LimitService limitService;
+    private readonly AccountRepository accountRepository;
+    private readonly LimitForecaster forecaster = new();
     private DateTimeOffset nextPoll = DateTimeOffset.MinValue;
     private DateTimeOffset lastUsage = DateTimeOffset.MinValue;
 
@@ -29,7 +31,8 @@ internal sealed class LimitPoller : IDisposable
         bool refreshSignInAutomatically)
     {
         this.sources = sources;
-        accountTracker = new AccountTracker(new AccountRepository(store), TimeProvider.System);
+        accountRepository = new AccountRepository(store);
+        accountTracker = new AccountTracker(accountRepository, TimeProvider.System);
         limitService = new LimitService(
             new UsageLimitClient(httpClient, TimeProvider.System),
             new LimitCache(store),
@@ -38,8 +41,8 @@ internal sealed class LimitPoller : IDisposable
             TimeProvider.System);
     }
 
-    /// <summary>The most pressing limit across every signed-in account.</summary>
-    public LimitResult? Latest { get; private set; }
+    /// <summary>Every signed-in account with known limits, the most pressing first.</summary>
+    public IReadOnlyList<AccountLimits> Accounts { get; private set; } = [];
 
     public int Polls { get; private set; }
 
@@ -54,17 +57,15 @@ internal sealed class LimitPoller : IDisposable
         }
 
         accountTracker.Observe(sources);
-        var results = accountTracker.SourcesByCurrentAccount(sources)
-            .Select(account => limitService
-                .GetForAccountAsync(account.Key, account.Value, CancellationToken.None)
-                .GetAwaiter()
-                .GetResult())
-            .ToList();
-
-        Latest = results
-            .Where(result => result.Snapshot is not null)
-            .OrderByDescending(result => PressingRank(result.Snapshot!))
-            .FirstOrDefault();
+        var details = accountRepository.ListAccounts()
+            .ToDictionary(account => account.AccountId);
+        Accounts =
+        [
+            .. accountTracker.SourcesByCurrentAccount(sources)
+                .Select(account => Read(account.Key, account.Value, details))
+                .OfType<AccountLimits>()
+                .OrderByDescending(account => PressingRank(account.Snapshot)),
+        ];
 
         var active = now - lastUsage < ActiveWindow;
         nextPoll = now + (active ? ActiveInterval : IdleInterval);
@@ -72,7 +73,29 @@ internal sealed class LimitPoller : IDisposable
         return true;
     }
 
+    /// <summary>When the recent pace fills the limit before it resets, else null.</summary>
+    public DateTimeOffset? FullAt(string accountId, UsageLimit limit, DateTimeOffset now) =>
+        forecaster.FullAt(accountId, limit, now);
+
     public void Dispose() => httpClient.Dispose();
+
+    private AccountLimits? Read(
+        string accountId,
+        IReadOnlyList<UsageSource> accountSources,
+        IReadOnlyDictionary<string, AccountInfo> details)
+    {
+        var result = limitService
+            .GetForAccountAsync(accountId, accountSources, CancellationToken.None)
+            .GetAwaiter()
+            .GetResult();
+        if (result.Snapshot is not { } snapshot)
+        {
+            return null;
+        }
+
+        forecaster.Record(accountId, snapshot);
+        return new AccountLimits(accountId, details.GetValueOrDefault(accountId), snapshot);
+    }
 
     private static int PressingRank(LimitSnapshot snapshot) =>
         LimitPriority.MostPressing(snapshot) is { } limit

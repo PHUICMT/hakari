@@ -107,7 +107,7 @@ internal sealed class UsageFeed : IDisposable
             Diagnostics.LimitPolls = limits.Polls;
             if (recordsChanged || limitsChanged || now - lastPublished >= ContentRefreshInterval)
             {
-                Updated?.Invoke(WidgetText.Build(query, limits.Latest));
+                Updated?.Invoke(WidgetText.Build(query, limits));
                 lastPublished = now;
             }
 

@@ -4,35 +4,61 @@ using Hakari.Taskbar.Rendering;
 
 namespace Hakari.Feed;
 
-/// <summary>Turns the most pressing limit into the widget's second line.</summary>
+/// <summary>Turns an account's most pressing limit into a widget line and ring.</summary>
 internal static class LimitLine
 {
-    private const string ResetSymbol = "↺";
     private const string LastKnownPrefix = "≈ ";
+    private const double PercentScale = 100.0;
 
-    public static (string Text, WidgetTone Tone)? From(LimitResult result, DateTimeOffset now)
+    /// <param name="withLabel">True when several accounts share the widget.</param>
+    public static (string Text, WidgetTone Tone)? From(
+        AccountLimits account,
+        LimitPoller poller,
+        DateTimeOffset now,
+        bool withLabel)
     {
-        if (result.Snapshot is not { } snapshot
-            || LimitPriority.MostPressing(snapshot) is not { } limit)
+        var snapshot = account.Snapshot.ProjectedTo(now);
+        if (LimitPriority.MostPressing(snapshot) is not { } limit)
         {
             return null;
         }
 
-        var isLastKnown = snapshot.Freshness == LimitFreshness.LastKnown;
-        var prefix = isLastKnown ? LastKnownPrefix : string.Empty;
-        var reset = limit.ResetsAt is { } resetsAt
-            ? $" · {ResetSymbol} {ResetText.Short(resetsAt, now)}"
+        var prefix = snapshot.Freshness == LimitFreshness.LastKnown
+            ? LastKnownPrefix
             : string.Empty;
-        var text = $"{prefix}{LimitNames.Short(limit)} {limit.Percent}%{reset}";
+        var label = withLabel ? $"{AccountLabels.Short(account.Account)} " : string.Empty;
+        var fullAt = poller.FullAt(account.AccountId, limit, now);
+        var text = $"{prefix}{label}{LimitText.Compact(limit, fullAt, now)}";
         return (text, Tone(limit, snapshot.Freshness));
     }
 
-    private static WidgetTone Tone(UsageLimit limit, LimitFreshness freshness) =>
-        LimitPriority.SeverityRank(limit.Severity) switch
+    /// <summary>The 5-hour session: the limit that runs out within a working day.</summary>
+    public static WidgetRing? Ring(AccountLimits account, DateTimeOffset now)
+    {
+        var snapshot = account.Snapshot.ProjectedTo(now);
+        var limit = snapshot.Limits.FirstOrDefault(
+                candidate => candidate.Group == LimitPriority.SessionGroup)
+            ?? LimitPriority.MostPressing(snapshot);
+        return limit is null
+            ? null
+            : new WidgetRing(
+                Math.Clamp(limit.Percent / PercentScale, 0, 1),
+                Tone(limit, snapshot.Freshness));
+    }
+
+    private static WidgetTone Tone(UsageLimit limit, LimitFreshness freshness)
+    {
+        if (limit.Percent >= LimitForecaster.FullPercent)
+        {
+            return WidgetTone.Critical;
+        }
+
+        return LimitPriority.SeverityRank(limit.Severity) switch
         {
             0 when freshness == LimitFreshness.LastKnown => WidgetTone.Muted,
             0 => WidgetTone.Normal,
             1 => WidgetTone.Warning,
             _ => WidgetTone.Critical,
         };
+    }
 }

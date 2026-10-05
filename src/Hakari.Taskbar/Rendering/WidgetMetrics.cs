@@ -9,6 +9,9 @@ internal static class WidgetMetrics
     public const float SecondaryFontPixels = 11f;
     public const float LineGap = 1f;
     public const float CornerRadius = 4f;
+    public const float RingDiameter = 22f;
+    public const float RingStroke = 3f;
+    public const float RingGap = 8f;
 
     /// <summary>Content never comes closer than this to any edge, even mid-animation.</summary>
     public const float MinimumInset = 2f;

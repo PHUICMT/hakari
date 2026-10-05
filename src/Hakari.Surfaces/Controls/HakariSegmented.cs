@@ -87,7 +87,7 @@ public sealed partial class HakariSegmented : Grid
         return null;
     }
 
-    /// <summary>Keeps the indicator under its choice when the layout changes, without motion.</summary>
+    /// <summary>Keeps the indicator under its choice through layout changes, unanimated.</summary>
     private void SnapIfMoved()
     {
         if (running is not null || SelectedBounds() is not var (offset, width))
@@ -165,7 +165,7 @@ public sealed partial class HakariSegmented : Grid
         storyboard.Begin();
     }
 
-    /// <summary>Hands the values back from the storyboard so a later jump is not overridden.</summary>
+    /// <summary>Hands values back from the storyboard so a later jump is not overridden.</summary>
     private void StopAnimations()
     {
         if (running is null)

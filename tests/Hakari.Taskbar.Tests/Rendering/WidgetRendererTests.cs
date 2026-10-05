@@ -31,6 +31,24 @@ public sealed class WidgetRendererTests : IDisposable
 
     [Theory]
     [InlineData(1.0)]
+    [InlineData(1.5)]
+    public void Makes_room_for_the_ring_without_touching_an_edge(double scale)
+    {
+        var withRing = SampleContent with { Ring = new WidgetRing(0.67) };
+
+        using var plain = renderer.Render(SampleContent, WidgetPalette.DarkTaskbar, scale, false);
+        using var ringed = renderer.Render(withRing, WidgetPalette.DarkTaskbar, scale, false);
+
+        Assert.True(ringed.Width > plain.Width);
+        var inset = (int)Math.Ceiling(MinimumInset * scale);
+        for (var row = 0; row < ringed.Height; row++)
+        {
+            Assert.True(ringed.GetPixel(inset - 1, row).A < ContentAlphaThreshold);
+        }
+    }
+
+    [Theory]
+    [InlineData(1.0)]
     [InlineData(1.25)]
     [InlineData(1.5)]
     [InlineData(2.0)]
