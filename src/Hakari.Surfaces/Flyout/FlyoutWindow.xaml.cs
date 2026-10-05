@@ -32,6 +32,13 @@ public sealed partial class FlyoutWindow : Window
 
     private DateTimeOffset hiddenAt = DateTimeOffset.MinValue;
     private (int AnchorX, int AnchorY, double Scale)? pendingFit;
+    private (int AnchorX, int AnchorY, double Scale)? lastAnchor;
+    private bool refittingOnly;
+
+    private const int StatColumns = 2;
+    private const double FoldedChevronAngle = -90;
+    private const string AnglePath = "Angle";
+    private const string OpacityPath = "Opacity";
     private int fitAttempts;
 
     private const int FitTolerance = 1;
@@ -98,6 +105,8 @@ public sealed partial class FlyoutWindow : Window
         var placement = FlyoutPlacement.Above(anchorX, anchorY, outer, scale);
         AppWindow.Move(new PointInt32(placement.X, placement.Y));
         IsShowing = true;
+        refittingOnly = false;
+        lastAnchor = (anchorX, anchorY, scale);
         pendingFit = (anchorX, anchorY, scale);
         Root.LayoutUpdated += FitAfterLayout;
         Activate();
@@ -133,6 +142,12 @@ public sealed partial class FlyoutWindow : Window
         Root.LayoutUpdated -= FitAfterLayout;
         pendingFit = null;
         fitAttempts = 0;
+        if (refittingOnly)
+        {
+            refittingOnly = false;
+            return;
+        }
+
         PlayEntrance();
     }
 
@@ -171,12 +186,63 @@ public sealed partial class FlyoutWindow : Window
     private void FillStats(IReadOnlyList<StatTile> stats)
     {
         StatGrid.Children.Clear();
-        for (var column = 0; column < stats.Count; column++)
+        for (var index = 0; index < stats.Count; index++)
         {
-            var tile = StatTileView.Create(stats[column]);
-            Grid.SetColumn(tile, column);
+            var tile = StatTileView.Create(stats[index]);
+            Grid.SetColumn(tile, index % StatColumns);
+            Grid.SetRow(tile, index / StatColumns);
             StatGrid.Children.Add(tile);
         }
+    }
+
+    /// <summary>
+    /// Folds or opens one account's card, remembers it for next time, and fits the window to
+    /// the new height without replaying the entrance.
+    /// </summary>
+    private void OnAccountHeaderClicked(object sender, RoutedEventArgs args)
+    {
+        if (sender is not Button { Tag: string accountId, Parent: StackPanel card } header
+            || card.Children.Count < 2
+            || header.Content is not Grid { Children.Count: >= 3 } headerGrid)
+        {
+            return;
+        }
+
+        var limits = card.Children[1];
+        var folding = limits.Visibility == Visibility.Visible;
+        limits.Visibility = folding ? Visibility.Collapsed : Visibility.Visible;
+        headerGrid.Children[1].Visibility = folding ? Visibility.Visible : Visibility.Collapsed;
+        if (headerGrid.Children[2] is FrameworkElement { RenderTransform: RotateTransform turn })
+        {
+            SurfaceMotion.Settle(turn, AnglePath, folding ? FoldedChevronAngle : 0);
+        }
+
+        if (!folding)
+        {
+            limits.Opacity = 0;
+            SurfaceMotion.Settle(limits, OpacityPath, 1);
+        }
+
+        SettingsStore.Default.Update(current => current with
+        {
+            CollapsedAccounts = folding
+                ? [.. current.CollapsedAccounts.Append(accountId).Distinct()]
+                : [.. current.CollapsedAccounts.Where(id => id != accountId)],
+        });
+        RefitAfterChange();
+    }
+
+    private void RefitAfterChange()
+    {
+        if (lastAnchor is not var (anchorX, anchorY, scale))
+        {
+            return;
+        }
+
+        refittingOnly = true;
+        pendingFit = (anchorX, anchorY, scale);
+        Root.LayoutUpdated -= FitAfterLayout;
+        Root.LayoutUpdated += FitAfterLayout;
     }
 
     private SizeInt32 MeasureSize(double scale)

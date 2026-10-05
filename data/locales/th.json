@@ -45,6 +45,8 @@
   "flyout.thisWeek": "สัปดาห์นี้",
   "flyout.sinceMonday": "ตั้งแต่วันจันทร์",
   "flyout.thisMonth": "เดือนนี้",
+  "flyout.allTime": "ทั้งหมด",
+  "flyout.since": "ตั้งแต่ {0}",
   "flyout.burnRate": "อัตราการใช้ · ชั่วโมงล่าสุด",
   "flyout.lastUsed": "ใช้ล่าสุด {0}",
   "flyout.settings": "ตั้งค่า",

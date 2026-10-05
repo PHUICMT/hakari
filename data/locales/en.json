@@ -45,6 +45,8 @@
   "flyout.thisWeek": "This week",
   "flyout.sinceMonday": "since Monday",
   "flyout.thisMonth": "This month",
+  "flyout.allTime": "All time",
+  "flyout.since": "since {0}",
   "flyout.burnRate": "Burn rate · last hour",
   "flyout.lastUsed": "last used {0}",
   "flyout.settings": "Settings",

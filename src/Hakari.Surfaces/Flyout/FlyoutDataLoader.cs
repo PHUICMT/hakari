@@ -97,11 +97,52 @@ internal static class FlyoutDataLoader
             Texts.Format("widget.today", MoneyText.Format(today.Cost, query.Currency)),
             UpdatedText(entry.Snapshot, now),
         };
+        var percentOf = PercentsOf(entry, settings, query, now);
+        var pressing = LimitPriority.MostPressing(entry.Snapshot);
         return new AccountLimitGroup(
-            AccountLabels.Full(entry.Account, nickname),
-            string.Join(DetailSeparator, details.OfType<string>()),
-            LimitRows(entry.Snapshot, now));
+            AccountId: entry.Account.AccountId,
+            Name: AccountLabels.Full(entry.Account, nickname),
+            Detail: string.Join(DetailSeparator, details.OfType<string>()),
+            Summary: pressing is null
+                ? string.Empty
+                : LimitText.Compact(pressing, null, now, Percent(pressing, percentOf, settings)),
+            SummaryTone: pressing is null
+                ? Tone.Normal
+                : ToneOf(pressing, entry.Snapshot.Freshness),
+            Limits: LimitRows(
+                entry.Snapshot,
+                now,
+                limit => Percent(limit, percentOf, settings),
+                percentOf),
+            IsCollapsed: settings.CollapsedAccounts.Contains(entry.Account.AccountId));
     }
+
+    /// <summary>The same estimate as the taskbar, when finer than whole percent.</summary>
+    private static Func<UsageLimit, double> PercentsOf(
+        (AccountInfo Account, LimitSnapshot Snapshot) entry,
+        HakariSettings settings,
+        UsageQuery query,
+        DateTimeOffset now)
+    {
+        if (settings.PercentDecimals <= 0 || entry.Snapshot.Freshness != LimitFreshness.Live)
+        {
+            return limit => limit.Percent;
+        }
+
+        decimal CostBetween(DateTimeOffset from, DateTimeOffset to) => query.Total(
+            new UsageFilter(From: from, To: to, AccountId: entry.Account.AccountId)).Cost;
+
+        var fetchedAt = entry.Snapshot.FetchedAt;
+        return limit => PercentEstimator.WindowOf(limit) is null
+            ? limit.Percent
+            : PercentEstimator.Estimate(limit, fetchedAt, now, CostBetween);
+    }
+
+    private static string Percent(
+        UsageLimit limit,
+        Func<UsageLimit, double> percentOf,
+        HakariSettings settings) =>
+        PercentText.Format(percentOf(limit), settings.PercentDecimals);
 
     /// <summary>Rates Hakari.exe already stored; opening a window never fetches any.</summary>
     internal static CurrencyConverter? StoredConverter(IndexStore store, HakariSettings settings)
@@ -130,15 +171,19 @@ internal static class FlyoutDataLoader
             : Texts.Format("flyout.updatedMinutes", (int)age.TotalMinutes);
     }
 
-    private static List<LimitRow> LimitRows(LimitSnapshot limits, DateTimeOffset now) =>
+    private static List<LimitRow> LimitRows(
+        LimitSnapshot limits,
+        DateTimeOffset now,
+        Func<UsageLimit, string> valueOf,
+        Func<UsageLimit, double> percentOf) =>
     [
         .. limits.Limits.Select(limit => new LimitRow(
             Name: LimitNames.Long(limit),
-            Value: $"{limit.Percent}%",
+            Value: valueOf(limit),
             ResetText: limit.ResetsAt is { } resetsAt
                 ? Texts.Format("flyout.resets", ResetText.Long(resetsAt, now))
                 : Texts.Get("flyout.startsNext"),
-            Fraction: Math.Clamp(limit.Percent / PercentScale, 0, 1),
+            Fraction: Math.Clamp(percentOf(limit) / PercentScale, 0, 1),
             Tone: ToneOf(limit, limits.Freshness))),
     ];
 
@@ -157,13 +202,22 @@ internal static class FlyoutDataLoader
         var today = query.Total(new UsageFilter(From: TimePeriods.StartOfToday(now)));
         var week = query.Total(new UsageFilter(From: TimePeriods.StartOfWeek(now)));
         var month = query.Total(new UsageFilter(From: TimePeriods.StartOfMonth(now)));
+        var allTime = query.Total(UsageFilter.Everything);
         return
         [
             new(Texts.Get("flyout.today"), MoneyText.Format(today.Cost, currency), Replies(today)),
             new(Texts.Get("flyout.thisWeek"), MoneyText.Format(week.Cost, currency), SinceMonday),
             new(Texts.Get("flyout.thisMonth"), MoneyText.Format(month.Cost, currency), Month(now)),
+            new(
+                Texts.Get("flyout.allTime"),
+                MoneyText.Format(allTime.Cost, currency),
+                Since(query.FirstUsageDay())),
         ];
     }
+
+    private static string Since(DateOnly? firstDay) => firstDay is { } day
+        ? Texts.Format("flyout.since", day.ToString("MMM yyyy", Texts.Culture))
+        : string.Empty;
 
     private static string SinceMonday => Texts.Get("flyout.sinceMonday");
 

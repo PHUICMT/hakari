@@ -92,6 +92,8 @@ internal static class SurfaceMotion
                 Microsoft.UI.Xaml.Media.TranslateTransform.XProperty,
             (Microsoft.UI.Xaml.Media.TranslateTransform, "Y") =>
                 Microsoft.UI.Xaml.Media.TranslateTransform.YProperty,
+            (Microsoft.UI.Xaml.Media.RotateTransform, "Angle") =>
+                Microsoft.UI.Xaml.Media.RotateTransform.AngleProperty,
             _ => throw new ArgumentException($"Unsupported property {property}", nameof(property)),
         };
 }

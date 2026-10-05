@@ -37,6 +37,9 @@ public sealed record HakariSettings
     /// <summary>Account ids in the user's order, used when the ordering is Custom.</summary>
     public IReadOnlyList<string> CustomAccountOrder { get; init; } = [];
 
+    /// <summary>Accounts folded in the flyout, showing only their summary line.</summary>
+    public IReadOnlyList<string> CollapsedAccounts { get; init; } = [];
+
     /// <summary>Accounts kept out of the taskbar and flyout, such as an old sign-in.</summary>
     public IReadOnlyList<string> HiddenAccounts { get; init; } = [];
 

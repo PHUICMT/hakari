@@ -47,62 +47,89 @@
                     TextTrimming="None" />
             </Border>
 
-            <!-- Limits, one section per account, the most pressing first -->
+            <!-- Accounts: a card each, most pressing first; the header folds the card -->
             <ItemsControl x:Name="AccountList">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
-                        <StackPanel Spacing="18" />
+                        <StackPanel Spacing="8" />
                     </ItemsPanelTemplate>
                 </ItemsControl.ItemsPanel>
                 <ItemsControl.ItemTemplate>
                     <DataTemplate x:DataType="local:AccountLimitGroup">
-                        <StackPanel Spacing="10">
-                            <StackPanel Spacing="1">
-                                <TextBlock Text="{x:Bind Name}" FontWeight="SemiBold" FontSize="13"
-                                    Foreground="{ThemeResource HakariInkBrush}" TextTrimming="CharacterEllipsis" />
-                                <TextBlock Text="{x:Bind Detail}" Style="{StaticResource HakariCaptionText}" />
+                        <Border Style="{StaticResource HakariCard}">
+                            <StackPanel>
+                                <Button Style="{StaticResource HakariListItemButton}" Padding="12,10"
+                                    Tag="{x:Bind AccountId}" Click="OnAccountHeaderClicked">
+                                    <Grid ColumnSpacing="8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Spacing="1">
+                                            <TextBlock Text="{x:Bind Name}" FontWeight="SemiBold" FontSize="13"
+                                                Foreground="{ThemeResource HakariInkBrush}" TextTrimming="CharacterEllipsis" />
+                                            <TextBlock Text="{x:Bind Detail}" Style="{StaticResource HakariCaptionText}" />
+                                        </StackPanel>
+                                        <TextBlock x:Name="FoldedSummary" Grid.Column="1" Text="{x:Bind Summary}"
+                                            Visibility="{x:Bind SummaryVisibility}"
+                                            FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center"
+                                            Foreground="{x:Bind local:FlyoutBrushes.ForTone(SummaryTone)}" />
+                                        <FontIcon Grid.Column="2" Glyph="&#xE70D;" FontSize="11"
+                                            FontFamily="{StaticResource HakariIconFont}"
+                                            Foreground="{ThemeResource HakariInkMutedBrush}" RenderTransformOrigin="0.5,0.5">
+                                            <FontIcon.RenderTransform>
+                                                <RotateTransform Angle="{x:Bind ChevronAngle}" />
+                                            </FontIcon.RenderTransform>
+                                        </FontIcon>
+                                    </Grid>
+                                </Button>
+                                <ItemsControl ItemsSource="{x:Bind Limits}" Margin="12,2,12,12"
+                                    Visibility="{x:Bind LimitsVisibility}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <StackPanel Spacing="12" />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate x:DataType="local:LimitRow">
+                                            <StackPanel Spacing="6">
+                                                <Grid>
+                                                    <TextBlock Text="{x:Bind Name}" Style="{StaticResource HakariLabelText}" />
+                                                    <TextBlock Text="{x:Bind Value}" HorizontalAlignment="Right"
+                                                        Style="{StaticResource HakariValueText}"
+                                                        Foreground="{x:Bind local:FlyoutBrushes.ForTone(Tone)}" />
+                                                </Grid>
+                                                <Border Height="6" CornerRadius="3" Background="{ThemeResource HakariLineBrush}">
+                                                    <Border x:Name="MeterFill" CornerRadius="3" RenderTransformOrigin="0,0.5"
+                                                        Background="{x:Bind local:FlyoutBrushes.ForTone(Tone)}"
+                                                        Tag="{x:Bind Fraction}">
+                                                        <Border.RenderTransform>
+                                                            <ScaleTransform ScaleX="{x:Bind Fraction}" ScaleY="1" />
+                                                        </Border.RenderTransform>
+                                                    </Border>
+                                                </Border>
+                                                <TextBlock Text="{x:Bind ResetText}" Style="{StaticResource HakariCaptionText}" />
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
                             </StackPanel>
-                            <ItemsControl ItemsSource="{x:Bind Limits}">
-                                <ItemsControl.ItemsPanel>
-                                    <ItemsPanelTemplate>
-                                        <StackPanel Spacing="12" />
-                                    </ItemsPanelTemplate>
-                                </ItemsControl.ItemsPanel>
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate x:DataType="local:LimitRow">
-                                    <StackPanel Spacing="6">
-                                        <Grid>
-                                            <TextBlock Text="{x:Bind Name}" Style="{StaticResource HakariLabelText}" />
-                                            <TextBlock Text="{x:Bind Value}" HorizontalAlignment="Right"
-                                                Style="{StaticResource HakariValueText}"
-                                                Foreground="{x:Bind local:FlyoutBrushes.ForTone(Tone)}" />
-                                        </Grid>
-                                        <Border Height="6" CornerRadius="3" Background="{ThemeResource HakariLineBrush}">
-                                            <Border x:Name="MeterFill" CornerRadius="3" RenderTransformOrigin="0,0.5"
-                                                Background="{x:Bind local:FlyoutBrushes.ForTone(Tone)}"
-                                                Tag="{x:Bind Fraction}">
-                                                <Border.RenderTransform>
-                                                    <ScaleTransform ScaleX="{x:Bind Fraction}" ScaleY="1" />
-                                                </Border.RenderTransform>
-                                            </Border>
-                                        </Border>
-                                        <TextBlock Text="{x:Bind ResetText}" Style="{StaticResource HakariCaptionText}" />
-                                    </StackPanel>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                        </StackPanel>
+                        </Border>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
 
-            <!-- Money: three equal columns that share the width, so nothing is clipped -->
-            <Grid x:Name="StatGrid" ColumnSpacing="8">
+            <!-- Money: a 2 × 2 grid of equal tiles, so nothing is clipped -->
+            <Grid x:Name="StatGrid" ColumnSpacing="8" RowSpacing="8">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
             </Grid>
 
             <!-- Burn rate -->
