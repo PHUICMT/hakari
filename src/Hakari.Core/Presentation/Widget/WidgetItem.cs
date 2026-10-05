@@ -12,6 +12,9 @@ public enum WidgetItem
     WeeklyLimit,
     MostPressingLimit,
 
+    /// <summary>Both at once: "5h 5% · Week 93%".</summary>
+    SessionAndWeeklyLimits,
+
     /// <summary>The most pressing limit of the second signed-in account.</summary>
     SecondAccount,
     Nothing,

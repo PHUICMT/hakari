@@ -13,6 +13,7 @@ public static class WidgetComposer
     private const string WeeklyGroup = "weekly";
     private const double PercentScale = 100.0;
     private const int TwoAccounts = 2;
+    private const string Separator = " · ";
 
     public static ComposedWidget Compose(
         WidgetLayout layout,
@@ -50,6 +51,7 @@ public static class WidgetComposer
             WidgetItem.WeeklyLimit => LimitLine(first, Weekly, labelled, facts, now),
             WidgetItem.MostPressingLimit =>
                 LimitLine(first, LimitPriority.MostPressing, labelled, facts, now),
+            WidgetItem.SessionAndWeeklyLimits => BothLimits(first, labelled, facts, now),
             WidgetItem.SecondAccount => facts.Accounts.Count >= TwoAccounts
                 ? LimitLine(facts.Accounts[1], LimitPriority.MostPressing, true, facts, now)
                 : new ComposedLine(Texts.Get("widget.noSecondAccount"), LineTone.Muted),
@@ -113,6 +115,35 @@ public static class WidgetComposer
         return new ComposedLine(text, ToneOf(limit, snapshot.Freshness));
     }
 
+    /// <summary>"5h 5% · Week full": both windows at a glance, in the color of the worse.</summary>
+    private static ComposedLine BothLimits(
+        WidgetAccount? account,
+        bool labelled,
+        WidgetFacts facts,
+        DateTimeOffset now)
+    {
+        if (account is null)
+        {
+            return NoLimits;
+        }
+
+        var snapshot = account.Snapshot.ProjectedTo(now);
+        var limits = new[] { Session(snapshot), Weekly(snapshot) }.OfType<UsageLimit>().ToList();
+        if (limits.Count == 0)
+        {
+            return NoLimits;
+        }
+
+        var label = labelled
+            ? $"{AccountLabels.Short(account.Account, facts.NicknameOf(account.AccountId))} "
+            : string.Empty;
+        var parts = limits.Select(limit => limit.Percent >= LimitForecaster.FullPercent
+            ? Texts.Format("limit.full", LimitNames.Short(limit))
+            : $"{LimitNames.Short(limit)} {limit.Percent}%");
+        var tone = limits.Select(limit => ToneOf(limit, snapshot.Freshness)).Max();
+        return new ComposedLine(label + string.Join(Separator, parts), tone);
+    }
+
     private static ComposedRing? Ring(
         WidgetRingSource source,
         WidgetFacts facts,
@@ -124,6 +155,11 @@ public static class WidgetComposer
         }
 
         var snapshot = first.Snapshot.ProjectedTo(now);
+        if (source == WidgetRingSource.SessionAndWeekly)
+        {
+            return TwoRings(snapshot);
+        }
+
         var limit = source switch
         {
             WidgetRingSource.Weekly => Weekly(snapshot),
@@ -136,6 +172,28 @@ public static class WidgetComposer
                 Math.Clamp(limit.Percent / PercentScale, 0, 1),
                 ToneOf(limit, snapshot.Freshness));
     }
+
+    /// <summary>The week outside, since it is the bigger window; the 5 hours inside.</summary>
+    private static ComposedRing? TwoRings(LimitSnapshot snapshot)
+    {
+        var weekly = Weekly(snapshot);
+        var session = Session(snapshot);
+        if (weekly is null || session is null)
+        {
+            return (weekly ?? session) is { } only
+                ? new ComposedRing(FractionOf(only), ToneOf(only, snapshot.Freshness))
+                : null;
+        }
+
+        return new ComposedRing(
+            FractionOf(weekly),
+            ToneOf(weekly, snapshot.Freshness),
+            FractionOf(session),
+            ToneOf(session, snapshot.Freshness));
+    }
+
+    private static double FractionOf(UsageLimit limit) =>
+        Math.Clamp(limit.Percent / PercentScale, 0, 1);
 
     public static LineTone ToneOf(UsageLimit limit, LimitFreshness freshness)
     {

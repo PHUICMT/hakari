@@ -27,6 +27,7 @@ public sealed partial class SettingsWindow
         (WidgetItem.SessionLimit, "settings.item.session"),
         (WidgetItem.WeeklyLimit, "settings.item.weekly"),
         (WidgetItem.MostPressingLimit, "settings.item.pressing"),
+        (WidgetItem.SessionAndWeeklyLimits, "settings.item.both"),
         (WidgetItem.SecondAccount, "settings.item.secondAccount"),
         (WidgetItem.Nothing, "settings.item.nothing"),
     ];
@@ -91,6 +92,7 @@ public sealed partial class SettingsWindow
         RingSession.IsChecked = layout.Ring == WidgetRingSource.Session;
         RingWeekly.IsChecked = layout.Ring == WidgetRingSource.Weekly;
         RingPressing.IsChecked = layout.Ring == WidgetRingSource.MostPressing;
+        RingBoth.IsChecked = layout.Ring == WidgetRingSource.SessionAndWeekly;
         var choices = LineChoicesFor(settings.AccountsMode).ToList();
         TopSelect.SetChoices(choices, layout.Top);
         BottomSelect.SetChoices(choices, layout.Bottom);
@@ -145,6 +147,7 @@ public sealed partial class SettingsWindow
         var ring = ReferenceEquals(sender, RingOff) ? WidgetRingSource.Off
             : ReferenceEquals(sender, RingWeekly) ? WidgetRingSource.Weekly
             : ReferenceEquals(sender, RingPressing) ? WidgetRingSource.MostPressing
+            : ReferenceEquals(sender, RingBoth) ? WidgetRingSource.SessionAndWeekly
             : WidgetRingSource.Session;
         ChangeLayout(layout => layout with { Ring = ring });
     }

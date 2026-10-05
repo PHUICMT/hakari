@@ -48,6 +48,23 @@ public sealed class WidgetComposerTests
     }
 
     [Fact]
+    public void Shows_both_windows_in_two_rings_and_one_line()
+    {
+        var layout = new WidgetLayout
+        {
+            Ring = WidgetRingSource.SessionAndWeekly,
+            Bottom = WidgetItem.SessionAndWeeklyLimits,
+        };
+
+        var widget = WidgetComposer.Compose(layout, Facts(Account("work", 100)), Now);
+
+        Assert.Equal(0.91, widget.Ring!.Fraction, precision: 2);
+        Assert.Equal(1.0, widget.Ring.InnerFraction);
+        Assert.Equal("5h full · Week 91%", widget.Bottom.Text);
+        Assert.Equal(LineTone.Critical, widget.Bottom.Tone);
+    }
+
+    [Fact]
     public void Never_leaves_the_widget_empty()
     {
         var layout = new WidgetLayout { Top = WidgetItem.Nothing, Bottom = WidgetItem.Nothing };

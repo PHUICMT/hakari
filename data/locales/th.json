@@ -75,6 +75,7 @@
   "settings.ring.session": "5ชม.",
   "settings.ring.weekly": "สัปดาห์",
   "settings.ring.pressing": "ใกล้เต็มสุด",
+  "settings.ring.both": "5ชม. + สัปดาห์",
   "settings.topLine": "บรรทัดบน",
   "settings.bottomLine": "บรรทัดล่าง",
   "settings.bottomLine.description": "อัตโนมัติ: ถ้าลงชื่อเข้าใช้ 2 บัญชี จะแสดงบัญชีละบรรทัด",
@@ -85,6 +86,7 @@
   "settings.item.session": "Limit 5 ชั่วโมง",
   "settings.item.weekly": "Limit รายสัปดาห์",
   "settings.item.pressing": "Limit ที่ใกล้เต็มสุด",
+  "settings.item.both": "Limit 5 ชม. และรายสัปดาห์",
   "settings.item.secondAccount": "บัญชีที่สอง",
   "settings.item.nothing": "ไม่แสดง",
 

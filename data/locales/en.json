@@ -75,6 +75,7 @@
   "settings.ring.session": "5h",
   "settings.ring.weekly": "Week",
   "settings.ring.pressing": "Most pressing",
+  "settings.ring.both": "5h + Week",
   "settings.topLine": "Top line",
   "settings.bottomLine": "Bottom line",
   "settings.bottomLine.description": "Automatic gives each of two signed-in accounts its own line.",
@@ -85,6 +86,7 @@
   "settings.item.session": "5-hour limit",
   "settings.item.weekly": "Weekly limit",
   "settings.item.pressing": "Most pressing limit",
+  "settings.item.both": "5-hour and weekly limits",
   "settings.item.secondAccount": "Second account",
   "settings.item.nothing": "Nothing",
 

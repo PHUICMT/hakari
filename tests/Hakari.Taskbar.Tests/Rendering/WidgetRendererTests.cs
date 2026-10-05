@@ -41,6 +41,24 @@ public sealed class WidgetRendererTests : IDisposable
         Assert.Equal(one.Height, both.Height);
     }
 
+    /// <summary>A ring's middle is empty; a full one is a solid disc with a white bar.</summary>
+    [Fact]
+    public void Draws_a_full_ring_as_a_solid_stop_disc()
+    {
+        var palette = WidgetPalette.DarkTaskbar;
+        var full = SampleContent with { Ring = new WidgetRing(1.0, WidgetTone.Critical) };
+        var partial = SampleContent with { Ring = new WidgetRing(0.5, WidgetTone.Critical) };
+
+        using var fullBitmap = renderer.Render(full, palette, 1.0, false);
+        using var partialBitmap = renderer.Render(partial, palette, 1.0, false);
+        var ringMiddle = new Point(10 + 11, 20);
+        var belowBar = new Point(10 + 11, 26);
+
+        Assert.True(partialBitmap.GetPixel(ringMiddle.X, belowBar.Y).A < ContentAlphaThreshold);
+        Assert.True(fullBitmap.GetPixel(belowBar.X, belowBar.Y).A > 200);
+        Assert.True(fullBitmap.GetPixel(ringMiddle.X, ringMiddle.Y).GetBrightness() > 0.9f);
+    }
+
     [Fact]
     public void Equal_panels_make_equal_content()
     {

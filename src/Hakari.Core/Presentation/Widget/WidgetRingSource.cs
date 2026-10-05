@@ -7,4 +7,7 @@ public enum WidgetRingSource
     Session,
     Weekly,
     MostPressing,
+
+    /// <summary>Two rings: the weekly limit outside, the 5-hour one inside.</summary>
+    SessionAndWeekly,
 }

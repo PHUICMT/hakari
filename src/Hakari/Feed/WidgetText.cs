@@ -69,7 +69,13 @@ internal static class WidgetText
         widget.Bottom.Text,
         ToWidgetTone(widget.Bottom.Tone),
         ToWidgetTone(widget.Top.Tone),
-        widget.Ring is { } ring ? new WidgetRing(ring.Fraction, ToWidgetTone(ring.Tone)) : null);
+        widget.Ring is { } ring ? ToRing(ring) : null);
+
+    private static WidgetRing ToRing(ComposedRing ring) => new(
+        ring.Fraction,
+        ToWidgetTone(ring.Tone),
+        ring.InnerFraction,
+        ToWidgetTone(ring.InnerTone));
 
     private static WidgetTone ToWidgetTone(LineTone tone) => tone switch
     {

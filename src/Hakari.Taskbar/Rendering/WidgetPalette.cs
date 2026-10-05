@@ -32,6 +32,9 @@ public sealed record WidgetPalette(
 
     public Color RingTrack => Color.FromArgb(RingTrackAlpha, SecondaryText);
 
+    /// <summary>Marks drawn on a colored disc, such as the bar across a full ring.</summary>
+    public Color OnTone => Color.White;
+
     public Color ForTone(WidgetTone tone) => tone switch
     {
         WidgetTone.Warning => Warning,

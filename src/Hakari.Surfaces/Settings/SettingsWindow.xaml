@@ -82,6 +82,8 @@
                                         Content="{l:Text Key=settings.ring.weekly}" Checked="OnRingChecked" />
                                     <controls:HakariSegment x:Name="RingPressing" GroupName="Ring"
                                         Content="{l:Text Key=settings.ring.pressing}" Checked="OnRingChecked" />
+                                    <controls:HakariSegment x:Name="RingBoth" GroupName="Ring"
+                                        Content="{l:Text Key=settings.ring.both}" Checked="OnRingChecked" />
                                 </controls:HakariSegmented>
                             </controls:SettingRow>
                             <controls:SettingRow Glyph="&#xE8E4;" Title="{l:Text Key=settings.topLine}">

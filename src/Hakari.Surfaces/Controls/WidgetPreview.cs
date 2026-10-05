@@ -5,9 +5,6 @@ using Microsoft.UI.Text;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
-using Microsoft.UI.Xaml.Shapes;
-using Windows.Foundation;
-using Path = Microsoft.UI.Xaml.Shapes.Path;
 
 namespace Hakari.Surfaces.Controls;
 
@@ -26,8 +23,9 @@ public sealed partial class WidgetPreview : Grid
     private const double RingGap = 8;
     private const double TopFontSize = 13;
     private const double BottomFontSize = 11;
-    private const double FullCircleDegrees = 360;
-    private const double AlmostFullCircle = 359.9;
+    private const double InnerRingSize = 13;
+    private const double InnerRingStroke = 2.5;
+    private const double FullFraction = 0.999;
     private const string OpacityPath = "Opacity";
 
     private readonly TextBlock topText = new()
@@ -38,12 +36,12 @@ public sealed partial class WidgetPreview : Grid
 
     private readonly TextBlock bottomText = new() { FontSize = BottomFontSize };
     private readonly Grid ring = new() { Width = RingSize, Height = RingSize };
-    private readonly Path ringFill = new() { StrokeThickness = RingStroke };
+    private readonly PreviewRing outerRing = new(RingSize, RingStroke);
+    private readonly PreviewRing innerRing = new(InnerRingSize, InnerRingStroke);
     private readonly StackPanel texts = new() { VerticalAlignment = VerticalAlignment.Center };
 
-    private double shownFraction;
-    private double tweenFrom;
-    private double tweenTo;
+    private (double Outer, double Inner) tweenFrom;
+    private (double Outer, double Inner) tweenTo;
     private DateTimeOffset tweenStartedAt;
 
     public WidgetPreview()
@@ -53,7 +51,8 @@ public sealed partial class WidgetPreview : Grid
         CornerRadius = new CornerRadius(WidgetRadius);
         HorizontalAlignment = HorizontalAlignment.Left;
         Background = Brush("HakariTaskbarBrush");
-        BuildRing();
+        ring.Children.Add(outerRing);
+        ring.Children.Add(innerRing);
         texts.Children.Add(topText);
         texts.Children.Add(bottomText);
 
@@ -78,8 +77,7 @@ public sealed partial class WidgetPreview : Grid
         ring.Visibility = widget.Ring is null ? Visibility.Collapsed : Visibility.Visible;
         if (widget.Ring is { } value)
         {
-            ringFill.Stroke = RingBrush(value.Tone);
-            MoveRing(value.Fraction);
+            ShowRings(value);
         }
 
         if (textChanged && IsLoaded)
@@ -89,30 +87,29 @@ public sealed partial class WidgetPreview : Grid
         }
     }
 
-    private void BuildRing()
+    /// <summary>The inner 5-hour ring hides when there is none or the outer is full.</summary>
+    private void ShowRings(ComposedRing value)
     {
-        ring.Children.Add(new Ellipse
-        {
-            Stroke = Brush("HakariLineStrongBrush"),
-            StrokeThickness = RingStroke,
-        });
-        ringFill.StrokeStartLineCap = PenLineCap.Round;
-        ringFill.StrokeEndLineCap = PenLineCap.Round;
-        ring.Children.Add(ringFill);
+        outerRing.SetBrush(RingBrush(value.Tone));
+        innerRing.SetBrush(RingBrush(value.InnerTone));
+        var hasInner = value.InnerFraction is not null && value.Fraction < FullFraction;
+        innerRing.Visibility = hasInner ? Visibility.Visible : Visibility.Collapsed;
+        MoveRings(value.Fraction, value.InnerFraction ?? 0);
     }
 
     /// <summary>Tweened frame by frame under Full; set at once otherwise.</summary>
-    private void MoveRing(double fraction)
+    private void MoveRings(double outer, double inner)
     {
         CompositionTarget.Rendering -= OnRendering;
         if (!IsLoaded || SurfaceMotion.Current() != AnimationSetting.Full)
         {
-            DrawRing(fraction);
+            outerRing.Draw(outer);
+            innerRing.Draw(inner);
             return;
         }
 
-        tweenFrom = shownFraction;
-        tweenTo = fraction;
+        tweenFrom = (outerRing.Fraction, innerRing.Fraction);
+        tweenTo = (outer, inner);
         tweenStartedAt = DateTimeOffset.UtcNow;
         CompositionTarget.Rendering += OnRendering;
     }
@@ -122,40 +119,13 @@ public sealed partial class WidgetPreview : Grid
         var elapsed = DateTimeOffset.UtcNow - tweenStartedAt;
         var progress = Math.Min(1, elapsed / SurfaceMotion.Entrance);
         var eased = 1 - Math.Pow(1 - progress, EaseExponent);
-        DrawRing(tweenFrom + (tweenTo - tweenFrom) * eased);
+        outerRing.Draw(tweenFrom.Outer + (tweenTo.Outer - tweenFrom.Outer) * eased);
+        innerRing.Draw(tweenFrom.Inner + (tweenTo.Inner - tweenFrom.Inner) * eased);
         if (progress >= 1)
         {
             CompositionTarget.Rendering -= OnRendering;
         }
     }
-
-    private void DrawRing(double fraction)
-    {
-        shownFraction = Math.Clamp(fraction, 0, 1);
-        var degrees = Math.Min(shownFraction * FullCircleDegrees, AlmostFullCircle);
-        ringFill.Data = degrees <= 0 ? null : Arc(degrees);
-    }
-
-    private static PathGeometry Arc(double degrees)
-    {
-        var radius = (RingSize - RingStroke) / 2;
-        var center = RingSize / 2;
-        var radians = (degrees - 90) * Math.PI / 180;
-        var figure = new PathFigure { StartPoint = new Point(center, center - radius) };
-        figure.Segments.Add(new ArcSegment
-        {
-            Point = new Point(
-                center + radius * Math.Cos(radians),
-                center + radius * Math.Sin(radians)),
-            Size = new Size(radius, radius),
-            IsLargeArc = degrees > FullCircleDegrees / 2,
-            SweepDirection = SweepDirection.Clockwise,
-        });
-        var geometry = new PathGeometry();
-        geometry.Figures.Add(figure);
-        return geometry;
-    }
-
     private static Brush TextBrush(LineTone tone, bool isTop) => tone switch
     {
         LineTone.Warning => Brush("HakariWarnBrush"),

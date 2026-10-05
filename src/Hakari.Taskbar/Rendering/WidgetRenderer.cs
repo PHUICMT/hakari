@@ -14,6 +14,9 @@ public sealed class WidgetRenderer : IDisposable
     private const float FullCircleDegrees = 360f;
     private const float TopDegrees = -90f;
 
+    /// <summary>At this share or more a ring is full; a hair below still shows as a ring.</summary>
+    private const double FullFraction = 0.999;
+
     private readonly FontFamily fontFamily = PickFontFamily();
     private readonly Bitmap measuringSurface = new(1, 1);
     private readonly Graphics measuringGraphics;
@@ -170,36 +173,106 @@ public sealed class WidgetRenderer : IDisposable
         }
 
         var previous = frame.Previous?.Ring ?? ring;
-        var fraction = previous.Fraction
-            + (ring.Fraction - previous.Fraction) * frame.ValueProgress;
-        var color = ColorBlend.Mix(
-            palette.ForRingTone(previous.Tone),
-            palette.ForRingTone(ring.Tone),
-            frame.ToneProgress);
-
         var stroke = (float)(WidgetMetrics.RingStroke * scale);
-        var diameter = (float)(WidgetMetrics.RingDiameter * scale) - stroke;
-        var bounds = new RectangleF(
-            left + stroke / 2,
-            (height - diameter) / 2f,
-            diameter,
-            diameter);
+        var outerDiameter = (float)(WidgetMetrics.RingDiameter * scale);
+        var center = new PointF(left + outerDiameter / 2, height / 2f);
+        var outer = new RingPass(
+            Lerp(previous.Fraction, ring.Fraction, frame.ValueProgress),
+            ColorBlend.Mix(
+                palette.ForRingTone(previous.Tone),
+                palette.ForRingTone(ring.Tone),
+                frame.ToneProgress));
+        DrawOneRing(graphics, palette, center, outerDiameter, stroke, outer, scale);
+
+        if (ring.InnerFraction is not { } innerFraction || outer.Fraction >= FullFraction)
+        {
+            return;
+        }
+
+        var innerStroke = (float)(WidgetMetrics.InnerRingStroke * scale);
+        var spacing = (float)(WidgetMetrics.RingSpacing * scale);
+        var innerDiameter = outerDiameter - 2 * (stroke + spacing);
+        var inner = new RingPass(
+            Lerp(previous.InnerFraction ?? innerFraction, innerFraction, frame.ValueProgress),
+            ColorBlend.Mix(
+                palette.ForRingTone(previous.InnerTone),
+                palette.ForRingTone(ring.InnerTone),
+                frame.ToneProgress));
+        DrawOneRing(graphics, palette, center, innerDiameter, innerStroke, inner, scale);
+    }
+
+    private readonly record struct RingPass(double Fraction, Color Color);
+
+    /// <summary>
+    /// A track with the filled share clockwise from the top. A full ring becomes a solid disc
+    /// with a bar across, like a stop sign, so "full" never reads as "almost full".
+    /// </summary>
+    private static void DrawOneRing(
+        Graphics graphics,
+        WidgetPalette palette,
+        PointF center,
+        float diameter,
+        float stroke,
+        RingPass pass,
+        double scale)
+    {
+        if (pass.Fraction >= FullFraction)
+        {
+            DrawStopDisc(graphics, palette, center, diameter, pass.Color, scale);
+            return;
+        }
+
+        var size = diameter - stroke;
+        var bounds = new RectangleF(center.X - size / 2, center.Y - size / 2, size, size);
         using var trackPen = new Pen(palette.RingTrack, stroke);
         graphics.DrawEllipse(trackPen, bounds);
 
-        var sweep = (float)(Math.Clamp(fraction, 0, 1) * FullCircleDegrees);
+        var sweep = (float)(Math.Clamp(pass.Fraction, 0, 1) * FullCircleDegrees);
         if (sweep <= 0)
         {
             return;
         }
 
-        using var fillPen = new Pen(color, stroke)
+        using var fillPen = new Pen(pass.Color, stroke)
         {
             StartCap = LineCap.Round,
             EndCap = LineCap.Round,
         };
         graphics.DrawArc(fillPen, bounds, TopDegrees, sweep);
     }
+
+    private static void DrawStopDisc(
+        Graphics graphics,
+        WidgetPalette palette,
+        PointF center,
+        float diameter,
+        Color color,
+        double scale)
+    {
+        using var discBrush = new SolidBrush(color);
+        graphics.FillEllipse(
+            discBrush,
+            center.X - diameter / 2,
+            center.Y - diameter / 2,
+            diameter,
+            diameter);
+
+        var barHalfWidth = diameter * WidgetMetrics.StopBarShare / 2;
+        using var barPen = new Pen(palette.OnTone, (float)(WidgetMetrics.RingStroke * scale))
+        {
+            StartCap = LineCap.Round,
+            EndCap = LineCap.Round,
+        };
+        graphics.DrawLine(
+            barPen,
+            center.X - barHalfWidth,
+            center.Y,
+            center.X + barHalfWidth,
+            center.Y);
+    }
+
+    private static double Lerp(double from, double to, double progress) =>
+        from + (to - from) * progress;
 
     private static (Color From, Color To) PrimaryColors(
         WidgetFrame frame,
