@@ -147,9 +147,9 @@ public sealed partial class FlyoutWindow : Window
 
     private void Fill(FlyoutSnapshot snapshot)
     {
-        AccountText.Text = snapshot.AccountName;
+        AccountText.Text = snapshot.AccountSummary;
         UpdatedText.Text = snapshot.UpdatedText;
-        LimitList.ItemsSource = snapshot.Limits;
+        AccountList.ItemsSource = snapshot.Accounts;
         FillStats(snapshot.Stats);
         BurnText.Text = snapshot.BurnRate;
         SourceList.ItemsSource = snapshot.Sources;
@@ -221,7 +221,7 @@ public sealed partial class FlyoutWindow : Window
     /// <summary>Meters grow from empty to their value after the flyout starts to rise.</summary>
     private void AddMeterFills(Storyboard storyboard)
     {
-        foreach (var fill in FindMeterFills(LimitList))
+        foreach (var fill in FindMeterFills(AccountList))
         {
             if (fill.RenderTransform is ScaleTransform scale && fill.Tag is double fraction)
             {

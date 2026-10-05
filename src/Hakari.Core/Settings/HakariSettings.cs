@@ -16,6 +16,10 @@ public sealed record HakariSettings
 
     public WidgetLayout Widget { get; init; } = new();
 
+    /// <summary>Names the user gave accounts, keyed by account id.</summary>
+    public IReadOnlyDictionary<string, string> AccountNicknames { get; init; } =
+        new Dictionary<string, string>();
+
     public TaskbarDisplays Displays { get; init; } = TaskbarDisplays.All;
 
     /// <summary><see cref="DisplayInfo.Id"/> values, used when Displays is Chosen.</summary>
@@ -47,4 +51,15 @@ public sealed record HakariSettings
         && RateMode == other.RateMode
         && RefreshSignInAutomatically == other.RefreshSignInAutomatically
         && Paused == other.Paused;
+
+    /// <summary>True when the widget would word and lay out the same data the same way.</summary>
+    public bool PresentsSameAs(HakariSettings other) =>
+        Widget == other.Widget
+        && Language == other.Language
+        && AccountNicknames.Count == other.AccountNicknames.Count
+        && AccountNicknames.All(entry =>
+            other.AccountNicknames.TryGetValue(entry.Key, out var name) && name == entry.Value);
+
+    public string? NicknameOf(string accountId) =>
+        AccountNicknames.TryGetValue(accountId, out var name) && name.Length > 0 ? name : null;
 }

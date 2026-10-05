@@ -104,7 +104,10 @@ public static class WidgetComposer
         var prefix = snapshot.Freshness == LimitFreshness.LastKnown
             ? LastKnownPrefix
             : string.Empty;
-        var label = labelled ? $"{AccountLabels.Short(account.Account)} " : string.Empty;
+        var nickname = facts.NicknameOf(account.AccountId);
+        var label = labelled
+            ? $"{AccountLabels.Short(account.Account, nickname)} "
+            : string.Empty;
         var fullAt = facts.FullAt?.Invoke(account.AccountId, limit, now);
         var text = $"{prefix}{label}{LimitText.Compact(limit, fullAt, now)}";
         return new ComposedLine(text, ToneOf(limit, snapshot.Freshness));

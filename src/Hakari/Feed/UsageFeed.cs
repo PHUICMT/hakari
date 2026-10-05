@@ -31,6 +31,8 @@ internal sealed class UsageFeed : IDisposable
     private volatile bool settingsChanged;
     private volatile bool layoutChanged;
     private volatile WidgetLayout layout = new();
+    private volatile IReadOnlyDictionary<string, string> nicknames =
+        new Dictionary<string, string>();
     private ChangeTracker? changeTracker;
 
     public UsageFeed(SettingsStore settingsStore)
@@ -53,10 +55,11 @@ internal sealed class UsageFeed : IDisposable
         changeTracker?.Wake();
     }
 
-    /// <summary>Thread-safe: redraws with the new layout without restarting anything.</summary>
-    public void SetLayout(WidgetLayout newLayout)
+    /// <summary>Thread-safe: redraws for a new layout, names or language.</summary>
+    public void SetPresentation(HakariSettings settings)
     {
-        layout = newLayout;
+        layout = settings.Widget;
+        nicknames = settings.AccountNicknames;
         layoutChanged = true;
         changeTracker?.Wake();
     }
@@ -79,6 +82,7 @@ internal sealed class UsageFeed : IDisposable
             settingsChanged = false;
             var settings = settingsStore.Load();
             layout = settings.Widget;
+            nicknames = settings.AccountNicknames;
             if (settings.Paused)
             {
                 Updated?.Invoke(WidgetText.Paused);
@@ -135,7 +139,7 @@ internal sealed class UsageFeed : IDisposable
             if (recordsChanged || limitsChanged || layoutChanged || due)
             {
                 layoutChanged = false;
-                Updated?.Invoke(WidgetText.Build(query, limits, layout));
+                Updated?.Invoke(WidgetText.Build(query, limits, layout, nicknames));
                 lastPublished = now;
             }
 

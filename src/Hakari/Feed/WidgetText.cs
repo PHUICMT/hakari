@@ -16,7 +16,11 @@ internal static class WidgetText
     public static WidgetContent Paused =>
         new(ProductName, Texts.Get("widget.paused"), WidgetTone.Muted);
 
-    public static WidgetContent Build(UsageQuery query, LimitPoller limits, WidgetLayout layout)
+    public static WidgetContent Build(
+        UsageQuery query,
+        LimitPoller limits,
+        WidgetLayout layout,
+        IReadOnlyDictionary<string, string> nicknames)
     {
         var now = DateTimeOffset.Now;
         var facts = new WidgetFacts(
@@ -25,7 +29,8 @@ internal static class WidgetText
             CostLastHour: query.Total(new UsageFilter(From: now.AddHours(-1))).Cost,
             Currency: query.Currency,
             Accounts: limits.Accounts,
-            FullAt: limits.FullAt);
+            FullAt: limits.FullAt,
+            Nicknames: nicknames);
         return ToContent(WidgetComposer.Compose(layout, facts, now));
     }
 

@@ -29,6 +29,7 @@
   "account.signedIn": "Signed-in account",
 
   "flyout.noAccount": "No account yet",
+  "flyout.accounts": "{0} accounts",
   "flyout.noLimits": "No limits yet",
   "flyout.updatedNow": "Updated just now",
   "flyout.updatedMinutes": "Updated {0} min ago",
@@ -99,6 +100,7 @@
   "settings.accounts": "Accounts",
   "settings.accounts.none": "No accounts yet",
   "settings.accounts.none.description": "They appear once Claude Code has signed in on a source.",
+  "settings.nickname": "Nickname, shown on the taskbar and in the flyout",
   "settings.renew": "Renew sign-in automatically",
   "settings.renew.description": "Keeps limits current after Claude Code has been closed for a long time. It updates Claude Code's sign-in file, and only while Claude Code is not running.",
 

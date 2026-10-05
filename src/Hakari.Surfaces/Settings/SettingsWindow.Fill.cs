@@ -19,6 +19,8 @@ public sealed partial class SettingsWindow
     private const string FolderGlyph = "";
     private const string AccountGlyph = "";
     private const string DisplayGlyph = "";
+    private const double NicknameBoxWidth = 120;
+    private const int NicknameMaximumLength = 12;
     private const string CurrencyGroup = "Currency";
     private const string ProjectsFolderName = "projects";
     private const string DetailSeparator = " · ";
@@ -132,21 +134,24 @@ public sealed partial class SettingsWindow
 
         foreach (var account in accounts)
         {
-            AccountList.Children.Add(AccountRow(account, isFirst: AccountList.Children.Count == 0));
+            var isFirst = AccountList.Children.Count == 0;
+            AccountList.Children.Add(AccountRow(account, settings, isFirst));
         }
 
         RenewSignInToggle.IsChecked = settings.RefreshSignInAutomatically;
     }
 
-    private static SettingRow AccountRow(AccountInfo account, bool isFirst)
+    /// <summary>The email stays the title; the nickname field on the right renames it.</summary>
+    private SettingRow AccountRow(AccountInfo account, HakariSettings settings, bool isFirst)
     {
         var details = new[] { PlanNames.Short(account.Plan), account.OrganizationName }
             .Where(detail => !string.IsNullOrWhiteSpace(detail));
         var row = new SettingRow
         {
             Glyph = AccountGlyph,
-            Title = account.Email ?? account.DisplayName ?? Texts.Get("account.signedIn"),
+            Title = AccountLabels.Full(account),
             Description = string.Join(DetailSeparator, details),
+            Content = NicknameBox(account.AccountId, settings.NicknameOf(account.AccountId)),
         };
         if (isFirst)
         {
@@ -154,6 +159,28 @@ public sealed partial class SettingsWindow
         }
 
         return row;
+    }
+
+    private TextBox NicknameBox(string accountId, string? nickname)
+    {
+        var box = new TextBox
+        {
+            Text = nickname ?? string.Empty,
+            Width = NicknameBoxWidth,
+            MaxLength = NicknameMaximumLength,
+            Style = (Style)Application.Current.Resources["HakariTextBox"],
+        };
+        ToolTipService.SetToolTip(box, Texts.Get("settings.nickname"));
+        box.LostFocus += (_, _) => SaveNickname(accountId, box.Text);
+        box.KeyDown += (_, args) =>
+        {
+            if (args.Key == Windows.System.VirtualKey.Enter)
+            {
+                args.Handled = true;
+                SaveNickname(accountId, box.Text);
+            }
+        };
+        return box;
     }
 
     private void FillGeneral(HakariSettings settings)

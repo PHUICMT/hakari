@@ -19,6 +19,7 @@ namespace Hakari.Surfaces.Flyout;
 internal static class FlyoutDataLoader
 {
     private const double PercentScale = 100.0;
+    private const string DetailSeparator = " · ";
     private static readonly TimeSpan RecentSourceWindow = TimeSpan.FromMinutes(10);
 
     public static FlyoutSnapshot Load()
@@ -29,20 +30,69 @@ internal static class FlyoutDataLoader
         var query = new UsageQuery(store, pricing, StoredConverter(store, settings));
         var now = DateTimeOffset.Now;
 
-        var account = new AccountRepository(store).ListAccounts().FirstOrDefault();
-        var limits = account is null ? null : new LimitCache(store).Load(account.AccountId);
-        var projected = limits?.ProjectedTo(now);
+        var accounts = AccountsWithLimits(store, now);
+        var newest = accounts.Count == 0
+            ? null
+            : accounts.MaxBy(account => account.Snapshot.FetchedAt).Snapshot;
+        var anyLastKnown = accounts.Any(
+            account => account.Snapshot.Freshness == LimitFreshness.LastKnown);
 
         return new FlyoutSnapshot(
-            UpdatedText: UpdatedText(projected, now),
-            AccountName: account is null ? Texts.Get("flyout.noAccount") : AccountName(account),
-            Limits: projected is null ? [] : LimitRows(projected, now),
+            UpdatedText: UpdatedText(newest, now),
+            AccountSummary: AccountSummary(accounts, settings),
+            Accounts: [.. accounts.Select(account => Group(account, settings, now))],
             Stats: StatTiles(query, now),
             BurnRate: BurnRate(query, now),
             Sources: SourceRows(store, now),
-            Notice: projected?.Freshness == LimitFreshness.LastKnown
-                ? Texts.Get("flyout.lastKnown")
-                : null);
+            Notice: anyLastKnown ? Texts.Get("flyout.lastKnown") : null);
+    }
+
+    private static List<(AccountInfo Account, LimitSnapshot Snapshot)> AccountsWithLimits(
+        IndexStore store,
+        DateTimeOffset now)
+    {
+        var cache = new LimitCache(store);
+        return
+        [
+            .. new AccountRepository(store).ListAccounts()
+                .Select(account => (Account: account, Snapshot: cache.Load(account.AccountId)))
+                .Where(entry => entry.Snapshot is not null)
+                .Select(entry => (entry.Account, Snapshot: entry.Snapshot!.ProjectedTo(now)))
+                .OrderByDescending(entry => LimitPriority.Rank(entry.Snapshot)),
+        ];
+    }
+
+    private static string AccountSummary(
+        List<(AccountInfo Account, LimitSnapshot Snapshot)> accounts,
+        HakariSettings settings) => accounts.Count switch
+    {
+        0 => Texts.Get("flyout.noAccount"),
+        1 => AccountLabels.Full(
+            accounts[0].Account,
+            settings.NicknameOf(accounts[0].Account.AccountId)),
+        _ => Texts.Format("flyout.accounts", accounts.Count),
+    };
+
+    /// <summary>
+    /// Titled by nickname, else by email, which tells two accounts of one person apart. With
+    /// a nickname, the email moves into the detail line.
+    /// </summary>
+    private static AccountLimitGroup Group(
+        (AccountInfo Account, LimitSnapshot Snapshot) entry,
+        HakariSettings settings,
+        DateTimeOffset now)
+    {
+        var nickname = settings.NicknameOf(entry.Account.AccountId);
+        var details = new[]
+        {
+            nickname is null ? null : entry.Account.Email,
+            PlanNames.Short(entry.Account.Plan),
+            UpdatedText(entry.Snapshot, now),
+        };
+        return new AccountLimitGroup(
+            AccountLabels.Full(entry.Account, nickname),
+            string.Join(DetailSeparator, details.OfType<string>()),
+            LimitRows(entry.Snapshot, now));
     }
 
     /// <summary>Rates Hakari.exe already stored; opening a window never fetches any.</summary>
@@ -58,11 +108,6 @@ internal static class FlyoutDataLoader
             ? null
             : new CurrencyConverter(settings.Currency, rates, settings.RateMode);
     }
-
-    private static string AccountName(AccountInfo account) =>
-        account.DisplayName is { Length: > 0 } name
-            ? $"{name} · {PlanNames.Short(account.Plan)}"
-            : PlanNames.Short(account.Plan);
 
     private static string UpdatedText(LimitSnapshot? limits, DateTimeOffset now)
     {

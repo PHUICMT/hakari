@@ -132,9 +132,9 @@ internal sealed class ResidentApp : IDisposable
         {
             feed.ReloadSettings();
         }
-        else if (languageChanged || settings.Widget != appliedSettings.Widget)
+        else if (languageChanged || !settings.PresentsSameAs(appliedSettings))
         {
-            feed.SetLayout(settings.Widget);
+            feed.SetPresentation(settings);
         }
 
         appliedSettings = settings;

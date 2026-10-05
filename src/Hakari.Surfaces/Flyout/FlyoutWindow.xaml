@@ -47,32 +47,50 @@
                     TextTrimming="None" />
             </Border>
 
-            <!-- Limits -->
-            <ItemsControl x:Name="LimitList">
+            <!-- Limits, one section per account, the most pressing first -->
+            <ItemsControl x:Name="AccountList">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
-                        <StackPanel Spacing="12" />
+                        <StackPanel Spacing="18" />
                     </ItemsPanelTemplate>
                 </ItemsControl.ItemsPanel>
                 <ItemsControl.ItemTemplate>
-                    <DataTemplate x:DataType="local:LimitRow">
-                        <StackPanel Spacing="6">
-                            <Grid>
-                                <TextBlock Text="{x:Bind Name}" Style="{StaticResource HakariLabelText}" />
-                                <TextBlock Text="{x:Bind Value}" HorizontalAlignment="Right"
-                                    Style="{StaticResource HakariValueText}"
-                                    Foreground="{x:Bind local:FlyoutBrushes.ForTone(Tone)}" />
-                            </Grid>
-                            <Border Height="6" CornerRadius="3" Background="{ThemeResource HakariLineBrush}">
-                                <Border x:Name="MeterFill" CornerRadius="3" RenderTransformOrigin="0,0.5"
-                                    Background="{x:Bind local:FlyoutBrushes.ForTone(Tone)}"
-                                    Tag="{x:Bind Fraction}">
-                                    <Border.RenderTransform>
-                                        <ScaleTransform ScaleX="{x:Bind Fraction}" ScaleY="1" />
-                                    </Border.RenderTransform>
-                                </Border>
-                            </Border>
-                            <TextBlock Text="{x:Bind ResetText}" Style="{StaticResource HakariCaptionText}" />
+                    <DataTemplate x:DataType="local:AccountLimitGroup">
+                        <StackPanel Spacing="10">
+                            <StackPanel Spacing="1">
+                                <TextBlock Text="{x:Bind Name}" FontWeight="SemiBold" FontSize="13"
+                                    Foreground="{ThemeResource HakariInkBrush}" TextTrimming="CharacterEllipsis" />
+                                <TextBlock Text="{x:Bind Detail}" Style="{StaticResource HakariCaptionText}" />
+                            </StackPanel>
+                            <ItemsControl ItemsSource="{x:Bind Limits}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <StackPanel Spacing="12" />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="local:LimitRow">
+                                    <StackPanel Spacing="6">
+                                        <Grid>
+                                            <TextBlock Text="{x:Bind Name}" Style="{StaticResource HakariLabelText}" />
+                                            <TextBlock Text="{x:Bind Value}" HorizontalAlignment="Right"
+                                                Style="{StaticResource HakariValueText}"
+                                                Foreground="{x:Bind local:FlyoutBrushes.ForTone(Tone)}" />
+                                        </Grid>
+                                        <Border Height="6" CornerRadius="3" Background="{ThemeResource HakariLineBrush}">
+                                            <Border x:Name="MeterFill" CornerRadius="3" RenderTransformOrigin="0,0.5"
+                                                Background="{x:Bind local:FlyoutBrushes.ForTone(Tone)}"
+                                                Tag="{x:Bind Fraction}">
+                                                <Border.RenderTransform>
+                                                    <ScaleTransform ScaleX="{x:Bind Fraction}" ScaleY="1" />
+                                                </Border.RenderTransform>
+                                            </Border>
+                                        </Border>
+                                        <TextBlock Text="{x:Bind ResetText}" Style="{StaticResource HakariCaptionText}" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                            </ItemsControl>
                         </StackPanel>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>

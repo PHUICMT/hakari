@@ -107,6 +107,31 @@ public sealed partial class SettingsWindow
         }
     }
 
+    /// <summary>An empty name removes the nickname. The preview shows it at once.</summary>
+    private void SaveNickname(string accountId, string text)
+    {
+        var nickname = text.Trim();
+        var updated = store.Update(current =>
+        {
+            var names = new Dictionary<string, string>(current.AccountNicknames);
+            if (nickname.Length == 0)
+            {
+                names.Remove(accountId);
+            }
+            else
+            {
+                names[accountId] = nickname;
+            }
+
+            return current with { AccountNicknames = names };
+        });
+        previewFacts = previewFacts is null ? null : previewFacts with
+        {
+            Nicknames = updated.AccountNicknames,
+        };
+        ShowPreview(updated.Widget);
+    }
+
     private void OnRenewSignInClicked(object sender, RoutedEventArgs args) =>
         Save(current => current with
         {

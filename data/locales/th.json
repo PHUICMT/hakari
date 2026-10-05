@@ -29,6 +29,7 @@
   "account.signedIn": "บัญชีที่ลงชื่อเข้าใช้",
 
   "flyout.noAccount": "ยังไม่มีบัญชี",
+  "flyout.accounts": "{0} บัญชี",
   "flyout.noLimits": "ยังไม่มีข้อมูล limit",
   "flyout.updatedNow": "อัปเดตเมื่อสักครู่",
   "flyout.updatedMinutes": "อัปเดต {0} นาทีที่แล้ว",
@@ -99,6 +100,7 @@
   "settings.accounts": "บัญชี",
   "settings.accounts.none": "ยังไม่มีบัญชี",
   "settings.accounts.none.description": "บัญชีจะแสดงเมื่อ Claude Code ลงชื่อเข้าใช้ในแหล่งข้อมูลใดแหล่งหนึ่ง",
+  "settings.nickname": "ชื่อเล่น แสดงบน taskbar และใน flyout",
   "settings.renew": "ต่ออายุการลงชื่อเข้าใช้อัตโนมัติ",
   "settings.renew.description": "ทำให้ limit ยังอัปเดตได้แม้ปิด Claude Code ไว้นาน โดยจะแก้ไฟล์ลงชื่อเข้าใช้ของ Claude Code เฉพาะตอนที่ Claude Code ไม่ได้รันอยู่",
 

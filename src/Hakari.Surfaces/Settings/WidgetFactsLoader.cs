@@ -54,6 +54,7 @@ internal static class WidgetFactsLoader
             CostThisMonth: query.Total(new UsageFilter(From: TimePeriods.StartOfMonth(now))).Cost,
             CostLastHour: query.Total(new UsageFilter(From: now.AddHours(-1))).Cost,
             Currency: query.Currency,
-            Accounts: accounts);
+            Accounts: accounts,
+            Nicknames: settings.AccountNicknames);
     }
 }
