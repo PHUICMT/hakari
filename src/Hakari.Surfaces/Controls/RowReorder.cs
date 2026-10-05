@@ -104,13 +104,14 @@ internal sealed class RowReorder
             return;
         }
 
-        panel.ReleasePointerCapture(args.Pointer);
-        var wasMoving = moving;
+        // Read the result before releasing: releasing raises "capture lost", which resets.
+        var changed = moving && fromIndex != toIndex;
         var order = Enumerable.Range(0, Rows.Count).ToList();
         order.RemoveAt(fromIndex);
         order.Insert(toIndex, fromIndex);
         Reset();
-        if (wasMoving && fromIndex != toIndex)
+        panel.ReleasePointerCapture(args.Pointer);
+        if (changed)
         {
             reordered(order);
         }
