@@ -29,6 +29,27 @@ public sealed class WidgetRendererTests : IDisposable
         Assert.Equal((int)Math.Round(40 * scale), bitmap.Height);
     }
 
+    [Fact]
+    public void Draws_extra_panels_beside_the_first()
+    {
+        var two = SampleContent with { MorePanels = [SampleContent] };
+
+        using var one = renderer.Render(SampleContent, WidgetPalette.DarkTaskbar, 1.0, false);
+        using var both = renderer.Render(two, WidgetPalette.DarkTaskbar, 1.0, false);
+
+        Assert.True(both.Width > one.Width * 2);
+        Assert.Equal(one.Height, both.Height);
+    }
+
+    [Fact]
+    public void Equal_panels_make_equal_content()
+    {
+        var first = SampleContent with { MorePanels = [SampleContent] };
+        var second = SampleContent with { MorePanels = [SampleContent with { }] };
+
+        Assert.Equal(first, second);
+    }
+
     [Theory]
     [InlineData(1.0)]
     [InlineData(1.5)]

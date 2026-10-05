@@ -16,6 +16,12 @@ public sealed record HakariSettings
 
     public WidgetLayout Widget { get; init; } = new();
 
+    public MultiAccountMode AccountsMode { get; init; } = MultiAccountMode.SideBySide;
+
+    /// <summary>Per-account layouts for side by side and take turns, keyed by account id.</summary>
+    public IReadOnlyDictionary<string, WidgetLayout> AccountLayouts { get; init; } =
+        new Dictionary<string, WidgetLayout>();
+
     /// <summary>Names the user gave accounts, keyed by account id.</summary>
     public IReadOnlyDictionary<string, string> AccountNicknames { get; init; } =
         new Dictionary<string, string>();
@@ -55,10 +61,18 @@ public sealed record HakariSettings
     /// <summary>True when the widget would word and lay out the same data the same way.</summary>
     public bool PresentsSameAs(HakariSettings other) =>
         Widget == other.Widget
+        && AccountsMode == other.AccountsMode
+        && AccountLayouts.Count == other.AccountLayouts.Count
+        && AccountLayouts.All(entry =>
+            other.AccountLayouts.TryGetValue(entry.Key, out var layout) && layout == entry.Value)
         && Language == other.Language
         && AccountNicknames.Count == other.AccountNicknames.Count
         && AccountNicknames.All(entry =>
             other.AccountNicknames.TryGetValue(entry.Key, out var name) && name == entry.Value);
+
+    /// <summary>The account's own layout, else the shared one.</summary>
+    public WidgetLayout LayoutOf(string accountId) =>
+        AccountLayouts.TryGetValue(accountId, out var layout) ? layout : Widget;
 
     public string? NicknameOf(string accountId) =>
         AccountNicknames.TryGetValue(accountId, out var name) && name.Length > 0 ? name : null;

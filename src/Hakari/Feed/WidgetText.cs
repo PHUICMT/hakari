@@ -1,6 +1,7 @@
 using Hakari.Core.Localization;
 using Hakari.Core.Presentation.Widget;
 using Hakari.Core.Querying;
+using Hakari.Core.Settings;
 using Hakari.Taskbar.Rendering;
 
 namespace Hakari.Feed;
@@ -16,23 +17,51 @@ internal static class WidgetText
     public static WidgetContent Paused =>
         new(ProductName, Texts.Get("widget.paused"), WidgetTone.Muted);
 
-    public static WidgetContent Build(
+    /// <summary>The database part: run on new data or every half minute, not every turn.</summary>
+    public static WidgetFacts Facts(
         UsageQuery query,
         LimitPoller limits,
-        WidgetLayout layout,
-        IReadOnlyDictionary<string, string> nicknames)
+        HakariSettings presentation)
     {
         var now = DateTimeOffset.Now;
-        var facts = new WidgetFacts(
-            CostToday: query.Total(new UsageFilter(From: TimePeriods.StartOfToday(now))).Cost,
-            CostThisMonth: query.Total(new UsageFilter(From: TimePeriods.StartOfMonth(now))).Cost,
-            CostLastHour: query.Total(new UsageFilter(From: now.AddHours(-1))).Cost,
+        var accounts = presentation.AccountsMode == MultiAccountMode.Together
+            ? limits.Accounts
+            : [.. limits.Accounts.Select(account => account with
+            {
+                Costs = CostsOf(query, account.AccountId, now),
+            })];
+        return new WidgetFacts(
+            CostToday: CostSince(query, TimePeriods.StartOfToday(now), null),
+            CostThisMonth: CostSince(query, TimePeriods.StartOfMonth(now), null),
+            CostLastHour: CostSince(query, now.AddHours(-1), null),
             Currency: query.Currency,
-            Accounts: limits.Accounts,
+            Accounts: accounts,
             FullAt: limits.FullAt,
-            Nicknames: nicknames);
-        return ToContent(WidgetComposer.Compose(layout, facts, now));
+            Nicknames: presentation.AccountNicknames);
     }
+
+    /// <summary>The cheap part: lays the facts out, such as for the next account's turn.</summary>
+    public static WidgetContent Content(WidgetFacts facts, HakariSettings presentation)
+    {
+        var now = DateTimeOffset.Now;
+        var panels = WidgetPanels.Compose(
+            presentation.AccountsMode,
+            presentation.Widget,
+            presentation.LayoutOf,
+            facts,
+            now);
+        var contents = panels.Select(ToContent).ToList();
+        return contents[0] with { MorePanels = contents.Count > 1 ? contents[1..] : null };
+    }
+
+    private static AccountCosts CostsOf(UsageQuery query, string accountId, DateTimeOffset now) =>
+        new(
+            CostSince(query, TimePeriods.StartOfToday(now), accountId),
+            CostSince(query, TimePeriods.StartOfMonth(now), accountId),
+            CostSince(query, now.AddHours(-1), accountId));
+
+    private static decimal CostSince(UsageQuery query, DateTimeOffset from, string? accountId) =>
+        query.Total(new UsageFilter(From: from, AccountId: accountId)).Cost;
 
     private static WidgetContent ToContent(ComposedWidget widget) => new(
         widget.Top.Text,

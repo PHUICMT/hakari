@@ -13,6 +13,12 @@ internal static class WidgetMetrics
     public const float RingStroke = 3f;
     public const float RingGap = 8f;
 
+    /// <summary>Space between blocks when each account has its own.</summary>
+    public const float PanelGap = 6f;
+
+    /// <summary>How far the divider between blocks stays from the top and bottom.</summary>
+    public const float DividerInset = 10f;
+
     /// <summary>Content never comes closer than this to any edge, even mid-animation.</summary>
     public const float MinimumInset = 2f;
 

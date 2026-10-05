@@ -125,11 +125,7 @@ public sealed partial class SettingsWindow
 
             return current with { AccountNicknames = names };
         });
-        previewFacts = previewFacts is null ? null : previewFacts with
-        {
-            Nicknames = updated.AccountNicknames,
-        };
-        ShowPreview(updated.Widget);
+        ShowPreview(updated);
     }
 
     private void OnRenewSignInClicked(object sender, RoutedEventArgs args) =>

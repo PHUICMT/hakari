@@ -36,8 +36,28 @@
                             <StackPanel Padding="16" Spacing="8" CornerRadius="8,8,0,0"
                                 Background="{ThemeResource HakariGroundBrush}">
                                 <TextBlock Text="{l:Text Key=settings.preview}" Style="{StaticResource HakariCaptionText}" />
-                                <controls:WidgetPreview x:Name="Preview" />
+                                <!-- One preview block per widget block; built in code -->
+                                <StackPanel x:Name="PreviewRow" Orientation="Horizontal" Spacing="6" />
                             </StackPanel>
+                            <controls:SettingRow Glyph="&#xE716;" Title="{l:Text Key=settings.accountsMode}"
+                                Description="{l:Text Key=settings.accountsMode.description}">
+                                <controls:HakariSegmented>
+                                    <controls:HakariSegment x:Name="ModeTogether" GroupName="AccountsMode"
+                                        Content="{l:Text Key=settings.accountsMode.together}"
+                                        Checked="OnAccountsModeChecked" />
+                                    <controls:HakariSegment x:Name="ModeSideBySide" GroupName="AccountsMode"
+                                        Content="{l:Text Key=settings.accountsMode.sideBySide}"
+                                        Checked="OnAccountsModeChecked" />
+                                    <controls:HakariSegment x:Name="ModeTakeTurns" GroupName="AccountsMode"
+                                        Content="{l:Text Key=settings.accountsMode.takeTurns}"
+                                        Checked="OnAccountsModeChecked" />
+                                </controls:HakariSegmented>
+                            </controls:SettingRow>
+                            <controls:SettingRow x:Name="LayoutTargetRow" Glyph="&#xE77B;"
+                                Title="{l:Text Key=settings.layoutFor}"
+                                Description="{l:Text Key=settings.layoutFor.description}">
+                                <controls:HakariSelect x:Name="LayoutTargetSelect" />
+                            </controls:SettingRow>
                             <controls:SettingRow Glyph="&#xE9D9;" Title="{l:Text Key=settings.ring}"
                                 Description="{l:Text Key=settings.ring.description}">
                                 <controls:HakariSegmented>

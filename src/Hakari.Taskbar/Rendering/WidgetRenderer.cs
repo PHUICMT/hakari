@@ -37,6 +37,71 @@ public sealed class WidgetRenderer : IDisposable
     /// <summary>Draws one frame into a premultiplied-alpha bitmap the caller disposes.</summary>
     public Bitmap Render(WidgetFrame frame, WidgetPalette palette, double scale)
     {
+        var current = frame.Current.Panels;
+        if (current.Count == 1)
+        {
+            return RenderPanel(frame, palette, scale);
+        }
+
+        var previous = frame.Previous?.Panels;
+        var panels = current
+            .Select((panel, index) => RenderPanel(
+                frame with
+                {
+                    Current = panel,
+                    Previous = previous is not null && index < previous.Count
+                        ? previous[index]
+                        : null,
+                    HoverAmount = 0,
+                },
+                palette,
+                scale))
+            .ToList();
+        try
+        {
+            return Combine(panels, palette, scale, frame.HoverAmount);
+        }
+        finally
+        {
+            panels.ForEach(panel => panel.Dispose());
+        }
+    }
+
+    /// <summary>Blocks left to right with a faint divider between them, one shared hover.</summary>
+    private static Bitmap Combine(
+        List<Bitmap> panels,
+        WidgetPalette palette,
+        double scale,
+        double hoverAmount)
+    {
+        var gap = (float)(WidgetMetrics.PanelGap * scale);
+        var width = (int)Math.Ceiling(panels.Sum(panel => panel.Width) + gap * (panels.Count - 1));
+        var height = panels[0].Height;
+        var bitmap = new Bitmap(width, height, PixelFormat.Format32bppPArgb);
+        using var graphics = Graphics.FromImage(bitmap);
+        graphics.SmoothingMode = SmoothingMode.AntiAlias;
+        DrawBackground(graphics, palette, width, height, scale, hoverAmount);
+
+        var dividerInset = (float)(WidgetMetrics.DividerInset * scale);
+        using var dividerPen = new Pen(palette.RingTrack, (float)scale);
+        var left = 0f;
+        for (var index = 0; index < panels.Count; index++)
+        {
+            if (index > 0)
+            {
+                var middle = left - gap / 2;
+                graphics.DrawLine(dividerPen, middle, dividerInset, middle, height - dividerInset);
+            }
+
+            graphics.DrawImageUnscaled(panels[index], (int)Math.Round(left), 0);
+            left += panels[index].Width + gap;
+        }
+
+        return bitmap;
+    }
+
+    private Bitmap RenderPanel(WidgetFrame frame, WidgetPalette palette, double scale)
+    {
         EnsureFonts(scale);
         var lines = WidgetLines.From(frame);
         var primaryHeight = Measure(frame.Current.PrimaryText, primaryFont!).Height;

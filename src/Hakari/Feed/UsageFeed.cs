@@ -30,9 +30,7 @@ internal sealed class UsageFeed : IDisposable
     private readonly AutoResetEvent settingsSignal = new(initialState: false);
     private volatile bool settingsChanged;
     private volatile bool layoutChanged;
-    private volatile WidgetLayout layout = new();
-    private volatile IReadOnlyDictionary<string, string> nicknames =
-        new Dictionary<string, string>();
+    private volatile HakariSettings presentation = new();
     private ChangeTracker? changeTracker;
 
     public UsageFeed(SettingsStore settingsStore)
@@ -58,8 +56,7 @@ internal sealed class UsageFeed : IDisposable
     /// <summary>Thread-safe: redraws for a new layout, names or language.</summary>
     public void SetPresentation(HakariSettings settings)
     {
-        layout = settings.Widget;
-        nicknames = settings.AccountNicknames;
+        presentation = settings;
         layoutChanged = true;
         changeTracker?.Wake();
     }
@@ -81,8 +78,7 @@ internal sealed class UsageFeed : IDisposable
         {
             settingsChanged = false;
             var settings = settingsStore.Load();
-            layout = settings.Widget;
-            nicknames = settings.AccountNicknames;
+            presentation = settings;
             if (settings.Paused)
             {
                 Updated?.Invoke(WidgetText.Paused);
@@ -112,6 +108,8 @@ internal sealed class UsageFeed : IDisposable
         using var limits = new LimitPoller(store, sources, settings.RefreshSignInAutomatically);
         changeTracker = tracker;
         var lastPublished = DateTimeOffset.MinValue;
+        WidgetFacts? facts = null;
+        WidgetContent? lastPosted = null;
         var nextSourceCheck = DateTimeOffset.UtcNow + SourceCheckInterval;
 
         while (!cancellation.IsCancellationRequested && !settingsChanged)
@@ -136,15 +134,24 @@ internal sealed class UsageFeed : IDisposable
             var limitsChanged = limits.PollIfDue(now);
             Diagnostics.LimitPolls = limits.Polls;
             var due = now - lastPublished >= ContentRefreshInterval;
-            if (recordsChanged || limitsChanged || layoutChanged || due)
+            if (facts is null || recordsChanged || limitsChanged || layoutChanged || due)
             {
                 layoutChanged = false;
-                Updated?.Invoke(WidgetText.Build(query, limits, layout, nicknames));
+                facts = WidgetText.Facts(query, limits, presentation);
                 lastPublished = now;
             }
 
+            // Posting redraws every widget, so only a real change is posted.
+            var content = WidgetText.Content(facts, presentation);
+            if (content != lastPosted)
+            {
+                Updated?.Invoke(content);
+                lastPosted = content;
+            }
+
             var untilScan = tracker.TimeUntilNextScan();
-            var wait = untilScan < ContentRefreshInterval ? untilScan : ContentRefreshInterval;
+            var refresh = RefreshInterval(facts);
+            var wait = untilScan < refresh ? untilScan : refresh;
             tracker.WaitForWork(wait, cancellation.Token);
         }
 
@@ -167,6 +174,12 @@ internal sealed class UsageFeed : IDisposable
         var current = SourceDiscovery.Discover(options).Select(source => source.Id).Order();
         return !current.SequenceEqual(sources.Select(source => source.Id).Order());
     }
+
+    /// <summary>Wakes for the next account's turn only while there are turns to take.</summary>
+    private TimeSpan RefreshInterval(WidgetFacts facts) =>
+        presentation.AccountsMode == MultiAccountMode.TakeTurns && facts.Accounts.Count > 1
+            ? WidgetPanels.TurnLength
+            : ContentRefreshInterval;
 
     private void WaitForSettingsChange()
     {
