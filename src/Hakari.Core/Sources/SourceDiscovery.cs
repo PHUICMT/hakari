@@ -12,6 +12,7 @@ public static class SourceDiscovery
         var sources = new List<UsageSource>();
         AddWindowsSources(sources);
         AddWslSources(sources, options.WslMode);
+        AddExtraConfigDirectories(sources, ConfiguredElsewhere());
         AddExtraConfigDirectories(sources, options.ExtraConfigDirectories);
         return sources;
     }
@@ -67,7 +68,7 @@ public static class SourceDiscovery
     {
         foreach (var configDirectory in configDirectories)
         {
-            if (!ConfigDirectoryScanner.HasProjectsDirectory(configDirectory))
+            if (!ConfigDirectoryScanner.IsConfigDirectory(configDirectory))
             {
                 continue;
             }
@@ -80,6 +81,19 @@ public static class SourceDiscovery
                 ConfigDirectory: fullPath));
         }
     }
+
+    /// <summary>
+    /// A config folder set with CLAUDE_CONFIG_DIR for this user or machine, which can live
+    /// anywhere, not only in the home folder.
+    /// </summary>
+    private static IEnumerable<string> ConfiguredElsewhere() =>
+        new[] { EnvironmentVariableTarget.Process, EnvironmentVariableTarget.User,
+            EnvironmentVariableTarget.Machine }
+            .Select(target => Environment.GetEnvironmentVariable(
+                ClaudeConfigNames.ConfigDirectoryVariable,
+                target))
+            .OfType<string>()
+            .Where(directory => directory.Length > 0 && Path.IsPathFullyQualified(directory));
 
     private static void AddUnique(List<UsageSource> sources, UsageSource candidate)
     {

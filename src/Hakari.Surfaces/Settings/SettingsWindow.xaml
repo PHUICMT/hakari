@@ -105,8 +105,7 @@
                     <TextBlock Text="{l:Text Key=settings.accounts}" Style="{StaticResource HakariSectionText}" />
                     <Border Style="{StaticResource HakariCard}">
                         <StackPanel>
-                            <StackPanel x:Name="AccountList" />
-                            <controls:SettingRow Glyph="&#xE72C;" Title="{l:Text Key=settings.renew}"
+                            <StackPanel x:Name="AccountList" />                            <controls:SettingRow Glyph="&#xE72C;" Title="{l:Text Key=settings.renew}"
                                 Description="{l:Text Key=settings.renew.description}">
                                 <controls:HakariToggle x:Name="RenewSignInToggle" Click="OnRenewSignInClicked" />
                             </controls:SettingRow>

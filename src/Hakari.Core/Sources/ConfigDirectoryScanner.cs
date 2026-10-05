@@ -8,7 +8,7 @@ internal static class ConfigDirectoryScanner
         {
             return Directory
                 .EnumerateDirectories(homeDirectory, ClaudeConfigNames.ConfigDirectorySearchPattern)
-                .Where(HasProjectsDirectory)
+                .Where(IsConfigDirectory)
                 .Order(StringComparer.OrdinalIgnoreCase)
                 .ToList();
         }
@@ -17,6 +17,14 @@ internal static class ConfigDirectoryScanner
             return [];
         }
     }
+
+    /// <summary>
+    /// Has session logs, or is signed in and simply not used yet, so a newly added account
+    /// shows up before its first session.
+    /// </summary>
+    public static bool IsConfigDirectory(string configDirectory) =>
+        HasProjectsDirectory(configDirectory)
+        || File.Exists(Path.Combine(configDirectory, ClaudeConfigNames.CredentialsFileName));
 
     public static bool HasProjectsDirectory(string configDirectory)
     {
