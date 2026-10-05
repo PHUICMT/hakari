@@ -283,8 +283,9 @@
         </Setter>
     </Style>
 
-    <!-- Segmented control: a framed row of HakariSegment choices -->
-    <Style x:Key="HakariSegmentedFrame" TargetType="Border">
+    <!-- Segmented control: a framed row of HakariSegment choices over a sliding indicator -->
+    <Style TargetType="controls:HakariSegmented">
+        <Setter Property="ColumnSpacing" Value="2" />
         <Setter Property="Padding" Value="2" />
         <Setter Property="CornerRadius" Value="{StaticResource HakariControlRadius}" />
         <Setter Property="Background" Value="{ThemeResource HakariGroundBrush}" />
@@ -301,11 +302,11 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="controls:HakariSegment">
-                    <Grid x:Name="Root" Background="Transparent">
+                    <Grid x:Name="Root" Background="Transparent" RenderTransformOrigin="0.5,0.5">
+                        <Grid.RenderTransform>
+                            <ScaleTransform x:Name="PressScale" ScaleX="1" ScaleY="1" />
+                        </Grid.RenderTransform>
                         <Border x:Name="StateFill" CornerRadius="3" Background="Transparent" />
-                        <Border x:Name="Pill" CornerRadius="3" Opacity="0" BorderThickness="1"
-                            Background="{ThemeResource HakariTileBrush}"
-                            BorderBrush="{ThemeResource HakariLineBrush}" />
                         <ContentPresenter x:Name="Text" Padding="{TemplateBinding Padding}"
                             HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
                             Foreground="{TemplateBinding Foreground}" FontSize="{TemplateBinding FontSize}"
@@ -316,13 +317,13 @@
                                 <VisualState x:Name="PointerOver">
                                     <VisualState.Setters>
                                         <Setter Target="StateFill.Background" Value="{ThemeResource HakariHoverBrush}" />
-                                        <Setter Target="Text.Foreground" Value="{ThemeResource HakariInkBrush}" />
                                     </VisualState.Setters>
                                 </VisualState>
                                 <VisualState x:Name="Pressed">
                                     <VisualState.Setters>
                                         <Setter Target="StateFill.Background" Value="{ThemeResource HakariPressedBrush}" />
-                                        <Setter Target="Text.Foreground" Value="{ThemeResource HakariInkBrush}" />
+                                        <Setter Target="PressScale.ScaleX" Value="0.95" />
+                                        <Setter Target="PressScale.ScaleY" Value="0.95" />
                                     </VisualState.Setters>
                                 </VisualState>
                                 <VisualState x:Name="Disabled">
@@ -334,7 +335,7 @@
                             <VisualStateGroup x:Name="CheckStates">
                                 <VisualState x:Name="Checked">
                                     <VisualState.Setters>
-                                        <Setter Target="Text.Foreground" Value="{ThemeResource HakariInkBrush}" />
+                                        <Setter Target="Text.Foreground" Value="{ThemeResource HakariOnAccentBrush}" />
                                     </VisualState.Setters>
                                 </VisualState>
                                 <VisualState x:Name="Unchecked" />

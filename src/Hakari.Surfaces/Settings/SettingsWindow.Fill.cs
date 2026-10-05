@@ -167,7 +167,7 @@ public sealed partial class SettingsWindow
     private void SelectCurrency(string currency)
     {
         var isCommon = false;
-        foreach (var choice in CurrencyChoices.Children.OfType<HakariSegment>())
+        foreach (var choice in CurrencyChoices.Choices)
         {
             var matches = string.Equals(
                 choice.Tag as string,

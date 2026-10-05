@@ -24,7 +24,8 @@
                 Foreground="{ThemeResource HakariInkMutedBrush}" VerticalAlignment="Center" />
         </Grid>
 
-        <ScrollViewer Grid.Row="1" HorizontalScrollMode="Disabled" HorizontalScrollBarVisibility="Disabled">
+        <ScrollViewer x:Name="Scroller" Grid.Row="1" IsTabStop="True"
+            HorizontalScrollMode="Disabled" HorizontalScrollBarVisibility="Disabled">
             <StackPanel x:Name="Sections" MaxWidth="720" Padding="24,0,24,28">
 
                 <!-- Sources -->
@@ -34,16 +35,14 @@
                         <StackPanel>
                             <controls:SettingRow Glyph="&#xE756;" Title="WSL distributions" BorderThickness="0"
                                 Description="Running only never starts a stopped distribution. All can start one, which costs memory.">
-                                <Border Style="{StaticResource HakariSegmentedFrame}">
-                                    <StackPanel Orientation="Horizontal" Spacing="2">
-                                        <controls:HakariSegment x:Name="WslOff" GroupName="Wsl" Content="Off"
-                                            Checked="OnWslChecked" />
-                                        <controls:HakariSegment x:Name="WslRunningOnly" GroupName="Wsl"
-                                            Content="Running only" Checked="OnWslChecked" />
-                                        <controls:HakariSegment x:Name="WslAll" GroupName="Wsl" Content="All"
-                                            Checked="OnWslChecked" />
-                                    </StackPanel>
-                                </Border>
+                                <controls:HakariSegmented>
+                                    <controls:HakariSegment x:Name="WslOff" GroupName="Wsl" Content="Off"
+                                        Checked="OnWslChecked" />
+                                    <controls:HakariSegment x:Name="WslRunningOnly" GroupName="Wsl"
+                                        Content="Running only" Checked="OnWslChecked" />
+                                    <controls:HakariSegment x:Name="WslAll" GroupName="Wsl" Content="All"
+                                        Checked="OnWslChecked" />
+                                </controls:HakariSegmented>
                             </controls:SettingRow>
                             <controls:SettingRow Glyph="&#xE8B7;" Title="Extra config folders"
                                 Description="For accounts kept in another CLAUDE_CONFIG_DIR.">
@@ -84,25 +83,21 @@
                             </controls:SettingRow>
                             <controls:SettingRow Glyph="&#xE768;" Title="Animations"
                                 Description="Off uses the least power. Reduced keeps only short fades.">
-                                <Border Style="{StaticResource HakariSegmentedFrame}">
-                                    <StackPanel Orientation="Horizontal" Spacing="2">
-                                        <controls:HakariSegment x:Name="MotionFollow" GroupName="Motion"
-                                            Content="Windows" Checked="OnMotionChecked" />
-                                        <controls:HakariSegment x:Name="MotionFull" GroupName="Motion"
-                                            Content="Full" Checked="OnMotionChecked" />
-                                        <controls:HakariSegment x:Name="MotionReduced" GroupName="Motion"
-                                            Content="Reduced" Checked="OnMotionChecked" />
-                                        <controls:HakariSegment x:Name="MotionOff" GroupName="Motion"
-                                            Content="Off" Checked="OnMotionChecked" />
-                                    </StackPanel>
-                                </Border>
+                                <controls:HakariSegmented>
+                                    <controls:HakariSegment x:Name="MotionFollow" GroupName="Motion"
+                                        Content="Windows" Checked="OnMotionChecked" />
+                                    <controls:HakariSegment x:Name="MotionFull" GroupName="Motion"
+                                        Content="Full" Checked="OnMotionChecked" />
+                                    <controls:HakariSegment x:Name="MotionReduced" GroupName="Motion"
+                                        Content="Reduced" Checked="OnMotionChecked" />
+                                    <controls:HakariSegment x:Name="MotionOff" GroupName="Motion"
+                                        Content="Off" Checked="OnMotionChecked" />
+                                </controls:HakariSegmented>
                             </controls:SettingRow>
                             <controls:SettingRow Glyph="&#xE8C7;" Title="Currency"
                                 Description="Amounts are API-equivalent prices, converted from US dollars.">
                                 <StackPanel Orientation="Horizontal" Spacing="8">
-                                    <Border Style="{StaticResource HakariSegmentedFrame}">
-                                        <StackPanel x:Name="CurrencyChoices" Orientation="Horizontal" Spacing="2" />
-                                    </Border>
+                                    <controls:HakariSegmented x:Name="CurrencyChoices" />
                                     <TextBox x:Name="OtherCurrencyBox" Width="64" MaxLength="3"
                                         CharacterCasing="Upper" Style="{StaticResource HakariTextBox}"
                                         ToolTipService.ToolTip="Any other currency code, such as SGD"
@@ -111,14 +106,12 @@
                             </controls:SettingRow>
                             <controls:SettingRow Glyph="&#xE774;" Title="Exchange rate"
                                 Description="European Central Bank rates, fetched at most once a day.">
-                                <Border Style="{StaticResource HakariSegmentedFrame}">
-                                    <StackPanel Orientation="Horizontal" Spacing="2">
-                                        <controls:HakariSegment x:Name="RateUsageDay" GroupName="Rate"
-                                            Content="Day of use" Checked="OnRateChecked" />
-                                        <controls:HakariSegment x:Name="RateLatest" GroupName="Rate"
-                                            Content="Latest" Checked="OnRateChecked" />
-                                    </StackPanel>
-                                </Border>
+                                <controls:HakariSegmented>
+                                    <controls:HakariSegment x:Name="RateUsageDay" GroupName="Rate"
+                                        Content="Day of use" Checked="OnRateChecked" />
+                                    <controls:HakariSegment x:Name="RateLatest" GroupName="Rate"
+                                        Content="Latest" Checked="OnRateChecked" />
+                                </controls:HakariSegmented>
                             </controls:SettingRow>
                             <controls:SettingRow Glyph="&#xE769;" Title="Pause updates"
                                 Description="Stops reading logs and checking limits until you turn it back on.">

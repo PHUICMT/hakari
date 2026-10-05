@@ -52,6 +52,9 @@ public sealed partial class SettingsWindow : Window
             PlaceOnPrimaryDisplay();
             PrepareEntrance();
             Activate();
+
+            // Without this the first choice gets keyboard focus and its focus frame.
+            Scroller.Focus(FocusState.Programmatic);
             PlayEntrance();
         }
         else
