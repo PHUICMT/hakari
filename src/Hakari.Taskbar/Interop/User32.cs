@@ -141,6 +141,33 @@ internal static class User32
     [DllImport(Library)]
     public static extern IntPtr GetWindow(IntPtr windowHandle, uint relationship);
 
+    [DllImport(Library)]
+    public static extern IntPtr CreatePopupMenu();
+
+    [DllImport(Library, CharSet = CharSet.Unicode)]
+    public static extern bool AppendMenu(IntPtr menu, uint flags, IntPtr itemId, string? text);
+
+    [DllImport(Library)]
+    public static extern bool DestroyMenu(IntPtr menu);
+
+    [DllImport(Library)]
+    public static extern uint TrackPopupMenuEx(
+        IntPtr menu,
+        uint flags,
+        int x,
+        int y,
+        IntPtr windowHandle,
+        IntPtr parameters);
+
+    [DllImport(Library)]
+    public static extern bool SetForegroundWindow(IntPtr windowHandle);
+
+    [DllImport(Library)]
+    public static extern bool GetCursorPos(out NativePoint point);
+
+    [DllImport(Library)]
+    public static extern bool DestroyIcon(IntPtr icon);
+
     [DllImport(Library, SetLastError = true)]
     public static extern bool SystemParametersInfo(
         uint action,

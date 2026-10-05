@@ -29,7 +29,7 @@ public sealed class TaskbarWidgetHost : IDisposable
     private static readonly IntPtr ThemeSettleTimerId = new(2);
     private static readonly IntPtr AnimationTimerId = new(3);
 
-    private readonly TaskbarWidgetHostOptions options;
+    private TaskbarWidgetHostOptions options;
     private readonly WidgetRenderer renderer = new();
     private readonly TaskbarLayoutMonitor layoutMonitor = new();
     private readonly List<WidgetWindow> widgets = [];
@@ -79,6 +79,27 @@ public sealed class TaskbarWidgetHost : IDisposable
             return $"{name}: {widget.Describe()}";
         }),
     ];
+
+    /// <summary>Applies a new animation choice; null follows Windows.</summary>
+    public void SetMotion(MotionPreference? preference)
+    {
+        options = options with { Motion = preference };
+        motion = ResolveMotion();
+    }
+
+    /// <summary>Adds or removes the widgets on secondary displays.</summary>
+    public void SetShowOnSecondaryTaskbars(bool show)
+    {
+        options = options with { ShowOnSecondaryTaskbars = show };
+        foreach (var widget in widgets.Where(widget => !show && !widget.Target.IsPrimary).ToList())
+        {
+            widget.Dispose();
+            widgets.Remove(widget);
+            states.Remove(widget);
+        }
+
+        SynchronizeWidgets(renderAll: true);
+    }
 
     /// <summary>Thread-safe: queues new content and wakes the widget thread.</summary>
     public void PostContent(WidgetContent newContent)

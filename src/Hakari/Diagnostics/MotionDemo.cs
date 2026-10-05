@@ -1,6 +1,6 @@
 using Hakari.Taskbar.Rendering;
 
-namespace Hakari.TaskbarSpike;
+namespace Hakari.Diagnostics;
 
 /// <summary>Sample values that walk through every tone, to judge motion at real size.</summary>
 internal sealed class MotionDemo : IDisposable

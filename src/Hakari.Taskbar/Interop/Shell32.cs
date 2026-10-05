@@ -8,4 +8,7 @@ internal static class Shell32
 
     [DllImport(Library)]
     public static extern int SHQueryUserNotificationState(out int state);
+
+    [DllImport(Library, CharSet = CharSet.Unicode)]
+    public static extern bool Shell_NotifyIcon(uint message, ref NotifyIconData data);
 }

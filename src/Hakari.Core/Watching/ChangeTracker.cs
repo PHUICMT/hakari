@@ -42,6 +42,18 @@ public sealed class ChangeTracker : IDisposable
     public static bool IsWatchable(UsageSource source) =>
         !source.ProjectsDirectory.StartsWith(NetworkPathPrefix, StringComparison.Ordinal);
 
+    /// <summary>Ends a <see cref="WaitForWork"/> early, such as after a settings change.</summary>
+    public void Wake()
+    {
+        try
+        {
+            wakeUp.Set();
+        }
+        catch (ObjectDisposedException)
+        {
+        }
+    }
+
     /// <summary>Blocks until something may need indexing, or the timeout passes.</summary>
     public void WaitForWork(TimeSpan timeout, CancellationToken cancellationToken) =>
         WaitHandle.WaitAny([wakeUp, cancellationToken.WaitHandle], timeout);

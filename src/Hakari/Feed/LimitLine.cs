@@ -2,7 +2,7 @@ using System.Globalization;
 using Hakari.Core.Limits;
 using Hakari.Taskbar.Rendering;
 
-namespace Hakari.TaskbarSpike;
+namespace Hakari.Feed;
 
 /// <summary>Turns the most pressing limit into the widget's second line.</summary>
 internal static class LimitLine

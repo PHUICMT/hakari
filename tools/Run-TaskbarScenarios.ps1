@@ -1,7 +1,7 @@
-# Runs the taskbar spike through every scenario and saves a screenshot of each taskbar.
+# Runs Hakari through every taskbar scenario and saves a screenshot of each taskbar.
 # Every setting it changes is restored before the next scenario starts.
 param(
-    [string] $OutputDirectory = (Join-Path $PSScriptRoot 'bin\scenarios')
+    [string] $OutputDirectory = (Join-Path $PSScriptRoot '..\artifacts\scenarios')
 )
 
 $ErrorActionPreference = 'Stop'
@@ -57,7 +57,7 @@ public static class ScenarioNative
 }
 '@
 
-$spike = Join-Path $PSScriptRoot 'bin\Release\net9.0-windows10.0.19041.0\Hakari.TaskbarSpike.exe'
+$spike = Join-Path $PSScriptRoot '..\src\Hakari\bin\Release\net9.0-windows10.0.19041.0\Hakari.exe'
 New-Item -ItemType Directory -Force $OutputDirectory | Out-Null
 $advancedKey = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced'
 $personalizeKey = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize'
@@ -106,9 +106,9 @@ if ([ScenarioNative]::GetAutoHide() -ne 0 -or (Get-SavedAutoHide) -ne $autoHideO
     throw 'Auto-hide is already on; refusing to run so the results are not misleading.'
 }
 
-$log = Join-Path $OutputDirectory 'spike.log'
-$spikeProcess = Start-Process -FilePath $spike -ArgumentList '--report-seconds', '5' `
-    -RedirectStandardOutput $log -PassThru -WindowStyle Hidden
+$log = Join-Path $env:LOCALAPPDATA 'Hakari\diagnostics.log'
+$spikeProcess = Start-Process -FilePath $spike -ArgumentList '--diagnostics', '--report-seconds', '5' `
+    -PassThru
 
 try {
     Start-Sleep -Seconds 10

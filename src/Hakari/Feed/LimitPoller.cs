@@ -3,7 +3,7 @@ using Hakari.Core.Indexing;
 using Hakari.Core.Limits;
 using Hakari.Core.Sources;
 
-namespace Hakari.TaskbarSpike;
+namespace Hakari.Feed;
 
 /// <summary>
 /// Asks for limits often while Claude Code is in use and rarely while idle, so an idle PC
@@ -23,7 +23,10 @@ internal sealed class LimitPoller : IDisposable
     private DateTimeOffset nextPoll = DateTimeOffset.MinValue;
     private DateTimeOffset lastUsage = DateTimeOffset.MinValue;
 
-    public LimitPoller(IndexStore store, IReadOnlyList<UsageSource> sources)
+    public LimitPoller(
+        IndexStore store,
+        IReadOnlyList<UsageSource> sources,
+        bool refreshSignInAutomatically)
     {
         this.sources = sources;
         accountTracker = new AccountTracker(new AccountRepository(store), TimeProvider.System);
@@ -31,7 +34,7 @@ internal sealed class LimitPoller : IDisposable
             new UsageLimitClient(httpClient, TimeProvider.System),
             new LimitCache(store),
             new ClaudeCodeActivity(),
-            LimitServiceOptions.Default,
+            new LimitServiceOptions(refreshSignInAutomatically),
             TimeProvider.System);
     }
 

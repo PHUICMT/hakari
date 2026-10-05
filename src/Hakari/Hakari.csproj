@@ -1,15 +1,19 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
+    <OutputType>WinExe</OutputType>
     <TargetFramework>net9.0-windows10.0.19041.0</TargetFramework>
     <SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <AssemblyName>Hakari</AssemblyName>
+    <!-- One collector thread instead of a concurrent background one: less memory, idle app -->
+    <ConcurrentGarbageCollection>false</ConcurrentGarbageCollection>
+    <TieredPGO>true</TieredPGO>
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Hakari.Taskbar\Hakari.Taskbar.csproj" />
-    <ProjectReference Include="..\..\src\Hakari.Core\Hakari.Core.csproj" />
+    <ProjectReference Include="..\Hakari.Core\Hakari.Core.csproj" />
+    <ProjectReference Include="..\Hakari.Taskbar\Hakari.Taskbar.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -3,14 +3,27 @@
 ```
 hakari/
 ├─ src/
-│  ├─ Hakari.Core/        # net9.0 lib — no UI. Parsing, index, pricing, aggregation, sources, sync
-│  ├─ Hakari.App/         # WinUI 3 app (MSIX) — taskbar overlay, flyout, dashboard, settings, toasts
-│  ├─ Hakari.Cli/         # dev/verification CLI: `hakari scan`, `hakari report --by model`
-│  └─ Hakari.SyncAgent/   # tiny cross-platform agent (Mac/Linux) → writes machine snapshot to shared folder
-├─ tests/Hakari.Core.Tests/
+│  ├─ Hakari.Core/        # net9.0, no UI: parsing, index, pricing, currency, accounts, limits
+│  ├─ Hakari.Taskbar/     # Win32: taskbar widgets, tray icon, motion, UI Automation layout
+│  ├─ Hakari/             # Hakari.exe, always running: widgets + tray + background feed
+│  ├─ Hakari.Surfaces/    # (next) WinUI 3: flyout, dashboard, settings; started on demand
+│  ├─ Hakari.Cli/         # dev/verification CLI: sources, index, report, limits
+│  └─ Hakari.SyncAgent/   # (later) Mac/Linux agent writing machine snapshots to a shared folder
+├─ tests/Hakari.Core.Tests/, tests/Hakari.Taskbar.Tests/
+├─ tools/Run-TaskbarScenarios.ps1   # Explorer restart, auto-hide, theme… with screenshots
 ├─ data/pricing.json      # bundled price table (also served raw from GitHub for remote update)
 └─ docs/
 ```
+
+## Two processes
+
+An empty WinUI 3 window costs about 110 MB, more than the whole always-running part. So:
+
+- **Hakari.exe** stays resident with no WinUI: widgets, tray icon, indexing and limit polling
+  (idle ≈ 0.01% CPU, ≈ 95 MB).
+- **Hakari.Surfaces.exe** is a WinUI 3 process started when a flyout, dashboard or settings
+  window opens, and it exits a while after its last window closes. Warm start ≈ 150 ms, first
+  start after boot ≈ 1.2 s. It reads the same SQLite index (WAL allows concurrent readers).
 
 ## Core pipeline
 
