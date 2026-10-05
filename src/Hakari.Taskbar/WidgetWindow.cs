@@ -41,6 +41,9 @@ internal sealed class WidgetWindow : IDisposable
 
     public Size RenderedSize { get; private set; }
 
+    /// <summary>Where the widget was last placed, in screen pixels.</summary>
+    public Rectangle ScreenBounds => lastPlacement;
+
     /// <summary>Zero until the first render, so a new widget always gets drawn.</summary>
     public uint RenderedDpi { get; private set; }
 

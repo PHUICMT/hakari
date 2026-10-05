@@ -1,0 +1,133 @@
+<Window
+    x:Class="Hakari.Surfaces.Flyout.FlyoutWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:Hakari.Surfaces.Flyout"
+    Title="Hakari">
+
+    <Grid x:Name="Root" Background="{ThemeResource HakariSurfaceBrush}" Opacity="0">
+        <Grid.RenderTransform>
+            <TranslateTransform x:Name="RootOffset" Y="0" />
+        </Grid.RenderTransform>
+        <Grid.KeyboardAccelerators>
+            <KeyboardAccelerator Key="Escape" Invoked="OnEscapeInvoked" />
+        </Grid.KeyboardAccelerators>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <StackPanel x:Name="Body" Padding="16" Spacing="16">
+            <!-- Header -->
+            <Grid ColumnSpacing="8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="秤" FontFamily="{StaticResource HakariBrandFont}" FontSize="20"
+                    FontWeight="Bold" Foreground="{ThemeResource HakariAccentBrush}"
+                    VerticalAlignment="Center" />
+                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                    <TextBlock Text="Hakari" FontWeight="SemiBold" Foreground="{ThemeResource HakariInkBrush}" />
+                    <TextBlock x:Name="AccountText" Style="{StaticResource HakariCaptionText}" />
+                </StackPanel>
+                <TextBlock x:Name="UpdatedText" Grid.Column="2" Style="{StaticResource HakariCaptionText}"
+                    VerticalAlignment="Center" />
+            </Grid>
+
+            <!-- Notice (last known limits) -->
+            <Border x:Name="NoticeCard" Visibility="Collapsed" Padding="10,8"
+                CornerRadius="{StaticResource HakariControlRadius}"
+                Background="{ThemeResource HakariTileBrush}" BorderBrush="{ThemeResource HakariLineBrush}"
+                BorderThickness="1">
+                <TextBlock x:Name="NoticeText" Style="{StaticResource HakariLabelText}" TextWrapping="Wrap"
+                    TextTrimming="None" />
+            </Border>
+
+            <!-- Limits -->
+            <ItemsControl x:Name="LimitList">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel Spacing="12" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="local:LimitRow">
+                        <StackPanel Spacing="6">
+                            <Grid>
+                                <TextBlock Text="{x:Bind Name}" Style="{StaticResource HakariLabelText}" />
+                                <TextBlock Text="{x:Bind Value}" HorizontalAlignment="Right"
+                                    Style="{StaticResource HakariValueText}"
+                                    Foreground="{x:Bind local:FlyoutBrushes.ForTone(Tone)}" />
+                            </Grid>
+                            <Border Height="6" CornerRadius="3" Background="{ThemeResource HakariLineBrush}">
+                                <Border x:Name="MeterFill" CornerRadius="3" RenderTransformOrigin="0,0.5"
+                                    Background="{x:Bind local:FlyoutBrushes.ForTone(Tone)}"
+                                    Tag="{x:Bind Fraction}">
+                                    <Border.RenderTransform>
+                                        <ScaleTransform ScaleX="{x:Bind Fraction}" ScaleY="1" />
+                                    </Border.RenderTransform>
+                                </Border>
+                            </Border>
+                            <TextBlock Text="{x:Bind ResetText}" Style="{StaticResource HakariCaptionText}" />
+                        </StackPanel>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <!-- Money: three equal columns that share the width, so nothing is clipped -->
+            <Grid x:Name="StatGrid" ColumnSpacing="8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+            </Grid>
+
+            <!-- Burn rate -->
+            <Grid>
+                <TextBlock Text="Burn rate · last hour" Style="{StaticResource HakariLabelText}" />
+                <TextBlock x:Name="BurnText" HorizontalAlignment="Right" FontWeight="SemiBold"
+                    Foreground="{ThemeResource HakariInkBrush}" />
+            </Grid>
+
+            <!-- Sources -->
+            <ItemsControl x:Name="SourceList">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel Spacing="6" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="local:SourceRow">
+                        <Grid ColumnSpacing="8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="8" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <Ellipse Width="8" Height="8"
+                                Fill="{x:Bind local:FlyoutBrushes.ForSource(IsRecent)}" />
+                            <TextBlock Grid.Column="1" Text="{x:Bind Name}" Style="{StaticResource HakariLabelText}" />
+                            <TextBlock Grid.Column="2" Text="{x:Bind Detail}" Style="{StaticResource HakariCaptionText}" />
+                        </Grid>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </StackPanel>
+
+        <!-- Footer -->
+        <Grid x:Name="Footer" Grid.Row="1" Padding="16,10" ColumnSpacing="8" Background="{ThemeResource HakariTileBrush}"
+            BorderBrush="{ThemeResource HakariLineBrush}" BorderThickness="0,1,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <Button Content="Settings" Style="{StaticResource HakariButton}" Click="OnSettingsClicked" />
+            <Button Grid.Column="2" Content="Close" Style="{StaticResource HakariSubtleButton}"
+                Click="OnCloseClicked" />
+        </Grid>
+    </Grid>
+</Window>

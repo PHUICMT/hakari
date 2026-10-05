@@ -1,5 +1,7 @@
+using Hakari.Core.Interprocess;
 using Hakari.Core.Settings;
 using Hakari.Feed;
+using Hakari.Surfaces;
 using Hakari.Taskbar;
 using Hakari.Taskbar.Motion;
 using Hakari.Taskbar.Tray;
@@ -38,6 +40,28 @@ internal sealed class ResidentApp : IDisposable
 
         menu.QuitRequested += (_, _) => MessageLoop.Quit();
         widgets.RightClicked += (_, _) => trayIcon.ShowMenu();
+        widgets.Clicked += (_, click) =>
+            OpenFlyout(click.WidgetBounds.Right, click.TaskbarBounds.Top);
+        trayIcon.Selected += (_, _) => OpenFlyoutAtWidget();
+    }
+
+    /// <summary>
+    /// Off the widget thread: connecting to the window process can wait up to 150 ms, and the
+    /// widget thread shares its input queue with Explorer.
+    /// </summary>
+    private static void OpenFlyout(int anchorX, int anchorY)
+    {
+        ForegroundPermission.GrantForNextWindow();
+        var command = new SurfaceCommand(SurfaceKind.Flyout, anchorX, anchorY);
+        Task.Run(() => SurfacesLauncher.Show(command));
+    }
+
+    private void OpenFlyoutAtWidget()
+    {
+        if (widgets.PrimaryWidgetAnchor() is { } anchor)
+        {
+            OpenFlyout(anchor.X, anchor.Y);
+        }
     }
 
     public TaskbarWidgetHost Widgets => widgets;

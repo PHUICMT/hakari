@@ -163,6 +163,9 @@ internal static class User32
     public static extern bool SetForegroundWindow(IntPtr windowHandle);
 
     [DllImport(Library)]
+    public static extern bool AllowSetForegroundWindow(int processId);
+
+    [DllImport(Library)]
     public static extern bool GetCursorPos(out NativePoint point);
 
     [DllImport(Library)]

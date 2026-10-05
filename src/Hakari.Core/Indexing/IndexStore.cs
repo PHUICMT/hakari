@@ -16,6 +16,27 @@ public sealed class IndexStore : IDisposable
         MigrateSchema();
     }
 
+    private IndexStore(SqliteConnection readOnlyConnection) => Connection = readOnlyConnection;
+
+    /// <summary>
+    /// For the window process: reads while Hakari.exe writes (WAL), never changes the schema,
+    /// and waits briefly instead of failing when a write is in progress.
+    /// </summary>
+    public static IndexStore OpenReadOnly(string databasePath)
+    {
+        var builder = new SqliteConnectionStringBuilder
+        {
+            DataSource = databasePath,
+            Mode = SqliteOpenMode.ReadOnly,
+            DefaultTimeout = ReadOnlyBusyTimeoutSeconds,
+        };
+        var connection = new SqliteConnection(builder.ToString());
+        connection.Open();
+        return new IndexStore(connection);
+    }
+
+    private const int ReadOnlyBusyTimeoutSeconds = 2;
+
     public SqliteConnection Connection { get; }
 
     public void DeleteAll() => Execute(IndexSchema.DeleteAll);

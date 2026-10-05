@@ -58,7 +58,7 @@ public sealed class TaskbarWidgetHost : IDisposable
         User32.SetTimer(hostHandle, PlacementTimerId, PlacementTimerInterval, IntPtr.Zero);
     }
 
-    public event EventHandler? Clicked;
+    public event EventHandler<WidgetClickedEventArgs>? Clicked;
 
     public event EventHandler? RightClicked;
 
@@ -202,10 +202,29 @@ public sealed class TaskbarWidgetHost : IDisposable
     private WidgetWindow CreateWidget(TaskbarTarget target, IntPtr taskbarHandle)
     {
         var widget = WidgetWindow.Create(target, taskbarHandle, options.Mode);
-        widget.Clicked += (_, _) => Clicked?.Invoke(this, EventArgs.Empty);
+        widget.Clicked += (_, _) => RaiseClicked(widget);
         widget.RightClicked += (_, _) => RightClicked?.Invoke(this, EventArgs.Empty);
         widget.HoverChanged += (_, _) => StartHoverTransition(widget);
         return widget;
+    }
+
+    /// <summary>Right edge of the primary widget on its taskbar's top, for tray clicks.</summary>
+    public System.Drawing.Point? PrimaryWidgetAnchor()
+    {
+        var widget = widgets.FirstOrDefault(candidate => candidate.Target.IsPrimary);
+        var taskbar = widget is null ? null : TaskbarLocator.Describe(widget.Target, layoutMonitor);
+        return widget is null || taskbar is null
+            ? null
+            : new System.Drawing.Point(widget.ScreenBounds.Right, taskbar.Bounds.Top);
+    }
+
+    private void RaiseClicked(WidgetWindow widget)
+    {
+        var taskbar = TaskbarLocator.Describe(widget.Target, layoutMonitor);
+        if (taskbar is not null)
+        {
+            Clicked?.Invoke(this, new WidgetClickedEventArgs(widget.ScreenBounds, taskbar.Bounds));
+        }
     }
 
     /// <summary>Samples the taskbar's color again, then draws the current frame.</summary>
