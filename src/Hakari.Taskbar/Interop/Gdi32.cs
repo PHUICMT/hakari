@@ -17,4 +17,10 @@ internal static class Gdi32
 
     [DllImport(Library)]
     public static extern bool DeleteDC(IntPtr deviceContext);
+
+    /// <summary>Returns 0x00BBGGRR, or <see cref="InvalidColor"/> outside the clip.</summary>
+    [DllImport(Library)]
+    public static extern uint GetPixel(IntPtr deviceContext, int x, int y);
+
+    public const uint InvalidColor = 0xFFFFFFFF;
 }

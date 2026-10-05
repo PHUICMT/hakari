@@ -10,4 +10,6 @@ public sealed class WidgetDiagnostics
     public int Collisions { get; set; }
 
     public int ExplorerRestarts { get; set; }
+
+    public int WidgetsRecreated { get; set; }
 }

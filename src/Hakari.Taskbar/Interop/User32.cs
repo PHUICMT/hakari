@@ -118,10 +118,16 @@ internal static class User32
         IntPtr callback);
 
     [DllImport(Library)]
+    public static extern bool KillTimer(IntPtr windowHandle, IntPtr timerId);
+
+    [DllImport(Library)]
     public static extern bool ShowWindow(IntPtr windowHandle, int command);
 
     [DllImport(Library)]
     public static extern bool IsWindow(IntPtr windowHandle);
+
+    [DllImport(Library)]
+    public static extern bool IsWindowVisible(IntPtr windowHandle);
 
     [DllImport(Library)]
     public static extern uint GetDpiForWindow(IntPtr windowHandle);
@@ -131,4 +137,7 @@ internal static class User32
 
     [DllImport(Library)]
     public static extern bool TrackMouseEvent(ref TrackMouseEventOptions options);
+
+    [DllImport(Library)]
+    public static extern IntPtr GetWindow(IntPtr windowHandle, uint relationship);
 }

@@ -5,14 +5,17 @@ using Hakari.TaskbarSpike;
 
 const string OverlayFlag = "--overlay";
 const long BytesPerMegabyte = 1024 * 1024;
-var reportInterval = TimeSpan.FromSeconds(30);
+const string ReportSecondsFlag = "--report-seconds";
+const int DefaultReportSeconds = 30;
+var reportInterval = TimeSpan.FromSeconds(ReadReportSeconds(args));
 
 MessageLoop.EnablePerMonitorDpiAwareness();
 var mode = args.Contains(OverlayFlag) ? AttachMode.TopMostOverlay : AttachMode.ChildOfTaskbar;
 Console.WriteLine($"Hakari taskbar spike · mode {mode} · right-click the widget to quit");
 
 var loading = new WidgetContent("Hakari", "Reading logs…", WidgetTone.Muted);
-using var widget = new TaskbarWidgetWindow(mode, loading);
+var hostOptions = TaskbarWidgetHostOptions.Default with { Mode = mode };
+using var widget = new TaskbarWidgetHost(hostOptions, loading);
 using var feed = new UsageFeed();
 feed.Updated += content => widget.PostContent(content);
 widget.Clicked += (_, _) => Console.WriteLine("Clicked: the flyout would open here.");
@@ -49,8 +52,32 @@ void Report()
         $"moves {diagnostics.Moves}",
         $"collisions {diagnostics.Collisions}",
         $"explorer restarts {diagnostics.ExplorerRestarts}",
+        $"widgets {widget.WidgetCount}",
+        $"recreated {diagnostics.WidgetsRecreated}",
+        $"layout reads {widget.LayoutRefreshes}",
         $"index passes {feed.IndexPasses}",
         $"last index {feed.LastIndexDuration.TotalMilliseconds:N0} ms",
     ];
     Console.WriteLine(string.Join(" | ", parts));
+
+    // Reads window state from the timer thread; good enough for a spike's diagnostics.
+    try
+    {
+        foreach (var line in widget.DescribeWidgets())
+        {
+            Console.WriteLine($"    {line}");
+        }
+    }
+    catch (InvalidOperationException)
+    {
+    }
+}
+
+static int ReadReportSeconds(string[] arguments)
+{
+    var position = Array.IndexOf(arguments, ReportSecondsFlag);
+    var hasValue = position >= 0 && position + 1 < arguments.Length;
+    return hasValue && int.TryParse(arguments[position + 1], out var seconds) && seconds > 0
+        ? seconds
+        : DefaultReportSeconds;
 }

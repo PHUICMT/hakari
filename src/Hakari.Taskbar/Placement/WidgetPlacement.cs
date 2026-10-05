@@ -13,13 +13,22 @@ public static class WidgetPlacement
     /// </summary>
     public static Rectangle? LeftOfNotificationArea(TaskbarInfo taskbar, Size widgetSize)
     {
+        // Secondary taskbars draw their clock in XAML with no Win32 window to fall back on,
+        // so until UI Automation has read the layout, any guess could cover the clock.
+        if (!taskbar.IsPrimary && !taskbar.HasXamlLayout)
+        {
+            return null;
+        }
+
         var gap = (int)Math.Round(GapBeforeNotificationArea * taskbar.Scale);
         var right = taskbar.NotificationArea.Left - gap;
         var left = right - widgetSize.Width;
         var top = taskbar.Bounds.Top + (taskbar.Bounds.Height - widgetSize.Height) / 2;
 
         var appButtonsGap = (int)Math.Round(MinimumGapAfterAppButtons * taskbar.Scale);
-        var minimumLeft = taskbar.AppButtons.Right + appButtonsGap;
+        var minimumLeft = taskbar.AppButtons.IsEmpty
+            ? taskbar.Bounds.Left
+            : taskbar.AppButtons.Right + appButtonsGap;
         if (left < minimumLeft)
         {
             return null;

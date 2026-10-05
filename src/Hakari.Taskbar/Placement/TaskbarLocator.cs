@@ -5,45 +5,36 @@ namespace Hakari.Taskbar.Placement;
 
 public static class TaskbarLocator
 {
-    private const string PrimaryTaskbarClass = "Shell_TrayWnd";
-    private const string SecondaryTaskbarClass = "Shell_SecondaryTrayWnd";
     private const string NotificationAreaClass = "TrayNotifyWnd";
-    private const string AppButtonsClass = "ReBarWindow32";
-    private const string SecondaryAppButtonsClass = "WorkerW";
 
-    public static TaskbarInfo? FindPrimary()
+    /// <summary>
+    /// Describes a taskbar with cheap Win32 calls, safe on the widget thread. The XAML layout
+    /// comes from <paramref name="layout"/> when the layout monitor has read it; until then the
+    /// Win32 notification area is used and app buttons are unknown.
+    /// </summary>
+    public static TaskbarInfo? Describe(TaskbarTarget target, TaskbarLayoutMonitor? layout)
     {
-        var handle = User32.FindWindow(PrimaryTaskbarClass, null);
-        return handle == IntPtr.Zero ? null : Describe(handle, isPrimary: true);
-    }
-
-    public static IReadOnlyList<TaskbarInfo> FindSecondary()
-    {
-        var taskbars = new List<TaskbarInfo>();
-        var handle = IntPtr.Zero;
-        while ((handle = User32.FindWindowEx(IntPtr.Zero, handle, SecondaryTaskbarClass, null))
-            != IntPtr.Zero)
+        var handle = target.Resolve();
+        if (handle == IntPtr.Zero)
         {
-            taskbars.Add(Describe(handle, isPrimary: false));
+            return null;
         }
 
-        return taskbars;
-    }
-
-    private static TaskbarInfo Describe(IntPtr handle, bool isPrimary)
-    {
         var bounds = ReadBounds(handle);
-        var notificationArea = ReadChildBounds(handle, NotificationAreaClass);
-        var appButtonsClass = isPrimary ? AppButtonsClass : SecondaryAppButtonsClass;
-        var appButtons = ReadChildBounds(handle, appButtonsClass);
+        var xamlLayout = layout?.TryGet(handle);
+        var notificationArea = xamlLayout?.NotificationArea
+            ?? ReadChildBounds(handle, NotificationAreaClass)
+            ?? new Rectangle(bounds.Right, bounds.Top, 0, bounds.Height);
+        var appButtons = xamlLayout?.AppButtons ?? Rectangle.Empty;
 
         return new TaskbarInfo(
             Handle: handle,
-            IsPrimary: isPrimary,
+            IsPrimary: target.IsPrimary,
             Bounds: bounds,
-            NotificationArea: notificationArea ?? new Rectangle(bounds.Right, bounds.Top, 0, 0),
-            AppButtons: appButtons ?? new Rectangle(bounds.Left, bounds.Top, 0, 0),
-            Dpi: User32.GetDpiForWindow(handle));
+            NotificationArea: notificationArea,
+            AppButtons: appButtons,
+            Dpi: User32.GetDpiForWindow(handle),
+            HasXamlLayout: xamlLayout is not null);
     }
 
     private static Rectangle? ReadChildBounds(IntPtr parent, string className)
