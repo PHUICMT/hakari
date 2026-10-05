@@ -1,10 +1,10 @@
 namespace Hakari.Core.Limits;
 
 /// <summary>
-/// The server reports limits in whole percent. Between readings, the share used is estimated
-/// from the account's own spending: what one percent cost so far in this window, applied to
-/// what was spent since the reading. It never runs a whole percent past the last reading, so
-/// it cannot get ahead of the next real one.
+/// The server reports limits in whole percent. The finer share is estimated from the
+/// account's own spending in the window: what one percent cost so far, applied to all that
+/// was spent up to now. It stays within the whole percent last read, so it can never get
+/// ahead of (or fall behind) the next real reading.
 /// </summary>
 public static class PercentEstimator
 {
@@ -14,6 +14,7 @@ public static class PercentEstimator
 
     /// <summary>Stays below the next whole percent until a reading confirms it.</summary>
     private const double MaximumGain = 0.99;
+    private const double ReadingMidpoint = 0.5;
 
     private static readonly TimeSpan SessionWindow = TimeSpan.FromHours(5);
     private static readonly TimeSpan WeeklyWindow = TimeSpan.FromDays(7);
@@ -40,10 +41,13 @@ public static class PercentEstimator
             return limit.Percent;
         }
 
-        var costPerPercent = spentByReading / limit.Percent;
-        var spentSince = (double)costBetween(readAt, now);
-        var gain = Math.Clamp(spentSince / costPerPercent, 0, MaximumGain);
-        return Math.Min(limit.Percent + gain, FullPercent);
+        // A whole-percent reading means somewhere in [P, P+1); taking the middle keeps the
+        // estimate from sitting on ".0" every time a fresh reading arrives.
+        var costPerPercent = spentByReading / (limit.Percent + ReadingMidpoint);
+        var spentNow = spentByReading + (double)costBetween(readAt, now);
+        var estimate = spentNow / costPerPercent;
+        var ceiling = Math.Min(limit.Percent + MaximumGain, FullPercent);
+        return Math.Clamp(estimate, limit.Percent, ceiling);
     }
 
     /// <summary>Only the windows whose length is known: the 5 hours and the full week.</summary>

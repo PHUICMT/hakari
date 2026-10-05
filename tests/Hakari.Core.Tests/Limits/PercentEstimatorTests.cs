@@ -8,26 +8,38 @@ public sealed class PercentEstimatorTests
     private static readonly DateTimeOffset ResetsAt = ReadAt.AddHours(3);
 
     [Fact]
-    public void Adds_what_was_spent_since_the_reading()
+    public void Places_a_fresh_reading_inside_its_whole_percent()
     {
-        // 40% cost $20, so $0.50 per percent; $0.20 since is 0.4% more.
+        // 40% after $20.25: $0.50 per percent at the middle of 40..41, so 40.5% right away.
         var estimate = PercentEstimator.Estimate(
             Session(40),
             ReadAt,
-            ReadAt.AddMinutes(10),
-            (from, to) => to <= ReadAt ? 20m : 0.2m);
+            ReadAt.AddSeconds(1),
+            (from, to) => to <= ReadAt ? 20.25m : 0m);
 
-        Assert.Equal(40.4, estimate, precision: 6);
+        Assert.Equal(40.5, estimate, precision: 6);
     }
 
     [Fact]
-    public void Never_runs_a_whole_percent_ahead()
+    public void Rises_with_what_was_spent_since_the_reading()
     {
         var estimate = PercentEstimator.Estimate(
             Session(40),
             ReadAt,
             ReadAt.AddMinutes(10),
-            (from, to) => to <= ReadAt ? 20m : 5m);
+            (from, to) => to <= ReadAt ? 20.25m : 0.2m);
+
+        Assert.Equal(40.9, estimate, precision: 6);
+    }
+
+    [Fact]
+    public void Stays_within_the_whole_percent_read()
+    {
+        var estimate = PercentEstimator.Estimate(
+            Session(40),
+            ReadAt,
+            ReadAt.AddMinutes(10),
+            (from, to) => to <= ReadAt ? 20.25m : 5m);
 
         Assert.Equal(40.99, estimate, precision: 6);
     }
