@@ -21,6 +21,9 @@ internal sealed class UsageFeed : IDisposable
     /// <summary>Time-based values (burn rate, a new day) refresh even without new usage.</summary>
     private static readonly TimeSpan ContentRefreshInterval = TimeSpan.FromSeconds(30);
 
+    /// <summary>How often to look for newly started WSL distributions and new sign-ins.</summary>
+    private static readonly TimeSpan SourceCheckInterval = TimeSpan.FromMinutes(1);
+
     private readonly SettingsStore settingsStore;
     private readonly CancellationTokenSource cancellation = new();
     private readonly Thread worker;
@@ -105,10 +108,21 @@ internal sealed class UsageFeed : IDisposable
         using var limits = new LimitPoller(store, sources, settings.RefreshSignInAutomatically);
         changeTracker = tracker;
         var lastPublished = DateTimeOffset.MinValue;
+        var nextSourceCheck = DateTimeOffset.UtcNow + SourceCheckInterval;
 
         while (!cancellation.IsCancellationRequested && !settingsChanged)
         {
             var now = DateTimeOffset.UtcNow;
+            if (now >= nextSourceCheck)
+            {
+                nextSourceCheck = now + SourceCheckInterval;
+                if (SourcesChanged(sources, discoveryOptions))
+                {
+                    // Start over with the new sources, like a settings change.
+                    break;
+                }
+            }
+
             var recordsChanged = IndexPendingWork(indexer, tracker);
             if (recordsChanged)
             {
@@ -131,6 +145,23 @@ internal sealed class UsageFeed : IDisposable
         }
 
         changeTracker = null;
+    }
+
+    /// <summary>
+    /// Catches a WSL distribution started, or a config folder signed in, after Hakari began.
+    /// Never under WslScanMode.All: looking inside a stopped distribution would start it.
+    /// </summary>
+    private static bool SourcesChanged(
+        IReadOnlyList<UsageSource> sources,
+        SourceDiscoveryOptions options)
+    {
+        if (options.WslMode == WslScanMode.All)
+        {
+            return false;
+        }
+
+        var current = SourceDiscovery.Discover(options).Select(source => source.Id).Order();
+        return !current.SequenceEqual(sources.Select(source => source.Id).Order());
     }
 
     private void WaitForSettingsChange()

@@ -69,6 +69,7 @@ public sealed partial class FlyoutWindow : Window
     private void ConfigureChrome()
     {
         SystemBackdrop = new DesktopAcrylicBackdrop();
+        WindowIcon.ApplyTo(AppWindow);
 
         // Without this, the space of the hidden title bar stays reserved as an empty band.
         ExtendsContentIntoTitleBar = true;

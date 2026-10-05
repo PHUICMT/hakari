@@ -7,6 +7,7 @@
     <RootNamespace>Hakari.Surfaces</RootNamespace>
     <AssemblyName>Hakari.Surfaces</AssemblyName>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>..\..\assets\Hakari.ico</ApplicationIcon>
     <UseWinUI>true</UseWinUI>
     <!-- Unpackaged for development; the MSIX package wraps both executables later -->
     <WindowsPackageType>None</WindowsPackageType>
@@ -28,6 +29,7 @@
 
   <ItemGroup>
     <None Include="..\..\data\pricing.json" Link="pricing.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\..\assets\Hakari.ico" Link="Hakari.ico" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

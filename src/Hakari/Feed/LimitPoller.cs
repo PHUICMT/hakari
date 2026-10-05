@@ -17,12 +17,16 @@ internal sealed class LimitPoller : IDisposable
     private static readonly TimeSpan ActiveWindow = TimeSpan.FromMinutes(5);
     private static readonly TimeSpan RequestTimeout = TimeSpan.FromSeconds(15);
 
+    /// <summary>An account unseen for longer than this is no longer shown.</summary>
+    private static readonly TimeSpan RememberFor = TimeSpan.FromDays(7);
+
     private readonly IReadOnlyList<UsageSource> sources;
     private readonly HttpClient httpClient = new() { Timeout = RequestTimeout };
     private readonly AccountTracker accountTracker;
     private readonly LimitService limitService;
     private readonly AccountRepository accountRepository;
     private readonly LimitForecaster forecaster = new();
+    private readonly LimitCache limitCache;
     private DateTimeOffset nextPoll = DateTimeOffset.MinValue;
     private DateTimeOffset lastUsage = DateTimeOffset.MinValue;
 
@@ -33,6 +37,7 @@ internal sealed class LimitPoller : IDisposable
     {
         this.sources = sources;
         accountRepository = new AccountRepository(store);
+        limitCache = new LimitCache(store);
         accountTracker = new AccountTracker(accountRepository, TimeProvider.System);
         limitService = new LimitService(
             new UsageLimitClient(httpClient, TimeProvider.System),
@@ -60,11 +65,13 @@ internal sealed class LimitPoller : IDisposable
         accountTracker.Observe(sources);
         var details = accountRepository.ListAccounts()
             .ToDictionary(account => account.AccountId);
+        var live = accountTracker.SourcesByCurrentAccount(sources)
+            .Select(account => Read(account.Key, account.Value, details))
+            .OfType<WidgetAccount>()
+            .ToList();
         Accounts =
         [
-            .. accountTracker.SourcesByCurrentAccount(sources)
-                .Select(account => Read(account.Key, account.Value, details))
-                .OfType<WidgetAccount>()
+            .. live.Concat(Remembered(live, details.Values, now))
                 .OrderByDescending(account => LimitPriority.Rank(account.Snapshot)),
         ];
 
@@ -79,6 +86,25 @@ internal sealed class LimitPoller : IDisposable
         forecaster.FullAt(accountId, limit, now);
 
     public void Dispose() => httpClient.Dispose();
+
+    /// <summary>
+    /// Accounts seen recently whose source is not here now, such as one signed in inside a
+    /// WSL distribution that has since stopped: their last limits, marked as last known.
+    /// </summary>
+    private IEnumerable<WidgetAccount> Remembered(
+        IReadOnlyList<WidgetAccount> live,
+        IEnumerable<AccountInfo> known,
+        DateTimeOffset now) =>
+        known
+            .Where(account => live.All(current => current.AccountId != account.AccountId))
+            .Select(account => limitCache.Load(account.AccountId) is { } snapshot
+                && now - snapshot.FetchedAt < RememberFor
+                    ? new WidgetAccount(
+                        account.AccountId,
+                        account,
+                        snapshot with { Freshness = LimitFreshness.LastKnown })
+                    : null)
+            .OfType<WidgetAccount>();
 
     private WidgetAccount? Read(
         string accountId,

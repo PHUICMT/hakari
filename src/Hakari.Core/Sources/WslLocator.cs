@@ -21,6 +21,7 @@ public static class WslLocator
     private static readonly TimeSpan ListRunningTimeout = TimeSpan.FromSeconds(5);
     private static readonly string[] IgnoredDistributionPrefixes = ["docker-desktop"];
     private static readonly char[] OutputSeparators = ['\r', '\n', '\0'];
+    private static readonly string[] VirtualMachineProcessNames = ["vmmemWSL", "vmmem"];
 
     private const StringSplitOptions OutputSplitOptions =
         StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries;
@@ -35,9 +36,27 @@ public static class WslLocator
         _ => throw new ArgumentOutOfRangeException(nameof(mode), mode, null),
     };
 
+    /// <summary>
+    /// WSL 2 runs every distribution in one utility VM; without its process nothing runs, and
+    /// looking for it costs far less than starting wsl.exe.
+    /// </summary>
+    public static bool IsVirtualMachineRunning() =>
+        VirtualMachineProcessNames.Any(IsProcessRunning);
+
+    private static bool IsProcessRunning(string name)
+    {
+        var processes = Process.GetProcessesByName(name);
+        foreach (var process in processes)
+        {
+            process.Dispose();
+        }
+
+        return processes.Length > 0;
+    }
+
     public static IReadOnlyList<string> FindRunningDistributions()
     {
-        if (!OperatingSystem.IsWindows())
+        if (!OperatingSystem.IsWindows() || !IsVirtualMachineRunning())
         {
             return [];
         }

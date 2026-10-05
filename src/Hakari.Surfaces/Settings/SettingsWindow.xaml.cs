@@ -72,6 +72,7 @@ public sealed partial class SettingsWindow : Window
     private void ConfigureChrome()
     {
         SystemBackdrop = new MicaBackdrop();
+        WindowIcon.ApplyTo(AppWindow);
         ExtendsContentIntoTitleBar = true;
         SetTitleBar(TitleBar);
         AppWindow.TitleBar.PreferredHeightOption = TitleBarHeightOption.Tall;

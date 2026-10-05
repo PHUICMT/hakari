@@ -5,6 +5,7 @@
     <TargetFramework>net9.0-windows10.0.19041.0</TargetFramework>
     <SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>..\..\assets\Hakari.ico</ApplicationIcon>
     <AssemblyName>Hakari</AssemblyName>
     <!-- One collector thread instead of a concurrent background one: less memory, idle app -->
     <ConcurrentGarbageCollection>false</ConcurrentGarbageCollection>
