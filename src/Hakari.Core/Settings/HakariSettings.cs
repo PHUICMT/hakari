@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using Hakari.Core.Currency;
 using Hakari.Core.Displays;
 using Hakari.Core.Localization;
@@ -17,6 +18,12 @@ public sealed record HakariSettings
     public WidgetLayout Widget { get; init; } = new();
 
     public MultiAccountMode AccountsMode { get; init; } = MultiAccountMode.SideBySide;
+
+    /// <summary>How long each account is shown when taking turns.</summary>
+    public int TurnSeconds { get; init; } = (int)WidgetPanels.DefaultTurnLength.TotalSeconds;
+
+    [JsonIgnore]
+    public TimeSpan TurnLength => TimeSpan.FromSeconds(Math.Max(1, TurnSeconds));
 
     /// <summary>Per-account layouts for side by side and take turns, keyed by account id.</summary>
     public IReadOnlyDictionary<string, WidgetLayout> AccountLayouts { get; init; } =
@@ -62,6 +69,7 @@ public sealed record HakariSettings
     public bool PresentsSameAs(HakariSettings other) =>
         Widget == other.Widget
         && AccountsMode == other.AccountsMode
+        && TurnSeconds == other.TurnSeconds
         && AccountLayouts.Count == other.AccountLayouts.Count
         && AccountLayouts.All(entry =>
             other.AccountLayouts.TryGetValue(entry.Key, out var layout) && layout == entry.Value)

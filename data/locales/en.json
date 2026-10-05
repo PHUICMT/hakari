@@ -65,6 +65,7 @@
   "settings.accountsMode.together": "Together",
   "settings.accountsMode.sideBySide": "Side by side",
   "settings.accountsMode.takeTurns": "Take turns",
+  "settings.turnSpeed": "Switch every",
   "settings.layoutFor": "Layout for",
   "settings.layoutFor.description": "Each account's block can have its own ring and lines.",
   "settings.layoutFor.all": "All accounts",

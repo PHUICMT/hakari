@@ -95,6 +95,15 @@
   animation-name: fade !important;
 }
 :root[data-motion="reduced"] .btn:active { transform: none; }
+:root[data-motion="reduced"] .seg-indicator { transition: none; }
+:root[data-motion="reduced"] .segmented button:active,
+:root[data-motion="reduced"] .segmented button.is-pressed { transform: none; }
+:root[data-motion="reduced"] .dropdown.is-open .dropdown-list { animation-name: fade; }
+@media (prefers-reduced-motion: reduce) {
+  .seg-indicator { transition: none; }
+  .segmented button:active { transform: none; }
+  .m-turn, .dropdown.is-open .dropdown-list { animation-name: fade !important; }
+}
 :root[data-motion="reduced"] .m-loop { animation: none !important; }
 :root[data-motion="off"] *,
 :root[data-motion="off"] *::before,
@@ -294,7 +303,7 @@ code, .mono { font-family: var(--font-mono); font-size: 12.5px; }
   color: var(--on-accent);
 }
 
-main { display: grid; gap: var(--space-7); min-width: 0; }
+main { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-7); min-width: 0; }
 .hero { display: grid; gap: var(--space-3); max-width: 760px; }
 .hero h1 { font-size: 34px; font-weight: 600; letter-spacing: -.01em; }
 .hero p { color: var(--ink-muted); font-size: 15px; max-width: 66ch; }
@@ -312,7 +321,7 @@ main { display: grid; gap: var(--space-7); min-width: 0; }
 }
 .chip b { color: var(--ink); font-weight: 600; }
 
-section.block { display: grid; gap: var(--space-5); scroll-margin-top: 24px; }
+section.block { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-5); scroll-margin-top: 24px; }
 .block-head { display: grid; gap: 6px; max-width: 760px; }
 .eyebrow {
   font-size: 11px;
@@ -621,8 +630,18 @@ section.block { display: grid; gap: var(--space-5); scroll-margin-top: 24px; }
 .flyout-title { display: flex; align-items: center; gap: var(--space-2); font-weight: 600; }
 .flyout-title .brand-mark { font-size: 20px; }
 .updated { font-size: 11.5px; color: var(--ink-faint); }
+.flyout-name { display: grid; line-height: 1.25; }
+.flyout-sub { font-size: 12px; font-weight: 400; color: var(--ink-faint); }
+.account-section { display: grid; gap: 10px; min-width: 0; }
+.account-section + .account-section { border-top: 1px solid var(--line); padding-top: var(--space-4); }
+.account-section-head { display: grid; gap: 1px; min-width: 0; }
+.account-section-name { font-size: 13px; font-weight: 600; }
+.account-section-detail { font-size: 12px; line-height: 16px; color: var(--ink-faint); overflow-wrap: anywhere; }
+/* Segmented: the chosen item sits on an accent indicator that slides between choices
+   (200ms, decelerate). Without script the chosen button is accent-filled itself. */
 .segmented {
   display: inline-flex;
+  position: relative;
   padding: 2px;
   border-radius: var(--radius-control);
   background: var(--ground);
@@ -631,6 +650,8 @@ section.block { display: grid; gap: var(--space-5); scroll-margin-top: 24px; }
   flex-wrap: wrap;
 }
 .segmented button {
+  position: relative;
+  z-index: 1;
   border: 0;
   background: transparent;
   color: var(--ink-muted);
@@ -641,10 +662,28 @@ section.block { display: grid; gap: var(--space-5); scroll-margin-top: 24px; }
   cursor: pointer;
 }
 .segmented button[aria-pressed="true"] {
-  background: var(--surface);
+  background: var(--accent);
+  color: var(--on-accent);
+}
+.segmented.has-indicator button[aria-pressed="true"] { background: transparent; }
+.segmented button:not([aria-pressed="true"]):hover,
+.segmented button.is-hover {
+  background: color-mix(in srgb, var(--ink) 7%, transparent);
   color: var(--ink);
+}
+.segmented button:active, .segmented button.is-pressed { transform: scale(.95); }
+.seg-indicator {
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  left: 0;
+  width: 0;
+  border-radius: 3px;
+  background: var(--accent);
   box-shadow: var(--shadow-card);
-  font-weight: 600;
+  pointer-events: none;
+  transition: transform var(--duration-normal) var(--ease-decelerate),
+    width var(--duration-normal) var(--ease-decelerate);
 }
 .limit { display: grid; gap: 6px; }
 .limit-top { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-2); }
@@ -1173,9 +1212,9 @@ td .model { font-family: var(--font-mono); font-size: 12px; }
 .toggle:active::after { width: 16px; }
 .toggle[aria-checked="true"]:active::after { left: 19px; }
 .segmented button {
-  transition: background-color var(--duration-normal) var(--ease-standard),
+  transition: background-color var(--duration-fast) var(--ease-standard),
     color var(--duration-normal) var(--ease-standard),
-    box-shadow var(--duration-normal) var(--ease-standard);
+    transform var(--duration-instant) var(--ease-standard);
 }
 .navpane { position: relative; }
 .nav-indicator {
@@ -1249,7 +1288,9 @@ td .model { font-family: var(--font-mono); font-size: 12px; }
 .control-row:last-child { border-bottom: 0; padding-bottom: 0; }
 .control-row > span { font-size: 12.5px; font-weight: 600; }
 .control-set { display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: center; min-width: 0; }
-.state-label { display: grid; gap: 4px; justify-items: start; font-size: 11px; color: var(--ink-faint); }
+.state-label { display: grid; gap: 4px; justify-items: start; font-size: 11px; color: var(--ink-faint); min-width: 0; max-width: 100%; }
+.state-label > .segmented { max-width: 100%; }
+.control-set > .slider { min-width: min(220px, 100%); flex: 1 1 160px; }
 .btn.is-hover { background: var(--surface-raised); }
 .btn.primary.is-hover { background: var(--accent-strong); }
 .btn.is-pressed { transform: scale(.97); }
@@ -1257,6 +1298,129 @@ td .model { font-family: var(--font-mono); font-size: 12px; }
 .input.is-error { border-bottom-color: var(--critical); }
 .field-error { font-size: 11.5px; color: var(--critical); }
 .input.is-rest { border-bottom-color: var(--line-strong); border-bottom-width: 1px; }
+
+/* ---------- App icon ---------- */
+.app-icon { width: 36px; height: 36px; display: block; flex-shrink: 0; }
+.icon-sizes { display: flex; flex-wrap: wrap; align-items: flex-end; gap: var(--space-4); }
+.icon-size { display: grid; gap: 6px; justify-items: center; font-size: 11px; color: var(--ink-faint); }
+
+/* ---------- Widget ring (22px, 3px stroke) and account blocks ---------- */
+.w-ring22 { width: 22px; height: 22px; flex-shrink: 0; display: block; }
+.w-ring22 .ring-track { stroke: var(--ink-faint); stroke-opacity: .35; }
+.strip.light .ring-track, .taskbar.light .ring-track { stroke: var(--taskbar-light-faint); stroke-opacity: .3; }
+.strip.dark .ring-track, .taskbar.dark .ring-track { stroke: var(--taskbar-dark-faint); stroke-opacity: .35; }
+.w-ring22.is-dim { opacity: .55; }
+.w-block { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.w-block .w-dots { margin-left: 2px; }
+.w-account { font-weight: 600; }
+.w-secondary .w-account { font-weight: 600; }
+.m-turn { animation: tick-in var(--duration-normal) var(--ease-decelerate) both; }
+.mode-label { font-family: var(--font-mono); font-size: 11px; color: var(--ink-faint); }
+
+/* ---------- Localisation ---------- */
+.lang-th { font-family: "Leelawadee UI", "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif; }
+.w-lines.lang-th { line-height: 1.4; }
+
+/* ---------- Dropdown (custom select) ---------- */
+.dropdown { display: grid; justify-items: end; gap: 4px; min-width: 0; max-width: 100%; }
+.dropdown-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-width: 180px;
+  max-width: 100%;
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
+  color: var(--ink);
+  border-radius: var(--radius-control);
+  padding: 5px 10px;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color var(--duration-fast) var(--ease-standard);
+}
+.dropdown-button:hover { background: var(--surface-raised); }
+.dropdown-button svg {
+  width: 12px;
+  height: 12px;
+  color: var(--ink-muted);
+  flex-shrink: 0;
+  transform: rotate(180deg);
+  transition: transform var(--duration-normal) var(--ease-decelerate);
+}
+.dropdown.is-open .dropdown-button svg { transform: none; }
+.dropdown-list {
+  display: none;
+  min-width: 220px;
+  max-width: 100%;
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  background: var(--surface-raised);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-overlay);
+  box-shadow: var(--shadow-flyout);
+}
+.dropdown.is-open .dropdown-list {
+  display: grid;
+  gap: 1px;
+  animation: rise var(--duration-normal) var(--ease-decelerate) both;
+}
+.dropdown-item {
+  display: grid;
+  grid-template-columns: 14px minmax(0, 1fr);
+  gap: var(--space-2);
+  align-items: center;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 13px;
+  padding: 6px 10px;
+  border-radius: var(--radius-control);
+  text-align: left;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.dropdown-item:hover { background: color-mix(in srgb, var(--ink) 6%, transparent); }
+.dropdown-item svg { width: 12px; height: 12px; color: var(--accent); visibility: hidden; }
+.dropdown-item[aria-selected="true"] { font-weight: 600; }
+.dropdown-item[aria-selected="true"] svg { visibility: visible; }
+
+/* ---------- Settings window (current build) ---------- */
+.settings-window { display: grid; gap: var(--space-3); max-width: 860px; min-width: 0; }
+.settings-window .sub-head + .setting-card { margin-top: -4px; }
+.setting-preview {
+  background: var(--ground);
+  border-bottom: 1px solid var(--line);
+  border-radius: 7px 7px 0 0;
+  padding: var(--space-4);
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+}
+.setting-preview > * { min-width: 0; }
+.setting-control {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  min-width: 0;
+  max-width: 100%;
+}
+.setting-row:has(.dropdown.is-open) { align-items: start; }
+.setting-row > div:nth-child(2) { min-width: 0; }
+.setting-row.nested { padding-left: calc(var(--space-4) + 40px); background: var(--surface-raised); }
+.setting-row.nested:last-child { border-radius: 0 0 7px 7px; }
+.setting-row[hidden] { display: none; }
+.input.compact { width: 128px; }
+.input.code { width: 72px; text-transform: uppercase; }
+.card-note { padding: 10px var(--space-4) 12px; }
+.lang-option { font-family: "Leelawadee UI", var(--font-ui); }
 
 /* ---------- Spec tables ---------- */
 .spec-table td { white-space: normal; vertical-align: top; }
@@ -1282,6 +1446,15 @@ td .model { font-family: var(--font-mono); font-size: 12px; }
   .slot-item { grid-template-columns: 16px minmax(0, 1fr) auto; }
   .slot-item .hide-narrow { display: none; }
   .type-row { grid-template-columns: minmax(0, 1fr); gap: 4px; }
+  .control-row { grid-template-columns: minmax(0, 1fr); gap: var(--space-2); }
+  .control-set > [style*="minmax(220px"], .control-set > [style*="minmax(140px"] {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+}
+@media (max-width: 640px) {
+  .setting-control { grid-column: 2 / -1; justify-content: flex-start; }
+  .dropdown { justify-items: start; }
+  .setting-row.nested { padding-left: calc(var(--space-4) + 16px); }
 }
 @media (max-width: 520px) {
   .page { padding-inline: 16px; }
@@ -1289,13 +1462,16 @@ td .model { font-family: var(--font-mono); font-size: 12px; }
   .roi-row { grid-template-columns: minmax(0, 1fr); }
   .strip { justify-content: flex-start; overflow-x: auto; }
   .strip .tray-ghost { display: none; }
+  .flyout-row { display: grid; grid-template-columns: minmax(0, 1fr); }
+  .flyout { width: 100%; }
 }
 </style>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <defs>
     <symbol id="i-scale" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="M12 3v17M7 20h10M4 7h16M6.5 7 3.5 14a3 3 0 0 0 6 0L6.5 7Zm11 0-3 7a3 3 0 0 0 6 0l-3-7Z"/></symbol>
-    <symbol id="i-chevron-up" viewBox="0 0 16 16"><path fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" d="m4 10 4-4 4 4"/></symbol>
+    <symbol id="i-app" viewBox="0 0 48 48"><rect width="48" height="48" rx="10.5" fill="#2f4c8c"/><g fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M24 12v24M16.5 36h15M11 16h26"/><path d="M13 16 8.5 26M13 16l4.5 10M8 26h10a5 5 0 0 1-10 0Z"/><path d="M35 16l-4.5 10M35 16l4.5 10M30 26h10a5 5 0 0 1-10 0Z"/></g><circle cx="24" cy="11.5" r="1.9" fill="#fff"/></symbol>
+    <symbol id="i-chevron-up"viewBox="0 0 16 16"><path fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" d="m4 10 4-4 4 4"/></symbol>
     <symbol id="i-wifi" viewBox="0 0 16 16"><path fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" d="M1.8 6.2a9 9 0 0 1 12.4 0M3.9 8.4a6 6 0 0 1 8.2 0M6 10.6a3 3 0 0 1 4 0"/><circle cx="8" cy="12.8" r="1" fill="currentColor"/></symbol>
     <symbol id="i-volume" viewBox="0 0 16 16"><path fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round" d="M2.5 6h2.5l3.5-3v10L5 10H2.5z"/><path fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" d="M11 5.5a3.5 3.5 0 0 1 0 5M12.8 3.8a6 6 0 0 1 0 8.4"/></symbol>
     <symbol id="i-battery" viewBox="0 0 16 16"><rect x="1.5" y="4.5" width="11.5" height="7" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.2"/><rect x="3" y="6" width="8.5" height="4" rx=".6" fill="currentColor"/><rect x="13.6" y="6.5" width="1.2" height="3" rx=".5" fill="currentColor"/></symbol>
@@ -1331,10 +1507,10 @@ td .model { font-family: var(--font-mono); font-size: 12px; }
 <div class="page">
   <aside class="index">
     <div class="brand">
-      <span class="brand-mark" aria-hidden="true">秤</span>
+      <svg class="app-icon" aria-hidden="true"><use href="#i-app"/></svg>
       <div>
         <div class="brand-name">Hakari</div>
-        <div class="brand-sub">Design handoff · v0.1</div>
+        <div class="brand-sub">Design handoff · v0.2</div>
       </div>
     </div>
     <div class="theme-switch" role="group" aria-label="Page theme">
@@ -1354,10 +1530,12 @@ td .model { font-family: var(--font-mono); font-size: 12px; }
       <a href="#type">Typography</a>
       <a href="#space">Space &amp; shape</a>
       <a href="#data">Data formatting</a>
+      <a href="#locale">Localisation</a>
       <a href="#motion">Motion</a>
       <a href="#controls">Controls</a>
       <span class="group">Taskbar</span>
       <a href="#anatomy">Widget anatomy</a>
+      <a href="#multi-account">Several accounts</a>
       <a href="#templates">Layout templates</a>
       <a href="#states">States</a>
       <a href="#placement">Placement</a>
@@ -1426,9 +1604,17 @@ td .model { font-family: var(--font-mono); font-size: 12px; }
         <div class="type-row"><span class="type-label">Body · 14/20 · 400</span><span style="font: 400 14px/20px var(--font-ui)">Windows source is live. WSL Ubuntu-24.04 is running and indexed 4 seconds ago.</span></div>
         <div class="type-row"><span class="type-label">Caption · 12/16 · 400</span><span style="font: 400 12px/16px var(--font-ui); color: var(--ink-muted)">Resets in 1 h 48 min · 14:30</span></div>
         <div class="type-row"><span class="type-label">Taskbar primary · 13/16 · 600</span><span style="font: 600 13px/16px var(--font-ui)">$142.18 today</span></div>
-        <div class="type-row"><span class="type-label">Taskbar secondary · 11/14 · 400</span><span style="font: 400 11px/14px var(--font-ui)">5h 62% · ↺ 1:48</span></div>
+        <div class="type-row"><span class="type-label">Taskbar secondary · 11/14 · 400</span><span style="font: 400 11px/14px var(--font-ui)">5h 67% · ↺ 1:48</span></div>
         <div class="type-row"><span class="type-label">Mono · 12.5/18 · 400</span><span class="mono">{cost.today:$0.00} · {limit.5h:0%}</span></div>
         <div class="type-row"><span class="type-label">Brand · mincho 800</span><span style="font: 800 40px/1 var(--font-brand); color: var(--accent)">秤 <span style="font: 600 20px var(--font-display); color: var(--ink)">Hakari</span></span></div>
+        <div class="type-row"><span class="type-label">App icon · radius 22% · #2f4c8c</span><div class="icon-sizes">
+          <span class="icon-size"><svg width="16" height="16" aria-hidden="true"><use href="#i-app"/></svg>16</span>
+          <span class="icon-size"><svg width="24" height="24" aria-hidden="true"><use href="#i-app"/></svg>24</span>
+          <span class="icon-size"><svg width="32" height="32" aria-hidden="true"><use href="#i-app"/></svg>32</span>
+          <span class="icon-size"><svg width="48" height="48" aria-label="Hakari app icon" role="img"><use href="#i-app"/></svg>48</span>
+          <span class="icon-size"><svg width="88" height="88" aria-hidden="true"><use href="#i-app"/></svg>Store 88</span>
+          <span class="note" style="max-width: 36ch">Indigo rounded square with a white balance scale: post, base, beam and two pans. Same artwork in light and dark; the 秤 glyph stays the wordmark only.</span>
+        </div></div>
       </div>
     </section>
 
@@ -1472,14 +1658,42 @@ td .model { font-family: var(--font-mono); font-size: 12px; }
               <tr><td>Money</td><td>2 decimals under $1,000, none above on the taskbar. Currency symbol from settings.</td><td>$142.18 · $3.3k · ฿5,140</td><td>$2,333.92 · ฿119,840.00</td></tr>
               <tr><td>Tokens</td><td>Compact on small surfaces (k, M, B with one decimal), full with separators in tables.</td><td>3.1B</td><td>3,104,552,018</td></tr>
               <tr><td>Percent</td><td>Whole numbers. Never show more than 100%; past the limit show "Limit".</td><td>62%</td><td>62% of 5-hour limit</td></tr>
-              <tr><td>Reset time</td><td>Countdown under 24 h (h:mm), weekday + time beyond.</td><td>↺ 1:48</td><td>Resets in 1 h 48 min · 14:30</td></tr>
+              <tr><td>Reset time</td><td>Countdown under 24 h (h:mm), weekday + time beyond.</td><td>↺ 1:48 · ↺ Wed 16:59</td><td>Resets in 1 h 48 min · 14:30</td></tr>
+              <tr><td>Forecast</td><td>When the recent pace fills a limit before it resets, the reset is replaced by the time it fills.</td><td>5h 82% · full ~18:40</td><td>≈ full at 18:40, before the 19:47 reset</td></tr>
+              <tr><td>Full</td><td>A used-up limit says "full" (never 100%) in the critical tone, with its reset.</td><td>Week full · ↺ Wed 16:59</td><td>Weekly limit full · resets Wed 16:59</td></tr>
               <tr><td>Rate</td><td>Per hour for money, per minute for tokens.</td><td>$18.6/h</td><td>$18.60 per hour · 412k tokens/min</td></tr>
-              <tr><td>Estimate</td><td>Prefix ≈ when a value is estimated from logs rather than read from the account.</td><td>≈ 58%</td><td>≈ 58% (estimated from logs)</td></tr>
+              <tr><td>Last known / estimate</td><td>Prefix "≈ " when a value is the last one read (the latest check failed) or estimated from logs rather than read from the account.</td><td>≈ 5h 67% · ↺ 1:48</td><td>≈ 67% (last known, 6 min ago)</td></tr>
               <tr><td>Stale</td><td>Value older than 10 min keeps showing, dimmed, with a dot.</td><td>· $142</td><td>Updated 14 min ago</td></tr>
               <tr><td>Thai locale</td><td>Thai digits off; dates in Buddhist calendar optional.</td><td>วันนี้ $142.18</td><td>รีเซ็ตใน 1 ชม. 48 นาที</td></tr>
             </tbody>
           </table>
         </div>
+      </div>
+    </section>
+
+    <!-- ============ LOCALISATION ============ -->
+    <section class="block" id="locale">
+      <div class="block-head">
+        <span class="eyebrow">Foundations</span>
+        <h2>Localisation</h2>
+        <p>Every string the app shows comes from one JSON file per language:
+          <code>data/locales/en.json</code> and <code>data/locales/th.json</code>. Nothing is
+          hard-coded in views; a missing key falls back to English.</p>
+      </div>
+      <div class="sheet">
+        <div class="table-wrap">
+          <table class="spec-table">
+            <thead><tr><th>Key</th><th>en.json</th><th>th.json</th></tr></thead>
+            <tbody>
+              <tr><td><code>widget.costToday</code></td><td>{amount} today</td><td class="lang-th">{amount} วันนี้</td></tr>
+              <tr><td><code>widget.weekFull</code></td><td>Week full</td><td class="lang-th">สัปดาห์ เต็ม</td></tr>
+              <tr><td><code>widget.fullAt</code></td><td>full ~{time}</td><td class="lang-th">เต็ม ~{time}</td></tr>
+              <tr><td><code>day.wed</code></td><td>Wed</td><td class="lang-th">พ.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="sub-head"><h3>Thai on the taskbar</h3><p>Same layout, Thai strings. Thai has tall vowels and tone marks above and below the line, so the two-line stack uses line-height 1.4 in Thai (1.2 in English) and still fits the 40px hit area without clipping.</p></div>
+        <div class="template-list" id="locale-list"></div>
       </div>
     </section>
 
@@ -1538,7 +1752,8 @@ td .model { font-family: var(--font-mono); font-size: 12px; }
               <tr><td>Flyout</td><td>Open / close</td><td>Rise 12px + fade, rows staggered 30 ms, meters fill</td><td>Fade</td><td>Appear</td></tr>
               <tr><td>Dashboard page</td><td>Navigation</td><td>Content rises in, cards staggered, charts grow from baseline</td><td>Fade</td><td>Appear</td></tr>
               <tr><td>Nav indicator</td><td>Selection</td><td>Slides to the new item with spring</td><td>Jump</td><td>Jump</td></tr>
-              <tr><td>Toggle, segmented, buttons</td><td>Press</td><td>Spring thumb, sliding pill, press scale + ripple</td><td>Color only</td><td>Instant</td></tr>
+              <tr><td>Toggle, segmented, buttons</td><td>Press</td><td>Spring thumb; segmented accent indicator slides 200 ms decelerate, press scale 0.95; buttons press scale + ripple</td><td>Color only</td><td>Instant</td></tr>
+              <tr><td>Take turns (accounts)</td><td>Every 8 s</td><td>Next account's block rises in, 200 ms; ring sweeps to its value</td><td>Cross-fade</td><td>Swap</td></tr>
               <tr><td>Toasts</td><td>Shown</td><td>System slide-in (Windows owns this)</td><td>System</td><td>System</td></tr>
               <tr><td>Loading</td><td>Indexing, skeletons</td><td>Shimmer loop</td><td>Static</td><td>Static</td></tr>
             </tbody>
@@ -1579,7 +1794,10 @@ td .model { font-family: var(--font-mono); font-size: 12px; }
           <span class="state-label"><button class="toggle" type="button" role="switch" aria-checked="true" aria-label="Disabled sample" disabled style="opacity: .45"></button>Disabled</span>
         </div></div>
         <div class="control-row"><span>Segmented</span><div class="control-set">
-          <div class="segmented" role="group" aria-label="Sample periods"><button type="button" aria-pressed="false">Today</button><button type="button" aria-pressed="true">30 days</button><button type="button" aria-pressed="false">All time</button></div>
+          <span class="state-label"><span class="segmented" role="group" aria-label="Sample periods"><button type="button" aria-pressed="false">Today</button><button type="button" aria-pressed="true">30 days</button><button type="button" aria-pressed="false">All time</button></span>Rest · click to slide</span>
+          <span class="state-label"><span class="segmented static" role="group" aria-label="Hover sample"><button type="button" aria-pressed="false" class="is-hover">Today</button><button type="button" aria-pressed="true">30 days</button></span>Hover · faint fill</span>
+          <span class="state-label"><span class="segmented static" role="group" aria-label="Pressed sample"><button type="button" aria-pressed="false" class="is-pressed">Today</button><button type="button" aria-pressed="true">30 days</button></span>Pressed · scale 0.95</span>
+          <span class="spec" style="flex-basis: 100%">Chosen: accent fill, on-accent text · indicator slides 200ms decelerate · hover 7% ink · press 0.95 · labels never wrap, the group scrolls</span>
         </div></div>
         <div class="control-row"><span>Text field</span><div class="control-set" style="max-width: 640px">
           <span class="state-label" style="flex: 1 1 180px"><input class="input is-rest" id="sample-rest" value="Work" aria-label="Rest sample">Rest</span>
@@ -1589,6 +1807,10 @@ td .model { font-family: var(--font-mono); font-size: 12px; }
         <div class="control-row"><span>Select · slider</span><div class="control-set">
           <span class="select">Running only</span>
           <div class="slider" aria-hidden="true"><div class="slider-track"><i style="width: 80%"></i><span class="slider-thumb" style="left: 80%"></span></div><div class="slider-labels"><span>50%</span><span>80%</span><span>100%</span></div></div>
+        </div></div>
+        <div class="control-row"><span>Dropdown</span><div class="control-set" style="align-items: flex-start">
+          <span class="state-label"><span class="dropdown" data-dropdown style="justify-items: start"><button type="button" class="dropdown-button" aria-haspopup="listbox" aria-expanded="false"><span class="dropdown-value">Weekly limit</span><svg><use href="#i-chevron-up"/></svg></button><span class="dropdown-list" role="listbox" aria-label="Sample metric"></span></span>Closed · click to open</span>
+          <span class="spec" style="flex: 1 1 220px; max-width: 46ch">Button with chevron; the list opens as a raised card (surface-raised, 8px radius, flyout shadow) with a check mark on the chosen item. Rises 12px in Full, fades in Reduced.</span>
         </div></div>
         <div class="control-row"><span>Badges</span><div class="control-set">
           <span class="badge">Limits on</span><span class="badge ok">Live</span><span class="badge warn">High</span><span class="badge critical">Limit</span><span class="badge neutral">Estimate</span>
@@ -1634,11 +1856,34 @@ td .model { font-family: var(--font-mono); font-size: 12px; }
         <div class="sub-head"><h3>Live</h3><p>The sample below receives a new value every 2.5 seconds and walks through normal, warning and critical, so the tick, tone change, ring ease and pulse can be judged at real size. It stops while this tab is hidden, as the app does.</p></div>
         <div class="strip-pair" id="live-demo"></div>
         <div class="callouts">
-          <div class="callout"><span class="callout-key">1</span><div><b>Slot</b><span>One metric rendered as text, bar, ring or sparkline. 1–4 slots per layout.</span></div></div>
+          <div class="callout"><span class="callout-key">1</span><div><b>Ring</b><span>22px, 3px stroke, left of the two lines. Track is faint ink, fill is the accent, warning or critical tone. Shows the most pressing limit by default.</span></div></div>
           <div class="callout"><span class="callout-key">2</span><div><b>Two-line stack</b><span>Primary 13px semibold over secondary 11px. Fits 40px without clipping at 100–150% scale.</span></div></div>
           <div class="callout"><span class="callout-key">3</span><div><b>Status tone</b><span>Text and bar take the warning or critical tone only for the metric that crossed a threshold.</span></div></div>
           <div class="callout"><span class="callout-key">4</span><div><b>Hit area</b><span>40px tall, hover fill 5% (light) / 7% (dark). Click opens the flyout, right-click the menu, wheel cycles views.</span></div></div>
         </div>
+        <div class="sub-head"><h3>Ring and lines</h3><p>The ring shows the most pressing limit unless the user picks one: a full weekly limit beats an empty 5-hour one. Lines follow the formats below; the reset is a countdown (h:mm) under 24 h, weekday + time beyond.</p></div>
+        <div class="template-list" id="line-format-list"></div>
+      </div>
+    </section>
+
+    <!-- ============ SEVERAL ACCOUNTS ============ -->
+    <section class="block" id="multi-account">
+      <div class="block-head">
+        <button class="btn replay" type="button" data-replay="#multi-account"><svg><use href="#i-refresh"/></svg>Replay animations</button>
+        <span class="eyebrow">Taskbar widget</span>
+        <h2>Several accounts</h2>
+        <p>Every signed-in account is found on its own. With more than one, Settings → Taskbar →
+          Several accounts picks how they share the taskbar. Sample accounts: Work
+          (<code>work@example.com</code>, Team) and Home (<code>home@example.com</code>, Max 20x).</p>
+      </div>
+      <div class="sheet">
+        <div class="template-list" id="multi-account-list"></div>
+        <div class="grid-3">
+          <p class="note"><b>Side by side is the default.</b> One block per account, each with its own ring and money, split by a faint 1px divider. At most 3 blocks; further accounts are left to the flyout.</p>
+          <p class="note"><b>Together</b> keeps one block and one ring (the most pressing limit across all accounts), with a labelled line per account, most pressing on top.</p>
+          <p class="note"><b>Take turns</b> shows one account at a time and switches every 8 s with the same rise-in as a value change (cross-fade in Reduced, a plain swap when Off). Dots show which account is up.</p>
+        </div>
+        <p class="note"><b>Shown on</b> Main display (default), All displays, or Chosen displays (pick monitors in Settings → Sources → Taskbar displays). Every taskbar shows the same layout.</p>
       </div>
     </section>
 
@@ -1670,17 +1915,18 @@ td .model { font-family: var(--font-mono); font-size: 12px; }
       <div class="block-head">
         <span class="eyebrow">Taskbar widget</span>
         <h2>Placement</h2>
-        <p>Choose the monitor (or all), and left or right of the notification area. The widget
-          re-measures when the taskbar moves, the DPI changes, Explorer restarts or apps are pinned.</p>
+        <p>Shown on Main display (default), All displays, or Chosen displays, left of the
+          notification area. The widget re-measures when the taskbar moves, the DPI changes,
+          Explorer restarts, monitors come and go or apps are pinned.</p>
       </div>
       <div class="sheet">
         <div class="monitors">
           <div class="monitor">
-            <div class="monitor-label">Display 1 · primary · <b>left of tray</b> (default)</div>
+            <div class="monitor-label">DELL U2720Q · main display · <b>left of tray</b> (default)</div>
             <div class="monitor-bar"><span class="slot apps"></span><span class="slot hakari"></span><span class="slot tray"></span></div>
           </div>
           <div class="monitor">
-            <div class="monitor-label">Display 2 · secondary taskbar · <b>mirrored</b> (optional)</div>
+            <div class="monitor-label">LG 27UL850 · secondary taskbar · <b>All displays</b> or <b>Chosen</b></div>
             <div class="monitor-bar"><span class="slot apps"></span><span class="slot hakari ghost"></span><span class="slot tray" style="width: 9%"></span></div>
           </div>
         </div>
@@ -1758,37 +2004,65 @@ td .model { font-family: var(--font-mono); font-size: 12px; }
         <button class="btn replay" type="button" data-replay="#flyout"><svg><use href="#i-refresh"/></svg>Replay animations</button>
         <span class="eyebrow">Surfaces</span>
         <h2>Flyout</h2>
-        <p>Opens on click, like Quick Settings. Summary first: limits, then money, then speed, then
-          where the numbers come from. Closes on Esc, focus loss, or a second click on the widget.</p>
+        <p>Opens on click, like Quick Settings. Every account gets its own section, most pressing
+          first: a header (nickname, or the email when there is none) with plan, today's spend and
+          freshness, then that account's limits. Below: money, speed, and where the numbers come
+          from. Closes on Esc, focus loss, Close, or a second click on the widget.</p>
       </div>
       <div class="flyout-row">
         <div class="flyout-col">
-          <span class="spec">Default · all accounts</span>
+          <span class="spec">Default · every account, most pressing first</span>
           <div class="flyout" id="flyout-main">
             <div class="flyout-body">
               <div class="flyout-head">
-                <div class="flyout-title"><span class="brand-mark" aria-hidden="true">秤</span>Hakari</div>
-                <span class="updated">Updated 4 s ago</span>
+                <div class="flyout-title"><span class="brand-mark" aria-hidden="true">秤</span><span class="flyout-name">Hakari<span class="flyout-sub">2 accounts</span></span></div>
               </div>
-              <div class="segmented" role="group" aria-label="Account">
-                <button type="button" aria-pressed="true">All</button>
-                <button type="button" aria-pressed="false">Work</button>
-                <button type="button" aria-pressed="false">Personal</button>
+              <div class="account-section">
+                <div class="account-section-head">
+                  <span class="account-section-name">Home</span>
+                  <span class="account-section-detail">home@example.com · Max 20x · $96.10 today · Updated just now</span>
+                </div>
+                <div class="limit">
+                  <div class="limit-top"><span class="limit-name">5-hour</span><span class="limit-value">0%</span></div>
+                  <div class="meter"><i style="width: 0%"></i></div>
+                  <span class="limit-reset">Starts with the next request</span>
+                </div>
+                <div class="limit">
+                  <div class="limit-top"><span class="limit-name">Weekly</span><span class="limit-value" style="color: var(--critical)">Full</span></div>
+                  <div class="meter"><i class="critical" style="width: 100%"></i></div>
+                  <span class="limit-reset">Resets Wed 16:59</span>
+                </div>
+                <div class="limit">
+                  <div class="limit-top"><span class="limit-name">Weekly · Fable</span><span class="limit-value">64%</span></div>
+                  <div class="meter"><i style="width: 64%"></i></div>
+                  <span class="limit-reset">Resets Wed 16:59</span>
+                </div>
               </div>
-              <div class="limit">
-                <div class="limit-top"><span class="limit-name">5-hour limit · Work</span><span class="limit-value">62%</span></div>
-                <div class="meter"><i style="width: 62%"></i></div>
-                <div class="limit-top"><span class="limit-reset">Resets in 1 h 48 min · 14:30</span><span class="limit-reset">≈ 86% at reset</span></div>
-              </div>
-              <div class="limit">
-                <div class="limit-top"><span class="limit-name">Weekly limit · Work</span><span class="limit-value">41%</span></div>
-                <div class="meter with-marker"><i style="width: 41%"></i><span class="meter-marker" style="left: 57%" title="Where an even pace would be"></span></div>
-                <div class="limit-top"><span class="limit-reset">Resets Mon 09:00</span><span class="limit-reset">Even pace 57%</span></div>
+              <div class="account-section">
+                <div class="account-section-head">
+                  <span class="account-section-name">Work</span>
+                  <span class="account-section-detail">work@example.com · Team · $412.80 today · Updated just now</span>
+                </div>
+                <div class="limit">
+                  <div class="limit-top"><span class="limit-name">5-hour</span><span class="limit-value">67%</span></div>
+                  <div class="meter"><i style="width: 67%"></i></div>
+                  <span class="limit-reset">Resets in 1 h 48 min · 14:30</span>
+                </div>
+                <div class="limit">
+                  <div class="limit-top"><span class="limit-name">Weekly</span><span class="limit-value">92%</span></div>
+                  <div class="meter with-marker"><i class="warn" style="width: 92%"></i><span class="meter-marker" style="left: 71%" title="Where an even pace would be"></span></div>
+                  <div class="limit-top"><span class="limit-reset">Resets Tue 22:00</span><span class="limit-reset">Even pace 71%</span></div>
+                </div>
+                <div class="limit">
+                  <div class="limit-top"><span class="limit-name">Weekly · Fable</span><span class="limit-value">48%</span></div>
+                  <div class="meter"><i style="width: 48%"></i></div>
+                  <span class="limit-reset">Resets Tue 22:00</span>
+                </div>
               </div>
               <div class="stat-grid">
-                <div class="stat"><span class="stat-label">Today</span><span class="stat-value">$142.18</span><span class="stat-delta">+$31 vs avg</span></div>
-                <div class="stat"><span class="stat-label">This week</span><span class="stat-value">$812</span><span class="stat-delta">Mon–Wed</span></div>
-                <div class="stat"><span class="stat-label">This month</span><span class="stat-value">$2,334</span><span class="stat-delta">≈ $9.9k by 31st</span></div>
+                <div class="stat"><span class="stat-label">Today</span><span class="stat-value">$508.90</span><span class="stat-delta">2 accounts</span></div>
+                <div class="stat"><span class="stat-label">This week</span><span class="stat-value">$1,842</span><span class="stat-delta">Mon–Wed</span></div>
+                <div class="stat"><span class="stat-label">This month</span><span class="stat-value">$4,960</span><span class="stat-delta">≈ $9.9k by 31st</span></div>
               </div>
               <div class="burn">
                 <span>Burn rate</span>
@@ -1796,16 +2070,14 @@ td .model { font-family: var(--font-mono); font-size: 12px; }
                 <b>$18.60/h</b>
               </div>
               <div class="sources">
-                <div class="source-row"><span class="dot"></span><span>Windows · .claude</span><span class="muted">live · $6,035</span></div>
+                <div class="source-row"><span class="dot"></span><span>Windows</span><span class="muted">live · $6,035</span></div>
                 <div class="source-row"><span class="dot"></span><span>WSL Ubuntu-24.04</span><span class="muted">running · $2,378</span></div>
-                <div class="source-row"><span class="dot idle"></span><span>MacBook (shared folder)</span><span class="muted">synced 2 h ago</span></div>
               </div>
             </div>
             <div class="flyout-foot">
-              <button class="btn primary" type="button"><svg><use href="#i-open"/></svg>Open dashboard</button>
+              <button class="btn" type="button"><svg><use href="#i-gear"/></svg>Settings</button>
               <span class="grow"></span>
-              <button class="btn subtle icon" type="button" aria-label="Pause"><svg><use href="#i-pause"/></svg></button>
-              <button class="btn subtle icon" type="button" aria-label="Settings"><svg><use href="#i-gear"/></svg></button>
+              <button class="btn subtle" type="button">Close</button>
             </div>
           </div>
         </div>
@@ -1865,7 +2137,7 @@ td .model { font-family: var(--font-mono); font-size: 12px; }
             <div class="flyout-body">
               <div class="infobar critical">
                 <svg><use href="#i-warn"/></svg>
-                <div><b>5-hour limit reached on Work</b>New requests on this account wait until 14:30. Personal still has 82% left.</div>
+                <div><b>5-hour limit reached on Work</b>New requests on this account wait until 14:30. Home still has 82% left.</div>
               </div>
               <div class="infobar warn">
                 <svg><use href="#i-warn"/></svg>
@@ -2046,13 +2318,13 @@ td .model { font-family: var(--font-mono); font-size: 12px; }
               <div style="display: grid; gap: var(--space-4)">
                 <div class="account-cards">
                   <div class="panel account-card">
-                    <div class="account-top"><div><div class="account-name">Work</div><div class="account-sub">alex@example.com · Team</div></div><span class="badge">Limits on</span></div>
+                    <div class="account-top"><div><div class="account-name">Work</div><div class="account-sub">work@example.com · Team</div></div><span class="badge">Limits on</span></div>
                     <div class="limit"><div class="limit-top"><span class="limit-name">5-hour</span><span class="limit-value">62%</span></div><div class="meter"><i style="width: 62%"></i></div></div>
                     <div class="limit"><div class="limit-top"><span class="limit-name">Weekly</span><span class="limit-value">41%</span></div><div class="meter"><i style="width: 41%"></i></div></div>
                     <div class="burn"><span>30 days</span><b>$2,208.77</b></div>
                   </div>
                   <div class="panel account-card">
-                    <div class="account-top"><div><div class="account-name">Personal</div><div class="account-sub">sample · Max 20x</div></div><span class="badge neutral">Estimate</span></div>
+                    <div class="account-top"><div><div class="account-name">Home</div><div class="account-sub">home@example.com · Max 20x</div></div><span class="badge neutral">Estimate</span></div>
                     <div class="limit"><div class="limit-top"><span class="limit-name">5-hour</span><span class="limit-value">≈ 18%</span></div><div class="meter"><i style="width: 18%; opacity: .55"></i></div></div>
                     <div class="limit"><div class="limit-top"><span class="limit-name">Weekly</span><span class="limit-value">≈ 9%</span></div><div class="meter"><i style="width: 9%; opacity: .55"></i></div></div>
                     <div class="burn"><span>30 days</span><b>$125.15</b></div>
@@ -2072,7 +2344,7 @@ td .model { font-family: var(--font-mono); font-size: 12px; }
                       <tbody>
                         <tr><td>Windows · C:\Users\alex\.claude</td><td>Work</td><td><span class="badge ok">Live</span></td><td class="num">812</td><td class="num">1.4 GB</td><td class="num">$6,035.12</td></tr>
                         <tr><td>WSL Ubuntu-24.04 · /home/alex/.claude</td><td>Work</td><td><span class="badge ok">Running</span></td><td class="num">96</td><td class="num">380 MB</td><td class="num">$2,377.78</td></tr>
-                        <tr><td>MacBook · shared folder</td><td>Personal</td><td><span class="badge neutral">Synced 2 h ago</span></td><td class="num">—</td><td class="num">12 KB</td><td class="num">sample</td></tr>
+                        <tr><td>MacBook · shared folder</td><td>Home</td><td><span class="badge neutral">Synced 2 h ago</span></td><td class="num">—</td><td class="num">12 KB</td><td class="num">sample</td></tr>
                       </tbody>
                     </table>
                   </div>
@@ -2108,7 +2380,7 @@ td .model { font-family: var(--font-mono); font-size: 12px; }
                 <div style="display: grid; gap: 10px">
                   <div class="roi-row"><span>Work · Team (Oct)</span><div class="roi-track"><i style="width: 100%"></i><b style="width: 1.9%"></b></div><span class="num"><b>37×</b> $2,209</span></div>
                   <div class="roi-row"><span>Work · Team (Sep)</span><div class="roi-track"><i style="width: 88%"></i><b style="width: 1.9%"></b></div><span class="num"><b>33×</b> $1,950</span></div>
-                  <div class="roi-row"><span>Personal · Max 20x</span><div class="roi-track"><i style="width: 4%"></i><b style="width: 6.2%"></b></div><span class="num"><b>0.6×</b> $125</span></div>
+                  <div class="roi-row"><span>Home · Max 20x</span><div class="roi-track"><i style="width: 4%"></i><b style="width: 6.2%"></b></div><span class="num"><b>0.6×</b> $125</span></div>
                 </div>
                 <p class="note">The dark tick is the plan price. A value under 1× means the plan cost more than the same usage would on the API. Plan prices are editable per account.</p>
               </div>
@@ -2128,12 +2400,82 @@ td .model { font-family: var(--font-mono); font-size: 12px; }
       <div class="block-head">
         <span class="eyebrow">Surfaces</span>
         <h2>Settings</h2>
-        <p>Windows 11 settings pattern: grouped cards, one row per setting, the control on the right.
-          The taskbar editor shows a live preview while you change it.</p>
+        <p>Windows 11 settings pattern: grouped cards, one row per setting, the control on the right
+          (below the text on narrow windows). The window has five cards in this order: Taskbar,
+          Sources, Accounts, General, About. The Taskbar card previews the widget as you change it;
+          try the controls.</p>
+      </div>
+
+      <div class="settings-window">
+        <div class="sub-head"><h3>Taskbar</h3></div>
+        <div class="setting-card">
+          <div class="setting-preview">
+            <span class="spec">Preview</span>
+            <div class="strip-pair" id="settings-preview"></div>
+          </div>
+          <div class="setting-row"><svg><use href="#i-user"/></svg><div><div class="setting-title">Several accounts</div><div class="setting-desc">How accounts share the taskbar</div></div>
+            <div class="setting-control"><div class="segmented" role="group" aria-label="Several accounts" id="settings-mode"><button type="button" aria-pressed="false" data-mode="together">Together</button><button type="button" aria-pressed="true" data-mode="side">Side by side</button><button type="button" aria-pressed="false" data-mode="turns">Take turns</button></div></div></div>
+          <div class="setting-row"><svg><use href="#i-list"/></svg><div><div class="setting-title">Layout for</div><div class="setting-desc">Each account's block can have its own ring and lines.</div></div>
+            <div class="setting-control"><div class="dropdown" data-dropdown data-options="All accounts|Work|Home"><button type="button" class="dropdown-button" aria-haspopup="listbox" aria-expanded="false"><span class="dropdown-value">All accounts</span><svg><use href="#i-chevron-up"/></svg></button><span class="dropdown-list" role="listbox" aria-label="Layout for"></span></div></div></div>
+          <div class="setting-row"><svg><use href="#i-chart"/></svg><div><div class="setting-title">Ring</div><div class="setting-desc">Most pressing: a full weekly limit beats an empty 5-hour one</div></div>
+            <div class="setting-control"><div class="segmented" role="group" aria-label="Ring" id="settings-ring"><button type="button" aria-pressed="false" data-ring="off">Off</button><button type="button" aria-pressed="false" data-ring="5h">5h</button><button type="button" aria-pressed="false" data-ring="week">Week</button><button type="button" aria-pressed="true" data-ring="pressing">Most pressing</button></div></div></div>
+          <div class="setting-row"><svg><use href="#i-taskbar"/></svg><div><div class="setting-title">Top line</div></div>
+            <div class="setting-control"><div class="dropdown" data-dropdown><button type="button" class="dropdown-button" aria-haspopup="listbox" aria-expanded="false"><span class="dropdown-value">Automatic</span><svg><use href="#i-chevron-up"/></svg></button><span class="dropdown-list" role="listbox" aria-label="Top line"></span></div></div></div>
+          <div class="setting-row"><svg><use href="#i-taskbar"/></svg><div><div class="setting-title">Bottom line</div><div class="setting-desc">Shown open</div></div>
+            <div class="setting-control"><div class="dropdown is-open" data-dropdown><button type="button" class="dropdown-button" aria-haspopup="listbox" aria-expanded="true"><span class="dropdown-value">Most pressing limit</span><svg><use href="#i-chevron-up"/></svg></button><span class="dropdown-list" role="listbox" aria-label="Bottom line"></span></div></div></div>
+        </div>
+
+        <div class="sub-head"><h3>Sources</h3></div>
+        <div class="setting-card">
+          <div class="setting-row"><svg><use href="#i-folder"/></svg><div><div class="setting-title">WSL distributions</div><div class="setting-desc">Running only never starts a stopped distribution.</div></div>
+            <div class="setting-control"><div class="segmented" role="group" aria-label="WSL distributions"><button type="button" aria-pressed="false">Off</button><button type="button" aria-pressed="true">Running only</button><button type="button" aria-pressed="false">All</button></div></div></div>
+          <div class="setting-row"><svg><use href="#i-folder"/></svg><div><div class="setting-title">Extra config folders</div><div class="setting-desc">For a config folder somewhere Hakari doesn't look on its own</div></div>
+            <div class="setting-control"><button class="btn" type="button">Add folder</button></div></div>
+          <div class="setting-row"><svg><use href="#i-taskbar"/></svg><div><div class="setting-title">Taskbar displays</div><div class="setting-desc">Where the widget is shown</div></div>
+            <div class="setting-control"><div class="segmented" role="group" aria-label="Taskbar displays" id="settings-displays"><button type="button" aria-pressed="false" data-displays="main">Main</button><button type="button" aria-pressed="false" data-displays="all">All</button><button type="button" aria-pressed="true" data-displays="choose">Choose</button></div></div></div>
+          <div class="setting-row nested" data-display-choice><svg><use href="#i-taskbar"/></svg><div><div class="setting-title">DELL U2720Q · Main display</div><div class="setting-desc">3840 × 2160 · 150%</div></div><button class="toggle" type="button" role="switch" aria-checked="true" aria-label="Show on DELL U2720Q"></button></div>
+          <div class="setting-row nested" data-display-choice><svg><use href="#i-taskbar"/></svg><div><div class="setting-title">LG 27UL850</div><div class="setting-desc">3840 × 2160 · 150%</div></div><button class="toggle" type="button" role="switch" aria-checked="false" aria-label="Show on LG 27UL850"></button></div>
+        </div>
+
+        <div class="sub-head"><h3>Accounts</h3></div>
+        <div class="setting-card">
+          <div class="setting-row"><svg><use href="#i-user"/></svg><div><div class="setting-title">work@example.com</div><div class="setting-desc">Team · Example Co</div></div>
+            <div class="setting-control"><input class="input compact is-rest" value="Work" aria-label="Nickname for work@example.com" placeholder="Nickname"></div></div>
+          <div class="setting-row"><svg><use href="#i-user"/></svg><div><div class="setting-title">home@example.com</div><div class="setting-desc">Max 20x · Personal</div></div>
+            <div class="setting-control"><input class="input compact is-rest" value="Home" aria-label="Nickname for home@example.com" placeholder="Nickname"></div></div>
+          <div class="setting-row"><svg><use href="#i-refresh"/></svg><div><div class="setting-title">Renew sign-in automatically</div><div class="setting-desc">When an account's sign-in expires, renew it in the background so its limits keep updating.</div></div>
+            <button class="toggle" type="button" role="switch" aria-checked="true" aria-label="Renew sign-in automatically"></button></div>
+        </div>
+        <p class="note">Accounts are found automatically: any signed-in <code>.claude*</code> folder in the home folder, <code>CLAUDE_CONFIG_DIR</code>, and running WSL distributions. There is no add-account button; sign in with Claude Code and the account appears. The nickname is optional; without one, the email is shown.</p>
+
+        <div class="sub-head"><h3>General</h3></div>
+        <div class="setting-card">
+          <div class="setting-row"><svg><use href="#i-power"/></svg><div><div class="setting-title">Start with Windows</div></div>
+            <button class="toggle" type="button" role="switch" aria-checked="true" aria-label="Start with Windows"></button></div>
+          <div class="setting-row"><svg><use href="#i-globe"/></svg><div><div class="setting-title">Language</div><div class="setting-desc">Each language is named in itself</div></div>
+            <div class="setting-control"><div class="segmented" role="group" aria-label="Language"><button type="button" aria-pressed="true">Windows</button><button type="button" aria-pressed="false" lang="en">English</button><button type="button" aria-pressed="false" lang="th" class="lang-option">ไทย</button></div></div></div>
+          <div class="setting-row"><svg><use href="#i-flow"/></svg><div><div class="setting-title">Animations</div><div class="setting-desc">Windows follows the system animation effects. Off uses the least power.</div></div>
+            <div class="setting-control"><div class="segmented" role="group" aria-label="Animations setting"><button type="button" aria-pressed="true">Windows</button><button type="button" aria-pressed="false">Full</button><button type="button" aria-pressed="false">Reduced</button><button type="button" aria-pressed="false">Off</button></div></div></div>
+          <div class="setting-row"><svg><use href="#i-coin"/></svg><div><div class="setting-title">Currency</div><div class="setting-desc">Or type any 3-letter code</div></div>
+            <div class="setting-control"><div class="segmented" role="group" aria-label="Currency"><button type="button" aria-pressed="true">USD</button><button type="button" aria-pressed="false">THB</button><button type="button" aria-pressed="false">EUR</button><button type="button" aria-pressed="false">JPY</button></div><input class="input code mono is-rest" maxlength="3" placeholder="Code" aria-label="Other currency code"></div></div>
+          <div class="setting-row"><svg><use href="#i-calendar"/></svg><div><div class="setting-title">Exchange rate</div><div class="setting-desc">Day of use converts each day at that day's rate</div></div>
+            <div class="setting-control"><div class="segmented" role="group" aria-label="Exchange rate"><button type="button" aria-pressed="true">Day of use</button><button type="button" aria-pressed="false">Latest</button></div></div></div>
+          <div class="setting-row"><svg><use href="#i-pause"/></svg><div><div class="setting-title">Pause updates</div><div class="setting-desc">Stop reading logs and limits until turned back on</div></div>
+            <button class="toggle" type="button" role="switch" aria-checked="false" aria-label="Pause updates"></button></div>
+        </div>
+
+        <div class="sub-head"><h3>About</h3></div>
+        <div class="setting-card">
+          <div class="setting-row"><svg width="20" height="20" aria-hidden="true" style="color: inherit"><use href="#i-app"/></svg><div><div class="setting-title">Hakari 1.0.0</div><div class="setting-desc">Reads usage only. Prompt and response text is never read or stored, and nothing leaves this PC except the limit checks.</div></div></div>
+          <div class="setting-row"><svg><use href="#i-heart"/></svg><div><div class="setting-title">Support Hakari</div><div class="setting-desc">Opens the project's Ko-fi page</div></div>
+            <div class="setting-control"><button class="btn primary" type="button">Ko-fi</button></div></div>
+          <div class="setting-row"><svg><use href="#i-folder"/></svg><div><div class="setting-title">Data folder</div><div class="setting-desc mono">%LOCALAPPDATA%\Hakari</div></div>
+            <div class="setting-control"><button class="btn" type="button">Open</button></div></div>
+        </div>
       </div>
 
       <div class="sheet">
-        <div class="sub-head"><h3>Taskbar layout editor</h3><p>Pick a template, then reorder, swap or restyle slots. Changes preview instantly and apply on Save.</p></div>
+        <div class="sub-head"><h3>Planned · taskbar layout editor</h3><p>Not in the current window. Pick a template, then reorder, swap or restyle slots. Changes preview instantly and apply on Save.</p></div>
         <div class="editor">
           <div class="template-picker" id="template-picker"></div>
           <div style="display: grid; gap: var(--space-3); min-width: 0">
@@ -2158,22 +2500,9 @@ td .model { font-family: var(--font-mono); font-size: 12px; }
         </div>
       </div>
 
+      <div class="sub-head"><h3>Planned · alerts and prices</h3><p>Not in the current window yet; kept so the design is ready when they land.</p></div>
       <div class="grid-2">
         <div class="settings-layout">
-          <div class="sub-head"><h3>Sources</h3></div>
-          <div class="setting-card">
-            <div class="setting-row"><svg><use href="#i-folder"/></svg><div><div class="setting-title">Windows · .claude</div><div class="setting-desc">C:\Users\alex\.claude · Work</div></div><button class="toggle" type="button" role="switch" aria-checked="true" aria-label="Windows source"></button></div>
-            <div class="setting-row"><svg><use href="#i-folder"/></svg><div><div class="setting-title">WSL distributions</div><div class="setting-desc">Only read distributions that are already running</div></div><span class="select">Running only</span></div>
-            <div class="setting-row"><svg><use href="#i-folder"/></svg><div><div class="setting-title">Extra config folders</div><div class="setting-desc">For accounts kept in another CLAUDE_CONFIG_DIR</div></div><button class="btn" type="button">Add folder</button></div>
-            <div class="setting-row"><svg><use href="#i-sync"/></svg><div><div class="setting-title">Shared folder sync</div><div class="setting-desc">OneDrive\Hakari · writes totals only, never logs</div></div><button class="toggle" type="button" role="switch" aria-checked="true" aria-label="Shared folder sync"></button></div>
-          </div>
-
-          <div class="sub-head"><h3>Accounts</h3></div>
-          <div class="setting-card">
-            <div class="setting-row"><svg><use href="#i-user"/></svg><div><div class="setting-title">Work</div><div class="setting-desc">alex@example.com · Team · limits on</div></div><button class="btn" type="button">Edit</button></div>
-            <div class="setting-row"><svg><use href="#i-user"/></svg><div><div class="setting-title">Personal</div><div class="setting-desc">Max 20x · estimate only</div></div><button class="btn" type="button">Edit</button></div>
-          </div>
-
           <div class="sub-head"><h3>Alerts</h3></div>
           <div class="setting-card">
             <div class="setting-row"><svg><use href="#i-bell"/></svg><div><div class="setting-title">Limit warnings</div><div class="setting-desc">Notify at 80%, 90% and 100%</div></div>
@@ -2185,29 +2514,10 @@ td .model { font-family: var(--font-mono); font-size: 12px; }
         </div>
 
         <div class="settings-layout">
-          <div class="sub-head"><h3>General</h3></div>
-          <div class="setting-card">
-            <div class="setting-row"><svg><use href="#i-power"/></svg><div><div class="setting-title">Start with Windows</div></div><button class="toggle" type="button" role="switch" aria-checked="true" aria-label="Start with Windows"></button></div>
-            <div class="setting-row"><svg><use href="#i-flow"/></svg><div><div class="setting-title">Animations</div><div class="setting-desc">Off uses the least power. Reduced keeps only short fades.</div></div>
-              <div class="segmented" role="group" aria-label="Animations setting"><button type="button" aria-pressed="true">Full</button><button type="button" aria-pressed="false">Reduced</button><button type="button" aria-pressed="false">Off</button></div></div>
-            <div class="setting-row"><svg><use href="#i-taskbar"/></svg><div><div class="setting-title">Follow Windows animation effects</div><div class="setting-desc">Use Reduced when Windows animations are off</div></div><button class="toggle" type="button" role="switch" aria-checked="true" aria-label="Follow Windows animation effects"></button></div>
-            <div class="setting-row"><svg><use href="#i-battery"/></svg><div><div class="setting-title">Reduce on battery saver</div></div><button class="toggle" type="button" role="switch" aria-checked="true" aria-label="Reduce on battery saver"></button></div>
-            <div class="setting-row"><svg><use href="#i-globe"/></svg><div><div class="setting-title">Language</div></div><span class="select">English</span></div>
-            <div class="setting-row"><svg><use href="#i-coin"/></svg><div><div class="setting-title">Currency</div><div class="setting-desc">1 USD = 36.15 THB · updated today</div></div><span class="select">THB ฿</span></div>
-            <div class="setting-row"><svg><use href="#i-calendar"/></svg><div><div class="setting-title">Week starts on</div></div><span class="select">Monday</span></div>
-            <div class="setting-row"><svg><use href="#i-taskbar"/></svg><div><div class="setting-title">Widget position</div><div class="setting-desc">Display 1 · left of the notification area</div></div><span class="select">Left of tray</span></div>
-          </div>
-
           <div class="sub-head"><h3>Prices</h3></div>
           <div class="setting-card">
             <div class="setting-row"><svg><use href="#i-refresh"/></svg><div><div class="setting-title">Price table</div><div class="setting-desc">Official pricing page · checked Oct 5, 2026 · 22 models</div></div><button class="btn" type="button">Check now</button></div>
             <div class="setting-row"><svg><use href="#i-list"/></svg><div><div class="setting-title">Custom prices</div><div class="setting-desc">Override a model or add one that isn't listed yet</div></div><button class="btn" type="button">Open</button></div>
-          </div>
-
-          <div class="sub-head"><h3>About</h3></div>
-          <div class="setting-card">
-            <div class="setting-row"><span class="brand-mark" style="font-size: 20px" aria-hidden="true">秤</span><div><div class="setting-title">Hakari 1.0.0</div><div class="setting-desc">Reads usage only. Prompt and response text is never read or stored. Not affiliated with Anthropic.</div></div><button class="btn" type="button">Privacy</button></div>
-            <div class="setting-row"><svg><use href="#i-heart"/></svg><div><div class="setting-title">Support Hakari</div><div class="setting-desc">Opens the project's Ko-fi page</div></div><button class="btn primary" type="button">Ko-fi</button></div>
           </div>
         </div>
       </div>
@@ -2233,7 +2543,7 @@ td .model { font-family: var(--font-mono); font-size: 12px; }
         <div class="toast">
           <div class="toast-app"><span class="brand-mark" aria-hidden="true">秤</span>Hakari · now</div>
           <div class="toast-title">Work reached its 5-hour limit</div>
-          <div class="toast-body">It resets at 14:30. Personal has 82% left.</div>
+          <div class="toast-body">It resets at 14:30. Home has 82% left.</div>
           <div class="meter"><i class="critical" style="width: 100%"></i></div>
         </div>
         <div class="toast">
@@ -2285,7 +2595,7 @@ td .model { font-family: var(--font-mono); font-size: 12px; }
           <div class="step-dots"><i class="on"></i><i class="on"></i><i></i></div>
           <span class="step-count">Step 2 of 3</span>
           <h4>Name your accounts</h4>
-          <label class="setting-desc" for="alias-1">alex@example.com · Team</label>
+          <label class="setting-desc" for="alias-1">work@example.com · Team</label>
           <input class="input" id="alias-1" value="Work">
           <div class="toggle-group">Show usage limits for this account <button class="toggle" type="button" role="switch" aria-checked="true" aria-label="Show limits for Work"></button></div>
           <p class="setting-desc">Hakari reads this account's sign-in token on this PC only to ask for its limits. Turn it off any time.</p>
@@ -2329,6 +2639,9 @@ td .model { font-family: var(--font-mono); font-size: 12px; }
             <tr><td>DataTable</td><td><code>ItemsRepeater</code> + header grid (or CommunityToolkit DataGrid)</td><td>stretch</td><td>loading, empty, sorted</td><td>Virtualized; sessions list can exceed 10k rows.</td></tr>
             <tr><td>Charts</td><td>Win2D <code>CanvasControl</code></td><td>stretch</td><td>loading, empty, hover readout</td><td>Daily bars, stacked share, heatmap; colors from data tokens.</td></tr>
             <tr><td>SettingsCard</td><td>CommunityToolkit <code>SettingsCard</code> / <code>SettingsExpander</code></td><td>stretch</td><td>—</td><td>Windows 11 settings pattern.</td></tr>
+            <tr><td>AccountBlock</td><td>UserControl: 22px ring + two TextBlocks</td><td>auto × 40</td><td>normal, warn, critical, last known (≈), no ring</td><td>One per account in Side by side (max 3, 1px divider between); one shared block in Together and Take turns.</td></tr>
+            <tr><td>SegmentedControl</td><td>Custom template over <code>SelectorBar</code>; indicator is a composition visual</td><td>auto × 26</td><td>rest, hover (7% ink), pressed (0.95), selected (accent), disabled</td><td>Indicator slides 200 ms decelerate between items; labels never wrap.</td></tr>
+            <tr><td>Dropdown</td><td><code>ComboBox</code> with custom template (button + chevron, raised list, check on the chosen item)</td><td>min 180 wide</td><td>closed, open, hover, chosen</td><td>Used for Layout for, Top line and Bottom line.</td></tr>
             <tr><td>LayoutEditor</td><td>ListView with reorder, live <code>TaskbarWidget</code> preview</td><td>stretch</td><td>editing, invalid format</td><td>Format string validated as you type.</td></tr>
             <tr><td>Toast</td><td><code>AppNotificationBuilder</code></td><td>system</td><td>with / without buttons, progress</td><td>Windows draws toasts, so they keep system style; Hakari controls text, logo, buttons and progress only.</td></tr>
             <tr><td>Context menu</td><td>Custom popup (not the shell menu) so it matches the theme and motion</td><td>240 × auto</td><td>hover, pressed, disabled</td><td>Rises 8px on open; keyboard navigable.</td></tr>
@@ -2383,7 +2696,7 @@ td .model { font-family: var(--font-mono); font-size: 12px; }
         </div>
         <div class="sheet">
           <div class="sub-head"><h3>Keyboard &amp; screen readers</h3></div>
-          <p class="note">Widget is reachable with Win+B then arrows (tray order). Its accessible name reads the full tooltip. Flyout traps focus, starts on the account switcher, and Esc returns focus. Every chart has a table view.</p>
+          <p class="note">Widget is reachable with Win+B then arrows (tray order). Its accessible name reads the full tooltip. Flyout traps focus, starts on the first account section, and Esc returns focus. Every chart has a table view.</p>
         </div>
         <div class="sheet">
           <div class="sub-head"><h3>Motion</h3></div>
@@ -2464,6 +2777,33 @@ td .model { font-family: var(--font-mono); font-size: 12px; }
       '<text x="13" y="16.5" text-anchor="middle" font-size="8.5" font-weight="700" fill="currentColor" font-family="Segoe UI, sans-serif">' + percent + '</text></svg>';
   }
 
+  /* 22px widget ring: 3px stroke, faint track, tone fill, no digits */
+  function ring22(percent, tone, options) {
+    var radius = 9.5;
+    var circumference = 2 * Math.PI * radius;
+    var offset = circumference - (Math.min(percent, 100) / 100) * circumference;
+    var dimClass = options && options.dim ? " is-dim" : "";
+    return '<svg class="w-ring22 ' + tone + dimClass + '" viewBox="0 0 22 22" aria-hidden="true">' +
+      '<circle class="ring-track" cx="11" cy="11" r="' + radius + '" fill="none" stroke-width="3"/>' +
+      '<circle class="ring-arc m-transform" cx="11" cy="11" r="' + radius + '" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" ' +
+      'style="--ring-length: ' + circumference.toFixed(2) + '; stroke-dasharray: ' + circumference.toFixed(2) + '; stroke-dashoffset: ' + offset.toFixed(2) + '; ' +
+      'transition: stroke-dashoffset var(--duration-emphasis) var(--ease-decelerate)" transform="rotate(-90 11 11)"/></svg>';
+  }
+
+  function lines(top, bottom, options) {
+    var topTone = options && options.topTone ? " " + options.topTone : "";
+    var bottomTone = options && options.bottomTone ? " " + options.bottomTone : " faint";
+    var langClass = options && options.lang ? " lang-" + options.lang : "";
+    return '<span class="w-lines' + langClass + '"><span class="w-primary' + topTone + '">' + top + '</span>' +
+      '<span class="w-secondary' + bottomTone + '">' + bottom + '</span></span>';
+  }
+
+  function toneFor(percent) {
+    if (percent >= 95) { return "tone-critical"; }
+    if (percent >= 80) { return "tone-warn"; }
+    return "tone-normal";
+  }
+
   function bar(percent, tone) {
     return '<span class="w-bar-track"><span class="w-bar-fill fill-normal ' + tone + '" style="width: ' + Math.min(percent, 100) + '%"></span></span>';
   }
@@ -2510,7 +2850,7 @@ td .model { font-family: var(--font-mono); font-size: 12px; }
       name: "Ring + text",
       description: "Limit ring with money and burn rate.",
       render: function () {
-        return ring(62, "tone-normal") + '<span class="w-lines"><span class="w-primary">$142.18</span><span class="w-secondary faint">$18.6/h</span></span>';
+        return ring22(62, "tone-normal") + '<span class="w-lines"><span class="w-primary">$142.18</span><span class="w-secondary faint">$18.6/h</span></span>';
       }
     },
     {
@@ -2524,7 +2864,7 @@ td .model { font-family: var(--font-mono); font-size: 12px; }
       name: "Accounts",
       description: "One value per account; wheel or timer cycles.",
       render: function () {
-        return '<span class="w-lines"><span class="w-primary">Work 62% · Personal 18%</span><span class="w-secondary faint" style="display: flex; gap: 6px; align-items: center">5-hour limits <span class="w-dots"><i class="on"></i><i></i><i></i></span></span></span>';
+        return '<span class="w-lines"><span class="w-primary">Work 62% · Home 18%</span><span class="w-secondary faint" style="display: flex; gap: 6px; align-items: center">5-hour limits <span class="w-dots"><i class="on"></i><i></i><i></i></span></span></span>';
       }
     },
     {
@@ -2538,27 +2878,27 @@ td .model { font-family: var(--font-mono); font-size: 12px; }
     {
       name: "Normal",
       description: "All values fresh, under thresholds.",
-      render: function () { return ring(62, "tone-normal") + '<span class="w-lines"><span class="w-primary">$142.18</span><span class="w-secondary faint">5h · ↺ 1:48</span></span>'; }
+      render: function () { return ring22(67, "tone-normal") + lines("$142.18 today", "5h 67% · ↺ 1:48"); }
     },
     {
       name: "Warning · 80–94%",
       description: "Only the metric past the threshold changes tone.",
-      render: function () { return ring(87, "tone-warn") + '<span class="w-lines"><span class="w-primary">$168.40</span><span class="w-secondary tone-warn">5h 87% · ↺ 0:52</span></span>'; }
+      render: function () { return ring22(87, "tone-warn") + lines("$168.40 today", "5h 87% · ↺ 0:52", { bottomTone: "tone-warn" }); }
     },
     {
       name: "Critical · 95%+",
-      description: "Red tone plus projected time to hit the limit.",
-      render: function () { return ring(97, "tone-critical") + '<span class="w-lines"><span class="w-primary">$181.02</span><span class="w-secondary tone-critical">Full in ~6 min</span></span>'; }
+      description: "Red tone; the reset is replaced by when it fills.",
+      render: function () { return ring22(97, "tone-critical") + lines("$181.02 today", "5h 97% · full ~13:48", { bottomTone: "tone-critical" }); }
     },
     {
       name: "Limit reached",
-      description: "Says \"Limit\" instead of 100%, with reset countdown.",
-      render: function () { return '<span class="w-pill tone-critical">LIMIT</span><span class="w-lines"><span class="w-primary">Work · resets 0:42</span><span class="w-secondary faint">Personal 18%</span></span>'; }
+      description: "Says \"full\" instead of 100%, with the reset.",
+      render: function () { return ring22(100, "tone-critical") + lines("$181.02 today", "5h full · ↺ 0:42", { bottomTone: "tone-critical" }); }
     },
     {
-      name: "Estimate",
-      description: "Limits not turned on: ≈ prefix, dimmed ring.",
-      render: function () { return '<span style="opacity: .6; display: flex">' + ring(58, "tone-normal") + '</span><span class="w-lines"><span class="w-primary">$142.18</span><span class="w-secondary faint">≈ 5h 58%</span></span>'; }
+      name: "Last known / estimate",
+      description: "Check failed or limits off: ≈ prefix, dimmed ring.",
+      render: function () { return ring22(58, "tone-normal", { dim: true }) + lines("$142.18 today", "≈ 5h 58% · ↺ 1:48"); }
     },
     {
       name: "Stale",
@@ -2578,7 +2918,7 @@ td .model { font-family: var(--font-mono); font-size: 12px; }
     {
       name: "Hover",
       description: "Hover fill only; tooltip after 600 ms.",
-      render: function () { return '<span class="w-lines"><span class="w-primary">$142.18 today</span><span class="w-secondary faint">5h 62% · ↺ 1:48</span></span>'; },
+      render: function () { return ring22(67, "tone-normal") + lines("$142.18 today", "5h 67% · ↺ 1:48"); },
       hover: true
     }
   ];
@@ -2599,6 +2939,171 @@ td .model { font-family: var(--font-mono); font-size: 12px; }
   renderRows("template-list", templates);
   renderRows("state-list", states);
 
+  /* ---------- Ring and line formats ---------- */
+  var lineFormats = [
+    {
+      name: "Normal",
+      description: "Limit, then the reset countdown (h:mm) under 24 h.",
+      render: function () { return ring22(67, "tone-normal") + lines("$142.18 today", "5h 67% · ↺ 1:48"); }
+    },
+    {
+      name: "Reset beyond 24 h",
+      description: "Weekday and time instead of a countdown.",
+      render: function () { return ring22(41, "tone-normal") + lines("$142.18 today", "Week 41% · ↺ Wed 16:59"); }
+    },
+    {
+      name: "Forecast",
+      description: "The recent pace fills it before it resets.",
+      render: function () { return ring22(82, "tone-warn") + lines("$168.40 today", "5h 82% · full ~18:40", { bottomTone: "tone-warn" }); }
+    },
+    {
+      name: "Full",
+      description: "Critical red, with when it comes back.",
+      render: function () { return ring22(100, "tone-critical") + lines("$96.10 today", "Week full · ↺ Wed 16:59", { bottomTone: "tone-critical" }); }
+    },
+    {
+      name: "Most pressing ring",
+      description: "Weekly is full, 5-hour is empty: the ring shows the weekly one.",
+      render: function () { return ring22(100, "tone-critical") + lines("5h 0% · ↺ 5:00", "Week full · ↺ Wed 16:59", { bottomTone: "tone-critical" }); }
+    },
+    {
+      name: "Last known",
+      description: "The latest check failed: \"≈ \" prefix, dimmed ring.",
+      render: function () { return ring22(67, "tone-normal", { dim: true }) + lines("≈ $142.18 today", "≈ 5h 67% · ↺ 1:48"); }
+    }
+  ];
+  renderRows("line-format-list", lineFormats);
+
+  /* ---------- Several accounts ---------- */
+  var mockAccounts = [
+    { nickname: "Work", today: "$412.80", fiveHour: 67, week: 92, weekLine: "Week 92% · ↺ Tue 22:00", fiveLine: "5h 67% · ↺ 1:48" },
+    { nickname: "Home", today: "$96.10", fiveHour: 0, week: 100, weekLine: "Week full · ↺ Wed 16:59", fiveLine: "5h 0% · ↺ 5:00" }
+  ];
+  var ringPercentByMode = {
+    off: function () { return null; },
+    "5h": function (account) { return account.fiveHour; },
+    week: function (account) { return account.week; },
+    pressing: function (account) { return Math.max(account.fiveHour, account.week); }
+  };
+
+  function accountRing(account, ringMode) {
+    var percent = ringPercentByMode[ringMode || "pressing"](account);
+    return percent === null ? "" : ring22(percent, toneFor(percent));
+  }
+
+  function accountBlock(account, ringMode) {
+    return '<span class="w-block">' + accountRing(account, ringMode) +
+      lines(account.nickname + ' · ' + account.today + ' today', account.weekLine, { bottomTone: toneFor(account.week) }) + '</span>';
+  }
+
+  function mostPressingFirst() {
+    return mockAccounts.slice().sort(function (first, second) { return second.week - first.week; });
+  }
+
+  function togetherBlock(ringMode) {
+    var ordered = mostPressingFirst();
+    var labelled = function (account) { return '<span class="w-account">' + account.nickname + '</span> ' + account.weekLine; };
+    return '<span class="w-block">' + accountRing(ordered[0], ringMode) +
+      lines(labelled(ordered[0]), labelled(ordered[1]), { topTone: toneFor(ordered[0].week), bottomTone: toneFor(ordered[1].week) }) + '</span>';
+  }
+
+  function sideBySideBlocks(ringMode) {
+    return mockAccounts.map(function (account) { return accountBlock(account, ringMode); }).join('<span class="w-divider"></span>');
+  }
+
+  function turnDots(index) {
+    return '<span class="w-dots" aria-hidden="true">' + mockAccounts.map(function (account, dotIndex) {
+      return '<i' + (dotIndex === index ? ' class="on"' : '') + '></i>';
+    }).join("") + '</span>';
+  }
+
+  function turnBlock(index, ringMode) {
+    return '<span class="w-block turn-block" data-turn="' + index + '" data-ring="' + (ringMode || "pressing") + '">' +
+      turnContent(index, ringMode) + '</span>';
+  }
+
+  function turnContent(index, ringMode) {
+    return accountBlock(mockAccounts[index], ringMode).replace(/^<span class="w-block">|<\/span>$/g, "") + turnDots(index);
+  }
+
+  var multiAccountModes = [
+    {
+      name: "Together",
+      description: "One block, a labelled line per account, most pressing on top.",
+      render: function () { return togetherBlock("pressing"); }
+    },
+    {
+      name: "Side by side · default",
+      description: "A block per account, each with its own ring and money. Max 3.",
+      render: function () { return sideBySideBlocks("pressing"); }
+    },
+    {
+      name: "Take turns",
+      description: "One block that switches account every 8 s (watch this row).",
+      render: function () { return turnBlock(0, "pressing"); }
+    }
+  ];
+  renderRows("multi-account-list", multiAccountModes);
+
+  function advanceTurns() {
+    document.querySelectorAll(".turn-block").forEach(function (block) {
+      var next = (Number(block.dataset.turn) + 1) % mockAccounts.length;
+      block.dataset.turn = String(next);
+      block.innerHTML = turnContent(next, block.dataset.ring);
+      var textLines = block.querySelector(".w-lines");
+      if (textLines) { textLines.classList.add("m-turn", "m-transform"); }
+    });
+  }
+  var turnTimer = null;
+  var turnIntervalMs = 8000;
+  function startTurns() { if (!turnTimer) { turnTimer = setInterval(advanceTurns, turnIntervalMs); } }
+  function stopTurns() { clearInterval(turnTimer); turnTimer = null; }
+  document.addEventListener("visibilitychange", function () {
+    if (document.hidden) { stopTurns(); } else { startTurns(); }
+  });
+  startTurns();
+
+  /* ---------- Thai examples ---------- */
+  var localeRows = [
+    {
+      name: "ไทย · one account",
+      description: "Cost today and a full weekly limit.",
+      render: function () { return ring22(100, "tone-critical") + lines("฿9,811 วันนี้", "สัปดาห์ เต็ม · ↺ พ. 16:59", { bottomTone: "tone-critical", lang: "th" }); }
+    },
+    {
+      name: "ไทย · side by side",
+      description: "Nicknames stay as typed; numbers keep Western digits.",
+      render: function () {
+        return '<span class="w-block">' + ring22(92, "tone-warn") + lines("Work · ฿14,920 วันนี้", "สัปดาห์ 92% · ↺ อ. 22:00", { bottomTone: "tone-warn", lang: "th" }) + '</span>' +
+          '<span class="w-divider"></span><span class="w-block">' + ring22(100, "tone-critical") +
+          lines("Home · ฿3,474 วันนี้", "สัปดาห์ เต็ม · ↺ พ. 16:59", { bottomTone: "tone-critical", lang: "th" }) + '</span>';
+      }
+    }
+  ];
+  renderRows("locale-list", localeRows);
+
+  /* ---------- Settings: taskbar preview follows the controls ---------- */
+  var settingsPreview = document.getElementById("settings-preview");
+  function selectedData(groupId, key, fallback) {
+    var chosen = document.querySelector("#" + groupId + ' button[aria-pressed="true"]');
+    return chosen ? chosen.dataset[key] : fallback;
+  }
+  function renderSettingsPreview() {
+    var mode = selectedData("settings-mode", "mode", "side");
+    var ringMode = selectedData("settings-ring", "ring", "pressing");
+    var inner = mode === "together" ? togetherBlock(ringMode)
+      : mode === "turns" ? turnBlock(0, ringMode)
+      : sideBySideBlocks(ringMode);
+    settingsPreview.innerHTML = strip("dark", inner);
+  }
+  renderSettingsPreview();
+
+  function syncDisplayChoice() {
+    var displays = selectedData("settings-displays", "displays", "main");
+    document.querySelectorAll("[data-display-choice]").forEach(function (row) { row.hidden = displays !== "choose"; });
+  }
+  syncDisplayChoice();
+
   /* ---------- Full taskbar for anatomy ---------- */
   function fullTaskbar(theme) {
     var appColors = ["#3a7bd5", "#e3a51c", "#4caf7a", "#8a5cd0", "#d9534f"];
@@ -2606,8 +3111,8 @@ td .model { font-family: var(--font-mono); font-size: 12px; }
       return '<span class="app-dot"><i style="background: ' + color + '"></i></span>';
     }).join("");
     return '<span class="spacer"></span><span class="apps">' + apps + '</span><span class="spacer"></span>' +
-      '<span class="widget outline-demo" title="Hakari widget"><span class="w-lines"><span class="w-primary">$142.18 today</span>' +
-      '<span class="w-secondary faint">5h 62% · ↺ 1:48</span></span>' + ring(62, "tone-normal") + '</span>' +
+      '<span class="widget outline-demo" title="Hakari widget">' + ring22(67, "tone-normal") +
+      lines("$142.18 today", "5h 67% · ↺ 1:48") + '</span>' +
       '<span class="tray"><span class="tray-item"><svg><use href="#i-chevron-up"/></svg></span>' +
       '<span class="tray-item" style="font-size: 12px">ไทย</span>' +
       '<span class="tray-icons"><svg><use href="#i-wifi"/></svg><svg><use href="#i-volume"/></svg><svg><use href="#i-battery"/></svg></span>' +
@@ -2637,13 +3142,72 @@ td .model { font-family: var(--font-mono); font-size: 12px; }
   document.getElementById("onboard-preview").innerHTML = strip("dark", templates[1].render());
 
   /* ---------- Segmented buttons and toggles ---------- */
+  function placeSegmentIndicator(group) {
+    var indicator = group.querySelector(".seg-indicator");
+    var selected = group.querySelector('button[aria-pressed="true"]');
+    if (!indicator || !selected || !selected.offsetWidth) { return; }
+    indicator.style.width = selected.offsetWidth + "px";
+    indicator.style.transform = "translateX(" + selected.offsetLeft + "px)";
+  }
+  function placeAllSegmentIndicators() {
+    document.querySelectorAll(".segmented.has-indicator").forEach(placeSegmentIndicator);
+  }
+  var segmentChangeHandlers = {
+    "settings-mode": renderSettingsPreview,
+    "settings-ring": renderSettingsPreview,
+    "settings-displays": syncDisplayChoice
+  };
   document.querySelectorAll(".segmented").forEach(function (group) {
+    var indicator = document.createElement("span");
+    indicator.className = "seg-indicator";
+    indicator.setAttribute("aria-hidden", "true");
+    indicator.style.transition = "none";
+    group.insertBefore(indicator, group.firstChild);
+    group.classList.add("has-indicator");
+    placeSegmentIndicator(group);
+    void indicator.offsetWidth;
+    indicator.style.transition = "";
+    if (group.classList.contains("static")) { return; }
     group.addEventListener("click", function (event) {
       var target = event.target.closest("button");
       if (!target) { return; }
       group.querySelectorAll("button").forEach(function (button) {
         button.setAttribute("aria-pressed", String(button === target));
       });
+      placeSegmentIndicator(group);
+      var handler = segmentChangeHandlers[group.id];
+      if (handler) { handler(); }
+    });
+  });
+  window.addEventListener("resize", placeAllSegmentIndicators);
+  if (document.fonts && document.fonts.ready) { document.fonts.ready.then(placeAllSegmentIndicators); }
+
+  /* ---------- Dropdowns ---------- */
+  var lineChoices = ["Automatic", "Cost today", "Cost this month", "Burn rate", "5-hour limit", "Weekly limit",
+    "Most pressing limit", "Second account", "Nothing"];
+  function renderDropdownList(dropdown) {
+    var options = dropdown.dataset.options ? dropdown.dataset.options.split("|") : lineChoices;
+    var chosen = dropdown.querySelector(".dropdown-value").textContent;
+    dropdown.querySelector(".dropdown-list").innerHTML = options.map(function (option) {
+      return '<button type="button" class="dropdown-item" role="option" aria-selected="' + String(option === chosen) + '">' +
+        '<svg><use href="#i-check"/></svg><span>' + option + '</span></button>';
+    }).join("");
+  }
+  function setDropdownOpen(dropdown, isOpen) {
+    dropdown.classList.toggle("is-open", isOpen);
+    dropdown.querySelector(".dropdown-button").setAttribute("aria-expanded", String(isOpen));
+  }
+  document.querySelectorAll("[data-dropdown]").forEach(function (dropdown) {
+    renderDropdownList(dropdown);
+    dropdown.querySelector(".dropdown-button").addEventListener("click", function () {
+      setDropdownOpen(dropdown, !dropdown.classList.contains("is-open"));
+    });
+    dropdown.querySelector(".dropdown-list").addEventListener("click", function (event) {
+      var item = event.target.closest(".dropdown-item");
+      if (!item) { return; }
+      dropdown.querySelector(".dropdown-value").textContent = item.textContent;
+      renderDropdownList(dropdown);
+      setDropdownOpen(dropdown, false);
     });
   });
   document.querySelectorAll(".toggle").forEach(function (toggle) {
@@ -2797,17 +3361,17 @@ td .model { font-family: var(--font-mono); font-size: 12px; }
 
   /* Live widget: new value every 2.5 s, paused while the tab is hidden */
   var liveSteps = [
-    { percent: 62, cost: 142.18, tone: "tone-normal", detail: "5h · ↺ 1:48" },
-    { percent: 71, cost: 151.02, tone: "tone-normal", detail: "5h · ↺ 1:41" },
-    { percent: 84, cost: 163.47, tone: "tone-warn", detail: "5h 84% · ↺ 1:30" },
-    { percent: 91, cost: 172.90, tone: "tone-warn", detail: "5h 91% · ↺ 1:22" },
-    { percent: 97, cost: 181.02, tone: "tone-critical", detail: "Full in ~6 min" }
+    { percent: 62, cost: 142.18, tone: "tone-normal", detail: "5h 62% · ↺ 1:48" },
+    { percent: 71, cost: 151.02, tone: "tone-normal", detail: "5h 71% · ↺ 1:41" },
+    { percent: 84, cost: 163.47, tone: "tone-warn", detail: "5h 84% · full ~14:58" },
+    { percent: 91, cost: 172.90, tone: "tone-warn", detail: "5h 91% · full ~14:20" },
+    { percent: 100, cost: 181.02, tone: "tone-critical", detail: "5h full · ↺ 1:15" }
   ];
   var liveIndex = 0;
   var liveContainer = document.getElementById("live-demo");
   function liveWidget(step) {
-    return ring(step.percent, step.tone) + '<span class="w-lines"><span class="w-primary"><span class="live-cost">$' +
-      step.cost.toFixed(2) + '</span></span><span class="w-secondary faint ' + (step.tone === "tone-normal" ? "" : step.tone) +
+    return ring22(step.percent, step.tone) + '<span class="w-lines"><span class="w-primary"><span class="live-cost">$' +
+      step.cost.toFixed(2) + '</span> today</span><span class="w-secondary faint ' + (step.tone === "tone-normal" ? "" : step.tone) +
       ' live-detail">' + step.detail + '</span></span>';
   }
   liveContainer.innerHTML = strip("light", liveWidget(liveSteps[0])) + strip("dark", liveWidget(liveSteps[0]));
@@ -2816,14 +3380,13 @@ td .model { font-family: var(--font-mono); font-size: 12px; }
     liveIndex = (liveIndex + 1) % liveSteps.length;
     var step = liveSteps[liveIndex];
     liveContainer.querySelectorAll(".widget").forEach(function (widget) {
-      var arc = widget.querySelector(".ring-arc");
-      var ringElement = widget.querySelector(".w-ring");
+      var arc = widget.querySelector(".w-ring22 circle:last-child");
+      var ringElement = widget.querySelector(".w-ring22");
       var length = parseFloat(arc.style.getPropertyValue("--ring-length"));
       arc.classList.remove("ring-arc");
-      arc.style.strokeDashoffset = String(length - (step.percent / 100) * length);
+      arc.style.strokeDashoffset = String(length - (Math.min(step.percent, 100) / 100) * length);
       ringElement.classList.remove(previous.tone);
       ringElement.classList.add(step.tone);
-      ringElement.querySelector("text").textContent = String(step.percent);
       if (step.tone === "tone-critical") {
         ringElement.classList.remove("m-pulse");
         void ringElement.getBoundingClientRect();

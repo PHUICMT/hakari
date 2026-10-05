@@ -53,6 +53,19 @@
                                         Checked="OnAccountsModeChecked" />
                                 </controls:HakariSegmented>
                             </controls:SettingRow>
+                            <controls:SettingRow x:Name="TurnSpeedRow" Glyph="&#xE916;"
+                                Title="{l:Text Key=settings.turnSpeed}">
+                                <controls:HakariSegmented>
+                                    <controls:HakariSegment x:Name="Turn4" GroupName="TurnSpeed" Tag="4"
+                                        Content="4 s" Checked="OnTurnSpeedChecked" />
+                                    <controls:HakariSegment x:Name="Turn8" GroupName="TurnSpeed" Tag="8"
+                                        Content="8 s" Checked="OnTurnSpeedChecked" />
+                                    <controls:HakariSegment x:Name="Turn15" GroupName="TurnSpeed" Tag="15"
+                                        Content="15 s" Checked="OnTurnSpeedChecked" />
+                                    <controls:HakariSegment x:Name="Turn30" GroupName="TurnSpeed" Tag="30"
+                                        Content="30 s" Checked="OnTurnSpeedChecked" />
+                                </controls:HakariSegmented>
+                            </controls:SettingRow>
                             <controls:SettingRow x:Name="LayoutTargetRow" Glyph="&#xE77B;"
                                 Title="{l:Text Key=settings.layoutFor}"
                                 Description="{l:Text Key=settings.layoutFor.description}">

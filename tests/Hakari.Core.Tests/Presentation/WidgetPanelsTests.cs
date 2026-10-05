@@ -40,7 +40,7 @@ public sealed class WidgetPanelsTests
     public void Take_turns_shows_one_account_at_a_time_and_moves_on()
     {
         var first = Compose(MultiAccountMode.TakeTurns, Now);
-        var next = Compose(MultiAccountMode.TakeTurns, Now + WidgetPanels.TurnLength);
+        var next = Compose(MultiAccountMode.TakeTurns, Now + WidgetPanels.DefaultTurnLength);
 
         Assert.Single(first);
         Assert.NotEqual(first[0].Top.Text, next[0].Top.Text);

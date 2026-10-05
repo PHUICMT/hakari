@@ -65,6 +65,7 @@
   "settings.accountsMode.together": "รวมกัน",
   "settings.accountsMode.sideBySide": "แยกช่อง",
   "settings.accountsMode.takeTurns": "สลับทีละบัญชี",
+  "settings.turnSpeed": "สลับทุก",
   "settings.layoutFor": "ตั้งค่าของ",
   "settings.layoutFor.description": "แต่ละบัญชีตั้งวงแหวนและบรรทัดของตัวเองได้",
   "settings.layoutFor.all": "ทุกบัญชี",

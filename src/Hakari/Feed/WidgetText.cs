@@ -49,7 +49,8 @@ internal static class WidgetText
             presentation.Widget,
             presentation.LayoutOf,
             facts,
-            now);
+            now,
+            presentation.TurnLength);
         var contents = panels.Select(ToContent).ToList();
         return contents[0] with { MorePanels = contents.Count > 1 ? contents[1..] : null };
     }

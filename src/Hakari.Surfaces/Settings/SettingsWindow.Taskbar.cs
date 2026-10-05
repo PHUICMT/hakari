@@ -1,3 +1,4 @@
+using System.Globalization;
 using Hakari.Core.Localization;
 using Hakari.Core.Presentation;
 using Hakari.Core.Presentation.Widget;
@@ -34,8 +35,12 @@ public sealed partial class SettingsWindow
     private string layoutTarget = SharedLayout;
     private DispatcherQueueTimer? turnTimer;
 
-    private static IEnumerable<(object Value, string Text)> LineChoices =>
-        LineChoiceKeys.Select(choice => ((object)choice.Value, Texts.Get(choice.TextKey)));
+    /// <summary>"Second account" only makes sense while all accounts share one block.</summary>
+    private static IEnumerable<(object Value, string Text)> LineChoicesFor(MultiAccountMode mode) =>
+        LineChoiceKeys
+            .Where(choice => mode == MultiAccountMode.Together
+                || choice.Value != WidgetItem.SecondAccount)
+            .Select(choice => ((object)choice.Value, Texts.Get(choice.TextKey)));
 
     private void FillTaskbar(HakariSettings settings)
     {
@@ -59,6 +64,18 @@ public sealed partial class SettingsWindow
     /// <summary>Per-account layouts only matter when each account has a block of its own.</summary>
     private void FillLayoutRows(HakariSettings settings)
     {
+        TurnSpeedRow.Visibility = settings.AccountsMode == MultiAccountMode.TakeTurns
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+        foreach (var choice in new[] { Turn4, Turn8, Turn15, Turn30 })
+        {
+            var wasFillingTurn = filling;
+            filling = true;
+            choice.IsChecked = choice.Tag as string
+                == settings.TurnSeconds.ToString(CultureInfo.InvariantCulture);
+            filling = wasFillingTurn;
+        }
+
         var perAccount = settings.AccountsMode != MultiAccountMode.Together
             && previewFacts!.Accounts.Count > 1;
         LayoutTargetRow.Visibility = perAccount ? Visibility.Visible : Visibility.Collapsed;
@@ -74,8 +91,9 @@ public sealed partial class SettingsWindow
         RingSession.IsChecked = layout.Ring == WidgetRingSource.Session;
         RingWeekly.IsChecked = layout.Ring == WidgetRingSource.Weekly;
         RingPressing.IsChecked = layout.Ring == WidgetRingSource.MostPressing;
-        TopSelect.SetChoices(LineChoices, layout.Top);
-        BottomSelect.SetChoices(LineChoices, layout.Bottom);
+        var choices = LineChoicesFor(settings.AccountsMode).ToList();
+        TopSelect.SetChoices(choices, layout.Top);
+        BottomSelect.SetChoices(choices, layout.Bottom);
         filling = wasFilling;
     }
 
@@ -101,6 +119,18 @@ public sealed partial class SettingsWindow
             : MultiAccountMode.SideBySide;
         var updated = store.Update(current => current with { AccountsMode = mode });
         FillLayoutRows(updated);
+        ShowPreview(updated);
+    }
+
+    private void OnTurnSpeedChecked(object sender, RoutedEventArgs args)
+    {
+        if (filling || sender is not HakariSegment { Tag: string tag }
+            || !int.TryParse(tag, CultureInfo.InvariantCulture, out var seconds))
+        {
+            return;
+        }
+
+        var updated = store.Update(current => current with { TurnSeconds = seconds });
         ShowPreview(updated);
     }
 
@@ -161,7 +191,8 @@ public sealed partial class SettingsWindow
             settings.Widget,
             settings.LayoutOf,
             facts,
-            now);
+            now,
+            settings.TurnLength);
 
         while (PreviewRow.Children.Count > panels.Count)
         {
@@ -195,11 +226,12 @@ public sealed partial class SettingsWindow
         if (turnTimer is null)
         {
             turnTimer = DispatcherQueue.CreateTimer();
-            turnTimer.Interval = WidgetPanels.TurnLength;
+            turnTimer.Interval = settings.TurnLength;
             turnTimer.Tick += (_, _) => ShowPreview(store.Load());
             Closed += (_, _) => turnTimer.Stop();
         }
 
+        turnTimer.Interval = settings.TurnLength;
         turnTimer.Start();
     }
 }

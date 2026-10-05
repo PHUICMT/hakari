@@ -178,7 +178,7 @@ internal sealed class UsageFeed : IDisposable
     /// <summary>Wakes for the next account's turn only while there are turns to take.</summary>
     private TimeSpan RefreshInterval(WidgetFacts facts) =>
         presentation.AccountsMode == MultiAccountMode.TakeTurns && facts.Accounts.Count > 1
-            ? WidgetPanels.TurnLength
+            ? presentation.TurnLength
             : ContentRefreshInterval;
 
     private void WaitForSettingsChange()
