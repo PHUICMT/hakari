@@ -20,7 +20,10 @@
                                 Background="{ThemeResource HakariGroundBrush}">
                                 <TextBlock Text="{l:Text Key=settings.preview}" Style="{StaticResource HakariCaptionText}" />
                                 <!-- One preview block per widget block; built in code -->
-                                <StackPanel x:Name="PreviewRow" Orientation="Horizontal" Spacing="6" />
+                                <ScrollViewer HorizontalScrollMode="Enabled" HorizontalScrollBarVisibility="Auto"
+                                    VerticalScrollMode="Disabled" VerticalScrollBarVisibility="Disabled" Padding="0,0,0,4">
+                                    <StackPanel x:Name="PreviewRow" Orientation="Horizontal" Spacing="6" />
+                                </ScrollViewer>
                             </StackPanel>
                             <controls:SettingRow Glyph="&#xE716;" Title="{l:Text Key=settings.accountsMode}"
                                 Description="{l:Text Key=settings.accountsMode.description}">

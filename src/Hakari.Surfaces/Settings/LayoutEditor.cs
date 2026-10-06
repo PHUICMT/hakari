@@ -145,13 +145,24 @@ internal sealed partial class LayoutEditor : StackPanel
         return header;
     }
 
+    /// <summary>A wide widget scrolls sideways here instead of being cut off.</summary>
     private Border PreviewStrip() => new()
     {
         Margin = new Thickness(Gutter, Gap, Gutter, 0),
         Padding = new Thickness(Gutter),
         CornerRadius = new CornerRadius(6),
         Background = Brush("HakariGroundBrush"),
-        Child = previewRow,
+        Child = SideScroller(previewRow),
+    };
+
+    internal static ScrollViewer SideScroller(UIElement content) => new()
+    {
+        Content = content,
+        HorizontalScrollMode = ScrollMode.Enabled,
+        HorizontalScrollBarVisibility = ScrollBarVisibility.Auto,
+        VerticalScrollMode = ScrollMode.Disabled,
+        VerticalScrollBarVisibility = ScrollBarVisibility.Disabled,
+        Padding = new Thickness(0, 0, 0, 4),
     };
 
     private void ShowPreview(IReadOnlyList<ComposedWidget> panels)
