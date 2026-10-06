@@ -3,10 +3,8 @@ using Hakari.Core.Localization;
 using Hakari.Core.Pricing;
 using Hakari.Core.Presentation;
 using Hakari.Core.Querying;
-using Microsoft.UI.Text;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Media;
 
 namespace Hakari.Surfaces.Dashboard;
 
@@ -14,15 +12,12 @@ namespace Hakari.Surfaces.Dashboard;
 /// The dashboard's first page: cost for the period against the one before, responses, cache
 /// and output tokens, where the money goes by token type, cost per day, and cost by model.
 /// </summary>
-internal sealed partial class OverviewPage : UserControl
+internal sealed partial class OverviewPage : LoadedPage<OverviewData>
 {
-    private const double PageTitleSize = 26;
     private const double SectionSpacing = 16;
-    private const double TileSpacing = 12;
     private const double ShareBarHeight = 10;
     private const double ShareGap = 2;
     private const int PercentScale = 100;
-    private static readonly Thickness PagePadding = new(24, 20, 24, 28);
 
     private static readonly (TokenKind Kind, string TextKey, string BrushKey)[] Kinds =
     [
@@ -33,49 +28,18 @@ internal sealed partial class OverviewPage : UserControl
         (TokenKind.Input, "dashboard.kind.input", "HakariChart5Brush"),
     ];
 
-    private readonly StackPanel content = new() { Spacing = SectionSpacing, Padding = PagePadding };
-    private readonly DashboardFilterBar filterBar = new();
-    private readonly PageLoader<OverviewData> loader;
-    private readonly ContentControl body = new()
-    {
-        HorizontalContentAlignment = HorizontalAlignment.Stretch,
-        IsTabStop = false,
-    };
-
     public OverviewPage()
+        : base("dashboard.overview")
     {
-        content.Children.Add(Header());
-        content.Children.Add(body);
-        Content = new ScrollViewer { Content = content };
-        loader = new PageLoader<OverviewData>(
-            body,
-            OverviewData.Load,
-            Build,
-            LoadingSkeleton.Overview);
-        filterBar.Changed += (_, _) => loader.Load(force: true);
-        loader.Load();
     }
 
-    /// <summary>Shows the current filter's numbers, reading again only when stale.</summary>
-    public void Refresh() => loader.Load();
+    protected override OverviewData Read(DashboardFilter filter) => OverviewData.Load(filter);
 
-    private Grid Header()
-    {
-        var header = new Grid();
-        header.Children.Add(new TextBlock
-        {
-            Text = Texts.Get("dashboard.overview"),
-            FontSize = PageTitleSize,
-            FontWeight = FontWeights.SemiBold,
-            Foreground = DashboardCard.Brush("HakariInkBrush"),
-            VerticalAlignment = VerticalAlignment.Center,
-        });
-        header.Children.Add(filterBar);
-        DashboardHeader.WrapWhenNarrow(header, filterBar);
-        return header;
-    }
+    protected override UIElement Build(OverviewData data) => BuildPage(data);
 
-    private static StackPanel Build(OverviewData data)
+    protected override UIElement Skeleton() => LoadingSkeleton.Overview();
+
+    private static StackPanel BuildPage(OverviewData data)
     {
         var page = new StackPanel { Spacing = SectionSpacing };
         page.Children.Add(Tiles(data));
@@ -85,7 +49,7 @@ internal sealed partial class OverviewPage : UserControl
         lower.ColumnDefinitions.Add(StarColumn(TableShare));
         var chart = DashboardCard.Create(
             Texts.Get("dashboard.dailyCost"),
-            PeriodCaption(),
+            PeriodText.Caption(),
             CostChart.Create(data.Timeline, data.Currency));
         var models = DashboardCard.Create(
             Texts.Get("dashboard.byModel"),
@@ -123,17 +87,15 @@ internal sealed partial class OverviewPage : UserControl
     }
 
     private const double SideBySideWidth = 980;
-    private const double FourTilesWidth = 760;
 
     private static Grid Tiles(OverviewData data)
     {
         var total = data.Total;
         var tokens = total.Tokens;
-        var tiles = new Grid { ColumnSpacing = TileSpacing };
-        var values = new[]
-        {
+        return DashboardTiles.Create(
+        [
             DashboardTile.Create(
-                Texts.Format("dashboard.tile.cost", PeriodCaption()),
+                Texts.Format("dashboard.tile.cost", PeriodText.Caption()),
                 MoneyText.Format(total.Cost, data.Currency),
                 ChangeText(total.Cost, data.PreviousCost),
                 ChangeTone(total.Cost, data.PreviousCost)),
@@ -156,31 +118,7 @@ internal sealed partial class OverviewPage : UserControl
                 Texts.Format(
                     "dashboard.tile.perResponse",
                     TokenText.Format(total.Messages == 0 ? 0 : tokens.Output / total.Messages))),
-        };
-        tiles.RowSpacing = TileSpacing;
-        foreach (var tile in values)
-        {
-            tiles.ColumnDefinitions.Add(new ColumnDefinition());
-            tiles.Children.Add(tile);
-        }
-
-        tiles.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-        tiles.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-
-        // Four across when there is room, two by two when not.
-        WidthSteps.Watch(tiles, [FourTilesWidth], level =>
-        {
-            var across = level >= 1 ? values.Length : values.Length / 2;
-            for (var index = 0; index < values.Length; index++)
-            {
-                Grid.SetColumn(values[index], index % across);
-                Grid.SetRow(values[index], index / across);
-                tiles.ColumnDefinitions[index].Width = index < across
-                    ? new GridLength(1, GridUnitType.Star)
-                    : new GridLength(0);
-            }
-        });
-        return tiles;
+        ]);
     }
 
     private static string? ChangeText(decimal cost, decimal? previous)
@@ -195,7 +133,7 @@ internal sealed partial class OverviewPage : UserControl
         return Texts.Format(
             "dashboard.tile.vsPrevious",
             $"{arrow} {Math.Abs(change).ToString("F0", CultureInfo.InvariantCulture)}%",
-            PeriodCaption());
+            PeriodText.Caption());
     }
 
     /// <summary>Spending more reads as a warning, less as good news.</summary>
@@ -207,12 +145,7 @@ internal sealed partial class OverviewPage : UserControl
     private static Border MoneyCard(OverviewData data)
     {
         var bar = new Grid { Height = ShareBarHeight, ColumnSpacing = ShareGap };
-        var legend = new VariableSizedWrapGrid
-        {
-            Orientation = Orientation.Horizontal,
-            ItemWidth = LegendItemWidth,
-            Margin = new Thickness(0, 12, 0, 0),
-        };
+        var legendItems = new List<(string BrushKey, string Text)>();
         var column = 0;
         foreach (var share in data.Shares.Where(share => share.Share > 0))
         {
@@ -228,43 +161,18 @@ internal sealed partial class OverviewPage : UserControl
             };
             Grid.SetColumn(piece, column++);
             bar.Children.Add(piece);
-            legend.Children.Add(LegendItem(
-                brushKey,
-                Texts.Get(textKey),
-                MoneyText.Format(data.Total.Cost * (decimal)share.Share, data.Currency),
-                PercentText.Format(share.Share * PercentScale, 0)));
+            var money = MoneyText.Format(data.Total.Cost * (decimal)share.Share, data.Currency);
+            var percent = PercentText.Format(share.Share * PercentScale, 0);
+            legendItems.Add((brushKey, $"{Texts.Get(textKey)} {money} · {percent}"));
         }
 
         var stack = new StackPanel();
         stack.Children.Add(bar);
-        stack.Children.Add(legend);
+        stack.Children.Add(DashboardLegend.Create(legendItems));
         return DashboardCard.Create(
             Texts.Get("dashboard.whereMoneyGoes"),
-            PeriodCaption(),
+            PeriodText.Caption(),
             stack);
-    }
-
-    private const double LegendItemWidth = 220;
-    private const double LegendSwatch = 10;
-
-    private static StackPanel LegendItem(string brushKey, string name, string money, string share)
-    {
-        var item = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
-        item.Children.Add(new Border
-        {
-            Width = LegendSwatch,
-            Height = LegendSwatch,
-            CornerRadius = new CornerRadius(2),
-            Background = DashboardCard.Brush(brushKey),
-            VerticalAlignment = VerticalAlignment.Center,
-        });
-        item.Children.Add(new TextBlock
-        {
-            Text = $"{name} {money} · {share}",
-            FontSize = 12,
-            Foreground = DashboardCard.Brush("HakariInkMutedBrush"),
-        });
-        return item;
     }
 
     private static UIElement ModelTable(OverviewData data) =>
@@ -274,12 +182,4 @@ internal sealed partial class OverviewPage : UserControl
             data.Currency,
             Texts.Get("dashboard.column.model"),
             row => (row.Key, null));
-
-    private static string PeriodCaption() => Texts.Get(DashboardFilter.Current.Period switch
-    {
-        DashboardPeriod.Today => "dashboard.period.today",
-        DashboardPeriod.SevenDays => "dashboard.period.week",
-        DashboardPeriod.ThirtyDays => "dashboard.period.month",
-        _ => "dashboard.period.all",
-    });
 }

@@ -10,14 +10,23 @@
             <Color x:Key="HakariSurfaceColor">#F8F9FC</Color>
             <Color x:Key="HakariTileColor">#FFFFFF</Color>
             <Color x:Key="HakariLineColor">#E0E3EB</Color>
-            <Color x:Key="HakariLineStrongColor">#C5CAD6</Color>
-            <Color x:Key="HakariGroundColor">#EEF0F5</Color>
+            <Color x:Key="HakariLineStrongColor">#C9CEDB</Color>
+            <Color x:Key="HakariGroundColor">#F2F3F7</Color>
             <Color x:Key="HakariTaskbarColor">#F3F3F3</Color>
-            <Color x:Key="HakariChart1Color">#23417F</Color>
-            <Color x:Key="HakariChart2Color">#4A6FC0</Color>
-            <Color x:Key="HakariChart3Color">#8AA5E6</Color>
-            <Color x:Key="HakariChart4Color">#A985D6</Color>
-            <Color x:Key="HakariChart5Color">#2FA98F</Color>
+            <Color x:Key="HakariChart1Color">#B9C8EA</Color>
+            <Color x:Key="HakariChart2Color">#6F8FD0</Color>
+            <Color x:Key="HakariChart3Color">#2F4C8C</Color>
+            <Color x:Key="HakariChart4Color">#8A6FB8</Color>
+            <Color x:Key="HakariChart5Color">#3E9A8F</Color>
+            <Color x:Key="HakariHeat0Color">#ECEFF5</Color>
+            <Color x:Key="HakariHeat1Color">#C9D4EE</Color>
+            <Color x:Key="HakariHeat2Color">#8FA6DC</Color>
+            <Color x:Key="HakariHeat3Color">#4F6FB6</Color>
+            <Color x:Key="HakariHeat4Color">#2F4C8C</Color>
+            <Color x:Key="HakariAccentSoftColor">#E5EBF7</Color>
+            <Color x:Key="HakariOkSoftColor">#E2F3EA</Color>
+            <Color x:Key="HakariWarnSoftColor">#FBEFD9</Color>
+            <Color x:Key="HakariCriticalSoftColor">#FBE3E1</Color>
             <Color x:Key="HakariInkColor">#1A1E29</Color>
             <Color x:Key="HakariInkMutedColor">#4A5164</Color>
             <Color x:Key="HakariInkFaintColor">#7B8296</Color>
@@ -34,14 +43,23 @@
             <Color x:Key="HakariSurfaceColor">#1D212B</Color>
             <Color x:Key="HakariTileColor">#171A22</Color>
             <Color x:Key="HakariLineColor">#2A2F3B</Color>
-            <Color x:Key="HakariLineStrongColor">#3C4352</Color>
-            <Color x:Key="HakariGroundColor">#13161D</Color>
+            <Color x:Key="HakariLineStrongColor">#3A4050</Color>
+            <Color x:Key="HakariGroundColor">#0F1116</Color>
             <Color x:Key="HakariTaskbarColor">#1C1C1C</Color>
-            <Color x:Key="HakariChart1Color">#34548F</Color>
-            <Color x:Key="HakariChart2Color">#5B7CCB</Color>
-            <Color x:Key="HakariChart3Color">#A6BDF2</Color>
-            <Color x:Key="HakariChart4Color">#C3A3E8</Color>
-            <Color x:Key="HakariChart5Color">#4FD0B3</Color>
+            <Color x:Key="HakariChart1Color">#39507F</Color>
+            <Color x:Key="HakariChart2Color">#5F7FC6</Color>
+            <Color x:Key="HakariChart3Color">#93ACEA</Color>
+            <Color x:Key="HakariChart4Color">#B49BE0</Color>
+            <Color x:Key="HakariChart5Color">#5CC0B3</Color>
+            <Color x:Key="HakariHeat0Color">#1E222C</Color>
+            <Color x:Key="HakariHeat1Color">#25345A</Color>
+            <Color x:Key="HakariHeat2Color">#34508F</Color>
+            <Color x:Key="HakariHeat3Color">#5F80CC</Color>
+            <Color x:Key="HakariHeat4Color">#A3B9EF</Color>
+            <Color x:Key="HakariAccentSoftColor">#1F2A45</Color>
+            <Color x:Key="HakariOkSoftColor">#12291E</Color>
+            <Color x:Key="HakariWarnSoftColor">#2F2410</Color>
+            <Color x:Key="HakariCriticalSoftColor">#34161A</Color>
             <Color x:Key="HakariInkColor">#E8EBF2</Color>
             <Color x:Key="HakariInkMutedColor">#A9B0C1</Color>
             <Color x:Key="HakariInkFaintColor">#7A8297</Color>
@@ -68,6 +86,15 @@
     <SolidColorBrush x:Key="HakariChart3Brush" Color="{ThemeResource HakariChart3Color}" />
     <SolidColorBrush x:Key="HakariChart4Brush" Color="{ThemeResource HakariChart4Color}" />
     <SolidColorBrush x:Key="HakariChart5Brush" Color="{ThemeResource HakariChart5Color}" />
+    <SolidColorBrush x:Key="HakariHeat0Brush" Color="{ThemeResource HakariHeat0Color}" />
+    <SolidColorBrush x:Key="HakariHeat1Brush" Color="{ThemeResource HakariHeat1Color}" />
+    <SolidColorBrush x:Key="HakariHeat2Brush" Color="{ThemeResource HakariHeat2Color}" />
+    <SolidColorBrush x:Key="HakariHeat3Brush" Color="{ThemeResource HakariHeat3Color}" />
+    <SolidColorBrush x:Key="HakariHeat4Brush" Color="{ThemeResource HakariHeat4Color}" />
+    <SolidColorBrush x:Key="HakariAccentSoftBrush" Color="{ThemeResource HakariAccentSoftColor}" />
+    <SolidColorBrush x:Key="HakariOkSoftBrush" Color="{ThemeResource HakariOkSoftColor}" />
+    <SolidColorBrush x:Key="HakariWarnSoftBrush" Color="{ThemeResource HakariWarnSoftColor}" />
+    <SolidColorBrush x:Key="HakariCriticalSoftBrush" Color="{ThemeResource HakariCriticalSoftColor}" />
     <SolidColorBrush x:Key="HakariInkBrush" Color="{ThemeResource HakariInkColor}" />
     <SolidColorBrush x:Key="HakariInkMutedBrush" Color="{ThemeResource HakariInkMutedColor}" />
     <SolidColorBrush x:Key="HakariInkFaintBrush" Color="{ThemeResource HakariInkFaintColor}" />

@@ -10,7 +10,8 @@ internal static class SampleLogLines
         string messageId = "msg_1",
         string requestId = "req_1",
         string model = "claude-opus-5",
-        string timestamp = "2026-10-05T06:45:53.637Z")
+        string timestamp = "2026-10-05T06:45:53.637Z",
+        bool isSidechain = false)
     {
         var line = new Dictionary<string, object>
         {
@@ -20,7 +21,7 @@ internal static class SampleLogLines
             ["timestamp"] = timestamp,
             ["cwd"] = @"D:\work",
             ["gitBranch"] = "main",
-            ["isSidechain"] = false,
+            ["isSidechain"] = isSidechain,
             ["message"] = new Dictionary<string, object>
             {
                 ["id"] = messageId,

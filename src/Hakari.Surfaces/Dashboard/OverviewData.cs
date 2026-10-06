@@ -15,13 +15,7 @@ internal sealed record OverviewData(
     IReadOnlyList<(string Label, decimal Cost)> Timeline,
     IReadOnlyList<UsageSummary> ByModel)
 {
-    private const int AllTimeChartDays = 60;
     private const int TopModels = 6;
-    private const int HoursPerDay = 24;
-    private const string DayFormat = "yyyy-MM-dd";
-    private const string HourFormat = "yyyy-MM-dd HH:00";
-    private static readonly System.Globalization.CultureInfo Invariant =
-        System.Globalization.CultureInfo.InvariantCulture;
 
     public static OverviewData Empty { get; } =
         new("USD", UsageSummary.Empty, null, 1, [], [], []);
@@ -55,30 +49,13 @@ internal sealed record OverviewData(
         DashboardFilter filter,
         DateTimeOffset now)
     {
-        var today = TimePeriods.StartOfToday(now);
-        if (filter.Period == DashboardPeriod.Today)
-        {
-            var hours = query.Summarize(filter.ToUsageFilter(now), GroupBy.Hour)
-                .ToDictionary(summary => summary.Key, summary => summary.Cost);
-            return
-            [
-                .. Enumerable.Range(0, HoursPerDay).Select(hour => today.AddHours(hour))
-                    .Select(at => (at.ToString("HH", null), hours.GetValueOrDefault(
-                        at.ToString(HourFormat, Invariant)))),
-            ];
-        }
-
-        var count = filter.Days ?? AllTimeChartDays;
-        var first = today.AddDays(1 - count);
-        var chartFilter = filter.ToUsageFilter(now) with { From = first };
-        var days = query.Summarize(chartFilter, GroupBy.Day)
+        var plan = TimelinePlan.For(filter, now);
+        var costs = query.Summarize(filter.ToUsageFilter(now) with { From = plan.From }, plan.By)
             .ToDictionary(summary => summary.Key, summary => summary.Cost);
         return
         [
-            .. Enumerable.Range(0, count).Select(offset => first.AddDays(offset))
-                .Select(day => (day.ToString("MMM d", Core.Localization.Texts.Culture),
-                    days.GetValueOrDefault(
-                        day.ToString(DayFormat, Invariant)))),
+            .. plan.Buckets.Select(bucket =>
+                (bucket.Label, costs.GetValueOrDefault(bucket.Key))),
         ];
     }
 

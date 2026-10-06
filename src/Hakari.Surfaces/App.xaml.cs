@@ -68,7 +68,7 @@ public partial class App : Application
                 break;
             case SurfaceKind.Dashboard:
                 tooltip?.HidePopup();
-                ShowDashboard(DashboardPage.Overview);
+                ShowDashboard(PageOf(command));
                 break;
             case SurfaceKind.Menu:
                 tooltip?.HidePopup();
@@ -116,6 +116,12 @@ public partial class App : Application
     }
 
     private void ShowSettings() => ShowDashboard(DashboardPage.Settings);
+
+    /// <summary>A dashboard command may name its page in the first number; 0 is Overview.</summary>
+    private static DashboardPage PageOf(SurfaceCommand command) =>
+        Enum.IsDefined((DashboardPage)command.AnchorX)
+            ? (DashboardPage)command.AnchorX
+            : DashboardPage.Overview;
 
     /// <summary>A closed window cannot be shown again, so each opening builds a new one.</summary>
     private void ShowDashboard(DashboardPage page)

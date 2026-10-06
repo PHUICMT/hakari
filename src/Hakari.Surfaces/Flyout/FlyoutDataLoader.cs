@@ -178,6 +178,21 @@ internal static class FlyoutDataLoader
             : Texts.Format("flyout.updatedMinutes", (int)age.TotalMinutes);
     }
 
+    /// <summary>The limit lines of one account, as the flyout draws them.</summary>
+    internal static List<LimitRow> LimitRowsOf(
+        (AccountInfo Account, LimitSnapshot Snapshot) entry,
+        HakariSettings settings,
+        UsageQuery query,
+        DateTimeOffset now)
+    {
+        var percentOf = PercentsOf(entry, settings, query, now);
+        return LimitRows(
+            entry.Snapshot,
+            now,
+            limit => Percent(limit, percentOf, settings),
+            percentOf);
+    }
+
     private static List<LimitRow> LimitRows(
         LimitSnapshot limits,
         DateTimeOffset now,
@@ -255,7 +270,7 @@ internal static class FlyoutDataLoader
             IsRecent: now - activity.LastUsage < RecentSourceWindow)),
     ];
 
-    private static string LastUsedText(TimeSpan age) => age switch
+    internal static string LastUsedText(TimeSpan age) => age switch
     {
         _ when age < TimeSpan.FromMinutes(1) => Texts.Get("age.justNow"),
         _ when age < TimeSpan.FromHours(1) => Texts.Format("age.minutes", (int)age.TotalMinutes),

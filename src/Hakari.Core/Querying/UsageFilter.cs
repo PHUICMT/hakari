@@ -6,7 +6,8 @@ public sealed record UsageFilter(
     IReadOnlyCollection<string>? SourceIds = null,
     string? Model = null,
     string? Project = null,
-    string? AccountId = null)
+    string? AccountId = null,
+    bool? IsSidechain = null)
 {
     public static UsageFilter Everything { get; } = new();
 }

@@ -1,6 +1,5 @@
 using Hakari.Core.Localization;
 using Hakari.Core.Querying;
-using Microsoft.UI.Text;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 
@@ -10,55 +9,23 @@ namespace Hakari.Surfaces.Dashboard;
 /// A page that splits the filtered usage by one thing (sessions, projects, branches) into a
 /// table, the most expensive first.
 /// </summary>
-internal sealed partial class BreakdownPage : UserControl
+internal sealed partial class BreakdownPage : LoadedPage<BreakdownRows>
 {
-    private const double PageTitleSize = 26;
-    private const double SectionSpacing = 16;
     private const int MaximumRows = 50;
     private const int MaximumGroupedRows = 500;
-    private static readonly Thickness PagePadding = new(24, 20, 24, 28);
 
     private readonly GroupBy groupBy;
     private readonly string titleKey;
-    private readonly DashboardFilterBar filterBar = new();
-    private readonly PageLoader<BreakdownRows> loader;
-    private readonly ContentControl body = new()
-    {
-        HorizontalContentAlignment = HorizontalAlignment.Stretch,
-        IsTabStop = false,
-    };
 
     public BreakdownPage(GroupBy groupBy, string titleKey)
+        : base(titleKey)
     {
         this.groupBy = groupBy;
         this.titleKey = titleKey;
-        var content = new StackPanel { Spacing = SectionSpacing, Padding = PagePadding };
-        var header = new Grid();
-        header.Children.Add(new TextBlock
-        {
-            Text = Texts.Get(titleKey),
-            FontSize = PageTitleSize,
-            FontWeight = FontWeights.SemiBold,
-            Foreground = DashboardCard.Brush("HakariInkBrush"),
-            VerticalAlignment = VerticalAlignment.Center,
-        });
-        header.Children.Add(filterBar);
-        DashboardHeader.WrapWhenNarrow(header, filterBar);
-        content.Children.Add(header);
-        content.Children.Add(body);
-        Content = new ScrollViewer { Content = content };
-        loader = new PageLoader<BreakdownRows>(body, Read, Build, LoadingSkeleton.Table);
-        filterBar.Changed += (_, _) => loader.Load(force: true);
-        Loaded += (_, _) => loader.Load();
     }
 
-    private sealed record BreakdownRows(
-        IReadOnlyList<UsageSummary> Rows,
-        decimal Total,
-        string Currency);
-
     /// <summary>Runs off the UI thread.</summary>
-    private BreakdownRows Read(DashboardFilter filter) => DashboardData.Read(
+    protected override BreakdownRows Read(DashboardFilter filter) => DashboardData.Read(
         (query, _) =>
         {
             var usage = filter.ToUsageFilter(DateTimeOffset.Now);
@@ -69,7 +36,7 @@ internal sealed partial class BreakdownPage : UserControl
         },
         new BreakdownRows([], 0m, "USD"));
 
-    private Border Build(BreakdownRows data) => DashboardCard.Create(
+    protected override UIElement Build(BreakdownRows data) => DashboardCard.Create(
         Texts.Get(titleKey),
         Texts.Format("dashboard.rowCount", data.Rows.Count),
         Table(data.Rows, data.Total, data.Currency));

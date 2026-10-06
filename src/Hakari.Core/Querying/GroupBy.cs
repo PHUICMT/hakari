@@ -17,4 +17,7 @@ public enum GroupBy
 
     /// <summary>A session with its project, so sessions can be told apart by where.</summary>
     ProjectSession,
+
+    /// <summary>Local weekday (0 is Sunday) and hour like "3 14", for a heat map.</summary>
+    WeekdayHour,
 }

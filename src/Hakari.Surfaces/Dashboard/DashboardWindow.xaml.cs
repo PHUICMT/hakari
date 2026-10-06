@@ -1,6 +1,7 @@
 using Hakari.Core.Localization;
 using Hakari.Core.Querying;
 using Hakari.Core.Settings;
+using Hakari.Surfaces.Controls;
 using Hakari.Surfaces.Flyout;
 using Hakari.Surfaces.Motion;
 using Hakari.Surfaces.Settings;
@@ -25,7 +26,7 @@ public sealed partial class DashboardWindow : Window
     private const double MinimumLogicalHeight = 520;
     private const double ScreenMargin = 48;
     private const double DefaultDpi = 96;
-    private const double IconSize = 15;
+    private const double IconSize = 16;
     private const double IconColumn = 22;
     private const double ItemSpacing = 10;
     private const double PageRise = 10;
@@ -35,13 +36,17 @@ public sealed partial class DashboardWindow : Window
     private const string NavGroup = "DashboardPages";
     private static readonly Thickness DividerMargin = new(8, 8, 8, 8);
 
-    private static readonly (DashboardPage Page, string Glyph, string TextKey)[] Pages =
+    private static readonly NavEntry[] Pages =
     [
-        (DashboardPage.Overview, "", "dashboard.overview"),
-        (DashboardPage.Sessions, "", "dashboard.sessions"),
-        (DashboardPage.Projects, "", "dashboard.projects"),
-        (DashboardPage.Branches, "", "dashboard.branches"),
-        (DashboardPage.Settings, "", "dashboard.settings"),
+        new(DashboardPage.Overview, DesignIcons.Home, "dashboard.overview"),
+        new(DashboardPage.Sessions, DesignIcons.List, "dashboard.sessions"),
+        new(DashboardPage.Projects, DesignIcons.Folder, "dashboard.projects"),
+        new(DashboardPage.Branches, DesignIcons.Branch, "dashboard.branches"),
+        new(DashboardPage.Workflows, DesignIcons.Flow, "dashboard.workflows"),
+        new(DashboardPage.Accounts, DesignIcons.User, "dashboard.accounts", SetApart: true),
+        new(DashboardPage.Charts, DesignIcons.Chart, "dashboard.charts"),
+        new(DashboardPage.PlanValue, DesignIcons.Coin, "dashboard.planValue"),
+        new(DashboardPage.Settings, DesignIcons.Gear, "dashboard.settings", SetApart: true),
     ];
 
     private readonly Dictionary<DashboardPage, RadioButton> navItems = [];
@@ -91,9 +96,9 @@ public sealed partial class DashboardWindow : Window
 
     private void BuildNavigation()
     {
-        foreach (var (page, glyph, textKey) in Pages)
+        foreach (var (page, icon, textKey, setApart) in Pages)
         {
-            if (page == DashboardPage.Settings)
+            if (setApart)
             {
                 Navigation.Children.Add(new Border
                 {
@@ -107,7 +112,7 @@ public sealed partial class DashboardWindow : Window
             {
                 GroupName = NavGroup,
                 Style = (Style)Application.Current.Resources["HakariNavItem"],
-                Content = NavContent(glyph, Texts.Get(textKey)),
+                Content = NavContent(icon, Texts.Get(textKey)),
             };
             ToolTipService.SetToolTip(item, Texts.Get(textKey));
             item.Checked += (_, _) =>
@@ -122,16 +127,15 @@ public sealed partial class DashboardWindow : Window
         }
     }
 
-    private static Grid NavContent(string glyph, string label)
+    private static Grid NavContent(IReadOnlyList<IconShape> icon, string label)
     {
         var row = new Grid { ColumnSpacing = ItemSpacing };
         row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(IconColumn) });
         row.ColumnDefinitions.Add(new ColumnDefinition());
-        row.Children.Add(new FontIcon
+        row.Children.Add(new DesignIcon(icon, IconSize)
         {
-            Glyph = glyph,
-            FontSize = IconSize,
-            FontFamily = (FontFamily)Application.Current.Resources["HakariIconFont"],
+            HorizontalAlignment = HorizontalAlignment.Left,
+            VerticalAlignment = VerticalAlignment.Center,
         });
         var text = new TextBlock { Text = label, VerticalAlignment = VerticalAlignment.Center };
         Grid.SetColumn(text, 1);
@@ -163,11 +167,6 @@ public sealed partial class DashboardWindow : Window
     {
         if (pages.TryGetValue(page, out var existing))
         {
-            if (existing is OverviewPage overview)
-            {
-                overview.Refresh();
-            }
-
             return existing;
         }
 
@@ -179,6 +178,10 @@ public sealed partial class DashboardWindow : Window
             DashboardPage.Projects => new BreakdownPage(GroupBy.Project, "dashboard.projects"),
             DashboardPage.Branches =>
                 new BreakdownPage(GroupBy.ProjectBranch, "dashboard.branches"),
+            DashboardPage.Workflows => new WorkflowsPage(),
+            DashboardPage.Accounts => new AccountsPage(),
+            DashboardPage.Charts => new ChartsPage(),
+            DashboardPage.PlanValue => new PlanValuePage(),
             _ => new OverviewPage(),
         };
         pages[page] = created;

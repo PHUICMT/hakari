@@ -87,6 +87,37 @@ public sealed class IndexerTests : IDisposable
         Assert.Equal(1, secondRun.RecordsChanged);
     }
 
+    [Fact]
+    public void Tells_subagent_responses_from_the_main_thread()
+    {
+        AppendLines(
+            SampleLogLines.Assistant(messageId: "msg_main", requestId: "req_main"),
+            SampleLogLines.Assistant(
+                messageId: "msg_sub", requestId: "req_sub", isSidechain: true));
+        Index();
+        var query = new UsageQuery(store, PricingTable.LoadBundled());
+
+        var subagents = query.Total(new UsageFilter(IsSidechain: true));
+        var mainThread = query.Total(new UsageFilter(IsSidechain: false));
+
+        Assert.Equal(1, subagents.Messages);
+        Assert.Equal(1, mainThread.Messages);
+    }
+
+    [Fact]
+    public void Groups_responses_by_local_weekday_and_hour()
+    {
+        AppendLines(SampleLogLines.Assistant());
+        Index();
+        var query = new UsageQuery(store, PricingTable.LoadBundled());
+
+        var cells = query.Summarize(UsageFilter.Everything, GroupBy.WeekdayHour);
+
+        var local = DateTimeOffset.Parse("2026-10-05T06:45:53.637Z").ToLocalTime();
+        var expected = $"{(int)local.DayOfWeek} {local.Hour:00}";
+        Assert.Equal(expected, Assert.Single(cells).Key);
+    }
+
     public void Dispose()
     {
         store.Dispose();

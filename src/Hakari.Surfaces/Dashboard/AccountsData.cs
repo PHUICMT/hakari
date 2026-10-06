@@ -1,0 +1,128 @@
+using Hakari.Core.Accounts;
+using Hakari.Core.Indexing;
+using Hakari.Core.Limits;
+using Hakari.Core.Localization;
+using Hakari.Core.Presentation;
+using Hakari.Core.Querying;
+using Hakari.Core.Settings;
+using Hakari.Surfaces.Flyout;
+
+namespace Hakari.Surfaces.Dashboard;
+
+/// <summary>
+/// What the Accounts and sources page shows: every account Hakari has seen with its limits,
+/// the totals across them, and each place usage is read from.
+/// </summary>
+internal sealed record AccountsData(
+    IReadOnlyList<AccountCardData> Accounts,
+    string AllTime,
+    string Period,
+    string Today,
+    IReadOnlyList<SourceLine> Sources)
+{
+    private const string DetailSeparator = " · ";
+    private static readonly TimeSpan LimitsAreLive = TimeSpan.FromMinutes(15);
+
+    public static AccountsData Empty { get; } =
+        new([], string.Empty, string.Empty, string.Empty, []);
+
+    public static AccountsData Load(DashboardFilter filter) =>
+        DashboardData.Read((query, store) => Read(query, store, filter), Empty);
+
+    private static AccountsData Read(UsageQuery query, IndexStore store, DashboardFilter filter)
+    {
+        var now = DateTimeOffset.Now;
+        var settings = SettingsStore.Default.Load();
+        var repository = new AccountRepository(store);
+        var accounts = Ordered(repository.ListAccounts(), new LimitCache(store), settings, now);
+        var usage = filter.ToUsageFilter(now) with { AccountId = null };
+        var today = new UsageFilter(From: TimePeriods.StartOfToday(now));
+        return new AccountsData(
+            [.. accounts.Select(entry => Card(entry, query, usage, settings, now))],
+            Money(query, UsageFilter.Everything),
+            Money(query, usage),
+            Money(query, today),
+            new SourceLines(query, store, repository, settings, now).Load());
+    }
+
+    private static string Money(UsageQuery query, UsageFilter usage) =>
+        MoneyText.Format(query.Total(usage).Cost, query.Currency);
+
+    /// <summary>Shown accounts in the order set in Settings, then the hidden ones.</summary>
+    private static List<(AccountInfo Account, LimitSnapshot? Snapshot)> Ordered(
+        IReadOnlyList<AccountInfo> accounts,
+        LimitCache cache,
+        HakariSettings settings,
+        DateTimeOffset now)
+    {
+        var entries = accounts
+            .Select(account => (Account: account, Snapshot: cache.Load(account.AccountId)))
+            .Select(entry => (entry.Account, Snapshot: entry.Snapshot?.ProjectedTo(now)))
+            .ToList();
+        var shown = AccountArrangement.Arrange(
+            entries,
+            entry => entry.Account.AccountId,
+            entry => entry.Snapshot is null ? 0 : LimitPriority.Rank(entry.Snapshot),
+            settings);
+        return [.. shown, .. entries.Where(entry => !shown.Contains(entry))];
+    }
+
+    private static AccountCardData Card(
+        (AccountInfo Account, LimitSnapshot? Snapshot) entry,
+        UsageQuery query,
+        UsageFilter usage,
+        HakariSettings settings,
+        DateTimeOffset now)
+    {
+        var account = entry.Account;
+        var nickname = settings.NicknameOf(account.AccountId);
+        var isHidden = settings.HiddenAccounts.Contains(account.AccountId);
+        var (badge, tone) = Badge(entry.Snapshot, isHidden, now);
+        var cost = query.Total(usage with { AccountId = account.AccountId }).Cost;
+        return new AccountCardData(
+            AccountLabels.Full(account, nickname),
+            Detail(account, nickname),
+            badge,
+            tone,
+            entry.Snapshot is null
+                ? []
+                : FlyoutDataLoader.LimitRowsOf((account, entry.Snapshot), settings, query, now),
+            MoneyText.Format(cost, query.Currency));
+    }
+
+    /// <summary>With a nickname as the title, the email moves down here.</summary>
+    private static string Detail(AccountInfo account, string? nickname) =>
+        string.Join(
+            DetailSeparator,
+            new[]
+            {
+                nickname is null ? null : account.Email,
+                PlanNames.Short(account.Plan),
+                account.OrganizationName,
+            }.Where(part => !string.IsNullOrEmpty(part)));
+
+    private static (string Text, BadgeTone Tone) Badge(
+        LimitSnapshot? snapshot,
+        bool isHidden,
+        DateTimeOffset now)
+    {
+        if (isHidden)
+        {
+            return (Texts.Get("dashboard.accounts.hidden"), BadgeTone.Neutral);
+        }
+
+        if (snapshot is null)
+        {
+            return (Texts.Get("dashboard.accounts.noLimits"), BadgeTone.Neutral);
+        }
+
+        var age = now - snapshot.FetchedAt;
+        if (age < LimitsAreLive)
+        {
+            return (Texts.Get("dashboard.accounts.limitsOn"), BadgeTone.Accent);
+        }
+
+        var when = FlyoutDataLoader.LastUsedText(age);
+        return (Texts.Format("dashboard.accounts.lastKnown", when), BadgeTone.Neutral);
+    }
+}

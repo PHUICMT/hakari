@@ -6,5 +6,9 @@ public enum DashboardPage
     Sessions,
     Projects,
     Branches,
+    Workflows,
+    Accounts,
+    Charts,
+    PlanValue,
     Settings,
 }

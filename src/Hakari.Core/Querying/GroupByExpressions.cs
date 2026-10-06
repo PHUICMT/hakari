@@ -26,6 +26,7 @@ internal static class GroupByExpressions
         GroupBy.Branch => "coalesce(git_branch, '')",
         GroupBy.Account => AccountSql.AccountOfRecord,
         GroupBy.ProjectBranch => $"{Project} || {Separator} || coalesce(git_branch, '')",
+        GroupBy.WeekdayHour => $"strftime('%w %H', {LocalSeconds})",
         GroupBy.ProjectSession => $"{Project} || {Separator} || session_id",
         _ => throw new ArgumentOutOfRangeException(nameof(groupBy), groupBy, null),
     };

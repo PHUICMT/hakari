@@ -40,6 +40,12 @@ internal static class UsageFilterSql
             command.Parameters.AddWithValue("$accountId", accountId);
         }
 
+        if (filter.IsSidechain is { } isSidechain)
+        {
+            conditions.Add("is_sidechain = $sidechain");
+            command.Parameters.AddWithValue("$sidechain", isSidechain ? 1 : 0);
+        }
+
         if (filter.SourceIds is { Count: > 0 } sourceIds)
         {
             conditions.Add(BuildSourceCondition(sourceIds, command));
