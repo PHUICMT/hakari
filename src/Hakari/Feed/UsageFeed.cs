@@ -52,8 +52,8 @@ internal sealed class UsageFeed : IDisposable
     /// <summary>The limit for the tray icon, raised with each new set of facts.</summary>
     public event Action<TrayBadge?>? BadgeUpdated;
 
-    /// <summary>A limit passed a level or reset: a title, a line below, and if a warning.</summary>
-    public event Action<string, string, bool>? AlertRaised;
+    /// <summary>A limit passed a level or reset.</summary>
+    public event Action<LimitAlertMessage>? AlertRaised;
 
     public FeedDiagnostics Diagnostics { get; } = new();
 
@@ -165,7 +165,7 @@ internal sealed class UsageFeed : IDisposable
             Diagnostics.LimitPolls = limits.Polls;
             if (limitsChanged)
             {
-                RaiseAlerts(limits.Accounts, now);
+                RaiseAlerts(limits, now);
             }
 
             var due = now - lastPublished >= ContentRefreshInterval;
@@ -215,13 +215,15 @@ internal sealed class UsageFeed : IDisposable
     /// Tells of limits that passed their warning or critical level, or reset, by the levels
     /// set in the layout. Only fresh readings count, and a hidden account stays quiet.
     /// </summary>
-    private void RaiseAlerts(IReadOnlyList<WidgetAccount> accounts, DateTimeOffset now)
+    private void RaiseAlerts(LimitPoller limits, DateTimeOffset now)
     {
         var settings = presentation;
         if (!settings.NotifyOnLimits)
         {
             return;
         }
+
+        var accounts = limits.Accounts;
 
         var levels = (settings.Widget.WarnAt, settings.Widget.CriticalAt);
         if (alertEngine is null || alertLevels != levels)
@@ -240,19 +242,52 @@ internal sealed class UsageFeed : IDisposable
                 continue;
             }
 
-            var name = shown.Count > 1
-                ? AccountLabels.Full(account.Account, settings.NicknameOf(account.AccountId))
-                : string.Empty;
+            var name = shown.Count > 1 ? NameOf(account, settings) : string.Empty;
             foreach (var limit in account.Snapshot.ProjectedTo(now).Limits)
             {
                 foreach (var alert in alertEngine.Observe(
                     account.AccountId, limit, account.PercentOf(limit)))
                 {
-                    var (title, body) = LimitAlertText.Compose(alert, name, now);
-                    AlertRaised?.Invoke(title, body, alert.Kind != LimitAlertKind.Reset);
+                    // The engine keeps watching while muted, so nothing piles up for later.
+                    if (settings.AlertsMutedAt(now))
+                    {
+                        continue;
+                    }
+
+                    AlertRaised?.Invoke(LimitAlertText.Compose(
+                        alert,
+                        name,
+                        now,
+                        limits.FullAt(account.AccountId, limit, now),
+                        RoomElsewhere(shown, account, limit, settings, now)));
                 }
             }
         }
+    }
+
+    private static string NameOf(WidgetAccount account, HakariSettings settings) =>
+        AccountLabels.Full(account.Account, settings.NicknameOf(account.AccountId));
+
+    /// <summary>The other account with the most room left on the same limit, if any.</summary>
+    private static (string Name, double Percent)? RoomElsewhere(
+        IReadOnlyList<WidgetAccount> shown,
+        WidgetAccount account,
+        UsageLimit limit,
+        HakariSettings settings,
+        DateTimeOffset now)
+    {
+        const double FullPercent = 100;
+        var best = shown
+            .Where(other => other.AccountId != account.AccountId)
+            .Select(other => (Account: other, Limit: other.Snapshot.ProjectedTo(now).Limits
+                .FirstOrDefault(candidate => candidate.Kind == limit.Kind
+                    && candidate.ScopeName == limit.ScopeName)))
+            .Where(entry => entry.Limit is not null)
+            .Select(entry => (entry.Account, Percent: entry.Account.PercentOf(entry.Limit!)))
+            .Where(entry => entry.Percent < FullPercent)
+            .OrderBy(entry => entry.Percent)
+            .FirstOrDefault();
+        return best.Account is null ? null : (NameOf(best.Account, settings), best.Percent);
     }
 
     /// <summary>

@@ -3,7 +3,9 @@ using Hakari.Core.Localization;
 using Hakari.Core.Presentation.Widget;
 using Hakari.Core.Settings;
 using Hakari.Core.Startup;
+using Hakari.Core.Presentation;
 using Hakari.Feed;
+using Hakari.Notifications;
 using Hakari.Settings;
 using Hakari.Surfaces;
 using Hakari.Taskbar;
@@ -114,6 +116,15 @@ internal sealed class ResidentApp : IDisposable
             case ResidentCommand.Quit:
                 MessageLoop.Quit();
                 break;
+            case ResidentCommand.OpenFlyout:
+                OpenFlyoutAtWidget();
+                break;
+            case ResidentCommand.MuteAlertsToday:
+                Apply(settingsStore.Update(current => current with
+                {
+                    AlertsMutedUntil = DateTimeOffset.Now.Date.AddDays(1),
+                }));
+                break;
         }
     }
 
@@ -145,12 +156,24 @@ internal sealed class ResidentApp : IDisposable
                 null,
                 StaleCheckInterval,
                 StaleCheckInterval);
-            feed.AlertRaised += (title, text, isWarning) => widgets.PostAction(
-                () => trayIcon.ShowBalloon(title, text, isWarning));
+            ToastNotifier.Register();
+            feed.AlertRaised += message => widgets.PostAction(() => ShowAlert(message));
             feed.Start();
         }
 
         MessageLoop.Run();
+    }
+
+    /// <summary>A Windows notification, or the tray's balloon when that is refused.</summary>
+    private void ShowAlert(LimitAlertMessage message)
+    {
+        if (!ToastNotifier.Show(message))
+        {
+            var text = string.Join(
+                Environment.NewLine,
+                new[] { message.Body, message.Detail }.Where(line => line.Length > 0));
+            trayIcon.ShowBalloon(message.Title, text, message.IsWarning);
+        }
     }
 
     /// <summary>Runs on the widget thread: every update from the feed shows as it comes.</summary>

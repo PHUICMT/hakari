@@ -77,6 +77,11 @@ public sealed record HakariSettings
     /// <summary>Tell when a limit passes its warning or critical level or resets.</summary>
     public bool NotifyOnLimits { get; init; } = true;
 
+    /// <summary>Limit alerts stay quiet until then, as "mute today" asks.</summary>
+    public DateTimeOffset? AlertsMutedUntil { get; init; }
+
+    public bool AlertsMutedAt(DateTimeOffset now) => AlertsMutedUntil > now;
+
     /// <summary><see cref="DisplayInfo.Id"/> values, used when Displays is Chosen.</summary>
     public IReadOnlyList<string> ChosenDisplays { get; init; } = [];
 
@@ -121,6 +126,7 @@ public sealed record HakariSettings
         && TurnSeconds == other.TurnSeconds
         && PercentDecimals == other.PercentDecimals
         && NotifyOnLimits == other.NotifyOnLimits
+        && AlertsMutedUntil == other.AlertsMutedUntil
         && AccountOrdering == other.AccountOrdering
         && CustomAccountOrder.SequenceEqual(other.CustomAccountOrder)
         && HiddenAccounts.SequenceEqual(other.HiddenAccounts)
