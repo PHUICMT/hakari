@@ -53,11 +53,76 @@ internal static class FlyoutDataLoader
             BurnRate: BurnRate(query, now),
             HourlyBurn: HourlyBurn(query, now),
             Sources: SourceRows(store, now),
-            Notice: anyLastKnown ? NoticeFor(accounts, new LimitCache(store)) : null);
+            Notices:
+            [
+                .. FullLimits(accounts, settings, now),
+                .. anyLastKnown
+                    ? new[] { NoticeFor(accounts, new LimitCache(store)) }
+                    : [],
+                .. Unpriced(query),
+            ]);
+    }
+
+    /// <summary>
+    /// A limit used up on one account, when it blocks work: when it resets, and which other
+    /// account still has room on the same limit.
+    /// </summary>
+    private static IEnumerable<FlyoutNotice> FullLimits(
+        List<(AccountInfo Account, LimitSnapshot Snapshot)> accounts,
+        HakariSettings settings,
+        DateTimeOffset now)
+    {
+        foreach (var (account, snapshot) in accounts)
+        {
+            foreach (var limit in snapshot.Limits.Where(limit => limit.Percent >= FullPercent))
+            {
+                var name = AccountLabels.Full(account, settings.NicknameOf(account.AccountId));
+                var room = accounts
+                    .Where(other => other.Account.AccountId != account.AccountId)
+                    .Select(other => (other.Account, Limit: other.Snapshot.Limits.FirstOrDefault(
+                        candidate => candidate.Kind == limit.Kind
+                            && candidate.ScopeName == limit.ScopeName)))
+                    .Where(other => other.Limit is { Percent: < FullPercent })
+                    .OrderBy(other => other.Limit!.Percent)
+                    .FirstOrDefault();
+                var resets = limit.ResetsAt is { } at
+                    ? Texts.Format("flyout.resets", ResetText.Long(at, now))
+                    : string.Empty;
+                var elsewhere = room.Account is null
+                    ? string.Empty
+                    : Texts.Format(
+                        "alert.roomElsewhere",
+                        AccountLabels.Full(room.Account, settings.NicknameOf(
+                            room.Account.AccountId)),
+                        $"{FullPercent - room.Limit!.Percent}%");
+                yield return new FlyoutNotice(
+                    Tone.Critical,
+                    Texts.Format("flyout.notice.full", LimitNames.Long(limit), name),
+                    string.Join(DetailSeparator, new[] { resets, elsewhere }
+                        .Where(part => part.Length > 0)));
+            }
+        }
+    }
+
+    /// <summary>Models seen in the logs that the price table does not know yet.</summary>
+    private static IEnumerable<FlyoutNotice> Unpriced(UsageQuery query)
+    {
+        var models = query.FindUnpricedModels();
+        if (models.Count == 0)
+        {
+            yield break;
+        }
+
+        yield return new FlyoutNotice(
+            Tone.Warning,
+            Texts.Format("flyout.notice.unpriced", models.Count),
+            Texts.Format("flyout.notice.unpricedBody", string.Join(", ", models)),
+            NoticeAction.OpenPrices,
+            Texts.Get("flyout.notice.updatePrices"));
     }
 
     /// <summary>Says why the limits are old when it is known, else only that they are.</summary>
-    private static string NoticeFor(
+    private static FlyoutNotice NoticeFor(
         IEnumerable<(AccountInfo Account, LimitSnapshot Snapshot)> accounts,
         LimitCache cache)
     {
@@ -67,10 +132,12 @@ internal static class FlyoutDataLoader
             .ToList();
         return failures.FirstOrDefault() switch
         {
-            LimitFailure.SignInExpired => Texts.Get("flyout.signInExpired"),
-            LimitFailure.Offline => Texts.Get("flyout.offline"),
-            LimitFailure.ServiceUnavailable => Texts.Get("flyout.unavailable"),
-            _ => Texts.Get("flyout.lastKnown"),
+            LimitFailure.SignInExpired =>
+                new FlyoutNotice(Tone.Warning, Texts.Get("flyout.signInExpired")),
+            LimitFailure.Offline => new FlyoutNotice(Tone.Warning, Texts.Get("flyout.offline")),
+            LimitFailure.ServiceUnavailable =>
+                new FlyoutNotice(Tone.Warning, Texts.Get("flyout.unavailable")),
+            _ => new FlyoutNotice(Tone.Normal, Texts.Get("flyout.lastKnown")),
         };
     }
 

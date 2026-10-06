@@ -40,13 +40,36 @@
             </Grid>
 
             <!-- Notice (last known limits) -->
-            <Border x:Name="NoticeCard" Visibility="Collapsed" Padding="10,8"
-                CornerRadius="{StaticResource HakariControlRadius}"
-                Background="{ThemeResource HakariTileBrush}" BorderBrush="{ThemeResource HakariLineBrush}"
-                BorderThickness="1">
-                <TextBlock x:Name="NoticeText" Style="{StaticResource HakariLabelText}" TextWrapping="Wrap"
-                    TextTrimming="None" />
-            </Border>
+            <ItemsControl x:Name="NoticeList" IsTabStop="False">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel Spacing="8" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="local:FlyoutNotice">
+                        <Border Padding="10,8" CornerRadius="{StaticResource HakariControlRadius}"
+                            Background="{x:Bind Ground}" BorderBrush="{x:Bind ToneBrush}" BorderThickness="1">
+                            <Grid ColumnSpacing="10">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <FontIcon Glyph="{x:Bind Glyph}" FontSize="14" VerticalAlignment="Top" Margin="0,2,0,0"
+                                    FontFamily="{StaticResource HakariIconFont}" Foreground="{x:Bind ToneBrush}" />
+                                <StackPanel Grid.Column="1" Spacing="2">
+                                    <TextBlock Text="{x:Bind Title}" FontWeight="SemiBold" FontSize="13"
+                                        Foreground="{ThemeResource HakariInkBrush}" TextWrapping="Wrap" />
+                                    <TextBlock Text="{x:Bind Detail}" Visibility="{x:Bind DetailVisibility}"
+                                        Style="{StaticResource HakariCaptionText}" TextWrapping="Wrap" TextTrimming="None" />
+                                    <Button Content="{x:Bind ActionText}" Visibility="{x:Bind ActionVisibility}"
+                                        Style="{StaticResource HakariButton}" Margin="0,6,0,0" Click="OnNoticeActionClicked" />
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
 
             <!-- Accounts: a card each, most pressing first; the header folds the card. On a
                  short screen this part scrolls, so the money and the buttons stay in view -->

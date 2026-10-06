@@ -486,5 +486,9 @@
   "dashboard.sheet.saved": "cache saved {0}",
   "dashboard.sheet.timeline": "Cost by hour",
   "dashboard.sheet.folder": "Working folder",
-  "dashboard.sheet.privacy": "Hakari reads usage numbers only. Prompt and response text is never read or stored."
+  "dashboard.sheet.privacy": "Hakari reads usage numbers only. Prompt and response text is never read or stored.",
+  "flyout.notice.full": "{0} reached on {1}",
+  "flyout.notice.unpriced": "{0} model(s) have no price yet",
+  "flyout.notice.unpricedBody": "{0} counted in tokens but not in cost. Update prices or set one in Settings.",
+  "flyout.notice.updatePrices": "Update prices"
 }

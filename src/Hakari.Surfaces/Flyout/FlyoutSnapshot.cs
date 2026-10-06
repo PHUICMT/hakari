@@ -11,4 +11,4 @@ public sealed record FlyoutSnapshot(
     string BurnRate,
     IReadOnlyList<decimal> HourlyBurn,
     IReadOnlyList<SourceRow> Sources,
-    string? Notice);
+    IReadOnlyList<FlyoutNotice> Notices);

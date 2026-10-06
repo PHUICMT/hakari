@@ -60,6 +60,13 @@ public sealed partial class FlyoutWindow : Window
 
     public event EventHandler? SettingsRequested;
 
+    /// <summary>A notice's button: for now, prices live in Settings.</summary>
+    private void OnNoticeActionClicked(object sender, RoutedEventArgs args)
+    {
+        HideFlyout();
+        SettingsRequested?.Invoke(this, EventArgs.Empty);
+    }
+
     public event EventHandler? DashboardRequested;
 
     public bool IsShowing { get; private set; }
@@ -182,8 +189,7 @@ public sealed partial class FlyoutWindow : Window
         BurnText.Text = snapshot.BurnRate;
         BurnSpark.Points = SparkPoints(snapshot.HourlyBurn);
         SourceList.ItemsSource = snapshot.Sources;
-        NoticeText.Text = snapshot.Notice ?? string.Empty;
-        NoticeCard.Visibility = snapshot.Notice is null ? Visibility.Collapsed : Visibility.Visible;
+        NoticeList.ItemsSource = snapshot.Notices;
     }
 
     /// <summary>
