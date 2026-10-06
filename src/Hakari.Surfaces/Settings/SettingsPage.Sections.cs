@@ -19,8 +19,8 @@ public sealed partial class SettingsPage
     private const double SectionTitleSize = 17;
     private const double MarkWidth = 3;
     private const double MarkHeight = 18;
-    private static readonly Thickness SectionHeaderMargin = new(0, 28, 0, 8);
-    private static readonly Thickness FirstSectionHeaderMargin = new(0, 12, 0, 8);
+    private static readonly Thickness SectionHeaderMargin = new(0, 12, 0, 8);
+    private static readonly Thickness DividerMargin = new(0, 28, 0, 4);
     private static readonly Thickness SectionHeaderPadding = new(4, 6, 8, 6);
 
     private void MakeSectionsFoldable()
@@ -38,13 +38,12 @@ public sealed partial class SettingsPage
             var isFolded = folded.Contains(key);
             var chevron = Chevron(isFolded);
             var header = SectionHeader(title.Text, chevron);
-            if (ReferenceEquals(section, Sections.Children.OfType<StackPanel>().First()))
-            {
-                header.Margin = FirstSectionHeaderMargin;
-            }
-
             header.Click += (_, _) => ToggleSection(key, card, chevron);
             section.Children[0] = header;
+            if (!ReferenceEquals(section, Sections.Children.OfType<StackPanel>().First()))
+            {
+                section.Children.Insert(0, Divider());
+            }
             card.Visibility = isFolded ? Visibility.Collapsed : Visibility.Visible;
         }
     }
@@ -87,6 +86,14 @@ public sealed partial class SettingsPage
             Padding = SectionHeaderPadding,
         };
     }
+
+    /// <summary>A hairline between two sections.</summary>
+    private static Border Divider() => new()
+    {
+        Height = 1,
+        Margin = DividerMargin,
+        Background = (Brush)Application.Current.Resources["HakariLineBrush"],
+    };
 
     private static FontIcon Chevron(bool isFolded) => new()
     {
