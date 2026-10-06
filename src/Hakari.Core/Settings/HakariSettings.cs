@@ -54,6 +54,9 @@ public sealed record HakariSettings
 
     public TrayIconStyle TrayIcon { get; init; } = TrayIconStyle.Automatic;
 
+    /// <summary>Tell when a limit passes its warning or critical level or resets.</summary>
+    public bool NotifyOnLimits { get; init; } = true;
+
     /// <summary><see cref="DisplayInfo.Id"/> values, used when Displays is Chosen.</summary>
     public IReadOnlyList<string> ChosenDisplays { get; init; } = [];
 
@@ -96,6 +99,7 @@ public sealed record HakariSettings
         && AccountsMode == other.AccountsMode
         && TurnSeconds == other.TurnSeconds
         && PercentDecimals == other.PercentDecimals
+        && NotifyOnLimits == other.NotifyOnLimits
         && AccountOrdering == other.AccountOrdering
         && CustomAccountOrder.SequenceEqual(other.CustomAccountOrder)
         && HiddenAccounts.SequenceEqual(other.HiddenAccounts)

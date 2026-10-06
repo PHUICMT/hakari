@@ -194,6 +194,9 @@ public sealed partial class SettingsPage
         ShowPreview(updated);
     }
 
+    private void OnNotifyClicked(object sender, RoutedEventArgs args) =>
+        Save(current => current with { NotifyOnLimits = NotifyToggle.IsChecked == true });
+
     private void OnRenewSignInClicked(object sender, RoutedEventArgs args) =>
         Save(current => current with
         {

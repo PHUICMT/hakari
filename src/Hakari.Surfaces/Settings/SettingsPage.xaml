@@ -166,7 +166,11 @@
                                 </controls:HakariSegmented>
                             </controls:SettingRow>
                             <StackPanel x:Name="AccountList" BorderThickness="0,1,0,0"
-                                BorderBrush="{ThemeResource HakariLineBrush}" />                            <controls:SettingRow Glyph="&#xE72C;" Title="{l:Text Key=settings.renew}"
+                                BorderBrush="{ThemeResource HakariLineBrush}" />                            <controls:SettingRow Glyph="&#xEA8F;" Title="{l:Text Key=settings.notify}"
+                                Description="{l:Text Key=settings.notify.description}">
+                                <controls:HakariToggle x:Name="NotifyToggle" Click="OnNotifyClicked" />
+                            </controls:SettingRow>
+                            <controls:SettingRow Glyph="&#xE72C;" Title="{l:Text Key=settings.renew}"
                                 Description="{l:Text Key=settings.renew.description}">
                                 <controls:HakariToggle x:Name="RenewSignInToggle" Click="OnRenewSignInClicked" />
                             </controls:SettingRow>

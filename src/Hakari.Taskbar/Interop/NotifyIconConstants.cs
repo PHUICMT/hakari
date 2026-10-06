@@ -11,6 +11,12 @@ internal static class NotifyIconConstants
     public const uint IconFlag = 0x00000002;
     public const uint TipFlag = 0x00000004;
     public const uint ShowTipFlag = 0x00000080;
+    public const uint InfoFlag = 0x00000010;
+
+    /// <summary>Balloon icons, and "stay quiet while the user asked not to be disturbed".</summary>
+    public const uint InfoNone = 0x00000000;
+    public const uint InfoWarning = 0x00000002;
+    public const uint InfoRespectQuietTime = 0x00000080;
 
     /// <summary>Version 4 sends the mouse event in the low word of the callback's lParam.</summary>
     public const uint Version4 = 4;

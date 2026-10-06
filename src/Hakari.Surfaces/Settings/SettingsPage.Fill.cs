@@ -159,6 +159,7 @@ public sealed partial class SettingsPage
         OrderPressing.IsChecked = settings.AccountOrdering == AccountOrder.MostPressing;
         OrderCustom.IsChecked = settings.AccountOrdering == AccountOrder.Custom;
         RenewSignInToggle.IsChecked = settings.RefreshSignInAutomatically;
+        NotifyToggle.IsChecked = settings.NotifyOnLimits;
     }
 
     /// <summary>

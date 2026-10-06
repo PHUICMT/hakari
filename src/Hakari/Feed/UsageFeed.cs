@@ -1,7 +1,9 @@
 using Hakari.Core.Configuration;
 using Hakari.Core.Currency;
 using Hakari.Core.Indexing;
+using Hakari.Core.Limits;
 using Hakari.Core.Performance;
+using Hakari.Core.Presentation;
 using Hakari.Core.Presentation.Widget;
 using Hakari.Core.Pricing;
 using Hakari.Core.Querying;
@@ -34,6 +36,8 @@ internal sealed class UsageFeed : IDisposable
     private volatile bool refreshRequested;
     private volatile HakariSettings presentation = new();
     private ChangeTracker? changeTracker;
+    private LimitAlertEngine? alertEngine;
+    private (int Warn, int Critical) alertLevels;
 
     public UsageFeed(SettingsStore settingsStore)
     {
@@ -45,6 +49,9 @@ internal sealed class UsageFeed : IDisposable
 
     /// <summary>The limit for the tray icon, raised with each new set of facts.</summary>
     public event Action<TrayBadge?>? BadgeUpdated;
+
+    /// <summary>A limit passed a level or reset: a title, a line below, and if a warning.</summary>
+    public event Action<string, string, bool>? AlertRaised;
 
     public FeedDiagnostics Diagnostics { get; } = new();
 
@@ -152,6 +159,11 @@ internal sealed class UsageFeed : IDisposable
 
             var limitsChanged = limits.PollIfDue(now);
             Diagnostics.LimitPolls = limits.Polls;
+            if (limitsChanged)
+            {
+                RaiseAlerts(limits.Accounts, now);
+            }
+
             var due = now - lastPublished >= ContentRefreshInterval;
             if (facts is null || recordsChanged || limitsChanged || layoutChanged || due)
             {
@@ -176,6 +188,50 @@ internal sealed class UsageFeed : IDisposable
         }
 
         changeTracker = null;
+    }
+
+    /// <summary>
+    /// Tells of limits that passed their warning or critical level, or reset, by the levels
+    /// set in the layout. Only fresh readings count, and a hidden account stays quiet.
+    /// </summary>
+    private void RaiseAlerts(IReadOnlyList<WidgetAccount> accounts, DateTimeOffset now)
+    {
+        var settings = presentation;
+        if (!settings.NotifyOnLimits)
+        {
+            return;
+        }
+
+        var levels = (settings.Widget.WarnAt, settings.Widget.CriticalAt);
+        if (alertEngine is null || alertLevels != levels)
+        {
+            alertEngine = new LimitAlertEngine(levels.WarnAt, levels.CriticalAt);
+            alertLevels = levels;
+        }
+
+        var shown = accounts
+            .Where(account => !settings.HiddenAccounts.Contains(account.AccountId))
+            .ToList();
+        foreach (var account in shown)
+        {
+            if (account.Snapshot.Freshness == LimitFreshness.LastKnown)
+            {
+                continue;
+            }
+
+            var name = shown.Count > 1
+                ? AccountLabels.Full(account.Account, settings.NicknameOf(account.AccountId))
+                : string.Empty;
+            foreach (var limit in account.Snapshot.ProjectedTo(now).Limits)
+            {
+                foreach (var alert in alertEngine.Observe(
+                    account.AccountId, limit, account.PercentOf(limit)))
+                {
+                    var (title, body) = LimitAlertText.Compose(alert, name, now);
+                    AlertRaised?.Invoke(title, body, alert.Kind != LimitAlertKind.Reset);
+                }
+            }
+        }
     }
 
     /// <summary>

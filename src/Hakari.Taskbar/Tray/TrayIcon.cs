@@ -62,6 +62,24 @@ public sealed class TrayIcon : IDisposable
         Shell32.Shell_NotifyIcon(NotifyIconConstants.Modify, ref data);
     }
 
+    /// <summary>
+    /// A notification from the icon. It stays quiet while Windows is asked not to disturb the
+    /// user, and a warning is shown with the warning icon.
+    /// </summary>
+    public void ShowBalloon(string title, string text, bool isWarning)
+    {
+        var data = CreateData(NotifyIconConstants.InfoFlag);
+        data.Info = text.Length > NotifyIconData.InfoLength - 1
+            ? text[..(NotifyIconData.InfoLength - 1)]
+            : text;
+        data.InfoTitle = title.Length > NotifyIconData.InfoTitleLength - 1
+            ? title[..(NotifyIconData.InfoTitleLength - 1)]
+            : title;
+        data.InfoFlags = NotifyIconConstants.InfoRespectQuietTime
+            | (isWarning ? NotifyIconConstants.InfoWarning : NotifyIconConstants.InfoNone);
+        Shell32.Shell_NotifyIcon(NotifyIconConstants.Modify, ref data);
+    }
+
     /// <summary>Shows a limit on the icon, or the logo with null. Unchanged is free.</summary>
     public void SetBadge(TrayBadge? badge)
     {

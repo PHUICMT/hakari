@@ -129,6 +129,8 @@ internal sealed class ResidentApp : IDisposable
         {
             feed.Updated += content => widgets.PostContent(content);
             feed.BadgeUpdated += badge => widgets.PostAction(() => ShowBadge(badge));
+            feed.AlertRaised += (title, text, isWarning) => widgets.PostAction(
+                () => trayIcon.ShowBalloon(title, text, isWarning));
             feed.Start();
         }
 
