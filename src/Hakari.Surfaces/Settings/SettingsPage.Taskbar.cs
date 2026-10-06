@@ -258,10 +258,22 @@ public sealed partial class SettingsPage
     /// <summary>The editor's own slots replace the top line, bottom line and ring.</summary>
     private void ShowLegacyRows(WidgetLayout layout)
     {
-        var visibility = layout.UsesSlots ? Visibility.Collapsed : Visibility.Visible;
-        RingRow.Visibility = visibility;
-        TopRow.Visibility = visibility;
-        BottomRow.Visibility = visibility;
+        foreach (var row in new FrameworkElement[] { RingRow, TopRow, BottomRow })
+        {
+            var hide = layout.UsesSlots;
+            if ((row.Visibility == Visibility.Collapsed) == hide)
+            {
+                continue;
+            }
+
+            if (!row.IsLoaded)
+            {
+                row.Visibility = hide ? Visibility.Collapsed : Visibility.Visible;
+                continue;
+            }
+
+            Flyout.CardFold.Run(row, folding: hide, fitWindow: () => { });
+        }
     }
 
     private void EnsureLayoutEditor()

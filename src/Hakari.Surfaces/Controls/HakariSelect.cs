@@ -61,7 +61,14 @@ public sealed partial class HakariSelect : Button
     private void Select(object value, bool notify)
     {
         SelectedValue = value;
-        label.Text = choices.FirstOrDefault(choice => Equals(choice.Value, value)).Text ?? "";
+        var text = choices.FirstOrDefault(choice => Equals(choice.Value, value)).Text ?? "";
+        if (label.Text != text && IsLoaded && label.Text.Length > 0)
+        {
+            label.Opacity = 0;
+            SurfaceMotion.Settle(label, "Opacity", 1);
+        }
+
+        label.Text = text;
         if (notify)
         {
             Selected?.Invoke(this, value);

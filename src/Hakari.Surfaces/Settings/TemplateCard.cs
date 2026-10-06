@@ -59,6 +59,7 @@ internal sealed partial class TemplateCard : UserControl
         frame.Padding = CardPadding;
         frame.BorderThickness = new Thickness(1);
         frame.CornerRadius = new CornerRadius(6);
+        frame.BackgroundTransition = new BrushTransition { Duration = SurfaceMotion.Normal };
         Content = frame;
         VerticalAlignment = VerticalAlignment.Stretch;
         VerticalContentAlignment = VerticalAlignment.Stretch;
@@ -86,7 +87,7 @@ internal sealed partial class TemplateCard : UserControl
         {
             if (index >= preview.Children.Count)
             {
-                preview.Children.Add(new WidgetPreview());
+                preview.Children.Add(LayoutEditor.FadingIn(new WidgetPreview()));
             }
 
             ((WidgetPreview)preview.Children[index]).Show(panels[index]);

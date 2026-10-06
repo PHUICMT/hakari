@@ -1,5 +1,7 @@
 using Hakari.Core.Localization;
 using Hakari.Core.Presentation.Widget;
+using Hakari.Surfaces.Motion;
+using Hakari.Core.Settings;
 using Hakari.Surfaces.Controls;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Text;
@@ -45,7 +47,10 @@ internal sealed partial class LayoutEditor : StackPanel
     private readonly HakariSelect cycleSelect = new();
     private readonly SettingRow simpleRow = new();
     private readonly DispatcherQueueTimer formatTimer;
+    private const double ChangedDip = 0.35;
     private bool refreshing;
+    private (SlotMotion Motion, int Index) pendingMotion = (SlotMotion.None, 0);
+    private double rowStep;
     private WidgetFacts? previewFacts;
 
     public LayoutEditor(
@@ -160,11 +165,24 @@ internal sealed partial class LayoutEditor : StackPanel
         {
             if (index >= previewRow.Children.Count)
             {
-                previewRow.Children.Add(new WidgetPreview());
+                previewRow.Children.Add(FadingIn(new WidgetPreview()));
             }
 
             ((WidgetPreview)previewRow.Children[index]).Show(panels[index]);
         }
+    }
+
+    /// <summary>A block that appears fades in once it is on screen.</summary>
+    internal static WidgetPreview FadingIn(WidgetPreview preview)
+    {
+        if (SurfaceMotion.Current() == AnimationSetting.Off)
+        {
+            return preview;
+        }
+
+        preview.Opacity = 0;
+        preview.Loaded += (_, _) => SurfaceMotion.Settle(preview, "Opacity", 1);
+        return preview;
     }
 
     private Grid Templates()
@@ -204,7 +222,8 @@ internal sealed partial class LayoutEditor : StackPanel
     {
         addSlot.Style = (Style)Application.Current.Resources["HakariButton"];
         addSlot.HorizontalAlignment = HorizontalAlignment.Stretch;
-        addSlot.Click += (_, _) => change(AddSlot);
+        addSlot.Click += (_, _) =>
+            ChangeSlot(SlotMotion.Added, WidgetLayout.MaximumSlots, AddSlot);
         var block = new StackPanel
         {
             Margin = new Thickness(Gutter, Gutter, Gutter, 0),
@@ -215,32 +234,47 @@ internal sealed partial class LayoutEditor : StackPanel
         return block;
     }
 
-    /// <summary>A new slot is a line of text showing something not already shown.</summary>
+    /// <summary>A new slot that the template can show, or the layout unchanged.</summary>
     private static WidgetLayout AddSlot(WidgetLayout layout) =>
-        CanAddSlot(layout)
-            ? layout with { Slots = [.. layout.Slots, NewSlot(layout)] }
-            : layout;
+        NewSlot(layout) is { } slot ? layout with { Slots = [.. layout.Slots, slot] } : layout;
 
-    private static WidgetSlot NewSlot(WidgetLayout layout)
-    {
-        var used = layout.Slots.Select(slot => slot.Item).ToHashSet();
-        var item = WidgetItemChoices.ForSlots()
-            .Select(choice => (WidgetItem)choice.Value)
-            .FirstOrDefault(candidate => !used.Contains(candidate), WidgetItem.BurnRate);
-        return new WidgetSlot(item);
-    }
-
-    /// <summary>Only when the template has room to show one more, and fewer than 4.</summary>
-    private static bool CanAddSlot(WidgetLayout layout)
+    /// <summary>
+    /// The first kind of slot that still fits: a line of text, else a ring, else a sparkline,
+    /// each showing something not already shown. Null when nothing more would show.
+    /// </summary>
+    private static WidgetSlot? NewSlot(WidgetLayout layout)
     {
         if (!layout.UsesSlots || layout.Slots.Count >= WidgetLayout.MaximumSlots)
         {
-            return false;
+            return null;
         }
 
-        var added = layout with { Slots = [.. layout.Slots, NewSlot(layout)] };
-        return WidgetTemplates.Shown(added)[^1];
+        var used = layout.Slots.Select(slot => slot.Item).ToHashSet();
+        foreach (var style in new[]
+            { WidgetSlotStyle.Text, WidgetSlotStyle.Ring, WidgetSlotStyle.Sparkline })
+        {
+            var item = WidgetItemChoices.ForSlotStyle(style)
+                .Select(choice => (WidgetItem)choice.Value)
+                .Where(candidate => !used.Contains(candidate))
+                .Cast<WidgetItem?>()
+                .FirstOrDefault();
+            if (item is null)
+            {
+                continue;
+            }
+
+            var slot = new WidgetSlot(item.Value, style);
+            var added = layout with { Slots = [.. layout.Slots, slot] };
+            if (WidgetTemplates.Shown(added)[^1])
+            {
+                return slot;
+            }
+        }
+
+        return null;
     }
+
+    private static bool CanAddSlot(WidgetLayout layout) => NewSlot(layout) is not null;
 
     /// <summary>
     /// Text always; a ring or a sparkline only when the metric suits it and no other slot
@@ -261,6 +295,85 @@ internal sealed partial class LayoutEditor : StackPanel
         ];
     }
 
+    /// <summary>Remembers what is about to happen to which row, then makes the change.</summary>
+    private void ChangeSlot(SlotMotion motion, int index, Func<WidgetLayout, WidgetLayout> edit)
+    {
+        pendingMotion = (motion, index);
+        rowStep = slotList.Children.Count > 0
+            ? ((FrameworkElement)slotList.Children[0]).ActualHeight + Gap
+            : 0;
+        change(edit);
+    }
+
+    /// <summary>The row folds away and fades first; the layout changes once it is gone.</summary>
+    private void RemoveSlot(FrameworkElement row, int index)
+    {
+        if (SurfaceMotion.Current() == AnimationSetting.Off)
+        {
+            change(current => Without(current, index));
+            return;
+        }
+
+        row.IsHitTestVisible = false;
+        SurfaceMotion.Settle(row, "Opacity", 0);
+        Flyout.CardFold.Run(row, folding: true, fitWindow: () => { });
+        var timer = DispatcherQueue.CreateTimer();
+        timer.Interval = SurfaceMotion.Normal;
+        timer.IsRepeating = false;
+        timer.Tick += (_, _) => change(current => Without(current, index));
+        timer.Start();
+    }
+
+    /// <summary>
+    /// A new row opens and fades in; moved rows slide from where they were; a changed row
+    /// brightens back in. Off shows the new list at once.
+    /// </summary>
+    private void PlaySlotMotion()
+    {
+        var (motion, index) = pendingMotion;
+        pendingMotion = (SlotMotion.None, 0);
+        if (motion == SlotMotion.None || SurfaceMotion.Current() == AnimationSetting.Off)
+        {
+            return;
+        }
+
+        var rows = slotList.Children.OfType<FrameworkElement>().ToList();
+        switch (motion)
+        {
+            case SlotMotion.Added when rows.Count > 0:
+                var added = rows[^1];
+                var shownOpacity = added.Opacity;
+                added.Opacity = 0;
+                Flyout.CardFold.Run(added, folding: false, fitWindow: () => { });
+                SurfaceMotion.Settle(added, "Opacity", shownOpacity);
+                break;
+            case SlotMotion.MovedUp or SlotMotion.MovedDown
+                when index >= 0 && index < rows.Count:
+                var other = motion == SlotMotion.MovedUp ? index + 1 : index - 1;
+                Slide(rows[index], motion == SlotMotion.MovedUp ? rowStep : -rowStep);
+                if (other >= 0 && other < rows.Count)
+                {
+                    Slide(rows[other], motion == SlotMotion.MovedUp ? -rowStep : rowStep);
+                }
+
+                break;
+            case SlotMotion.Changed when index >= 0 && index < rows.Count:
+                var changed = rows[index];
+                var target = changed.Opacity;
+                changed.Opacity = target * ChangedDip;
+                SurfaceMotion.Settle(changed, "Opacity", target);
+                break;
+        }
+    }
+
+    /// <summary>Starts a row where it was and lets it settle into its new place.</summary>
+    private static void Slide(FrameworkElement row, double from)
+    {
+        var offset = new TranslateTransform { Y = from };
+        row.RenderTransform = offset;
+        SurfaceMotion.Settle(offset, "Y", 0);
+    }
+
     private void RebuildSlots(WidgetLayout layout)
     {
         slotList.Children.Clear();
@@ -278,17 +391,26 @@ internal sealed partial class LayoutEditor : StackPanel
                 isShown: position >= shown.Count || shown[position],
                 metricSample: value => MetricSample(value, rules),
                 styles: StylesFor(layout, position));
-            row.ItemChanged += (_, item) => change(current => WithItem(current, position, item));
-            row.StyleChanged += (_, style) =>
-                change(current => WithStyle(current, position, style));
-            row.MovedUp += (_, _) => change(current => Moved(current, position, -1));
-            row.MovedDown += (_, _) => change(current => Moved(current, position, 1));
-            row.Removed += (_, _) => change(current => Without(current, position));
+            row.ItemChanged += (_, item) => ChangeSlot(
+                SlotMotion.Changed, position, current => WithItem(current, position, item));
+            row.StyleChanged += (_, style) => ChangeSlot(
+                SlotMotion.Changed, position, current => WithStyle(current, position, style));
+            row.MovedUp += (_, _) => ChangeSlot(
+                SlotMotion.MovedUp, position - 1, current => Moved(current, position, -1));
+            row.MovedDown += (_, _) => ChangeSlot(
+                SlotMotion.MovedDown, position + 1, current => Moved(current, position, 1));
+            row.Removed += (_, _) => RemoveSlot(row, position);
             slotList.Children.Add(row);
         }
 
-        addSlot.Content = Texts.Format("settings.slot.add", WidgetLayout.MaximumSlots);
+        PlaySlotMotion();
+
         var roomLeft = CanAddSlot(layout);
+        addSlot.Content = roomLeft
+            ? Texts.Format("settings.slot.add", WidgetLayout.MaximumSlots)
+            : Texts.Get(layout.Slots.Count >= WidgetLayout.MaximumSlots
+                ? "settings.slot.atMost"
+                : "settings.slot.noRoom");
         addSlot.IsEnabled = roomLeft;
         ToolTipService.SetToolTip(addSlot, roomLeft ? null : Texts.Get("settings.slot.full"));
         slotList.Visibility = layout.UsesSlots ? Visibility.Visible : Visibility.Collapsed;

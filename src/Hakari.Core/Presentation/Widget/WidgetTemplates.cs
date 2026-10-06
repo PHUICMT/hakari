@@ -28,7 +28,7 @@ public static class WidgetTemplates
         WidgetTemplate.Bars => [new(WidgetItem.SessionLimit), new(WidgetItem.WeeklyLimit)],
         WidgetTemplate.RingText =>
         [
-            new(WidgetItem.MostPressingLimit, WidgetSlotStyle.Ring),
+            new(WidgetItem.SessionAndWeeklyLimits, WidgetSlotStyle.Ring),
             new(WidgetItem.CostToday),
             new(WidgetItem.BurnRate),
         ],
