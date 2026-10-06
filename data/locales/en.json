@@ -131,7 +131,7 @@
   "dashboard.mix.other": "other",
   "dashboard.accounts.hidden": "Hidden",
   "dashboard.accounts.noLimits": "No limits yet",
-  "dashboard.accounts.limitsOn": "Limits on",
+  "dashboard.accounts.limitsOn": "Live",
   "dashboard.accounts.lastKnown": "Last known · {0}",
   "dashboard.accounts.summary": "{0} accounts · {1} sources",
   "dashboard.accounts.earlier": "Before Hakari was installed",

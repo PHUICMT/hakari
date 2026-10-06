@@ -131,7 +131,7 @@
   "dashboard.mix.other": "อื่นๆ",
   "dashboard.accounts.hidden": "ซ่อนอยู่",
   "dashboard.accounts.noLimits": "ยังไม่มี limit",
-  "dashboard.accounts.limitsOn": "เปิด limit",
+  "dashboard.accounts.limitsOn": "ข้อมูลสด",
   "dashboard.accounts.lastKnown": "ค่าล่าสุด · {0}",
   "dashboard.accounts.summary": "{0} บัญชี · {1} แหล่งข้อมูล",
   "dashboard.accounts.earlier": "ยอดการใช้งานก่อนลงโปรแกรม",
