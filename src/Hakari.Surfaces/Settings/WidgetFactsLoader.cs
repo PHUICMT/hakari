@@ -58,6 +58,15 @@ internal static class WidgetFactsLoader
             settings.AccountNicknames,
             now,
             percentDecimals: settings.PercentDecimals,
-            withHourlySpend: true);
+            withHourlySpend: true,
+            extras: new WidgetExtraRequest(
+                WidgetExtraValues.Names,
+                settings.DailyBudget,
+                account => account.Account is { } info
+                    && settings.PlanPriceOf(account.AccountId, info.Plan) is { } dollars
+                        ? converter is null
+                            ? dollars
+                            : converter.Convert(dollars, DateOnly.FromDateTime(now.DateTime))
+                        : null));
     }
 }

@@ -120,7 +120,11 @@ internal sealed class UsageFeed : IDisposable
             settings.WslMode,
             settings.ExtraConfigDirectories);
         var sources = SourceDiscovery.Discover(discoveryOptions);
-        var query = new UsageQuery(store, pricing, CreateConverter(store, pricing, settings));
+        var converter = CreateConverter(store, pricing, settings);
+        var query = new UsageQuery(store, pricing, converter);
+        Func<decimal, decimal> fromDollars = dollars => converter is null
+            ? dollars
+            : converter.Convert(dollars, DateOnly.FromDateTime(DateTime.Now));
         SyncSessionTitles(store, settings.ShowSessionTitles);
         var indexer = new Indexer(store, settings.ShowSessionTitles);
         indexer.Progressed += ShowIndexProgress;
@@ -172,7 +176,7 @@ internal sealed class UsageFeed : IDisposable
             if (facts is null || recordsChanged || limitsChanged || layoutChanged || due)
             {
                 layoutChanged = false;
-                facts = WidgetText.Facts(query, limits, presentation);
+                facts = WidgetText.Facts(query, limits, presentation, fromDollars);
                 BadgeUpdated?.Invoke(WidgetText.Badge(facts));
                 lastPublished = now;
             }

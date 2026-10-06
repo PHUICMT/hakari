@@ -85,6 +85,18 @@ public sealed record HakariSettings
 
     public bool AlertsMutedAt(DateTimeOffset now) => AlertsMutedUntil > now;
 
+    /// <summary>What a day may cost, in the shown currency; null for no budget.</summary>
+    public decimal? DailyBudget { get; init; }
+
+    /// <summary>What a month may cost, in the shown currency; null for no budget.</summary>
+    public decimal? MonthlyBudget { get; init; }
+
+    /// <summary>Tell when one session costs far more than sessions usually do.</summary>
+    public bool NotifyOnUnusualSessions { get; init; } = true;
+
+    /// <summary>Tell when a limit resets, apart from the warnings as it fills.</summary>
+    public bool NotifyOnResets { get; init; } = true;
+
     /// <summary><see cref="DisplayInfo.Id"/> values, used when Displays is Chosen.</summary>
     public IReadOnlyList<string> ChosenDisplays { get; init; } = [];
 
@@ -130,6 +142,10 @@ public sealed record HakariSettings
         && PercentDecimals == other.PercentDecimals
         && NotifyOnLimits == other.NotifyOnLimits
         && AlertsMutedUntil == other.AlertsMutedUntil
+        && DailyBudget == other.DailyBudget
+        && MonthlyBudget == other.MonthlyBudget
+        && NotifyOnUnusualSessions == other.NotifyOnUnusualSessions
+        && NotifyOnResets == other.NotifyOnResets
         && AccountOrdering == other.AccountOrdering
         && CustomAccountOrder.SequenceEqual(other.CustomAccountOrder)
         && HiddenAccounts.SequenceEqual(other.HiddenAccounts)

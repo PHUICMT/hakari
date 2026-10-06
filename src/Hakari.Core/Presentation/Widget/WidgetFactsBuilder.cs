@@ -19,7 +19,8 @@ public static class WidgetFactsBuilder
         DateTimeOffset now,
         Func<string, UsageLimit, DateTimeOffset, DateTimeOffset?>? fullAt = null,
         int percentDecimals = 0,
-        bool withHourlySpend = false)
+        bool withHourlySpend = false,
+        WidgetExtraRequest? extras = null)
     {
         var total = UsageOf(query, accountId: null, now);
         var shown = accounts.Select(account => account with
@@ -41,7 +42,16 @@ public static class WidgetFactsBuilder
             TokensThisMonth: total.TokensThisMonth,
             RepliesToday: total.RepliesToday,
             PercentDecimals: percentDecimals,
-            HourlySpend: withHourlySpend ? HourlySpendOf(query, now) : null);
+            HourlySpend: withHourlySpend ? HourlySpendOf(query, now) : null,
+            Extras: extras is { Names.Count: > 0 } wanted
+                ? WidgetExtraValues.Read(
+                    query,
+                    wanted.Names,
+                    now,
+                    wanted.DailyBudget,
+                    shown.FirstOrDefault() is { } first ? wanted.PlanPriceOf?.Invoke(first) : null,
+                    shown.FirstOrDefault()?.AccountId)
+                : null);
     }
 
     private const int SparkHours = 12;

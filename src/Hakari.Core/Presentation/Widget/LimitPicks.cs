@@ -5,7 +5,7 @@ namespace Hakari.Core.Presentation.Widget;
 /// <summary>Which of an account's limits a widget item means.</summary>
 internal static class LimitPicks
 {
-    private const string WeeklyGroup = "weekly";
+    public const string WeeklyGroup = "weekly";
 
     public static UsageLimit? Session(LimitSnapshot snapshot) =>
         snapshot.Limits.FirstOrDefault(limit => limit.Group == LimitPriority.SessionGroup);

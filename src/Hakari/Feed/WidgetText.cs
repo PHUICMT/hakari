@@ -58,7 +58,8 @@ internal static class WidgetText
     public static WidgetFacts Facts(
         UsageQuery query,
         LimitPoller limits,
-        HakariSettings presentation)
+        HakariSettings presentation,
+        Func<decimal, decimal>? fromDollars = null)
     {
         var now = DateTimeOffset.Now;
         var arranged = AccountArrangement.Arrange(
@@ -74,7 +75,28 @@ internal static class WidgetText
             now,
             limits.FullAt,
             presentation.PercentDecimals,
-            withHourlySpend: UsesSparkline(presentation.Widget));
+            withHourlySpend: UsesSparkline(presentation.Widget),
+            extras: ExtrasFor(presentation, fromDollars ?? (dollars => dollars)));
+    }
+
+    /// <summary>Only what the custom formats name is read; most widgets ask for nothing.</summary>
+    private static WidgetExtraRequest? ExtrasFor(
+        HakariSettings settings,
+        Func<decimal, decimal> fromDollars)
+    {
+        var names = settings.AccountLayouts.Values
+            .Append(settings.Widget)
+            .SelectMany(layout => WidgetFormat.NamesIn(layout.CustomFormat))
+            .ToHashSet();
+        return names.Count == 0
+            ? null
+            : new WidgetExtraRequest(
+                names,
+                settings.DailyBudget,
+                account => account.Account is { } info
+                    && settings.PlanPriceOf(account.AccountId, info.Plan) is { } dollars
+                        ? fromDollars(dollars)
+                        : null);
     }
 
     private static bool UsesSparkline(WidgetLayout layout) =>

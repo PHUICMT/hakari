@@ -19,6 +19,24 @@ public static class WidgetFormat
     private const char PercentSign = '%';
     private static readonly CultureInfo Invariant = CultureInfo.InvariantCulture;
 
+    /// <summary>The names a format uses, without patterns or account scopes.</summary>
+    public static IReadOnlyCollection<string> NamesIn(string? format)
+    {
+        var names = new HashSet<string>(StringComparer.Ordinal);
+        if (string.IsNullOrEmpty(format))
+        {
+            return names;
+        }
+
+        Apply(format, name =>
+        {
+            var scope = name.IndexOf('@');
+            names.Add(scope < 0 ? name : name[..scope]);
+            return null;
+        });
+        return names;
+    }
+
     /// <param name="valueOf">The value for a name, or null if unknown or unavailable.</param>
     public static string Apply(string format, Func<string, FormatValue?> valueOf)
     {

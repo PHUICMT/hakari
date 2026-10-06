@@ -8,6 +8,7 @@ namespace Hakari.Core.Presentation.Widget;
 /// <param name="Nicknames">Names the user gave accounts, keyed by account id.</param>
 /// <param name="TokensToday">Every token today: input, output and cache.</param>
 /// <param name="HourlySpend">Spending in each of the last 12 hours, oldest first, or null.</param>
+/// <param name="Extras">Format values read only because a format uses them.</param>
 public sealed record WidgetFacts(
     decimal CostToday,
     decimal CostThisMonth,
@@ -20,7 +21,8 @@ public sealed record WidgetFacts(
     long TokensThisMonth = 0,
     long RepliesToday = 0,
     int PercentDecimals = 0,
-    IReadOnlyList<decimal>? HourlySpend = null)
+    IReadOnlyList<decimal>? HourlySpend = null,
+    IReadOnlyDictionary<string, FormatValue>? Extras = null)
 {
     /// <summary>"93%", or "93.4%" with one decimal; the decimals are an estimate.</summary>
     public string FormatPercent(double percent) => PercentText.Format(percent, PercentDecimals);
