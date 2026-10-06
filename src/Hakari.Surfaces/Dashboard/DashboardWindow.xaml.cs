@@ -20,8 +20,9 @@ namespace Hakari.Surfaces.Dashboard;
 /// </summary>
 public sealed partial class DashboardWindow : Window
 {
-    private const double LogicalWidth = 1100;
-    private const double LogicalHeight = 780;
+    /// <summary>Wide enough for Settings to preview three accounts side by side.</summary>
+    private const double LogicalWidth = 1340;
+    private const double LogicalHeight = 860;
     private const double MinimumLogicalWidth = 640;
     private const double MinimumLogicalHeight = 520;
     private const double ScreenMargin = 48;
