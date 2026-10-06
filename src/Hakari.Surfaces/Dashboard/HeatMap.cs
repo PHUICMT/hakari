@@ -40,7 +40,7 @@ internal sealed partial class HeatMap : Grid
         AddHourLabels();
         var highest = costs.Count == 0 ? 0m : costs.Max();
         var storyboard = new Storyboard();
-        var animate = SurfaceMotion.Current() == AnimationSetting.Full;
+        var animate = SurfaceMotion.Current() == AnimationSetting.Full && ChartEntrance.ShouldPlay;
         for (var day = 0; day < ChartsData.Weekdays; day++)
         {
             var row = new RowDefinition { Height = GridLength.Auto };
@@ -50,7 +50,7 @@ internal sealed partial class HeatMap : Grid
         }
 
         SizeChanged += (_, args) => FitSquares(args.NewSize.Width);
-        Loaded += (_, _) => storyboard.Begin();
+        ChartEntrance.PlayOnce(this, storyboard);
     }
 
     /// <summary>How many shades there are: the lightest for nothing, then four darker.</summary>

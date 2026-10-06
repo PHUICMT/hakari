@@ -61,7 +61,8 @@ internal sealed class PageLoader<T>(
             return;
         }
 
-        var view = build(data);
+        var quiet = !firstRead && !asked;
+        var view = quiet ? ChartEntrance.Quietly(() => build(data)) : build(data);
         body.Content = view;
         if (firstRead)
         {

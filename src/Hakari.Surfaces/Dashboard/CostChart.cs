@@ -98,7 +98,7 @@ internal static class CostChart
         }
 
         var storyboard = new Storyboard();
-        var animate = SurfaceMotion.Current() == AnimationSetting.Full;
+        var animate = SurfaceMotion.Current() == AnimationSetting.Full && ChartEntrance.ShouldPlay;
         for (var index = 0; index < bars.Count; index++)
         {
             plot.ColumnDefinitions.Add(new ColumnDefinition());
@@ -119,7 +119,7 @@ internal static class CostChart
             Grid.SetColumnSpan(line, Math.Max(1, bars.Count));
         }
 
-        plot.Loaded += (_, _) => storyboard.Begin();
+        ChartEntrance.PlayOnce(plot, storyboard);
         ChartHover.Attach(plot, bars.Count, index => (
             bars[index].Label,
             [new ReadoutRow(

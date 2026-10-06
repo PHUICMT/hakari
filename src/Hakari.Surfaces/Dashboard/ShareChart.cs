@@ -93,7 +93,7 @@ internal static class ShareChart
         }
 
         var storyboard = new Storyboard();
-        var animate = SurfaceMotion.Current() == AnimationSetting.Full;
+        var animate = SurfaceMotion.Current() == AnimationSetting.Full && ChartEntrance.ShouldPlay;
         for (var index = 0; index < bars; index++)
         {
             plot.ColumnDefinitions.Add(new ColumnDefinition());
@@ -109,7 +109,7 @@ internal static class ShareChart
             }
         }
 
-        plot.Loaded += (_, _) => storyboard.Begin();
+        ChartEntrance.PlayOnce(plot, storyboard);
         ChartHover.Attach(plot, bars, index => (labels[index], Readout(index, series, currency)));
         return plot;
     }
