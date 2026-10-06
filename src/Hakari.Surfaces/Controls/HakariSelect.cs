@@ -48,6 +48,50 @@ public sealed partial class HakariSelect : Button
         Click += (_, _) => OpenList();
     }
 
+    /// <summary>How far each edge comes in when pressed, however wide the control.</summary>
+    private const double PressInset = 2;
+    private const double SharedPressScale = 0.97;
+
+    private readonly ScaleTransform pressScale = new();
+
+    /// <summary>
+    /// The shared button shrinks by a share of its size when pressed, which is a lot for a
+    /// stretched select; this one takes the root a fixed few pixels in instead.
+    /// </summary>
+    protected override void OnApplyTemplate()
+    {
+        base.OnApplyTemplate();
+        if (GetTemplateChild("Root") is not Grid root)
+        {
+            return;
+        }
+
+        root.RenderTransform = pressScale;
+        AddHandler(PointerPressedEvent, new Microsoft.UI.Xaml.Input.PointerEventHandler(
+            (_, _) => Press(true)), handledEventsToo: true);
+        AddHandler(PointerReleasedEvent, new Microsoft.UI.Xaml.Input.PointerEventHandler(
+            (_, _) => Press(false)), handledEventsToo: true);
+        PointerCaptureLost += (_, _) => Press(false);
+        PointerExited += (_, _) => Press(false);
+    }
+
+    private void Press(bool pressed)
+    {
+        // Never deeper than the shared button's press, so a small select feels the same.
+        var scale = pressed && ActualWidth > 0
+            ? Math.Max(SharedPressScale, 1 - PressInset * 2 / ActualWidth)
+            : 1;
+        if (SurfaceMotion.Current() == AnimationSetting.Off)
+        {
+            pressScale.ScaleX = scale;
+            pressScale.ScaleY = scale;
+            return;
+        }
+
+        SurfaceMotion.Settle(pressScale, "ScaleX", scale);
+        SurfaceMotion.Settle(pressScale, "ScaleY", scale);
+    }
+
     public event EventHandler<object>? Selected;
 
     public object? SelectedValue { get; private set; }
