@@ -21,6 +21,7 @@ internal sealed partial class ChartsPage : LoadedPage<ChartsData>
         var page = new StackPanel { Spacing = SectionSpacing };
         page.Children.Add(HeatCard(data));
         page.Children.Add(MixCard(data));
+        page.Children.Add(TrendCard(data));
         return page;
     }
 
@@ -32,6 +33,31 @@ internal sealed partial class ChartsPage : LoadedPage<ChartsData>
         return DashboardCard.Create(
             Texts.Get("dashboard.heat.title"),
             Texts.Get("dashboard.heat.caption"),
+            body);
+    }
+
+    private static Border TrendCard(ChartsData data)
+    {
+        var body = new StackPanel();
+        if (data.Trend is { } trend)
+        {
+            body.Children.Add(new LimitTrendChart(trend));
+            body.Children.Add(DashboardLegend.Create(
+                trend.Series.Select(series => (series.BrushKey, series.Name))));
+        }
+        else
+        {
+            body.Children.Add(new TextBlock
+            {
+                Text = Texts.Get("dashboard.trend.empty"),
+                Foreground = DashboardCard.Brush("HakariInkFaintBrush"),
+                TextWrapping = TextWrapping.Wrap,
+            });
+        }
+
+        return DashboardCard.Create(
+            Texts.Get("dashboard.trend.title"),
+            data.Trend?.AccountName,
             body);
     }
 

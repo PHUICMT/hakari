@@ -72,6 +72,14 @@ internal static class IndexSchema
             failure TEXT NOT NULL
         );
 
+        CREATE TABLE IF NOT EXISTS limit_history (
+            account_id TEXT NOT NULL,
+            kind TEXT NOT NULL,
+            taken_at_ms INTEGER NOT NULL,
+            percent REAL NOT NULL,
+            PRIMARY KEY (account_id, kind, taken_at_ms)
+        ) WITHOUT ROWID;
+
         CREATE TABLE IF NOT EXISTS accounts (
             account_id TEXT PRIMARY KEY,
             email TEXT,

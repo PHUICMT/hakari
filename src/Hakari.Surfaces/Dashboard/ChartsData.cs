@@ -1,4 +1,10 @@
+using Hakari.Core.Accounts;
+using Hakari.Core.Indexing;
+using Hakari.Core.Limits;
+using Hakari.Core.Localization;
+using Hakari.Core.Presentation;
 using Hakari.Core.Querying;
+using Hakari.Core.Settings;
 
 namespace Hakari.Surfaces.Dashboard;
 
@@ -9,7 +15,8 @@ internal sealed record ChartsData(
     string Currency,
     IReadOnlyList<decimal> Heat,
     IReadOnlyList<string> Labels,
-    IReadOnlyList<MixSeries> Mix)
+    IReadOnlyList<MixSeries> Mix,
+    LimitTrend? Trend = null)
 {
     public const int Weekdays = 7;
     public const int Hours = 24;
@@ -25,9 +32,9 @@ internal sealed record ChartsData(
         new("USD", new decimal[Weekdays * Hours], [], []);
 
     public static ChartsData Load(DashboardFilter filter) =>
-        DashboardData.Read((query, _) => Read(query, filter), Empty);
+        DashboardData.Read((query, store) => Read(query, store, filter), Empty);
 
-    private static ChartsData Read(UsageQuery query, DashboardFilter filter)
+    private static ChartsData Read(UsageQuery query, IndexStore store, DashboardFilter filter)
     {
         var now = DateTimeOffset.Now;
         var usage = filter.ToUsageFilter(now);
@@ -36,7 +43,52 @@ internal sealed record ChartsData(
             query.Currency,
             ReadHeat(query, usage),
             [.. plan.Buckets.Select(bucket => bucket.Label)],
-            ReadMix(query, usage with { From = plan.From }, plan));
+            ReadMix(query, usage with { From = plan.From }, plan),
+            ReadTrend(store, filter, now));
+    }
+
+    private const int TrendDays = 90;
+    private const string SessionKind = "session";
+    private const string WeeklyKind = "weekly_all";
+
+    /// <summary>
+    /// How full the chosen account's 5-hour and weekly limits were; with no account chosen,
+    /// the one most recently seen. Null when nothing has been recorded.
+    /// </summary>
+    private static LimitTrend? ReadTrend(
+        IndexStore store,
+        DashboardFilter filter,
+        DateTimeOffset now)
+    {
+        var settings = SettingsStore.Default.Load();
+        var accounts = new AccountRepository(store).ListAccounts();
+        var account = filter.AccountId is { Length: > 0 } chosen
+            ? accounts.FirstOrDefault(entry => entry.AccountId == chosen)
+            : accounts.FirstOrDefault();
+        if (account is null)
+        {
+            return null;
+        }
+
+        var from = filter.Period == DashboardPeriod.Today
+            ? now.AddHours(-24)
+            : filter.From(now) ?? now.AddDays(-TrendDays);
+        var history = new LimitHistory(store);
+        var trend = new LimitTrend(
+            AccountLabels.Full(account, settings.NicknameOf(account.AccountId)),
+            from,
+            now,
+            [
+                new TrendSeries(
+                    Texts.Get("limit.short.session"),
+                    "HakariChart3Brush",
+                    history.Load(account.AccountId, SessionKind, from)),
+                new TrendSeries(
+                    Texts.Get("limit.short.weekly"),
+                    "HakariChart2Brush",
+                    history.Load(account.AccountId, WeeklyKind, from)),
+            ]);
+        return trend.HasReadings ? trend : null;
     }
 
     /// <summary>The database counts Sunday as 0; the chart starts its week on Monday.</summary>

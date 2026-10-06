@@ -26,6 +26,7 @@ internal sealed class LimitPoller : IDisposable
     private readonly AccountRepository accountRepository;
     private readonly LimitForecaster forecaster = new();
     private readonly LimitCache limitCache;
+    private readonly LimitHistory limitHistory;
     private readonly Dictionary<string, DateTime> signInTimes = [];
     private DateTimeOffset nextPoll = DateTimeOffset.MinValue;
     private DateTimeOffset lastUsage = DateTimeOffset.MinValue;
@@ -43,6 +44,8 @@ internal sealed class LimitPoller : IDisposable
         }
 
         limitCache = new LimitCache(store);
+        limitHistory = new LimitHistory(store);
+        limitHistory.Prune(DateTimeOffset.UtcNow);
         accountTracker = new AccountTracker(accountRepository, TimeProvider.System);
         limitService = new LimitService(
             new UsageLimitClient(httpClient, TimeProvider.System),
@@ -151,6 +154,7 @@ internal sealed class LimitPoller : IDisposable
         }
 
         forecaster.Record(accountId, snapshot);
+        limitHistory.Record(accountId, snapshot);
         return new WidgetAccount(accountId, details.GetValueOrDefault(accountId), snapshot);
     }
 }
