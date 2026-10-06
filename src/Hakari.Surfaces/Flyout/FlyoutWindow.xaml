@@ -4,6 +4,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:Hakari.Surfaces.Flyout"
     xmlns:l="using:Hakari.Surfaces.Localization"
+    xmlns:controls="using:Hakari.Surfaces.Controls"
     Title="Hakari">
 
     <Grid x:Name="Root" Background="{ThemeResource HakariSurfaceBrush}" Opacity="0"
@@ -74,9 +75,22 @@
                                             <TextBlock Text="{x:Bind Name}" FontWeight="SemiBold" FontSize="13"
                                                 Foreground="{ThemeResource HakariInkBrush}" TextTrimming="CharacterEllipsis" />
                                             <!-- Folded, the card is its name and one summary; the details fold away -->
-                                            <TextBlock Text="{x:Bind Detail}" Style="{StaticResource HakariCaptionText}"
-                                                TextWrapping="Wrap" TextTrimming="None"
-                                                Visibility="{x:Bind LimitsVisibility}" />
+                                            <StackPanel Visibility="{x:Bind LimitsVisibility}">
+                                                <TextBlock Text="{x:Bind Email}" Visibility="{x:Bind EmailVisibility}"
+                                                    Style="{StaticResource HakariCaptionText}" />
+                                                <ItemsControl ItemsSource="{x:Bind Facts}" IsTabStop="False">
+                                                    <ItemsControl.ItemsPanel>
+                                                        <ItemsPanelTemplate>
+                                                            <controls:FlowPanel Spacing="4" />
+                                                        </ItemsPanelTemplate>
+                                                    </ItemsControl.ItemsPanel>
+                                                    <ItemsControl.ItemTemplate>
+                                                        <DataTemplate x:DataType="x:String">
+                                                            <TextBlock Text="{x:Bind}" Style="{StaticResource HakariCaptionText}" />
+                                                        </DataTemplate>
+                                                    </ItemsControl.ItemTemplate>
+                                                </ItemsControl>
+                                            </StackPanel>
                                         </StackPanel>
                                         <TextBlock x:Name="FoldedSummary" Grid.Column="1" Text="{x:Bind Summary}"
                                             Visibility="{x:Bind SummaryVisibility}"

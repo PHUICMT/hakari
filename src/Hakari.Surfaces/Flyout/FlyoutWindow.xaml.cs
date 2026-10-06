@@ -279,9 +279,11 @@ public sealed partial class FlyoutWindow : Window
             return;
         }
 
-        AccountScroller.MaxHeight = double.PositiveInfinity;
+        // Runs every frame of a fold: one layout pass, and a second only when the accounts
+        // have to give way to stay on screen.
         Root.UpdateLayout();
-        if (LimitAccountsToScreen(measured: false))
+        if (Body.ActualHeight + Footer.ActualHeight > availableHeight
+            && LimitAccountsToScreen(measured: false))
         {
             Root.UpdateLayout();
         }

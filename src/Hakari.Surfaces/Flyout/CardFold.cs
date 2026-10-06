@@ -54,10 +54,29 @@ internal sealed class CardFold
     {
         body.MaxHeight = double.PositiveInfinity;
         body.Visibility = Visibility.Visible;
-        body.Measure(new Windows.Foundation.Size(body.ActualWidth > 0
-            ? body.ActualWidth
-            : double.PositiveInfinity, double.PositiveInfinity));
+        body.Measure(new Windows.Foundation.Size(WidthFor(body), double.PositiveInfinity));
         return body.DesiredSize.Height;
+    }
+
+    /// <summary>
+    /// A folded body has no width of its own yet; measured at an endless width its text
+    /// would fit on one line and the opening would jump at the end. The nearest laid-out
+    /// parent's width stands in.
+    /// </summary>
+    private static double WidthFor(FrameworkElement body)
+    {
+        DependencyObject? current = body;
+        while (current is FrameworkElement element)
+        {
+            if (element.ActualWidth > 0)
+            {
+                return element.ActualWidth - element.Margin.Left - element.Margin.Right;
+            }
+
+            current = VisualTreeHelper.GetParent(element);
+        }
+
+        return double.PositiveInfinity;
     }
 
     private void OnRendering(object? sender, object args)
