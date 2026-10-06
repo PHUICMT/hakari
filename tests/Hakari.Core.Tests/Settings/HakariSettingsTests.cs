@@ -1,3 +1,4 @@
+using Hakari.Core.Accounts;
 using Hakari.Core.Settings;
 using Hakari.Core.Sources;
 
@@ -29,5 +30,18 @@ public sealed class HakariSettingsTests
         Assert.False((before with { Paused = true }).FeedsSameDataAs(before));
         Assert.False((before with { ExtraConfigDirectories = [@"D:\Other"] })
             .FeedsSameDataAs(before));
+    }
+
+    [Fact]
+    public void An_account_pays_its_own_price_when_set_else_the_plans_list_price()
+    {
+        var settings = new HakariSettings
+        {
+            PlanPriceOverrides = new Dictionary<string, decimal> { ["work"] = 17m },
+        };
+
+        Assert.Equal(17m, settings.PlanPriceOf("work", SubscriptionPlan.Pro));
+        Assert.Equal(20m, settings.PlanPriceOf("home", SubscriptionPlan.Pro));
+        Assert.Null(settings.PlanPriceOf("home", SubscriptionPlan.Enterprise));
     }
 }

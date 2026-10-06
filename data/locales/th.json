@@ -300,6 +300,7 @@
   "settings.accounts.show": "แสดงบัญชีนี้ บัญชีที่ออกจากระบบแล้วจะยังแสดง limit ล่าสุดจนกว่าจะซ่อน",  "settings.accounts.none": "ยังไม่มีบัญชี",
   "settings.accounts.none.description": "บัญชีจะแสดงเมื่อ Claude Code ลงชื่อเข้าใช้ในแหล่งข้อมูลใดแหล่งหนึ่ง",
   "settings.nickname": "ชื่อเล่น แสดงบน taskbar และใน flyout",
+  "settings.planPrice": "ราคาที่บัญชีนี้จ่ายต่อเดือนเป็นดอลลาร์ ปล่อยว่างเพื่อใช้ราคาประกาศของแผน",
   "settings.renew": "ต่ออายุการลงชื่อเข้าใช้อัตโนมัติ",
   "settings.renew.description": "ทำให้ limit ยังอัปเดตได้แม้ปิด Claude Code ไว้นาน โดยจะแก้ไฟล์ลงชื่อเข้าใช้ของ Claude Code เฉพาะตอนที่ Claude Code ไม่ได้รันอยู่",
 

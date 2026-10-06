@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Globalization;
 using Hakari.Core.Configuration;
 using Hakari.Core.Currency;
 using Hakari.Core.Displays;
@@ -192,6 +193,30 @@ public sealed partial class SettingsPage
             return current with { AccountNicknames = names };
         });
         ShowPreview(updated);
+    }
+
+    /// <summary>Empty or not a positive number goes back to the plan's list price.</summary>
+    private void SavePlanPrice(string accountId, string text)
+    {
+        var hasPrice = decimal.TryParse(
+            text.Trim(),
+            NumberStyles.Number,
+            CultureInfo.InvariantCulture,
+            out var price) && price > 0;
+        store.Update(current =>
+        {
+            var prices = new Dictionary<string, decimal>(current.PlanPriceOverrides);
+            if (hasPrice)
+            {
+                prices[accountId] = price;
+            }
+            else
+            {
+                prices.Remove(accountId);
+            }
+
+            return current with { PlanPriceOverrides = prices };
+        });
     }
 
     private void OnNotifyClicked(object sender, RoutedEventArgs args) =>

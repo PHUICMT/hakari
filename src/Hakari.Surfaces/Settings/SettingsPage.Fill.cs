@@ -1,3 +1,4 @@
+using System.Globalization;
 using Hakari.Core.Accounts;
 using Hakari.Core.Configuration;
 using Hakari.Core.Currency;
@@ -24,6 +25,8 @@ public sealed partial class SettingsPage
     private const string GripGlyph = "";
     private const double AccountControlSpacing = 4;
     private const double NicknameBoxWidth = 110;
+    private const double PriceBoxWidth = 76;
+    private const int PriceMaximumLength = 8;
     private const int NicknameMaximumLength = 12;
     private const string CurrencyGroup = "Currency";
     private const string ProjectsFolderName = "projects";
@@ -178,6 +181,7 @@ public sealed partial class SettingsPage
         };
         var nickname = settings.NicknameOf(account.AccountId);
         controls.Children.Add(NicknameBox(account.AccountId, nickname));
+        controls.Children.Add(PriceBox(account, settings));
         controls.Children.Add(ShowToggle(account.AccountId, settings));
 
         var row = new SettingRow
@@ -216,6 +220,37 @@ public sealed partial class SettingsPage
         ToolTipService.SetToolTip(toggle, Texts.Get("settings.accounts.show"));
         toggle.Click += (_, _) => SetAccountShown(accountId, toggle.IsChecked == true);
         return toggle;
+    }
+
+    /// <summary>
+    /// What the account pays per month in dollars. Empty means the plan's list price, which
+    /// the field shows faintly, so only a different price needs typing.
+    /// </summary>
+    private TextBox PriceBox(AccountInfo account, HakariSettings settings)
+    {
+        var listPrice = PlanPrices.MonthlyDollars(account.Plan);
+        var own = settings.PlanPriceOverrides.TryGetValue(account.AccountId, out var price)
+            ? price
+            : (decimal?)null;
+        var box = new TextBox
+        {
+            Text = own?.ToString("0.##", CultureInfo.InvariantCulture) ?? string.Empty,
+            PlaceholderText = listPrice?.ToString("0.##", CultureInfo.InvariantCulture) ?? "—",
+            Width = PriceBoxWidth,
+            MaxLength = PriceMaximumLength,
+            Style = (Style)Application.Current.Resources["HakariTextBox"],
+        };
+        ToolTipService.SetToolTip(box, Texts.Get("settings.planPrice"));
+        box.LostFocus += (_, _) => SavePlanPrice(account.AccountId, box.Text);
+        box.KeyDown += (_, args) =>
+        {
+            if (args.Key == Windows.System.VirtualKey.Enter)
+            {
+                args.Handled = true;
+                SavePlanPrice(account.AccountId, box.Text);
+            }
+        };
+        return box;
     }
 
     private TextBox NicknameBox(string accountId, string? nickname)

@@ -133,7 +133,7 @@ internal sealed record PlanValueData(
         List<PlanMonth> months,
         DateTimeOffset now)
     {
-        var dollars = PlanPrices.MonthlyDollars(account.Plan);
+        var dollars = settings.PlanPriceOf(account.AccountId, account.Plan);
         var price = dollars is { } list && converter is not null
             ? converter.Convert(list, DateOnly.FromDateTime(now.UtcDateTime))
             : dollars;

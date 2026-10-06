@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using Hakari.Core.Accounts;
 using Hakari.Core.Currency;
 using Hakari.Core.Displays;
 using Hakari.Core.Localization;
@@ -45,6 +46,13 @@ public sealed record HakariSettings
 
     /// <summary>Accounts kept out of the taskbar and flyout, such as an old sign-in.</summary>
     public IReadOnlyList<string> HiddenAccounts { get; init; } = [];
+
+    /// <summary>
+    /// What an account really pays per month in US dollars, keyed by account id, for when the
+    /// plan's list price is not it, such as a discounted or annual price.
+    /// </summary>
+    public IReadOnlyDictionary<string, decimal> PlanPriceOverrides { get; init; } =
+        new Dictionary<string, decimal>();
 
     /// <summary>Names the user gave accounts, keyed by account id.</summary>
     public IReadOnlyDictionary<string, string> AccountNicknames { get; init; } =
@@ -114,6 +122,12 @@ public sealed record HakariSettings
     /// <summary>The account's own layout, else the shared one.</summary>
     public WidgetLayout LayoutOf(string accountId) =>
         AccountLayouts.TryGetValue(accountId, out var layout) ? layout : Widget;
+
+    /// <summary>What the account pays per month in dollars: its own price, else the list.</summary>
+    public decimal? PlanPriceOf(string accountId, SubscriptionPlan plan) =>
+        PlanPriceOverrides.TryGetValue(accountId, out var price) && price > 0
+            ? price
+            : PlanPrices.MonthlyDollars(plan);
 
     public string? NicknameOf(string accountId) =>
         AccountNicknames.TryGetValue(accountId, out var name) && name.Length > 0 ? name : null;
