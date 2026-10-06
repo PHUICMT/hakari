@@ -149,6 +149,7 @@
   "dashboard.mix.title": "Model mix over time",
   "dashboard.mix.caption": "Share of cost",
   "dashboard.mix.other": "other",
+  "dashboard.mix.otherOf": "other ({0})",
   "dashboard.trend.title": "Limits over time",
   "dashboard.trend.empty": "Nothing recorded yet. Readings are kept for 90 days while Hakari runs.",
   "dashboard.accounts.hidden": "Hidden",

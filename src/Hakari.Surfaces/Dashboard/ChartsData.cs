@@ -22,6 +22,7 @@ internal sealed record ChartsData(
     public const int Hours = 24;
 
     private const int TopModels = 3;
+    private const int OtherNamesListed = 3;
     private const char KeySeparator = ' ';
     private const string OtherBrush = "HakariChart4Brush";
 
@@ -112,7 +113,12 @@ internal sealed record ChartsData(
         TimelinePlan plan)
     {
         var series = new List<MixSeries>();
-        var models = query.Summarize(usage, GroupBy.Model).Take(TopModels).ToList();
+        var everyModel = query.Summarize(usage, GroupBy.Model).ToList();
+        var models = everyModel.Take(TopModels).ToList();
+        var rest = everyModel.Skip(TopModels)
+            .Where(model => model.Cost > 0)
+            .Select(model => model.Key)
+            .ToList();
         for (var index = 0; index < models.Count; index++)
         {
             var costs = CostPerBucket(query, usage with { Model = models[index].Key }, plan);
@@ -126,10 +132,32 @@ internal sealed record ChartsData(
             .ToList();
         if (other.Any(cost => cost > 0))
         {
-            series.Add(new MixSeries(string.Empty, OtherBrush, other));
+            series.Add(new MixSeries(OtherName(rest), OtherBrush, other));
         }
 
         return series;
+    }
+
+    /// <summary>
+    /// Names what "other" holds: a single model by its own name, a few listed, many cut short
+    /// with how many more there are.
+    /// </summary>
+    private static string OtherName(IReadOnlyList<string> rest)
+    {
+        if (rest.Count == 1)
+        {
+            return rest[0];
+        }
+
+        var listed = string.Join(", ", rest.Take(OtherNamesListed));
+        if (rest.Count > OtherNamesListed)
+        {
+            listed += $" +{rest.Count - OtherNamesListed}";
+        }
+
+        return rest.Count == 0
+            ? Texts.Get("dashboard.mix.other")
+            : Texts.Format("dashboard.mix.otherOf", listed);
     }
 
     private static List<decimal> CostPerBucket(
