@@ -344,6 +344,7 @@
   "settings.trayIcon.automatic": "Automatic",
   "settings.trayIcon.logo": "Logo",
   "settings.trayIcon.limit": "Limit",  "settings.accounts": "Accounts",
+  "settings.trayIcon.cost": "Today's cost",
   "settings.accounts.order": "Order",
   "settings.accounts.order.description": "Which account comes first on the taskbar and in the flyout. Drag an account to move it; that switches to My order.",
   "settings.accounts.order.pressing": "Most pressing first",

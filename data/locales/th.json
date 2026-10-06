@@ -344,6 +344,7 @@
   "settings.trayIcon.automatic": "อัตโนมัติ",
   "settings.trayIcon.logo": "โลโก้",
   "settings.trayIcon.limit": "Limit",  "settings.accounts": "บัญชี",
+  "settings.trayIcon.cost": "ยอดวันนี้",
   "settings.accounts.order": "ลำดับ",
   "settings.accounts.order.description": "บัญชีไหนขึ้นก่อนบน taskbar และใน flyout ลากบัญชีเพื่อย้ายได้ และจะเปลี่ยนเป็นตามที่จัดเอง",
   "settings.accounts.order.pressing": "ใกล้เต็มก่อน",

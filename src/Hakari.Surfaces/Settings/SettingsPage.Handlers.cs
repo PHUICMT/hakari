@@ -95,6 +95,7 @@ public sealed partial class SettingsPage
     {
         var style = ReferenceEquals(sender, TrayLogo) ? TrayIconStyle.Logo
             : ReferenceEquals(sender, TrayLimit) ? TrayIconStyle.Limit
+            : ReferenceEquals(sender, TrayCost) ? TrayIconStyle.Cost
             : TrayIconStyle.Automatic;
         Save(current => current with { TrayIcon = style });
     }

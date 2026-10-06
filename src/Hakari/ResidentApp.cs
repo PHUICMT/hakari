@@ -35,6 +35,7 @@ internal sealed class ResidentApp : IDisposable
     private readonly CancellationTokenSource listening = new();
     private HakariSettings appliedSettings;
     private TrayBadge? lastBadge;
+    private (decimal Amount, string Currency) todayCost = (0, "USD");
     private static readonly TimeSpan StaleCheckInterval = TimeSpan.FromMinutes(1);
     private Timer? staleCheck;
     private WidgetContent? lastLive;
@@ -147,6 +148,11 @@ internal sealed class ResidentApp : IDisposable
         {
             feed.Updated += content => widgets.PostAction(() => ShowContent(content));
             widgets.Scrolled += (_, delta) => feed.ShiftTurn(delta > 0 ? -1 : 1);
+            feed.CostUpdated += (cost, currency) => widgets.PostAction(() =>
+            {
+                todayCost = (cost, currency);
+                ShowBadge(lastBadge);
+            });
             feed.BadgeUpdated += badge => widgets.PostAction(() =>
             {
                 Heard();
@@ -180,6 +186,21 @@ internal sealed class ResidentApp : IDisposable
         ForegroundPermission.GrantForNextWindow();
         var command = new SurfaceCommand(SurfaceKind.Onboarding, 0, 0);
         Task.Run(() => SurfacesLauncher.Show(command));
+    }
+
+    /// <summary>Few enough characters for a tray icon: "142", "3.3k", "12k", "1.2M".</summary>
+    private static string CompactAmount(decimal amount)
+    {
+        const decimal Thousand = 1_000;
+        const decimal Million = 1_000_000;
+        var culture = System.Globalization.CultureInfo.InvariantCulture;
+        return amount switch
+        {
+            < Thousand => decimal.Round(amount).ToString("0", culture),
+            < 10 * Thousand => (amount / Thousand).ToString("0.#", culture) + "k",
+            < Million => (amount / Thousand).ToString("0", culture) + "k",
+            _ => (amount / Million).ToString("0.#", culture) + "M",
+        };
     }
 
     /// <summary>A Windows notification, or the tray's balloon when that is refused.</summary>
@@ -281,6 +302,16 @@ internal sealed class ResidentApp : IDisposable
     private void ShowBadge(TrayBadge? badge)
     {
         lastBadge = badge;
+        if (appliedSettings.TrayIcon == TrayIconStyle.Cost)
+        {
+            trayIcon.SetBadge(new TrayBadge(
+                0,
+                Taskbar.Rendering.WidgetTone.Normal,
+                CompactAmount(todayCost.Amount),
+                todayCost.Currency));
+            return;
+        }
+
         var showLimit = appliedSettings.TrayIcon switch
         {
             TrayIconStyle.Limit => true,

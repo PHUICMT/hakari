@@ -56,6 +56,9 @@ internal sealed class UsageFeed : IDisposable
     /// <summary>The limit for the tray icon, raised with each new set of facts.</summary>
     public event Action<TrayBadge?>? BadgeUpdated;
 
+    /// <summary>Today's spending and its currency, with each new set of facts.</summary>
+    public event Action<decimal, string>? CostUpdated;
+
     /// <summary>A limit passed a level or reset.</summary>
     public event Action<LimitAlertMessage>? AlertRaised;
 
@@ -225,6 +228,7 @@ internal sealed class UsageFeed : IDisposable
                 layoutChanged = false;
                 facts = WidgetText.Facts(query, limits, presentation, fromDollars);
                 BadgeUpdated?.Invoke(WidgetText.Badge(facts));
+                CostUpdated?.Invoke(facts.CostToday, facts.Currency);
                 lastPublished = now;
             }
 

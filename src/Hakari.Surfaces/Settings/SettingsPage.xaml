@@ -124,6 +124,8 @@
                                         Content="{l:Text Key=settings.trayIcon.logo}" Checked="OnTrayIconChecked" />
                                     <controls:HakariSegment x:Name="TrayLimit" GroupName="TrayIcon"
                                         Content="{l:Text Key=settings.trayIcon.limit}" Checked="OnTrayIconChecked" />
+                                    <controls:HakariSegment x:Name="TrayCost" GroupName="TrayIcon"
+                                        Content="{l:Text Key=settings.trayIcon.cost}" Checked="OnTrayIconChecked" />
                                 </controls:HakariSegmented>
                             </controls:SettingRow>
                         </StackPanel>

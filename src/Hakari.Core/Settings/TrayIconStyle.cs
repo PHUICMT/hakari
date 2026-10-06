@@ -8,4 +8,7 @@ public enum TrayIconStyle
 
     /// <summary>The most pressing limit's percent on its tone color.</summary>
     Limit,
+
+    /// <summary>Today's spending, with the currency over it.</summary>
+    Cost,
 }

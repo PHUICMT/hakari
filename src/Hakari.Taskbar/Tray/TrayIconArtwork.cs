@@ -38,7 +38,11 @@ internal static class TrayIconArtwork
             using var path = RoundedSquare(BadgeRadius);
             using var brush = new SolidBrush(fill);
             graphics.FillPath(brush, path);
-            if (badge.IsFull)
+            if (badge.Amount is { } amount)
+            {
+                DrawAmount(graphics, amount, badge.Unit ?? string.Empty, ink);
+            }
+            else if (badge.IsFull)
             {
                 DrawStopBar(graphics, ink);
             }
@@ -67,6 +71,32 @@ internal static class TrayIconArtwork
         };
         var text = percent.ToString(System.Globalization.CultureInfo.InvariantCulture);
         graphics.DrawString(text, font, brush, new RectangleF(0, 0, Size, Size), format);
+    }
+
+    private const float UnitFontPixels = 9f;
+    private const float AmountFontPixels = 15f;
+    private const float UnitBand = 11f;
+
+    /// <summary>The currency code small along the top, the amount large below it.</summary>
+    private static void DrawAmount(Graphics graphics, string amount, string unit, Color ink)
+    {
+        using var unitFont = new Font(
+            BadgeFont, UnitFontPixels, FontStyle.Bold, GraphicsUnit.Pixel);
+        using var amountFont = new Font(
+            BadgeFont, AmountFontPixels, FontStyle.Bold, GraphicsUnit.Pixel);
+        using var brush = new SolidBrush(ink);
+        using var format = new StringFormat
+        {
+            Alignment = StringAlignment.Center,
+            LineAlignment = StringAlignment.Center,
+        };
+        graphics.DrawString(unit, unitFont, brush, new RectangleF(0, 1, Size, UnitBand), format);
+        graphics.DrawString(
+            amount,
+            amountFont,
+            brush,
+            new RectangleF(0, UnitBand - 1, Size, Size - UnitBand),
+            format);
     }
 
     private static void DrawStopBar(Graphics graphics, Color ink)
