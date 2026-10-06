@@ -47,9 +47,6 @@ public sealed partial class SettingsPage
         ModeSideBySide.IsChecked = settings.AccountsMode == MultiAccountMode.SideBySide;
         ModeTakeTurns.IsChecked = settings.AccountsMode == MultiAccountMode.TakeTurns;
 
-        LayoutTargetSelect.SetChoices(LayoutTargets(settings), layoutTarget);
-        LayoutTargetSelect.Selected -= OnLayoutTargetSelected;
-        LayoutTargetSelect.Selected += OnLayoutTargetSelected;
         TopSelect.Selected -= OnTopSelected;
         TopSelect.Selected += OnTopSelected;
         BottomSelect.Selected -= OnBottomSelected;
@@ -85,11 +82,12 @@ public sealed partial class SettingsPage
 
         var perAccount = settings.AccountsMode != MultiAccountMode.Together
             && previewFacts!.Accounts.Count > 1;
-        LayoutTargetRow.Visibility = perAccount ? Visibility.Visible : Visibility.Collapsed;
         if (!perAccount)
         {
             layoutTarget = SharedLayout;
         }
+
+        layoutEditor?.ShowTargets(perAccount ? LayoutTargets(settings) : [], layoutTarget);
 
         var layout = EditedLayout(settings);
         var wasFilling = filling;
@@ -105,12 +103,14 @@ public sealed partial class SettingsPage
         filling = wasFilling;
     }
 
-    private IEnumerable<(object Value, string Text)> LayoutTargets(HakariSettings settings) =>
-        previewFacts!.Accounts
-            .Select(account => ((object)account.AccountId, AccountLabels.Full(
-                account.Account,
-                settings.NicknameOf(account.AccountId))))
-            .Prepend((SharedLayout, Texts.Get("settings.layoutFor.all")));
+    private List<LayoutTarget> LayoutTargets(HakariSettings settings) =>
+    [
+        new LayoutTarget(SharedLayout, Texts.Get("settings.layoutFor.all"), false),
+        .. previewFacts!.Accounts.Select(account => new LayoutTarget(
+            account.AccountId,
+            AccountLabels.Short(account.Account, settings.NicknameOf(account.AccountId)),
+            settings.AccountLayouts.ContainsKey(account.AccountId))),
+    ];
 
     private WidgetLayout EditedLayout(HakariSettings settings) =>
         layoutTarget == SharedLayout ? settings.Widget : settings.LayoutOf(layoutTarget);
@@ -136,7 +136,6 @@ public sealed partial class SettingsPage
         filling = true;
         try
         {
-            LayoutTargetSelect.SetChoices(LayoutTargets(settings), layoutTarget);
             FillLayoutRows(settings);
         }
         finally
@@ -173,10 +172,25 @@ public sealed partial class SettingsPage
         ShowPreview(updated);
     }
 
-    private void OnLayoutTargetSelected(object? sender, object value)
+    private void OnLayoutTargetChosen(object? sender, string target)
     {
-        layoutTarget = (string)value;
-        FillLayoutRows(store.Load());
+        layoutTarget = target;
+        var settings = store.Load();
+        FillLayoutRows(settings);
+        ShowPreview(settings);
+    }
+
+    /// <summary>The account drops its own layout and follows everyone's again.</summary>
+    private void OnLayoutTargetReset(object? sender, string target)
+    {
+        var updated = store.Update(current => current with
+        {
+            AccountLayouts = current.AccountLayouts
+                .Where(entry => entry.Key != target)
+                .ToDictionary(entry => entry.Key, entry => entry.Value),
+        });
+        FillLayoutRows(updated);
+        ShowPreview(updated);
     }
 
     private void OnRingChecked(object sender, RoutedEventArgs args)
@@ -217,6 +231,7 @@ public sealed partial class SettingsPage
             };
             return current with { AccountLayouts = layouts };
         });
+        layoutEditor?.ShowTargets(LayoutTargetsIfShown(updated), layoutTarget);
         ShowPreview(updated);
     }
 
@@ -251,7 +266,8 @@ public sealed partial class SettingsPage
 
         var layout = EditedLayout(settings);
         ShowLegacyRows(layout);
-        layoutEditor?.Refresh(layout, panels, facts, settings.AccountsMode);
+        var (editorPanels, focused) = EditorPanels(settings, facts, panels, now);
+        layoutEditor?.Refresh(layout, editorPanels, facts, settings.AccountsMode, focused);
         UpdateTurnTimer(settings, facts);
     }
 
@@ -291,6 +307,8 @@ public sealed partial class SettingsPage
             {
                 SavedLayouts = change(current.SavedLayouts),
             })));
+        layoutEditor.TargetBar.Chosen += OnLayoutTargetChosen;
+        layoutEditor.TargetBar.ResetRequested += OnLayoutTargetReset;
         LayoutEditorCard.Child = layoutEditor;
     }
 
@@ -315,5 +333,37 @@ public sealed partial class SettingsPage
 
         turnTimer.Interval = settings.TurnLength;
         turnTimer.Start();
+    }
+
+    private List<LayoutTarget> LayoutTargetsIfShown(HakariSettings settings) =>
+        settings.AccountsMode != MultiAccountMode.Together && previewFacts!.Accounts.Count > 1
+            ? LayoutTargets(settings)
+            : [];
+
+    /// <summary>
+    /// The editor's preview while one account is edited: side by side its block stays lit and
+    /// the rest dim; taking turns it holds on that account instead of turning.
+    /// </summary>
+    private (IReadOnlyList<ComposedWidget> Panels, int Focused) EditorPanels(
+        HakariSettings settings,
+        WidgetFacts facts,
+        IReadOnlyList<ComposedWidget> panels,
+        DateTimeOffset now)
+    {
+        var index = facts.Accounts.ToList()
+            .FindIndex(account => account.AccountId == layoutTarget);
+        if (layoutTarget == SharedLayout || index < 0)
+        {
+            return (panels, -1);
+        }
+
+        if (settings.AccountsMode == MultiAccountMode.TakeTurns)
+        {
+            var account = facts.Accounts[index];
+            return ([WidgetPanels.ForAccount(settings.LayoutOf(layoutTarget), facts, account, now)],
+                -1);
+        }
+
+        return (panels, index < panels.Count ? index : -1);
     }
 }

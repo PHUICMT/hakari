@@ -77,6 +77,9 @@ internal sealed partial class LayoutEditor : StackPanel
         formatTimer.Tick += (_, _) => ApplyFormat();
 
         Children.Add(Header());
+        TargetBar.Margin = new Thickness(Gutter, Gap, Gutter, 0);
+        TargetBar.Visibility = Visibility.Collapsed;
+        Children.Add(TargetBar);
         Children.Add(PreviewStrip());
         Children.Add(Templates());
         Children.Add(MyLayouts());
@@ -87,18 +90,32 @@ internal sealed partial class LayoutEditor : StackPanel
         Children.Add(SimpleRow());
     }
 
+    /// <summary>Whose layout is being edited; hidden while the accounts share one block.</summary>
+    public LayoutTargetBar TargetBar { get; } = new();
+
+    public void ShowTargets(IReadOnlyList<LayoutTarget> targets, string chosen)
+    {
+        TargetBar.Visibility = targets.Count > 1 ? Visibility.Visible : Visibility.Collapsed;
+        if (targets.Count > 1)
+        {
+            TargetBar.Show(targets, chosen);
+        }
+    }
+
     /// <summary>Shows the layout's state in every control, without changing it.</summary>
+    /// <param name="focusedPanel">The block of the account being edited, the rest dimmed.</param>
     public void Refresh(
         WidgetLayout layout,
         IReadOnlyList<ComposedWidget> panels,
         WidgetFacts facts,
-        MultiAccountMode mode)
+        MultiAccountMode mode,
+        int focusedPanel = -1)
     {
         refreshing = true;
         previewFacts = facts;
         try
         {
-            ShowPreview(panels);
+            ShowPreview(panels, focusedPanel);
             var now = DateTimeOffset.Now;
             var isSavedLayout = saved().Any(entry => entry.Layout == layout);
             foreach (var card in templateCards)
@@ -183,7 +200,7 @@ internal sealed partial class LayoutEditor : StackPanel
         VerticalScrollBarVisibility = ScrollBarVisibility.Disabled,
     };
 
-    private void ShowPreview(IReadOnlyList<ComposedWidget> panels)
+    private void ShowPreview(IReadOnlyList<ComposedWidget> panels, int focusedPanel)
     {
         while (previewRow.Children.Count > panels.Count)
         {
@@ -197,9 +214,25 @@ internal sealed partial class LayoutEditor : StackPanel
                 previewRow.Children.Add(FadingIn(new WidgetPreview()));
             }
 
-            ((WidgetPreview)previewRow.Children[index]).Show(panels[index]);
+            var block = (WidgetPreview)previewRow.Children[index];
+            block.Show(panels[index]);
+            var opacity = focusedPanel < 0 || focusedPanel == index ? 1 : UnfocusedOpacity;
+            if (SurfaceMotion.Current() == AnimationSetting.Off)
+            {
+                block.Opacity = opacity;
+            }
+            else if (block.IsLoaded && block.Opacity != opacity)
+            {
+                SurfaceMotion.Settle(block, "Opacity", opacity);
+            }
+            else if (!block.IsLoaded)
+            {
+                block.Tag = opacity;
+            }
         }
     }
+
+    private const double UnfocusedOpacity = 0.4;
 
     /// <summary>
     /// The user's own layouts, each a card that puts it back, and a field to save the one
@@ -331,7 +364,8 @@ internal sealed partial class LayoutEditor : StackPanel
         }
 
         preview.Opacity = 0;
-        preview.Loaded += (_, _) => SurfaceMotion.Settle(preview, "Opacity", 1);
+        preview.Loaded += (_, _) =>
+            SurfaceMotion.Settle(preview, "Opacity", preview.Tag is double target ? target : 1);
         return preview;
     }
 

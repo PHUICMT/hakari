@@ -59,11 +59,6 @@
                                         Content="30 s" Checked="OnTurnSpeedChecked" />
                                 </controls:HakariSegmented>
                             </controls:SettingRow>
-                            <controls:SettingRow x:Name="LayoutTargetRow" Glyph="&#xE77B;"
-                                Title="{l:Text Key=settings.layoutFor}"
-                                Description="{l:Text Key=settings.layoutFor.description}">
-                                <controls:HakariSelect x:Name="LayoutTargetSelect" />
-                            </controls:SettingRow>
                             <controls:SettingRow x:Name="RingRow" Glyph="&#xE9D9;" Title="{l:Text Key=settings.ring}"
                                 Description="{l:Text Key=settings.ring.description}">
                                 <controls:HakariSegmented>
