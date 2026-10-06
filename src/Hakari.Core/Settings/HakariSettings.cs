@@ -77,6 +77,9 @@ public sealed record HakariSettings
     /// <summary>Tell when a limit passes its warning or critical level or resets.</summary>
     public bool NotifyOnLimits { get; init; } = true;
 
+    /// <summary>The first-run steps were finished or closed; they never show again.</summary>
+    public bool OnboardingDone { get; init; }
+
     /// <summary>Limit alerts stay quiet until then, as "mute today" asks.</summary>
     public DateTimeOffset? AlertsMutedUntil { get; init; }
 

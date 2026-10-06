@@ -88,6 +88,9 @@ public partial class App : Application
             case SurfaceKind.Warm:
                 idleExitTimer?.Start();
                 break;
+            case SurfaceKind.Onboarding:
+                ShowOnboarding();
+                break;
             default:
                 tooltip?.HidePopup();
                 ShowFlyout(command);
@@ -116,6 +119,23 @@ public partial class App : Application
     }
 
     private void ShowSettings() => ShowDashboard(DashboardPage.Settings);
+
+    private Onboarding.OnboardingWindow? onboarding;
+
+    private void ShowOnboarding()
+    {
+        if (onboarding is null)
+        {
+            onboarding = new Onboarding.OnboardingWindow();
+            onboarding.Closed += (_, _) =>
+            {
+                onboarding = null;
+                idleExitTimer?.Start();
+            };
+        }
+
+        onboarding.Activate();
+    }
 
     /// <summary>A dashboard command may name its page in the first number; 0 is Overview.</summary>
     private static DashboardPage PageOf(SurfaceCommand command) =>

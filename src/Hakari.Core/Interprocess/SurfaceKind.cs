@@ -16,4 +16,7 @@ public enum SurfaceKind
 
     /// <summary>Start the window process without showing anything, so the next is quick.</summary>
     Warm,
+
+    /// <summary>The first-run steps.</summary>
+    Onboarding,
 }

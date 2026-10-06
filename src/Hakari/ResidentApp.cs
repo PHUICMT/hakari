@@ -157,11 +157,28 @@ internal sealed class ResidentApp : IDisposable
                 StaleCheckInterval,
                 StaleCheckInterval);
             ToastNotifier.Register();
+            ShowOnboardingOnce();
             feed.AlertRaised += message => widgets.PostAction(() => ShowAlert(message));
             feed.Start();
         }
 
         MessageLoop.Run();
+    }
+
+    /// <summary>
+    /// The first-run steps, until they have been finished or closed once. Indexing starts
+    /// at the same time, so the numbers are ready by the last step.
+    /// </summary>
+    private void ShowOnboardingOnce()
+    {
+        if (appliedSettings.OnboardingDone)
+        {
+            return;
+        }
+
+        ForegroundPermission.GrantForNextWindow();
+        var command = new SurfaceCommand(SurfaceKind.Onboarding, 0, 0);
+        Task.Run(() => SurfacesLauncher.Show(command));
     }
 
     /// <summary>A Windows notification, or the tray's balloon when that is refused.</summary>
