@@ -37,7 +37,7 @@ public sealed class WidgetTemplatesTests
     }
 
     [Fact]
-    public void Text_slots_past_a_templates_lines_are_not_shown()
+    public void Text_slots_past_a_templates_lines_join_the_last_line()
     {
         var layout = new WidgetLayout
         {
@@ -50,7 +50,7 @@ public sealed class WidgetTemplatesTests
             ],
         };
 
-        Assert.Equal([true, true, false], WidgetTemplates.Shown(layout));
+        Assert.Equal([true, true, true], WidgetTemplates.Shown(layout));
     }
 
     [Fact]

@@ -9,7 +9,7 @@ public sealed class WidgetSlotsTests
     private static readonly DateTimeOffset Now = new(2026, 10, 5, 12, 0, 0, TimeSpan.Zero);
 
     [Fact]
-    public void A_single_line_shows_only_the_first_text_slot()
+    public void A_single_line_joins_its_text_slots_on_one_line()
     {
         var layout = Layout(
             WidgetTemplate.SingleLine,
@@ -18,7 +18,7 @@ public sealed class WidgetSlotsTests
 
         var widget = WidgetComposer.Compose(layout, Facts(Account(67)), Now);
 
-        Assert.Equal("$12.50 today", widget.Top.Text);
+        Assert.Equal("$12.50 today · $3.00/h", widget.Top.Text);
         Assert.Equal(string.Empty, widget.Bottom.Text);
     }
 
@@ -53,6 +53,21 @@ public sealed class WidgetSlotsTests
         Assert.Equal(0.4, widget.Ring!.Fraction, precision: 2);
         Assert.Equal([1.0, 2.0, 3.0], widget.Spark);
         Assert.Equal("$12.50 today", widget.Top.Text);
+    }
+
+    [Fact]
+    public void More_slots_than_lines_share_the_last_line()
+    {
+        var layout = Layout(
+            WidgetTemplate.TwoLines,
+            new WidgetSlot(WidgetItem.CostToday),
+            new WidgetSlot(WidgetItem.BurnRate),
+            new WidgetSlot(WidgetItem.CostThisMonth));
+
+        var widget = WidgetComposer.Compose(layout, Facts(Account(40)), Now);
+
+        Assert.Equal("$12.50 today", widget.Top.Text);
+        Assert.Equal("$3.00/h · month $400.00", widget.Bottom.Text);
     }
 
     [Fact]

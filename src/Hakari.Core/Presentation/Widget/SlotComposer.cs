@@ -72,6 +72,11 @@ internal static class SlotComposer
         return [.. slots.Where(slot => slot.Style == WidgetSlotStyle.Ring), shown];
     }
 
+    /// <summary>
+    /// The first text slot is the top line. The rest share the last line, joined by a dot,
+    /// so a slot is never dropped for want of a line; the line takes the worst tone among
+    /// them. No text slot means no text: only the ring or line the other slots draw.
+    /// </summary>
     private static ComposedWidget Lines(
         List<WidgetItem> texts,
         int count,
@@ -79,14 +84,30 @@ internal static class SlotComposer
         DateTimeOffset now,
         ToneRules rules)
     {
-        // No text slot means no text: only the ring or line the other slots draw.
-        var first = texts.Count > 0 ? texts[0] : WidgetItem.Nothing;
-        var second = count > 1 && texts.Count > 1 ? texts[1] : WidgetItem.Nothing;
-        return new ComposedWidget(
-            WidgetComposer.Line(first, isTop: true, facts, now, rules),
-            WidgetComposer.Line(second, isTop: false, facts, now, rules),
-            null);
+        var lines = texts
+            .Select((item, index) => WidgetComposer.Line(item, index == 0, facts, now, rules))
+            .Where(line => line.Text.Length > 0)
+            .ToList();
+        if (lines.Count == 0)
+        {
+            return new ComposedWidget(Empty, Empty, null);
+        }
+
+        return count <= 1
+            ? new ComposedWidget(Joined(lines), Empty, null)
+            : new ComposedWidget(lines[0], Joined(lines.Skip(1).ToList()), null);
     }
+
+    private const string Joiner = " · ";
+
+    private static ComposedLine Empty => new(string.Empty);
+
+    private static ComposedLine Joined(IReadOnlyList<ComposedLine> lines) =>
+        lines.Count == 0
+            ? Empty
+            : new ComposedLine(
+                string.Join(Joiner, lines.Select(line => line.Text)),
+                lines.Max(line => line.Tone));
 
     /// <summary>A ring and one number, with no label, for when space runs out.</summary>
     private static ComposedWidget Minimal(

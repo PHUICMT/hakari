@@ -43,12 +43,14 @@ public static class WidgetTemplates
         _ => [new(WidgetItem.CostToday), new(WidgetItem.MostPressingLimit)],
     };
 
-    /// <summary>How many text slots a template shows at once; the rest wait their turn.</summary>
+    /// <summary>
+    /// How many text slots a template shows at once. Line templates join any more onto their
+    /// last line, so only the one-value templates (minimal, accounts) have a limit.
+    /// </summary>
     public static int TextLines(WidgetTemplate template) => template switch
     {
-        WidgetTemplate.SingleLine or WidgetTemplate.Minimal or WidgetTemplate.Accounts => 1,
-        WidgetTemplate.Columns => WidgetLayout.MaximumSlots,
-        _ => 2,
+        WidgetTemplate.Minimal or WidgetTemplate.Accounts => 1,
+        _ => WidgetLayout.MaximumSlots,
     };
 
     /// <summary>
@@ -60,7 +62,8 @@ public static class WidgetTemplates
     public static IReadOnlyList<bool> Shown(WidgetLayout layout)
     {
         var template = layout.Template;
-        var cycles = layout.CycleSeconds > 0 && TextLines(template) == 1;
+        var cycles = layout.CycleSeconds > 0 && TextLines(template) == 1
+            || layout.CycleSeconds > 0 && template == WidgetTemplate.SingleLine;
         var shown = new List<bool>();
         var (texts, rings, sparks) = (0, 0, 0);
         foreach (var slot in layout.Slots.Take(WidgetLayout.MaximumSlots))
