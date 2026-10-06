@@ -110,8 +110,8 @@ internal sealed partial class OverviewPage : LoadedPage<OverviewData>
                 PercentText.Format(tokens.CacheHitRate * PercentScale, 0),
                 Texts.Format(
                     "dashboard.tile.cacheDetail",
-                    TokenText.Format(tokens.CacheRead),
-                    TokenText.Format(tokens.CacheWrite))),
+                    MoneyText.Format(data.CacheSavings, data.Currency),
+                    TokenText.Format(tokens.CacheRead))),
             DashboardTile.Create(
                 Texts.Get("dashboard.tile.output"),
                 TokenText.Format(tokens.Output),

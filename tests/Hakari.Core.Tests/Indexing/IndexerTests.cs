@@ -105,6 +105,21 @@ public sealed class IndexerTests : IDisposable
     }
 
     [Fact]
+    public void Counts_what_the_cache_saved_against_sending_the_tokens_as_input()
+    {
+        AppendLines(SampleLogLines.Assistant());
+        Index();
+        var pricing = PricingTable.LoadBundled();
+        var price = pricing.Find("claude-opus-5", new DateOnly(2026, 10, 5))!;
+        var expected = 32048m * (price.Input - price.CacheRead) / 1_000_000m;
+
+        var saved = new UsageQuery(store, pricing).CacheSavings(UsageFilter.Everything);
+
+        Assert.Equal(expected, saved);
+        Assert.True(saved > 0);
+    }
+
+    [Fact]
     public void Groups_responses_by_local_weekday_and_hour()
     {
         AppendLines(SampleLogLines.Assistant());

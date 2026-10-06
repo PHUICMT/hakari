@@ -13,6 +13,7 @@ public sealed class UsageQuery(
     CurrencyConverter? converter = null)
 {
     private const long MillisecondsPerDay = 86_400_000;
+    private const decimal TokensPerPriceUnit = 1_000_000m;
 
     public string Currency => converter?.Currency ?? CurrencyCodes.Dollar;
 
@@ -61,6 +62,34 @@ public sealed class UsageQuery(
 
     public UsageSummary Total(UsageFilter filter) =>
         Summarize(filter, GroupBy.None).FirstOrDefault() ?? UsageSummary.Empty;
+
+    /// <summary>
+    /// What reading from the cache saved against sending the same tokens as ordinary input,
+    /// each model at the price of its day, in the shown currency.
+    /// </summary>
+    public decimal CacheSavings(UsageFilter filter)
+    {
+        using var command = store.Connection.CreateCommand();
+        var whereClause = UsageFilterSql.BuildWhereClause(filter, command);
+        command.CommandText = BuildSummarySql(GroupByExpressions.For(GroupBy.None), whereClause);
+
+        var saved = 0m;
+        using var reader = command.ExecuteReader();
+        while (reader.Read())
+        {
+            var utcDay = ToUtcDay(reader.GetInt64(4));
+            if (pricing.Find(reader.GetString(1), utcDay) is not { } price)
+            {
+                continue;
+            }
+
+            var perToken = price.Input - price.CacheRead;
+            var dollars = reader.GetInt64(10) * perToken / TokensPerPriceUnit;
+            saved += converter is null ? dollars : converter.Convert(dollars, utcDay);
+        }
+
+        return saved;
+    }
 
     public IReadOnlyList<string> FindUnpricedModels()
     {

@@ -22,6 +22,7 @@ internal static class FlyoutDataLoader
     private const string DetailSeparator = " · ";
     private const int FullPercent = 100;
     private const int SparkHours = 12;
+    private const double ExtraUsageWarnAt = 0.8;
     private static readonly TimeSpan RecentSourceWindow = TimeSpan.FromMinutes(10);
 
     public static FlyoutSnapshot Load()
@@ -212,6 +213,34 @@ internal static class FlyoutDataLoader
     }
 
     private static List<LimitRow> LimitRows(
+        LimitSnapshot limits,
+        DateTimeOffset now,
+        Func<UsageLimit, string> valueOf,
+        Func<UsageLimit, double> percentOf) =>
+    [
+        .. PlanLimitRows(limits, now, valueOf, percentOf),
+        .. ExtraUsageRows(limits.ExtraUsage),
+    ];
+
+    /// <summary>Paid credits that cover the account past its limits, when it has a cap.</summary>
+    private static IEnumerable<LimitRow> ExtraUsageRows(ExtraUsage? extra)
+    {
+        if (extra is not { IsEnabled: true, MonthlyLimit: > 0 })
+        {
+            yield break;
+        }
+
+        var fraction = Math.Clamp(extra.Utilization, 0, 1);
+        yield return new LimitRow(
+            Name: Texts.Get("flyout.extraUsage"),
+            Value: $"{MoneyText.Format(extra.Used, extra.Currency)} / "
+                + MoneyText.Format(extra.MonthlyLimit, extra.Currency),
+            ResetText: Texts.Get("flyout.extraUsage.note"),
+            Fraction: fraction,
+            Tone: fraction >= ExtraUsageWarnAt ? Tone.Warning : Tone.Normal);
+    }
+
+    private static List<LimitRow> PlanLimitRows(
         LimitSnapshot limits,
         DateTimeOffset now,
         Func<UsageLimit, string> valueOf,

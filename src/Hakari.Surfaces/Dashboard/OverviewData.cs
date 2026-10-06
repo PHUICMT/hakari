@@ -13,7 +13,8 @@ internal sealed record OverviewData(
     int DayCount,
     IReadOnlyList<CostShare> Shares,
     IReadOnlyList<(string Label, decimal Cost)> Timeline,
-    IReadOnlyList<UsageSummary> ByModel)
+    IReadOnlyList<UsageSummary> ByModel,
+    decimal CacheSavings = 0)
 {
     private const int TopModels = 6;
 
@@ -40,7 +41,8 @@ internal sealed record OverviewData(
             days,
             CostShares.Of(byModel, PricingTableOrEmpty(), DateOnly.FromDateTime(now.UtcDateTime)),
             ReadTimeline(query, filter, now),
-            [.. byModel.Take(TopModels)]);
+            [.. byModel.Take(TopModels)],
+            query.CacheSavings(usage));
     }
 
     /// <summary>Every bar is present, even with nothing spent, so gaps read as gaps.</summary>
