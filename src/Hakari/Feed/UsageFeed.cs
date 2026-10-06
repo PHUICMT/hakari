@@ -36,6 +36,8 @@ internal sealed class UsageFeed : IDisposable
     private volatile bool refreshRequested;
     private volatile HakariSettings presentation = new();
     private ChangeTracker? changeTracker;
+    private static readonly TimeSpan ProgressInterval = TimeSpan.FromMilliseconds(250);
+    private long lastProgressShown;
     private LimitAlertEngine? alertEngine;
     private (int Warn, int Critical) alertLevels;
 
@@ -121,6 +123,7 @@ internal sealed class UsageFeed : IDisposable
         var query = new UsageQuery(store, pricing, CreateConverter(store, pricing, settings));
         SyncSessionTitles(store, settings.ShowSessionTitles);
         var indexer = new Indexer(store, settings.ShowSessionTitles);
+        indexer.Progressed += ShowIndexProgress;
         using var tracker = new ChangeTracker(
             sources,
             ChangeTrackerOptions.Default,
@@ -321,6 +324,23 @@ internal sealed class UsageFeed : IDisposable
             .CreateConverterAsync(settings.Currency, settings.RateMode, firstUsageDay)
             .GetAwaiter()
             .GetResult();
+    }
+
+    /// <summary>
+    /// A first run or a rebuild reads gigabytes: the widget says how far it has got, a few
+    /// times a second at most, instead of showing zeros.
+    /// </summary>
+    private void ShowIndexProgress(IndexProgress progress)
+    {
+        var now = Environment.TickCount64;
+        if (now - lastProgressShown < ProgressInterval.TotalMilliseconds
+            && progress.Fraction < 1)
+        {
+            return;
+        }
+
+        lastProgressShown = now;
+        Updated?.Invoke(WidgetText.Indexing(progress));
     }
 
     private bool IndexPendingWork(Indexer indexer, ChangeTracker tracker)

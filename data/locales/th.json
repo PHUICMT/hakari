@@ -1,5 +1,7 @@
 {
   "widget.loading": "กำลังอ่าน log…",
+  "widget.indexing": "กำลังอ่าน log {0}",
+  "widget.indexingBytes": "{0} จาก {1}",
   "widget.paused": "หยุดชั่วคราว",
   "widget.pausedPill": "หยุดชั่วคราว",
   "widget.pausedUntil": "จนถึง {0}",

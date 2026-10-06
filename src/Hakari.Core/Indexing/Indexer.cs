@@ -17,15 +17,21 @@ public sealed class Indexer
     private readonly IndexStore store;
     private readonly TrackedFileRepository trackedFiles;
     private readonly bool collectSessionTitles;
+    private readonly long progressFromBytes;
 
     /// <param name="collectSessionTitles">
     /// Also keep each session's title. Off unless the user asked, since titles come from the
     /// conversation and nothing else Hakari reads does.
     /// </param>
-    public Indexer(IndexStore store, bool collectSessionTitles = false)
+    /// <param name="progressFromBytes">Scans of this many new bytes or more show progress.</param>
+    public Indexer(
+        IndexStore store,
+        bool collectSessionTitles = false,
+        long progressFromBytes = DefaultProgressFromBytes)
     {
         this.store = store;
         this.collectSessionTitles = collectSessionTitles;
+        this.progressFromBytes = progressFromBytes;
         trackedFiles = new TrackedFileRepository(store.Connection);
     }
 
@@ -43,10 +49,7 @@ public sealed class Indexer
         var stopwatch = Stopwatch.StartNew();
         var totals = new RunningTotals();
 
-        foreach (var source in work.FullScans)
-        {
-            IndexSource(source, totals, cancellationToken);
-        }
+        IndexPlanned(Plan(work.FullScans), totals, cancellationToken);
 
         foreach (var (source, files) in work.ChangedFiles)
         {
@@ -66,27 +69,70 @@ public sealed class Indexer
             stopwatch.Elapsed);
     }
 
-    private void IndexSource(
-        UsageSource source,
-        RunningTotals totals,
-        CancellationToken cancellationToken)
-    {
-        if (!Directory.Exists(source.ProjectsDirectory))
-        {
-            return;
-        }
+    /// <summary>Raised while a large scan runs, so the widget can say how far it is.</summary>
+    public event Action<IndexProgress>? Progressed;
 
+    /// <summary>A scan this large shows progress; smaller ones are over at once.</summary>
+    public const long DefaultProgressFromBytes = 64L * 1024 * 1024;
+
+    /// <summary>One log file a scan has to read, and how many bytes of it are new.</summary>
+    private sealed record PlannedFile(string Path, TrackedFile? Previous, long NewBytes);
+
+    private List<(UsageSource Source, List<PlannedFile> Files)> Plan(
+        IEnumerable<UsageSource> sources) =>
+    [
+        .. sources
+            .Where(source => Directory.Exists(source.ProjectsDirectory))
+            .Select(source => (source, PlanSource(source))),
+    ];
+
+    private List<PlannedFile> PlanSource(UsageSource source)
+    {
         var knownFiles = trackedFiles.LoadForSource(source.Id);
+        var planned = new List<PlannedFile>();
         var logFiles = Directory.EnumerateFiles(
             source.ProjectsDirectory,
             ClaudeConfigNames.LogFileSearchPattern,
             LogEnumerationOptions);
-
         foreach (var logFile in logFiles)
         {
-            cancellationToken.ThrowIfCancellationRequested();
-            totals.FilesScanned++;
-            IndexFileIfChanged(source.Id, logFile, knownFiles.GetValueOrDefault(logFile), totals);
+            var info = new FileInfo(logFile);
+            var previous = knownFiles.GetValueOrDefault(logFile);
+            if (!info.Exists
+                || previous is not null
+                    && previous.IsUnchanged(info.Length, info.LastWriteTimeUtc.Ticks))
+            {
+                continue;
+            }
+
+            var from = previous?.ResumeOffset(info.Length) ?? 0;
+            planned.Add(new PlannedFile(logFile, previous, info.Length - from));
+        }
+
+        return planned;
+    }
+
+    private void IndexPlanned(
+        List<(UsageSource Source, List<PlannedFile> Files)> plan,
+        RunningTotals totals,
+        CancellationToken cancellationToken)
+    {
+        var total = plan.Sum(entry => entry.Files.Sum(file => file.NewBytes));
+        var report = total >= progressFromBytes;
+        var done = 0L;
+        foreach (var (source, files) in plan)
+        {
+            foreach (var file in files)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                totals.FilesScanned++;
+                IndexFileIfChanged(source.Id, file.Path, file.Previous, totals);
+                done += file.NewBytes;
+                if (report)
+                {
+                    Progressed?.Invoke(new IndexProgress(done, total));
+                }
+            }
         }
     }
 

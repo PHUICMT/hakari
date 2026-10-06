@@ -1,5 +1,7 @@
+using Hakari.Core.Indexing;
 using Hakari.Core.Limits;
 using Hakari.Core.Localization;
+using Hakari.Core.Presentation;
 using Hakari.Core.Presentation.Widget;
 using Hakari.Core.Querying;
 using Hakari.Core.Settings;
@@ -15,6 +17,18 @@ internal static class WidgetText
 
     public static WidgetContent Loading =>
         new(ProductName, Texts.Get("widget.loading"), WidgetTone.Muted);
+
+    /// <summary>Reading the logs: how far along, and how many bytes of how many.</summary>
+    public static WidgetContent Indexing(IndexProgress progress) => new(
+        Texts.Format(
+            "widget.indexing",
+            PercentText.Format(progress.Fraction * 100, 0)),
+        Texts.Format(
+            "widget.indexingBytes",
+            ByteText.Format(progress.BytesDone),
+            ByteText.Format(progress.BytesTotal)),
+        WidgetTone.Muted,
+        Ring: new WidgetRing(progress.Fraction));
 
     /// <summary>A PAUSED pill, and until when, or how to resume.</summary>
     public static WidgetContent Paused(HakariSettings settings) => new(

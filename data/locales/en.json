@@ -1,5 +1,7 @@
 {
   "widget.loading": "Reading logs…",
+  "widget.indexing": "Reading logs {0}",
+  "widget.indexingBytes": "{0} of {1}",
   "widget.paused": "Paused",
   "widget.pausedPill": "PAUSED",
   "widget.pausedUntil": "until {0}",

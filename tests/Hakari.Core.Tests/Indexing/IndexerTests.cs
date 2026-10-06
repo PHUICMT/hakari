@@ -136,6 +136,34 @@ public sealed class IndexerTests : IDisposable
     }
 
     [Fact]
+    public void Reports_progress_for_a_large_scan_ending_at_the_whole()
+    {
+        AppendLines(SampleLogLines.Assistant(messageId: "a"), SampleLogLines.Assistant("b", "r2"));
+        var reports = new List<IndexProgress>();
+        var indexer = new Indexer(store, progressFromBytes: 1);
+        indexer.Progressed += reports.Add;
+
+        indexer.Index([source]);
+
+        var last = Assert.Single(reports);
+        Assert.Equal(1.0, last.Fraction);
+        Assert.True(last.BytesTotal > 0);
+    }
+
+    [Fact]
+    public void Reports_no_progress_for_a_small_scan()
+    {
+        AppendLines(SampleLogLines.Assistant());
+        var reports = new List<IndexProgress>();
+        var indexer = new Indexer(store);
+        indexer.Progressed += reports.Add;
+
+        indexer.Index([source]);
+
+        Assert.Empty(reports);
+    }
+
+    [Fact]
     public void Groups_responses_by_local_weekday_and_hour()
     {
         AppendLines(SampleLogLines.Assistant());
