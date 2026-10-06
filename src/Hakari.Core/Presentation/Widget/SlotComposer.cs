@@ -14,7 +14,7 @@ internal static class SlotComposer
         ToneRules rules)
     {
         var slots = Active(layout, now);
-        var texts = slots.Where(slot => slot.Style == WidgetSlotStyle.Text)
+        var texts = slots.Where(slot => slot.Style != WidgetSlotStyle.Ring)
             .Select(slot => slot.Item)
             .ToList();
         var ring = RingOf(layout, slots, facts, now, rules);
@@ -61,7 +61,7 @@ internal static class SlotComposer
     {
         var slots = layout.Slots.Take(WidgetLayout.MaximumSlots).ToList();
         var oneLine = layout.Template is WidgetTemplate.SingleLine or WidgetTemplate.Minimal;
-        var texts = slots.Where(slot => slot.Style == WidgetSlotStyle.Text).ToList();
+        var texts = slots.Where(slot => slot.Style != WidgetSlotStyle.Ring).ToList();
         if (!oneLine || layout.CycleSeconds <= 0 || texts.Count < 2)
         {
             return slots;
@@ -69,7 +69,7 @@ internal static class SlotComposer
 
         var step = now.ToUnixTimeSeconds() / layout.CycleSeconds;
         var shown = texts[(int)(step % texts.Count)];
-        return [.. slots.Where(slot => slot.Style != WidgetSlotStyle.Text), shown];
+        return [.. slots.Where(slot => slot.Style == WidgetSlotStyle.Ring), shown];
     }
 
     private static ComposedWidget Lines(

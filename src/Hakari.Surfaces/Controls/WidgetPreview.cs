@@ -107,7 +107,7 @@ public sealed partial class WidgetPreview : Grid
             : Visibility.Visible;
 
         ring.Visibility = widget.Ring is null ? Visibility.Collapsed : Visibility.Visible;
-        ShowSpark(widget.Ring is null ? widget.Spark : null);
+        ShowSpark(widget.Spark);
         ShowBars(widget.TopBar, widget.BottomBar);
         if (widget.Ring is { } value)
         {

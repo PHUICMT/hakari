@@ -148,7 +148,8 @@ public sealed class WidgetRenderer : IDisposable
         var lineGap = hasSecondary ? (float)(WidgetMetrics.LineGap * scale) : 0f;
         var top = (height - (primaryHeight + lineGap + secondaryHeight)) / 2f;
         DrawRing(graphics, frame, palette, scale, padding, height);
-        DrawSpark(graphics, frame.Current, palette, scale, padding, height);
+        var sparkLeft = padding + RingSpace(frame.Current, scale);
+        DrawSpark(graphics, frame.Current, palette, scale, sparkLeft, height);
         DrawPill(graphics, frame.Current, palette, scale, padding, height);
         var dotsLeft = padding + ringSpace + pillWidth + barSpace + textWidth;
         DrawTurnDots(graphics, frame.Current, palette, scale, dotsLeft, height);
@@ -227,18 +228,19 @@ public sealed class WidgetRenderer : IDisposable
 
     private float MeasureWidth(string text, Font font) => Measure(text, font).Width;
 
-    /// <summary>Room before the text for a ring or a sparkline, with the gap after it.</summary>
-    private static float LeadingSpace(WidgetContent content, double scale)
-    {
-        if (content.Ring is not null)
-        {
-            return (float)((WidgetMetrics.RingDiameter + WidgetMetrics.RingGap) * scale);
-        }
+    /// <summary>Room before the text for a ring and a sparkline, each with its gap.</summary>
+    private static float LeadingSpace(WidgetContent content, double scale) =>
+        RingSpace(content, scale) + SparkSpace(content, scale);
 
-        return content.Spark is { Count: > 1 }
+    private static float RingSpace(WidgetContent content, double scale) =>
+        content.Ring is null
+            ? 0f
+            : (float)((WidgetMetrics.RingDiameter + WidgetMetrics.RingGap) * scale);
+
+    private static float SparkSpace(WidgetContent content, double scale) =>
+        content.Spark is { Count: > 1 }
             ? (float)((WidgetMetrics.SparkWidth + WidgetMetrics.RingGap) * scale)
             : 0f;
-    }
 
     /// <summary>
     /// Recent spending as a small line, scaled to its own highest point. With nothing spent it
@@ -252,7 +254,7 @@ public sealed class WidgetRenderer : IDisposable
         float left,
         int height)
     {
-        if (content.Ring is not null || content.Spark is not { Count: > 1 } points)
+        if (content.Spark is not { Count: > 1 } points)
         {
             return;
         }

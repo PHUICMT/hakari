@@ -54,7 +54,7 @@ public sealed class WidgetTemplatesTests
     }
 
     [Fact]
-    public void A_sparkline_gives_way_to_a_ring()
+    public void A_sparkline_shows_beside_a_ring()
     {
         var layout = new WidgetLayout
         {
@@ -67,7 +67,7 @@ public sealed class WidgetTemplatesTests
             ],
         };
 
-        Assert.Equal([true, true, false], WidgetTemplates.Shown(layout));
+        Assert.Equal([true, true, true], WidgetTemplates.Shown(layout));
     }
 
     [Fact]

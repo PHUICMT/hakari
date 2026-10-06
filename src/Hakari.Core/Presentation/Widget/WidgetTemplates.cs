@@ -53,25 +53,29 @@ public static class WidgetTemplates
 
     /// <summary>
     /// Which slots show up in the widget. Text slots fill the template's lines in order, unless
-    /// one-line layouts cycle through them all; one ring shows, and a sparkline only where no
-    /// ring takes its place. In columns every slot has a column of its own.
+    /// one-line layouts cycle through them all. One ring shows. A sparkline slot draws the line
+    /// of recent spending and also takes a line for its value, so it shows if either fits. In
+    /// columns every slot has a column of its own.
     /// </summary>
     public static IReadOnlyList<bool> Shown(WidgetLayout layout)
     {
         var template = layout.Template;
         var cycles = layout.CycleSeconds > 0 && TextLines(template) == 1;
-        var hasRing = template == WidgetTemplate.Minimal
-            || layout.Slots.Any(slot => slot.Style == WidgetSlotStyle.Ring);
         var shown = new List<bool>();
         var (texts, rings, sparks) = (0, 0, 0);
         foreach (var slot in layout.Slots.Take(WidgetLayout.MaximumSlots))
         {
+            var lineFits = cycles || texts < TextLines(template);
             shown.Add(template == WidgetTemplate.Columns || slot.Style switch
             {
                 WidgetSlotStyle.Ring => rings++ == 0,
-                WidgetSlotStyle.Sparkline => !hasRing && sparks++ == 0,
-                _ => cycles || texts++ < TextLines(template),
+                WidgetSlotStyle.Sparkline => sparks++ == 0 | lineFits,
+                _ => lineFits,
             });
+            if (slot.Style != WidgetSlotStyle.Ring)
+            {
+                texts++;
+            }
         }
 
         return shown;

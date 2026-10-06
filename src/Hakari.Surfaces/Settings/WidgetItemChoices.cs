@@ -37,6 +37,18 @@ internal static class WidgetItemChoices
         or WidgetItem.CostThisMonth
         or WidgetItem.BurnRate;
 
+    /// <summary>
+    /// The metrics that suit a style: a ring only shows a limit and a sparkline only spending;
+    /// text shows anything.
+    /// </summary>
+    public static IEnumerable<(object Value, string Text)> ForSlotStyle(WidgetSlotStyle style) =>
+        ForSlots().Where(choice => style switch
+        {
+            WidgetSlotStyle.Ring => IsLimit((WidgetItem)choice.Value),
+            WidgetSlotStyle.Sparkline => IsSpending((WidgetItem)choice.Value),
+            _ => true,
+        });
+
     /// <summary>A ring needs a limit and a sparkline needs spending; text suits anything.</summary>
     public static IEnumerable<(object Value, string Text)> StylesFor(WidgetItem item)
     {

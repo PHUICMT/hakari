@@ -215,10 +215,51 @@ internal sealed partial class LayoutEditor : StackPanel
         return block;
     }
 
+    /// <summary>A new slot is a line of text showing something not already shown.</summary>
     private static WidgetLayout AddSlot(WidgetLayout layout) =>
-        layout.Slots.Count >= WidgetLayout.MaximumSlots
-            ? layout
-            : layout with { Slots = [.. layout.Slots, new WidgetSlot(WidgetItem.BurnRate)] };
+        CanAddSlot(layout)
+            ? layout with { Slots = [.. layout.Slots, NewSlot(layout)] }
+            : layout;
+
+    private static WidgetSlot NewSlot(WidgetLayout layout)
+    {
+        var used = layout.Slots.Select(slot => slot.Item).ToHashSet();
+        var item = WidgetItemChoices.ForSlots()
+            .Select(choice => (WidgetItem)choice.Value)
+            .FirstOrDefault(candidate => !used.Contains(candidate), WidgetItem.BurnRate);
+        return new WidgetSlot(item);
+    }
+
+    /// <summary>Only when the template has room to show one more, and fewer than 4.</summary>
+    private static bool CanAddSlot(WidgetLayout layout)
+    {
+        if (!layout.UsesSlots || layout.Slots.Count >= WidgetLayout.MaximumSlots)
+        {
+            return false;
+        }
+
+        var added = layout with { Slots = [.. layout.Slots, NewSlot(layout)] };
+        return WidgetTemplates.Shown(added)[^1];
+    }
+
+    /// <summary>
+    /// Text always; a ring or a sparkline only when the metric suits it and no other slot
+    /// already draws one, since the widget has room for one of each. The slot's own style
+    /// stays in the list, so the list always shows what it is.
+    /// </summary>
+    private static List<(object Value, string Text)> StylesFor(WidgetLayout layout, int index)
+    {
+        var slot = layout.Slots[index];
+        var others = layout.Slots.Where((_, position) => position != index).ToList();
+        return
+        [
+            .. WidgetItemChoices.StylesFor(slot.Item).Where(choice =>
+                (WidgetSlotStyle)choice.Value is var style
+                && (style == slot.Style
+                    || style == WidgetSlotStyle.Text
+                    || others.All(other => other.Style != style))),
+        ];
+    }
 
     private void RebuildSlots(WidgetLayout layout)
     {
@@ -235,7 +276,8 @@ internal sealed partial class LayoutEditor : StackPanel
                 canMoveDown: position < layout.Slots.Count - 1,
                 canRemove: layout.Slots.Count > 1,
                 isShown: position >= shown.Count || shown[position],
-                metricSample: value => MetricSample(value, rules));
+                metricSample: value => MetricSample(value, rules),
+                styles: StylesFor(layout, position));
             row.ItemChanged += (_, item) => change(current => WithItem(current, position, item));
             row.StyleChanged += (_, style) =>
                 change(current => WithStyle(current, position, style));
@@ -246,7 +288,9 @@ internal sealed partial class LayoutEditor : StackPanel
         }
 
         addSlot.Content = Texts.Format("settings.slot.add", WidgetLayout.MaximumSlots);
-        addSlot.IsEnabled = layout.UsesSlots && layout.Slots.Count < WidgetLayout.MaximumSlots;
+        var roomLeft = CanAddSlot(layout);
+        addSlot.IsEnabled = roomLeft;
+        ToolTipService.SetToolTip(addSlot, roomLeft ? null : Texts.Get("settings.slot.full"));
         slotList.Visibility = layout.UsesSlots ? Visibility.Visible : Visibility.Collapsed;
         addSlot.Visibility = layout.UsesSlots ? Visibility.Visible : Visibility.Collapsed;
     }

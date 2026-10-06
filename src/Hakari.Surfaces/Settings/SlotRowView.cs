@@ -25,6 +25,7 @@ internal sealed partial class SlotRowView : UserControl
 
     /// <param name="isShown">False when the template has no room for it; it is dimmed then.</param>
     /// <param name="metricSample">What each metric would show now, for the metric list.</param>
+    /// <param name="styles">The styles this slot may take, given what the others use.</param>
     public SlotRowView(
         int number,
         WidgetSlot slot,
@@ -32,13 +33,14 @@ internal sealed partial class SlotRowView : UserControl
         bool canMoveDown,
         bool canRemove,
         bool isShown,
-        Func<object, FrameworkElement?> metricSample)
+        Func<object, FrameworkElement?> metricSample,
+        IEnumerable<(object Value, string Text)> styles)
     {
         var metric = new HakariSelect { Sample = metricSample };
-        metric.SetChoices(WidgetItemChoices.ForSlots(), slot.Item);
+        metric.SetChoices(WidgetItemChoices.ForSlotStyle(slot.Style), slot.Item);
         metric.Selected += (_, value) => ItemChanged?.Invoke(this, (WidgetItem)value);
         var style = new HakariSelect { Sample = StyleSamples.Of };
-        style.SetChoices(WidgetItemChoices.StylesFor(slot.Item), slot.Style);
+        style.SetChoices(styles, slot.Style);
         style.Selected += (_, value) => StyleChanged?.Invoke(this, (WidgetSlotStyle)value);
 
         var row = new Grid { ColumnSpacing = RowSpacing };
