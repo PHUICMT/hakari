@@ -119,7 +119,8 @@ internal sealed class UsageFeed : IDisposable
             settings.ExtraConfigDirectories);
         var sources = SourceDiscovery.Discover(discoveryOptions);
         var query = new UsageQuery(store, pricing, CreateConverter(store, pricing, settings));
-        var indexer = new Indexer(store);
+        SyncSessionTitles(store, settings.ShowSessionTitles);
+        var indexer = new Indexer(store, settings.ShowSessionTitles);
         using var tracker = new ChangeTracker(
             sources,
             ChangeTrackerOptions.Default,
@@ -188,6 +189,23 @@ internal sealed class UsageFeed : IDisposable
         }
 
         changeTracker = null;
+    }
+
+    /// <summary>
+    /// Titles are only kept while the user wants them. Turning them on or off changes what the
+    /// index holds, and the logs are read again from the start so it holds the right thing.
+    /// </summary>
+    private static void SyncSessionTitles(IndexStore store, bool wanted)
+    {
+        const string Option = "sessionTitles";
+        var kept = store.GetOption(Option) == bool.TrueString;
+        if (kept == wanted)
+        {
+            return;
+        }
+
+        store.DeleteAll();
+        store.SetOption(Option, wanted.ToString());
     }
 
     /// <summary>

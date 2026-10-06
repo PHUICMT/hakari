@@ -26,24 +26,26 @@ internal sealed partial class BreakdownPage : LoadedPage<BreakdownRows>
 
     /// <summary>Runs off the UI thread.</summary>
     protected override BreakdownRows Read(DashboardFilter filter) => DashboardData.Read(
-        (query, _) =>
+        (query, store) =>
         {
             var usage = filter.ToUsageFilter(DateTimeOffset.Now);
             return new BreakdownRows(
                 query.Summarize(usage, groupBy),
                 query.Total(usage).Cost,
-                query.Currency);
+                query.Currency,
+                groupBy == GroupBy.ProjectSession ? SessionTitles.Load(store) : null);
         },
         new BreakdownRows([], 0m, "USD"));
 
     protected override UIElement Build(BreakdownRows data) => DashboardCard.Create(
         Texts.Get(titleKey),
         Texts.Format("dashboard.rowCount", data.Rows.Count),
-        Table(data.Rows, data.Total, data.Currency));
+        Table(data));
 
     /// <summary>Branches and sessions sit under their project; other pages are flat.</summary>
-    private UIElement Table(IReadOnlyList<UsageSummary> rows, decimal total, string currency)
+    private UIElement Table(BreakdownRows data)
     {
+        var (rows, total, currency) = (data.Rows, data.Total, data.Currency);
         var name = Texts.Get(titleKey);
         if (groupBy is GroupBy.ProjectBranch or GroupBy.ProjectSession)
         {
@@ -52,7 +54,7 @@ internal sealed partial class BreakdownPage : LoadedPage<BreakdownRows>
                 total,
                 currency,
                 name,
-                row => RowNames.InGroup(groupBy, row),
+                row => RowNames.InGroup(groupBy, row, data.Titles),
                 row => GroupKeys.Split(row.Key).Project,
                 RowNames.Project);
         }

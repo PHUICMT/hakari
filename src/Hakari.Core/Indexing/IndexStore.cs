@@ -47,6 +47,27 @@ public sealed class IndexStore : IDisposable
 
     public void DeleteAll() => Execute(IndexSchema.DeleteAll);
 
+    /// <summary>A setting the index remembers about how it was built, or null.</summary>
+    public string? GetOption(string name)
+    {
+        using var command = Connection.CreateCommand();
+        command.CommandText = "SELECT value FROM index_options WHERE name = $name";
+        command.Parameters.AddWithValue("$name", name);
+        return command.ExecuteScalar() as string;
+    }
+
+    public void SetOption(string name, string value)
+    {
+        using var command = Connection.CreateCommand();
+        command.CommandText = """
+            INSERT INTO index_options (name, value) VALUES ($name, $value)
+            ON CONFLICT (name) DO UPDATE SET value = excluded.value
+            """;
+        command.Parameters.AddWithValue("$name", name);
+        command.Parameters.AddWithValue("$value", value);
+        command.ExecuteNonQuery();
+    }
+
     public void Dispose() => Connection.Dispose();
 
     /// <summary>

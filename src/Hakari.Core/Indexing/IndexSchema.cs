@@ -25,6 +25,7 @@ internal static class IndexSchema
         DROP TABLE IF EXISTS usage_records;
         DROP TABLE IF EXISTS tracked_files;
         DROP TABLE IF EXISTS account_limits;
+        DROP TABLE IF EXISTS session_titles;
         """;
 
     public const string CreateTables = """
@@ -60,6 +61,17 @@ internal static class IndexSchema
 
         CREATE INDEX IF NOT EXISTS index_usage_source_timestamp
             ON usage_records (source_id, timestamp_ms);
+
+        CREATE TABLE IF NOT EXISTS session_titles (
+            session_id TEXT PRIMARY KEY,
+            title TEXT NOT NULL,
+            is_custom INTEGER NOT NULL
+        );
+
+        CREATE TABLE IF NOT EXISTS index_options (
+            name TEXT PRIMARY KEY,
+            value TEXT NOT NULL
+        );
 
         CREATE TABLE IF NOT EXISTS account_limits (
             account_id TEXT PRIMARY KEY,
@@ -108,5 +120,6 @@ internal static class IndexSchema
     public const string DeleteAll = """
         DELETE FROM usage_records;
         DELETE FROM tracked_files;
+        DELETE FROM session_titles;
         """;
 }

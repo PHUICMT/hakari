@@ -24,4 +24,6 @@ internal static class LogFieldNames
     public const string InferenceGeography = "inference_geo";
     public const string ServerToolUse = "server_tool_use";
     public const string WebSearchRequests = "web_search_requests";
+    public const string AiTitle = "aiTitle";
+    public const string CustomTitle = "customTitle";
 }

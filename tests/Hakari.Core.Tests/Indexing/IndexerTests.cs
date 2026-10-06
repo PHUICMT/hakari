@@ -120,6 +120,22 @@ public sealed class IndexerTests : IDisposable
     }
 
     [Fact]
+    public void Keeps_session_titles_only_when_asked_to()
+    {
+        var title = """{"type":"ai-title","aiTitle":"Fix the sync bug","sessionId":"session_1"}""";
+        var custom = """{"type":"custom-title","customTitle":"Meter","sessionId":"session_1"}""";
+        AppendLines(SampleLogLines.Assistant(), title, custom);
+
+        new Indexer(store).Index([source]);
+        Assert.Empty(SessionTitles.Load(store));
+
+        store.DeleteAll();
+        new Indexer(store, collectSessionTitles: true).Index([source]);
+
+        Assert.Equal("Meter", SessionTitles.Load(store)["session_1"]);
+    }
+
+    [Fact]
     public void Groups_responses_by_local_weekday_and_hour()
     {
         AppendLines(SampleLogLines.Assistant());

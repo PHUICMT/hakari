@@ -62,6 +62,12 @@ public sealed record HakariSettings
 
     public TrayIconStyle TrayIcon { get; init; } = TrayIconStyle.Automatic;
 
+    /// <summary>
+    /// Keep and show the short title Claude Code gives each session. Off by default: titles
+    /// are written from the conversation, so reading them is the user's choice.
+    /// </summary>
+    public bool ShowSessionTitles { get; init; }
+
     /// <summary>Tell when a limit passes its warning or critical level or resets.</summary>
     public bool NotifyOnLimits { get; init; } = true;
 
@@ -98,6 +104,7 @@ public sealed record HakariSettings
         && string.Equals(Currency, other.Currency, StringComparison.OrdinalIgnoreCase)
         && RateMode == other.RateMode
         && RefreshSignInAutomatically == other.RefreshSignInAutomatically
+        && ShowSessionTitles == other.ShowSessionTitles
         && Paused == other.Paused
         && PausedUntil == other.PausedUntil;
 

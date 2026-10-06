@@ -26,7 +26,10 @@ internal static class RowNames
         };
 
     /// <summary>Inside its project's group the project is already said, so only the rest.</summary>
-    public static (string Title, string? Detail) InGroup(GroupBy groupBy, UsageSummary row)
+    public static (string Title, string? Detail) InGroup(
+        GroupBy groupBy,
+        UsageSummary row,
+        IReadOnlyDictionary<string, string>? titles = null)
     {
         var (title, _) = Of(groupBy, row);
         if (groupBy != GroupBy.ProjectSession)
@@ -35,7 +38,9 @@ internal static class RowNames
         }
 
         var session = GroupKeys.Split(row.Key).Item;
-        return (title, ShortId(session));
+        return titles is not null && titles.TryGetValue(session, out var named)
+            ? (named, $"{title}{Separator}{ShortId(session)}")
+            : (title, ShortId(session));
     }
 
     /// <summary>A project group's header: the folder name over its full path.</summary>

@@ -16,10 +16,16 @@ public sealed class Indexer
 
     private readonly IndexStore store;
     private readonly TrackedFileRepository trackedFiles;
+    private readonly bool collectSessionTitles;
 
-    public Indexer(IndexStore store)
+    /// <param name="collectSessionTitles">
+    /// Also keep each session's title. Off unless the user asked, since titles come from the
+    /// conversation and nothing else Hakari reads does.
+    /// </param>
+    public Indexer(IndexStore store, bool collectSessionTitles = false)
     {
         this.store = store;
+        this.collectSessionTitles = collectSessionTitles;
         trackedFiles = new TrackedFileRepository(store.Connection);
     }
 
@@ -112,6 +118,7 @@ public sealed class Indexer
     {
         using var transaction = store.Connection.BeginTransaction();
         using var writer = new UsageRecordWriter(store.Connection, transaction);
+        using var titleWriter = new SessionTitleWriter(store.Connection, transaction);
         var recordsChanged = 0;
         var endOffset = file.IndexedOffset;
 
@@ -123,6 +130,10 @@ public sealed class Indexer
                 if (record is not null && writer.TryUpsert(file.SourceId, record))
                 {
                     recordsChanged++;
+                }
+                else if (collectSessionTitles && SessionTitleParser.TryParse(line) is { } title)
+                {
+                    titleWriter.Upsert(title);
                 }
             });
         }

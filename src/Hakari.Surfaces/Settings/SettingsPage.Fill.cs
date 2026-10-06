@@ -163,6 +163,7 @@ public sealed partial class SettingsPage
         OrderCustom.IsChecked = settings.AccountOrdering == AccountOrder.Custom;
         RenewSignInToggle.IsChecked = settings.RefreshSignInAutomatically;
         NotifyToggle.IsChecked = settings.NotifyOnLimits;
+        TitlesToggle.IsChecked = settings.ShowSessionTitles;
     }
 
     /// <summary>

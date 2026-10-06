@@ -305,6 +305,8 @@
   "settings.accounts.show": "Show this account. Signed-out accounts keep their last limits until hidden.",  "settings.accounts.none": "No accounts yet",
   "settings.accounts.none.description": "They appear once Claude Code has signed in on a source.",
   "settings.nickname": "Nickname, shown on the taskbar and in the flyout",
+  "settings.titles": "Session titles",
+  "settings.titles.description": "Show the short title Claude Code gives each session. Only the title lines are read, never prompts or replies. Turning it on or off reads your logs again.",
   "settings.planPrice": "What this account pays per month in US dollars. Leave empty for the plan's list price.",
   "settings.renew": "Renew sign-in automatically",
   "settings.renew.description": "Keeps limits current after Claude Code has been closed for a long time. It updates Claude Code's sign-in file, and only while Claude Code is not running.",
