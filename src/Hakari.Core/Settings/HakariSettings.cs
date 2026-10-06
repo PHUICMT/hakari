@@ -83,6 +83,9 @@ public sealed record HakariSettings
     /// <summary>The first-run steps were finished or closed; they never show again.</summary>
     public bool OnboardingDone { get; init; }
 
+    /// <summary>The note that the meter moved to the tray, told once and never again.</summary>
+    public bool TrayFallbackTold { get; init; }
+
     /// <summary>Limit alerts stay quiet until then, as "mute today" asks.</summary>
     public DateTimeOffset? AlertsMutedUntil { get; init; }
 

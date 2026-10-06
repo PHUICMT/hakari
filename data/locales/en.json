@@ -499,5 +499,7 @@
   "flyout.notice.updatePrices": "Update prices",
   "flyout.live": "live",
   "flyout.notice.reading": "Reading your logs for the first time",
-  "flyout.notice.readingDetail": "The numbers appear when it finishes. It runs at low priority; your work comes first."
+  "flyout.notice.readingDetail": "The numbers appear when it finishes. It runs at low priority; your work comes first.",
+  "tray.fallback.title": "Hakari is in the tray",
+  "tray.fallback.body": "The widget could not be placed on the taskbar, so the limit shows on the tray icon instead. Click it for details."
 }

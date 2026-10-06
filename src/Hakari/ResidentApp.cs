@@ -38,6 +38,8 @@ internal sealed class ResidentApp : IDisposable
     private (decimal Amount, string Currency) todayCost = (0, "USD");
     private static readonly TimeSpan StaleCheckInterval = TimeSpan.FromMinutes(1);
     private Timer? staleCheck;
+    private Timer? fallbackCheck;
+    private static readonly TimeSpan FallbackCheckDelay = TimeSpan.FromSeconds(15);
     private WidgetContent? lastLive;
     private DateTimeOffset lastHeard = DateTimeOffset.Now;
     private bool showingStale;
@@ -165,6 +167,11 @@ internal sealed class ResidentApp : IDisposable
                 StaleCheckInterval);
             ToastNotifier.Register();
             ShowOnboardingOnce();
+            fallbackCheck = new Timer(
+                _ => widgets.PostAction(TellTrayFallbackOnce),
+                null,
+                FallbackCheckDelay,
+                Timeout.InfiniteTimeSpan);
             feed.AlertRaised += message => widgets.PostAction(() => ShowAlert(message));
             feed.Start();
         }
@@ -201,6 +208,24 @@ internal sealed class ResidentApp : IDisposable
             < Million => (amount / Thousand).ToString("0", culture) + "k",
             _ => (amount / Million).ToString("0.#", culture) + "M",
         };
+    }
+
+    /// <summary>
+    /// When no taskbar has room for the widget, or it cannot be placed at all, the meter lives
+    /// in the tray icon; that is said once, so the widget is not simply missing.
+    /// </summary>
+    private void TellTrayFallbackOnce()
+    {
+        if (widgets.WidgetCount > 0 || appliedSettings.TrayFallbackTold)
+        {
+            return;
+        }
+
+        trayIcon.ShowBalloon(
+            Texts.Get("tray.fallback.title"),
+            Texts.Get("tray.fallback.body"),
+            isWarning: false);
+        Apply(settingsStore.Update(current => current with { TrayFallbackTold = true }));
     }
 
     /// <summary>A Windows notification, or the tray's balloon when that is refused.</summary>
@@ -260,6 +285,7 @@ internal sealed class ResidentApp : IDisposable
     public void Dispose()
     {
         staleCheck?.Dispose();
+        fallbackCheck?.Dispose();
         listening.Cancel();
         widgetSurfaces.Dispose();
         settingsWatcher.Dispose();

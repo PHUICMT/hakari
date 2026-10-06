@@ -499,5 +499,7 @@
   "flyout.notice.updatePrices": "อัปเดตราคา",
   "flyout.live": "ใช้อยู่",
   "flyout.notice.reading": "กำลังอ่าน log ครั้งแรก",
-  "flyout.notice.readingDetail": "ตัวเลขจะขึ้นเมื่ออ่านเสร็จ ทำงานเบื้องหลังแบบไม่แย่งเครื่อง งานของคุณมาก่อน"
+  "flyout.notice.readingDetail": "ตัวเลขจะขึ้นเมื่ออ่านเสร็จ ทำงานเบื้องหลังแบบไม่แย่งเครื่อง งานของคุณมาก่อน",
+  "tray.fallback.title": "Hakari อยู่ที่ tray แทน",
+  "tray.fallback.body": "วาง widget บน taskbar ไม่ได้ ตัวเลข limit จะแสดงที่ไอคอนใน tray แทน กดไอคอนเพื่อเปิดรายละเอียด"
 }
