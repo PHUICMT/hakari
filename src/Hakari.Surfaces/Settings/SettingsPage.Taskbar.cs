@@ -283,7 +283,14 @@ public sealed partial class SettingsPage
             return;
         }
 
-        layoutEditor = new LayoutEditor(() => EditedLayout(store.Load()), ChangeLayout);
+        layoutEditor = new LayoutEditor(
+            () => EditedLayout(store.Load()),
+            ChangeLayout,
+            () => store.Load().SavedLayouts,
+            change => ShowPreview(store.Update(current => current with
+            {
+                SavedLayouts = change(current.SavedLayouts),
+            })));
         LayoutEditorCard.Child = layoutEditor;
     }
 

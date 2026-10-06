@@ -29,6 +29,9 @@ public sealed record HakariSettings
     [JsonIgnore]
     public TimeSpan TurnLength => TimeSpan.FromSeconds(Math.Max(1, TurnSeconds));
 
+    /// <summary>Layouts the user saved under a name, newest first.</summary>
+    public IReadOnlyList<NamedLayout> SavedLayouts { get; init; } = [];
+
     /// <summary>Per-account layouts for side by side and take turns, keyed by account id.</summary>
     public IReadOnlyDictionary<string, WidgetLayout> AccountLayouts { get; init; } =
         new Dictionary<string, WidgetLayout>();

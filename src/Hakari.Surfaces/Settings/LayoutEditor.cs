@@ -38,6 +38,12 @@ internal sealed partial class LayoutEditor : StackPanel
         Spacing = 6,
     };
     private readonly List<TemplateCard> templateCards = [];
+    private readonly Func<IReadOnlyList<NamedLayout>> saved;
+    private readonly Action<Func<IReadOnlyList<NamedLayout>, IReadOnlyList<NamedLayout>>>
+        changeSaved;
+    private readonly Grid savedGrid = new() { ColumnSpacing = Gap, RowSpacing = Gap };
+    private readonly TextBlock savedHint = new();
+    private readonly TextBox nameBox = new();
     private readonly StackPanel slotList = new() { Spacing = Gap };
     private readonly Button addSlot = new();
     private readonly TextBox formatBox = new();
@@ -53,12 +59,18 @@ internal sealed partial class LayoutEditor : StackPanel
     private double rowStep;
     private WidgetFacts? previewFacts;
 
+    /// <param name="saved">The user's saved layouts, read fresh each time.</param>
+    /// <param name="changeSaved">Saves a change to that list.</param>
     public LayoutEditor(
         Func<WidgetLayout> currentLayout,
-        Action<Func<WidgetLayout, WidgetLayout>> change)
+        Action<Func<WidgetLayout, WidgetLayout>> change,
+        Func<IReadOnlyList<NamedLayout>> saved,
+        Action<Func<IReadOnlyList<NamedLayout>, IReadOnlyList<NamedLayout>>> changeSaved)
     {
         this.currentLayout = currentLayout;
         this.change = change;
+        this.saved = saved;
+        this.changeSaved = changeSaved;
         formatTimer = DispatcherQueue.GetForCurrentThread().CreateTimer();
         formatTimer.Interval = TimeSpan.FromMilliseconds(FormatDebounceMilliseconds);
         formatTimer.IsRepeating = false;
@@ -67,6 +79,7 @@ internal sealed partial class LayoutEditor : StackPanel
         Children.Add(Header());
         Children.Add(PreviewStrip());
         Children.Add(Templates());
+        Children.Add(MyLayouts());
         Children.Add(Slots());
         Children.Add(FormatBlock());
         Children.Add(Thresholds());
@@ -94,6 +107,7 @@ internal sealed partial class LayoutEditor : StackPanel
                 card.ShowPreview(WidgetPanels.Compose(mode, sample, _ => sample, facts, now));
             }
 
+            RebuildSaved(layout, facts, mode, now);
             RebuildSlots(layout);
             if (formatBox.FocusState == FocusState.Unfocused)
             {
@@ -183,6 +197,127 @@ internal sealed partial class LayoutEditor : StackPanel
 
             ((WidgetPreview)previewRow.Children[index]).Show(panels[index]);
         }
+    }
+
+    /// <summary>
+    /// The user's own layouts, each a card that puts it back, and a field to save the one
+    /// being edited under a name.
+    /// </summary>
+    private StackPanel MyLayouts()
+    {
+        var block = new StackPanel
+        {
+            Margin = new Thickness(Gutter, Gutter, Gutter, 0),
+            Spacing = Gap,
+        };
+        block.Children.Add(new TextBlock
+        {
+            Text = Texts.Get("settings.layout.mine"),
+            FontSize = 13,
+            FontWeight = FontWeights.SemiBold,
+            Foreground = Brush("HakariInkBrush"),
+        });
+        savedHint.Text = Texts.Get("settings.layout.mine.empty");
+        savedHint.FontSize = HintSize;
+        savedHint.Foreground = Brush("HakariInkFaintBrush");
+        savedHint.TextWrapping = TextWrapping.Wrap;
+        block.Children.Add(savedHint);
+        savedGrid.ColumnDefinitions.Add(new ColumnDefinition());
+        savedGrid.ColumnDefinitions.Add(new ColumnDefinition());
+        block.Children.Add(savedGrid);
+        block.Children.Add(SaveRow());
+        return block;
+    }
+
+    private Grid SaveRow()
+    {
+        nameBox.Style = (Style)Application.Current.Resources["HakariTextBox"];
+        nameBox.PlaceholderText = Texts.Get("settings.layout.name");
+        nameBox.MaxLength = SavedLayouts.MaximumNameLength;
+        var save = new Button
+        {
+            Content = Texts.Get("settings.layout.save"),
+            Style = (Style)Application.Current.Resources["HakariPrimaryButton"],
+        };
+        save.Click += (_, _) => SaveCurrent();
+        nameBox.KeyDown += (_, args) =>
+        {
+            if (args.Key == Windows.System.VirtualKey.Enter)
+            {
+                args.Handled = true;
+                SaveCurrent();
+            }
+        };
+        var row = new Grid { ColumnSpacing = Gap };
+        row.ColumnDefinitions.Add(new ColumnDefinition());
+        row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        row.Children.Add(nameBox);
+        Grid.SetColumn(save, 1);
+        row.Children.Add(save);
+        return row;
+    }
+
+    private void SaveCurrent()
+    {
+        var name = nameBox.Text;
+        if (name.Trim().Length == 0)
+        {
+            nameBox.Focus(FocusState.Programmatic);
+            return;
+        }
+
+        var layout = currentLayout();
+        nameBox.Text = string.Empty;
+        changeSaved(list => SavedLayouts.Save(list, name, layout));
+    }
+
+    private void RebuildSaved(
+        WidgetLayout layout,
+        WidgetFacts facts,
+        MultiAccountMode mode,
+        DateTimeOffset now)
+    {
+        var list = saved();
+        var known = savedGrid.Children.OfType<SavedLayoutCard>()
+            .Select(card => card.Saved.Name)
+            .ToHashSet();
+        savedGrid.Children.Clear();
+        savedGrid.RowDefinitions.Clear();
+        savedHint.Visibility = list.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+        for (var index = 0; index < list.Count; index++)
+        {
+            if (index % 2 == 0)
+            {
+                savedGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            }
+
+            var entry = list[index];
+            var card = new SavedLayoutCard(entry);
+            card.Choose(entry.Layout == layout);
+            card.ShowPreview(
+                WidgetPanels.Compose(mode, entry.Layout, _ => entry.Layout, facts, now));
+            card.Chosen += (_, chosen) => change(_ => chosen.Layout);
+            card.Removed += (_, removed) =>
+                changeSaved(current => SavedLayouts.Remove(current, removed.Name));
+            Grid.SetColumn(card, index % 2);
+            Grid.SetRow(card, index / 2);
+            savedGrid.Children.Add(card);
+            if (!known.Contains(entry.Name) && known.Count + 1 >= list.Count)
+            {
+                FadeIn(card);
+            }
+        }
+    }
+
+    private static void FadeIn(UIElement element)
+    {
+        if (SurfaceMotion.Current() == AnimationSetting.Off)
+        {
+            return;
+        }
+
+        element.Opacity = 0;
+        SurfaceMotion.Settle(element, "Opacity", 1);
     }
 
     /// <summary>A block that appears fades in once it is on screen.</summary>
