@@ -253,14 +253,16 @@ public sealed class TaskbarWidgetHost : IDisposable
         return widget;
     }
 
-    /// <summary>Right edge of the primary widget on its taskbar's top, for tray clicks.</summary>
+    /// <summary>Middle of the primary widget on its taskbar's top, for tray clicks.</summary>
     public System.Drawing.Point? PrimaryWidgetAnchor()
     {
         var widget = widgets.FirstOrDefault(candidate => candidate.Target.IsPrimary);
         var taskbar = widget is null ? null : TaskbarLocator.Describe(widget.Target, layoutMonitor);
         return widget is null || taskbar is null
             ? null
-            : new System.Drawing.Point(widget.ScreenBounds.Right, taskbar.Bounds.Top);
+            : new System.Drawing.Point(
+                widget.ScreenBounds.Left + widget.ScreenBounds.Width / 2,
+                taskbar.Bounds.Top);
     }
 
     private void RaiseClicked(WidgetWindow widget) => Raise(Clicked, widget);
@@ -270,7 +272,12 @@ public sealed class TaskbarWidgetHost : IDisposable
         var taskbar = TaskbarLocator.Describe(widget.Target, layoutMonitor);
         if (taskbar is not null)
         {
-            handler?.Invoke(this, new WidgetClickedEventArgs(widget.ScreenBounds, taskbar.Bounds));
+            var pointerX = Interop.User32.GetCursorPos(out var cursor)
+                ? cursor.X
+                : widget.ScreenBounds.Left + widget.ScreenBounds.Width / 2;
+            handler?.Invoke(
+                this,
+                new WidgetClickedEventArgs(widget.ScreenBounds, taskbar.Bounds, pointerX));
         }
     }
 

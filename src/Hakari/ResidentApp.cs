@@ -67,7 +67,7 @@ internal sealed class ResidentApp : IDisposable
             command => widgets.PostAction(() => Handle(command)),
             listening.Token);
         widgets.Clicked += (_, click) =>
-            OpenFlyout(click.WidgetBounds.Right, click.TaskbarBounds.Top);
+            OpenFlyout(click.PointerX, click.TaskbarBounds.Top);
         trayIcon.Selected += (_, _) => OpenFlyoutAtWidget();
     }
 
