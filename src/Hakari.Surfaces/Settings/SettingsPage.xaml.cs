@@ -27,6 +27,9 @@ public sealed partial class SettingsPage : UserControl
         InitializeComponent();
         BuildCurrencyChoices();
         CurrencySuggestions.Attach(OtherCurrencyBox, _ => ApplyOtherCurrency());
+        SupportLinks.Brand(SponsorsButton, SupportService.GitHubSponsors);
+        SupportLinks.Brand(KoFiButton, SupportService.KoFi);
+        SupportLinks.Brand(PromptPayButton, SupportService.PromptPay);
         PromptPayButton.Visibility = SupportLinks.ShowsPromptPay
             ? Visibility.Visible
             : Visibility.Collapsed;

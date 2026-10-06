@@ -26,6 +26,48 @@ internal static class SupportLinks
     public const string PromptPayId = "";
 
     private const string ThaiRegion = "TH";
+    private const double IconSize = 14;
+
+    /// <summary>Each service in its own color and mark, so each button reads at a glance.</summary>
+    public static void Brand(Button button, SupportService service)
+    {
+        (Windows.UI.Color Color, string? Glyph, string? Emoji, string Text) look = service switch
+        {
+            SupportService.GitHubSponsors =>
+                (Windows.UI.Color.FromArgb(0xFF, 0xBF, 0x39, 0x89), "", null, "Sponsor"),
+            SupportService.KoFi =>
+                (Windows.UI.Color.FromArgb(0xFF, 0xFF, 0x5E, 0x5B), null, "☕", "Ko-fi"),
+            _ => (Windows.UI.Color.FromArgb(0xFF, 0x11, 0x35, 0x66), "", null, "PromptPay"),
+        };
+        var (color, glyph, emoji, text) = look;
+        var brush = new SolidColorBrush(color);
+        button.Background = brush;
+        button.BorderBrush = brush;
+        button.Foreground = new SolidColorBrush(Microsoft.UI.Colors.White);
+        var content = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6 };
+        content.Children.Add(glyph is not null
+            ? new FontIcon
+            {
+                Glyph = glyph,
+                FontSize = IconSize,
+                FontFamily = (FontFamily)Application.Current.Resources["HakariIconFont"],
+                Foreground = button.Foreground,
+            }
+            : new TextBlock
+            {
+                Text = emoji,
+                FontSize = IconSize,
+                FontFamily = new FontFamily("Segoe UI Emoji"),
+                VerticalAlignment = VerticalAlignment.Center,
+            });
+        content.Children.Add(new TextBlock
+        {
+            Text = text,
+            FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
+            VerticalAlignment = VerticalAlignment.Center,
+        });
+        button.Content = content;
+    }
     private const int ModulePixels = 8;
     private const double CodeSize = 200;
     private const double CardWidth = 240;
@@ -86,4 +128,12 @@ internal static class SupportLinks
         await bitmap.SetSourceAsync(stream);
         return bitmap;
     }
+}
+
+/// <summary>The ways to support Hakari, for their buttons.</summary>
+internal enum SupportService
+{
+    GitHubSponsors,
+    KoFi,
+    PromptPay,
 }

@@ -298,9 +298,10 @@
                                     <!-- Thai users only, and only once a PromptPay number is set -->
                                     <Button x:Name="PromptPayButton" Content="PromptPay" Visibility="Collapsed"
                                         Style="{StaticResource HakariButton}" Click="OnPromptPayClicked" />
-                                    <Button Content="GitHub Sponsors" Style="{StaticResource HakariButton}"
+                                    <!-- Each in its service's own color and mark, set in code -->
+                                    <Button x:Name="SponsorsButton" Style="{StaticResource HakariButton}"
                                         Click="OnSponsorsClicked" />
-                                    <Button Content="Ko-fi" Style="{StaticResource HakariPrimaryButton}"
+                                    <Button x:Name="KoFiButton" Style="{StaticResource HakariButton}"
                                         Click="OnSupportClicked" />
                                 </StackPanel>
                             </controls:SettingRow>
