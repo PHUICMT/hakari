@@ -195,12 +195,18 @@
                             </controls:SettingRow>
                             <controls:SettingRow Glyph="&#xE8C7;" Title="{l:Text Key=settings.currency}"
                                 Description="{l:Text Key=settings.currency.description}">
-                                <StackPanel Orientation="Horizontal" Spacing="8">
-                                    <controls:HakariSegmented x:Name="CurrencyChoices" />
-                                    <TextBox x:Name="OtherCurrencyBox" Width="64" MaxLength="3"
-                                        CharacterCasing="Upper" Style="{StaticResource HakariTextBox}"
-                                        ToolTipService.ToolTip="{l:Text Key=settings.currency.other}"
-                                        KeyDown="OnOtherCurrencyKeyDown" LostFocus="OnOtherCurrencyLostFocus" />
+                                <StackPanel>
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <controls:HakariSegmented x:Name="CurrencyChoices" />
+                                        <!-- A code, a currency's name or a country; suggestions fill in below -->
+                                        <TextBox x:Name="OtherCurrencyBox" Width="140" MaxLength="40"
+                                            Style="{StaticResource HakariTextBox}"
+                                            PlaceholderText="{l:Text Key=settings.currency.other}"
+                                            KeyDown="OnOtherCurrencyKeyDown" LostFocus="OnOtherCurrencyLostFocus" />
+                                    </StackPanel>
+                                    <!-- What the chosen code is, such as "Singapore Dollar · S$" -->
+                                    <TextBlock x:Name="CurrencyName" FontSize="12" Margin="0,4,0,0"
+                                        HorizontalAlignment="Right" Foreground="{ThemeResource HakariInkFaintBrush}" />
                                 </StackPanel>
                             </controls:SettingRow>
                             <controls:SettingRow Glyph="&#xE774;" Title="{l:Text Key=settings.rate}"

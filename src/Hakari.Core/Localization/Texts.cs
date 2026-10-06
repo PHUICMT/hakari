@@ -51,6 +51,12 @@ public static class Texts
             ? text
             : key;
 
+    /// <summary>The text for a key that may not exist, such as a name; else null.</summary>
+    public static string? Find(string key) =>
+        current.TryGetValue(key, out var text) || EnglishTexts.TryGetValue(key, out text)
+            ? text
+            : null;
+
     public static string Format(string key, params object?[] values) =>
         string.Format(CultureInfo.InvariantCulture, Get(key), values);
 

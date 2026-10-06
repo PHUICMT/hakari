@@ -26,6 +26,7 @@ public sealed partial class SettingsPage : UserControl
     {
         InitializeComponent();
         BuildCurrencyChoices();
+        CurrencySuggestions.Attach(OtherCurrencyBox, _ => ApplyOtherCurrency());
         Fill();
         MakeSectionsFoldable();
     }

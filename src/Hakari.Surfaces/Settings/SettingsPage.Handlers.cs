@@ -271,14 +271,27 @@ public sealed partial class SettingsPage
     private void OnOtherCurrencyLostFocus(object sender, RoutedEventArgs args) =>
         ApplyOtherCurrency();
 
-    /// <summary>Anything that is not three letters is left unsaved until it is.</summary>
+    /// <summary>
+    /// A known code is taken as it is; a name or a country becomes the best match's code, so
+    /// "singapore" saves SGD. Anything that matches nothing is left unsaved.
+    /// </summary>
     private void ApplyOtherCurrency()
     {
-        var code = OtherCurrencyBox.Text.Trim().ToUpperInvariant();
-        if (code.Length != CurrencyCodeLength || !code.All(char.IsAsciiLetter))
+        var typed = OtherCurrencyBox.Text.Trim();
+        var asCode = typed.ToUpperInvariant();
+        var isCode = asCode.Length == CurrencyCodeLength && asCode.All(char.IsAsciiLetter);
+        var code = isCode ? asCode : CurrencyCatalog.Search(typed).FirstOrDefault()?.Code;
+        if (code is null)
         {
             return;
         }
+
+        if (code == store.Load().Currency && OtherCurrencyBox.Text == code)
+        {
+            return;
+        }
+
+        OtherCurrencyBox.Text = code;
 
         filling = true;
         try

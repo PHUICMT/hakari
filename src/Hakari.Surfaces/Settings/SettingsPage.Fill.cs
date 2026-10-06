@@ -335,6 +335,8 @@ public sealed partial class SettingsPage
         }
 
         OtherCurrencyBox.Text = isCommon ? string.Empty : currency;
+        var entry = CurrencyCatalog.Find(currency);
+        CurrencyName.Text = entry is null ? string.Empty : $"{entry.Name} · {entry.Symbol}";
     }
 
     private void FillAbout()
