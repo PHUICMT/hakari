@@ -171,18 +171,7 @@ public sealed partial class SettingsPage
 
         var target = layoutTarget;
         var updated = store.Update(current =>
-        {
-            if (target == SharedLayout)
-            {
-                return current with { Widget = change(current.Widget) };
-            }
-
-            var layouts = new Dictionary<string, WidgetLayout>(current.AccountLayouts)
-            {
-                [target] = change(current.LayoutOf(target)),
-            };
-            return current with { AccountLayouts = layouts };
-        });
+            WithEdited(current, target, change(EditedLayout(current, target))));
         layoutEditor?.ShowTargets(LayoutTargetsIfShown(updated), layoutTarget);
         ShowPreview(updated);
     }
@@ -193,20 +182,24 @@ public sealed partial class SettingsPage
         var now = DateTimeOffset.Now;
         previewFacts ??= WidgetFactsLoader.Load(now);
         var facts = previewFacts with { Nicknames = settings.AccountNicknames };
-        var panels = WidgetPanels.Compose(
-            settings.AccountsMode,
-            settings.Widget,
-            settings.LayoutOf,
-            facts,
-            now,
-            settings.TurnLength);
-
+        var panels = Composed(settings, facts, now);
         PreviewStrips.Show(panels);
 
         var layout = EditedLayout(settings);
 
         var (editorPanels, focused) = EditorPanels(settings, facts, panels, now);
-        layoutEditor?.Refresh(layout, editorPanels, facts, settings.AccountsMode, focused);
+        var target = layoutTarget;
+        layoutEditor?.Refresh(
+            layout,
+            editorPanels,
+            facts,
+            settings.AccountsMode,
+            sample =>
+            {
+                var edited = WithEdited(settings, target, sample);
+                return EditorPanels(edited, facts, Composed(edited, facts, now), now).Panels;
+            },
+            focused);
         UpdateTurnTimer(settings, facts);
     }
 
@@ -283,5 +276,41 @@ public sealed partial class SettingsPage
         }
 
         return (panels, index < panels.Count ? index : -1);
+    }
+
+    private static IReadOnlyList<ComposedWidget> Composed(
+        HakariSettings settings,
+        WidgetFacts facts,
+        DateTimeOffset now) =>
+        WidgetPanels.Compose(
+            settings.AccountsMode,
+            settings.Widget,
+            settings.LayoutOf,
+            facts,
+            now,
+            settings.TurnLength);
+
+    private static WidgetLayout EditedLayout(HakariSettings settings, string target) =>
+        target == SharedLayout ? settings.Widget : settings.LayoutOf(target);
+
+    /// <summary>
+    /// The settings with the edited layout replaced: everyone's, or only the chosen
+    /// account's, which then has a layout of its own.
+    /// </summary>
+    private static HakariSettings WithEdited(
+        HakariSettings settings,
+        string target,
+        WidgetLayout layout)
+    {
+        if (target == SharedLayout)
+        {
+            return settings with { Widget = layout };
+        }
+
+        var layouts = new Dictionary<string, WidgetLayout>(settings.AccountLayouts)
+        {
+            [target] = layout,
+        };
+        return settings with { AccountLayouts = layouts };
     }
 }

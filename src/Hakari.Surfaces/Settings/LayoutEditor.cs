@@ -38,8 +38,8 @@ internal sealed partial class LayoutEditor : StackPanel
         Orientation = Orientation.Horizontal,
         Spacing = 2,
     };
-    private (WidgetLayout Layout, IReadOnlyList<ComposedWidget> Panels, MultiAccountMode Mode,
-        int Focused)? shown;
+    private (WidgetLayout Layout, IReadOnlyList<ComposedWidget> Panels,
+        Func<WidgetLayout, IReadOnlyList<ComposedWidget>> ComposeWith, int Focused)? shown;
     private WidgetTemplate? hoveredTemplate;
     private ScrollViewer formatSampleRow = new();
     private readonly List<TemplateCard> templateCards = [];
@@ -109,12 +109,17 @@ internal sealed partial class LayoutEditor : StackPanel
     private static WidgetLayout WithSlots(WidgetLayout layout) =>
         layout.UsesSlots ? layout : WidgetTemplates.Apply(layout, WidgetTemplate.TwoLines);
     /// <summary>Shows the layout's state in every control, without changing it.</summary>
+    /// <param name="composeWith">
+    /// The widget as it would be with the edited layout swapped for another, leaving any
+    /// account that is not being edited as it is; for samples.
+    /// </param>
     /// <param name="focusedPanel">The block of the account being edited, the rest dimmed.</param>
     public void Refresh(
         WidgetLayout layout,
         IReadOnlyList<ComposedWidget> panels,
         WidgetFacts facts,
         MultiAccountMode mode,
+        Func<WidgetLayout, IReadOnlyList<ComposedWidget>> composeWith,
         int focusedPanel = -1)
     {
         layout = WithSlots(layout);
@@ -122,7 +127,7 @@ internal sealed partial class LayoutEditor : StackPanel
         previewFacts = facts;
         try
         {
-            shown = (layout, panels, mode, focusedPanel);
+            shown = (layout, panels, composeWith, focusedPanel);
             if (hoveredTemplate is { } hovered)
             {
                 ShowTemplateSample(hovered);
@@ -445,8 +450,7 @@ internal sealed partial class LayoutEditor : StackPanel
         }
 
         var sample = WidgetTemplates.Apply(current.Layout, template);
-        strips.Show(WidgetPanels.Compose(
-            current.Mode, sample, _ => sample, previewFacts, DateTimeOffset.Now));
+        strips.Show(current.ComposeWith(sample), current.Focused);
     }
 
     /// <summary>What the format being typed gives, before it is applied.</summary>
@@ -478,8 +482,7 @@ internal sealed partial class LayoutEditor : StackPanel
         }
 
         var sample = current.Layout with { CustomFormat = text };
-        var panels = WidgetPanels.Compose(
-            current.Mode, sample, _ => sample, previewFacts, DateTimeOffset.Now);
+        var panels = current.ComposeWith(sample);
         while (formatSample.Children.Count > panels.Count)
         {
             formatSample.Children.RemoveAt(formatSample.Children.Count - 1);
