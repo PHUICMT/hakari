@@ -7,6 +7,7 @@
   "widget.pausedUntil": "until {0}",
   "widget.pausedManual": "resume from the menu",
   "widget.stale": "updated {0}",
+  "widget.error": "Could not read usage; trying again soon",
   "widget.today": "{0} today",
   "widget.month": "month {0}",
   "widget.perHour": "{0}/h",

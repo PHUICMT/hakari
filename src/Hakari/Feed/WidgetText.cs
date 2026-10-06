@@ -30,6 +30,13 @@ internal static class WidgetText
         WidgetTone.Muted,
         Ring: new WidgetRing(progress.Fraction));
 
+    /// <summary>Something broke while reading; the feed tries again shortly.</summary>
+    public static WidgetContent Error() => new(
+        ProductName,
+        Texts.Get("widget.error"),
+        WidgetTone.Critical,
+        WidgetTone.Muted);
+
     /// <summary>A PAUSED pill, and until when, or how to resume.</summary>
     public static WidgetContent Paused(HakariSettings settings) => new(
         string.Empty,
@@ -52,6 +59,7 @@ internal static class WidgetText
     /// <summary>Loading, indexing and paused speak in the muted tone on both lines.</summary>
     public static bool IsLive(WidgetContent content) =>
         content.Pill is null
+        && content.PrimaryText != ProductName
         && !(content.PrimaryTone == WidgetTone.Muted && content.SecondaryTone == WidgetTone.Muted);
 
     /// <summary>The database part: run on new data or every half minute, not every turn.</summary>

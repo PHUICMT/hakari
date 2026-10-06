@@ -132,9 +132,22 @@ internal sealed class UsageFeed : IDisposable
                 continue;
             }
 
-            RunUntilSettingsChange(store, pricing, settings);
+            try
+            {
+                RunUntilSettingsChange(store, pricing, settings);
+            }
+            catch (Exception exception) when (exception is not OperationCanceledException)
+            {
+                // The widget says something is wrong rather than showing old numbers as new,
+                // and the feed starts over after a pause.
+                ErrorLog.Write(exception);
+                Updated?.Invoke(WidgetText.Error());
+                settingsSignal.WaitOne(ErrorRetryDelay);
+            }
         }
     }
+
+    private static readonly TimeSpan ErrorRetryDelay = TimeSpan.FromSeconds(30);
 
     private void RunUntilSettingsChange(
         IndexStore store,

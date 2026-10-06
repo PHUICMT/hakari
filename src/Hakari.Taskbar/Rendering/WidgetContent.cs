@@ -22,6 +22,20 @@ public sealed record WidgetContent(
     WidgetBar? SecondaryBar = null,
     string? Pill = null)
 {
+    /// <summary>
+    /// What still fits when the taskbar has little room: the first block's ring and its top
+    /// line only, like the minimal template.
+    /// </summary>
+    public WidgetContent Compact() => this with
+    {
+        SecondaryText = string.Empty,
+        MorePanels = null,
+        Spark = null,
+        PrimaryBar = null,
+        SecondaryBar = null,
+        TurnCount = 0,
+    };
+
     public IReadOnlyList<WidgetContent> Panels =>
         MorePanels is { Count: > 0 } more ? [this with { MorePanels = null }, .. more] : [this];
 

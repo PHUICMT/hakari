@@ -317,6 +317,11 @@ public sealed class TaskbarWidgetHost : IDisposable
         var overlayHidden = options.Mode == AttachMode.TopMostOverlay
             && FullScreenDetector.IsSomethingFullScreen();
         var target = WidgetPlacement.LeftOfNotificationArea(taskbar, widget.RenderedSize);
+        if (!overlayHidden && target is null && TryCompact(widget, taskbar))
+        {
+            target = WidgetPlacement.LeftOfNotificationArea(taskbar, widget.RenderedSize);
+        }
+
         if (overlayHidden || target is not { } screenBounds)
         {
             Diagnostics.Collisions += overlayHidden ? 0 : 1;
@@ -328,6 +333,27 @@ public sealed class TaskbarWidgetHost : IDisposable
         {
             Diagnostics.Moves++;
         }
+    }
+
+    /// <summary>
+    /// No room for the full widget: it shrinks to its first block's ring and top line, as the
+    /// minimal template does, before giving up and hiding. The next content tries full again.
+    /// </summary>
+    private bool TryCompact(WidgetWindow widget, TaskbarInfo taskbar)
+    {
+        var state = states[widget];
+        if (state.IsCompact)
+        {
+            return false;
+        }
+
+        state.IsCompact = true;
+        state.Animation.ChangeContent(
+            content.Compact(),
+            Stopwatch.GetTimestamp(),
+            MotionTokens.For(MotionPreference.Off));
+        RenderFrame(widget, taskbar, state);
+        return true;
     }
 
     private void RunPendingActions()
@@ -363,6 +389,7 @@ public sealed class TaskbarWidgetHost : IDisposable
         var now = Stopwatch.GetTimestamp();
         foreach (var state in states.Values)
         {
+            state.IsCompact = false;
             state.Animation.ChangeContent(content, now, motion);
         }
 

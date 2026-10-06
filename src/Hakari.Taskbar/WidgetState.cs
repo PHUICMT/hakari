@@ -12,4 +12,7 @@ internal sealed class WidgetState(WidgetContent initialContent)
     public WidgetAnimation Animation { get; } = new(initialContent);
 
     public WidgetPalette Palette { get; set; } = WidgetPalette.DarkTaskbar;
+
+    /// <summary>Showing the compact form because the full one had no room on its taskbar.</summary>
+    public bool IsCompact { get; set; }
 }

@@ -7,6 +7,7 @@
   "widget.pausedUntil": "จนถึง {0}",
   "widget.pausedManual": "เปิดต่อจากเมนู",
   "widget.stale": "อัปเดต {0}",
+  "widget.error": "อ่านข้อมูลไม่ได้ จะลองใหม่เร็วๆ นี้",
   "widget.today": "{0} วันนี้",
   "widget.month": "เดือนนี้ {0}",
   "widget.perHour": "{0}/ชม.",
