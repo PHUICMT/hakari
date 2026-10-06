@@ -994,6 +994,17 @@ td .model { font-family: var(--font-mono); font-size: 12px; }
   inset: 0 auto 0 0;
   border-right: 2px solid var(--ink);
 }
+.account-card.pinned { display: flex; flex-direction: column; }
+.account-card.pinned .burn { margin-top: auto; }
+.limit-quiet { display: flex; justify-content: space-between; font-size: 12.5px; color: var(--ink-faint); }
+.summary-strip { display: flex; justify-content: space-between; align-items: center; gap: var(--space-4); flex-wrap: wrap; }
+.summary-figures { display: flex; gap: var(--space-5); flex-wrap: wrap; }
+.summary-figure { display: grid; gap: 2px; }
+.summary-figure span { font-size: 12px; color: var(--ink-faint); }
+.summary-figure b { font-size: 22px; font-weight: 600; font-family: var(--font-display); }
+.roi-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); }
+.roi-stack { display: grid; gap: 10px; }
+@media (max-width: 720px) { .roi-cards { grid-template-columns: minmax(0, 1fr); } }
 
 /* ---------- Settings ---------- */
 .settings-layout { display: grid; gap: var(--space-4); }
@@ -2306,7 +2317,8 @@ td .model { font-family: var(--font-mono); font-size: 12px; }
         <h2>Dashboard</h2>
         <p>A NavigationView window. Every page shares the same filter bar (period, account, source,
           model) so a question asked on one page carries to the next. Click the nav items to see each
-          page.</p>
+          page. Each page shows its own skeleton (the shape of that page, bones pulsing in a wave)
+          while its numbers load, and charts show a readout card on hover.</p>
       </div>
       <div class="window">
         <div class="titlebar">
@@ -2353,7 +2365,7 @@ td .model { font-family: var(--font-mono); font-size: 12px; }
                 <div class="kpis">
                   <div class="kpi"><span class="kpi-label">Cost · 30 days</span><span class="kpi-value money">$2,333.92</span><span class="kpi-foot"><span class="up">▲ 12%</span> vs previous 30 days</span></div>
                   <div class="kpi"><span class="kpi-label">Responses</span><span class="kpi-value">28,905</span><span class="kpi-foot">1,314 per day</span></div>
-                  <div class="kpi"><span class="kpi-label">Cache hit rate</span><span class="kpi-value">98%</span><span class="kpi-foot">4.12B read · 0.08B written</span></div>
+                  <div class="kpi"><span class="kpi-label">Cache hit rate</span><span class="kpi-value">98%</span><span class="kpi-foot">saved $1,284 · 4.12B read</span></div>
                   <div class="kpi"><span class="kpi-label">Output tokens</span><span class="kpi-value">7.2M</span><span class="kpi-foot">Thinking 41% of output</span></div>
                 </div>
                 <div class="panel">
@@ -2450,8 +2462,8 @@ td .model { font-family: var(--font-mono); font-size: 12px; }
                 <div class="kpis">
                   <div class="kpi"><span class="kpi-label">Main thread</span><span class="kpi-value">$2,710</span><span class="kpi-foot">82% of cost</span></div>
                   <div class="kpi"><span class="kpi-label">Subagents</span><span class="kpi-value">$613</span><span class="kpi-foot">18% of cost</span></div>
-                  <div class="kpi"><span class="kpi-label">Subagent runs</span><span class="kpi-value">1,284</span><span class="kpi-foot">$0.48 each</span></div>
-                  <div class="kpi"><span class="kpi-label">Largest run</span><span class="kpi-value">$14.20</span><span class="kpi-foot">Explore · Oct 4</span></div>
+                  <div class="kpi"><span class="kpi-label">Subagent responses</span><span class="kpi-value">15,320</span><span class="kpi-foot">$0.04 each</span></div>
+                  <div class="kpi"><span class="kpi-label">Largest subagent session</span><span class="kpi-value">$14.20</span><span class="kpi-foot">Oct 4</span></div>
                 </div>
               </div>
             </div>
@@ -2459,25 +2471,41 @@ td .model { font-family: var(--font-mono); font-size: 12px; }
             <!-- Accounts -->
             <div class="view" data-view-panel="accounts" hidden>
               <div style="display: grid; gap: var(--space-4)">
+                <div class="panel summary-strip">
+                  <div><div class="account-name">All accounts</div><div class="account-sub">3 accounts · 2 sources</div></div>
+                  <div class="summary-figures">
+                    <div class="summary-figure"><span>All time</span><b>$8,412.90</b></div>
+                    <div class="summary-figure"><span>30 days</span><b>$2,333.92</b></div>
+                    <div class="summary-figure"><span>Today</span><b>$142.18</b></div>
+                  </div>
+                </div>
                 <div class="account-cards">
-                  <div class="panel account-card">
-                    <div class="account-top"><div><div class="account-name">Work</div><div class="account-sub">work@example.com · Team</div></div><span class="badge">Limits on</span></div>
+                  <div class="panel account-card pinned">
+                    <div class="account-top"><div><div class="account-name">Work</div><div class="account-sub">work@example.com · Team</div></div><span class="badge">Live</span></div>
                     <div class="limit"><div class="limit-top"><span class="limit-name">5-hour</span><span class="limit-value">62%</span></div><div class="meter"><i style="width: 62%"></i></div></div>
                     <div class="limit"><div class="limit-top"><span class="limit-name">Weekly</span><span class="limit-value">41%</span></div><div class="meter"><i style="width: 41%"></i></div></div>
                     <div class="burn"><span>30 days</span><b>$2,208.77</b></div>
                   </div>
-                  <div class="panel account-card">
-                    <div class="account-top"><div><div class="account-name">Home</div><div class="account-sub">home@example.com · Max 20x</div></div><span class="badge neutral">Estimate</span></div>
+                  <div class="panel account-card pinned">
+                    <div class="account-top"><div><div class="account-name">Home</div><div class="account-sub">home@example.com · Max 20x</div></div><span class="badge neutral">Last known · 1 h ago</span></div>
                     <div class="limit"><div class="limit-top"><span class="limit-name">5-hour</span><span class="limit-value">≈ 18%</span></div><div class="meter"><i style="width: 18%; opacity: .55"></i></div></div>
                     <div class="limit"><div class="limit-top"><span class="limit-name">Weekly</span><span class="limit-value">≈ 9%</span></div><div class="meter"><i style="width: 9%; opacity: .55"></i></div></div>
                     <div class="burn"><span>30 days</span><b>$125.15</b></div>
                   </div>
-                  <div class="panel account-card">
-                    <div class="account-top"><div><div class="account-name">All accounts</div><div class="account-sub">2 accounts · 3 sources</div></div><span class="badge ok">In sync</span></div>
-                    <div class="burn"><span>All time</span><b style="font-size: 20px">$8,412.90</b></div>
-                    <div class="burn"><span>30 days</span><b>$2,333.92</b></div>
-                    <div class="burn"><span>Today</span><b>$142.18</b></div>
+                  <div class="panel account-card pinned">
+                    <div class="account-top"><div><div class="account-name">Spare</div><div class="account-sub">spare@example.com · Pro</div></div><span class="badge warn">Sign in again · 2 h ago</span></div>
+                    <div class="limit-quiet"><span>5-hour</span><span>0.0%</span></div>
+                    <div class="limit"><div class="limit-top"><span class="limit-name">Weekly</span><span class="limit-value">≈ 4%</span></div><div class="meter"><i style="width: 4%; opacity: .55"></i></div></div>
+                    <div class="burn"><span>30 days</span><b>$0.00</b></div>
                   </div>
+                </div>
+                <div class="panel">
+                  <div class="panel-head"><h4>Before Hakari was installed</h4><span>Sep 12 – Oct 2</span></div>
+                  <div class="summary-figures">
+                    <div class="summary-figure"><span>30 days</span><b>$0.00</b></div>
+                    <div class="summary-figure"><span>All time</span><b>$1,946.40</b></div>
+                  </div>
+                  <p class="note">This is usage already in the logs when Hakari first ran. Claude Code's logs do not say which account was signed in, so it is not given to any account. Each account counts from when Hakari first saw it, and after a switch the new account counts from that moment. Totals include it.</p>
                 </div>
                 <div class="panel">
                   <div class="panel-head"><h4>Sources</h4><span>Where usage is read from</span></div>
@@ -2486,8 +2514,7 @@ td .model { font-family: var(--font-mono); font-size: 12px; }
                       <thead><tr><th>Source</th><th>Account</th><th>Status</th><th class="num">Files</th><th class="num">Size</th><th class="num">All time</th></tr></thead>
                       <tbody>
                         <tr><td>Windows · C:\Users\alex\.claude</td><td>Work</td><td><span class="badge ok">Live</span></td><td class="num">812</td><td class="num">1.4 GB</td><td class="num">$6,035.12</td></tr>
-                        <tr><td>WSL Ubuntu-24.04 · /home/alex/.claude</td><td>Work</td><td><span class="badge ok">Running</span></td><td class="num">96</td><td class="num">380 MB</td><td class="num">$2,377.78</td></tr>
-                        <tr><td>MacBook · shared folder</td><td>Home</td><td><span class="badge neutral">Synced 2 h ago</span></td><td class="num">—</td><td class="num">12 KB</td><td class="num">sample</td></tr>
+                        <tr><td>WSL Ubuntu-24.04 · /home/alex/.claude</td><td>Home</td><td><span class="badge ok">Running</span></td><td class="num">96</td><td class="num">380 MB</td><td class="num">$2,377.78</td></tr>
                       </tbody>
                     </table>
                   </div>
@@ -2513,19 +2540,61 @@ td .model { font-family: var(--font-mono); font-size: 12px; }
                     <span><i style="background: var(--chart-4)"></i>other</span>
                   </div>
                 </div>
+                <div class="panel">
+                  <div class="panel-head"><h4>Limits over time</h4><span>Work</span></div>
+                  <svg class="chart" id="limits-chart" viewBox="0 0 560 160" role="img" aria-label="5-hour and weekly limit usage over time"></svg>
+                  <div class="legend">
+                    <span><i style="background: var(--chart-1)"></i>5h</span>
+                    <span><i style="background: var(--chart-2)"></i>Week</span>
+                  </div>
+                </div>
               </div>
             </div>
 
             <!-- ROI -->
             <div class="view" data-view-panel="roi" hidden>
-              <div class="panel">
-                <div class="panel-head"><h4>Plan value</h4><span>API-equivalent cost compared with what the plan costs per month</span></div>
-                <div style="display: grid; gap: 10px">
-                  <div class="roi-row"><span>Work · Team (Oct)</span><div class="roi-track"><i style="width: 100%"></i><b style="width: 1.9%"></b></div><span class="num"><b>37×</b> $2,209</span></div>
-                  <div class="roi-row"><span>Work · Team (Sep)</span><div class="roi-track"><i style="width: 88%"></i><b style="width: 1.9%"></b></div><span class="num"><b>33×</b> $1,950</span></div>
-                  <div class="roi-row"><span>Home · Max 20x</span><div class="roi-track"><i style="width: 4%"></i><b style="width: 6.2%"></b></div><span class="num"><b>0.6×</b> $125</span></div>
+              <div style="display: grid; gap: var(--space-4)">
+                <div class="kpis">
+                  <div class="kpi"><span class="kpi-label">Per-token cost · October</span><span class="kpi-value money">$2,334</span><span class="kpi-foot"><span class="up">▲ 12%</span> vs last month</span></div>
+                  <div class="kpi"><span class="kpi-label">Plans paid</span><span class="kpi-value">$230</span><span class="kpi-foot">2 plans</span></div>
+                  <div class="kpi"><span class="kpi-label">Saved against per-token</span><span class="kpi-value">+$2,104</span><span class="kpi-foot">10× overall</span></div>
+                  <div class="kpi"><span class="kpi-label">Projected this month</span><span class="kpi-value">$3,010</span><span class="kpi-foot">21 days left</span></div>
                 </div>
-                <p class="note">The dark tick is the plan price. A value under 1× means the plan cost more than the same usage would on the API. Plan prices are editable per account.</p>
+                <div class="panel">
+                  <div class="panel-head"><h4>All accounts together</h4><span class="badge ok">Worth it</span></div>
+                  <div class="account-sub">2 plans · $230 a month</div>
+                  <div class="roi-stack">
+                    <div class="roi-row"><span>Oct</span><div class="roi-track"><i style="width: 100%"></i><b style="width: 9.9%"></b></div><span class="num"><b>10×</b> $2,334</span></div>
+                    <div class="roi-row"><span>Sep</span><div class="roi-track"><i style="width: 84%"></i><b style="width: 9.9%"></b></div><span class="num"><b>8.5×</b> $1,960</span></div>
+                    <div class="roi-row"><span>Aug</span><div class="roi-track"><i style="width: 62%"></i><b style="width: 9.9%"></b></div><span class="num"><b>6.3×</b> $1,450</span></div>
+                  </div>
+                  <p class="note">Paid for itself on Oct 2</p>
+                </div>
+                <div class="roi-cards">
+                  <div class="panel">
+                    <div class="panel-head"><h4>Work · Team</h4><span class="badge ok">Worth it</span></div>
+                    <div class="roi-stack">
+                      <div class="roi-row"><span>Oct</span><div class="roi-track"><i style="width: 100%"></i><b style="width: 1.9%"></b></div><span class="num"><b>37×</b> $2,209</span></div>
+                      <div class="roi-row"><span>Sep</span><div class="roi-track"><i style="width: 88%"></i><b style="width: 1.9%"></b></div><span class="num"><b>33×</b> $1,950</span></div>
+                    </div>
+                  </div>
+                  <div class="panel">
+                    <div class="panel-head"><h4>Home · Max 20x</h4><span class="badge warn">Not paying off</span></div>
+                    <div class="roi-stack">
+                      <div class="roi-row"><span>Oct</span><div class="roi-track"><i style="width: 4%"></i><b style="width: 6.2%"></b></div><span class="num"><b>0.6×</b> $125</span></div>
+                      <div class="roi-row"><span>Sep</span><div class="roi-track"><i style="width: 3%"></i><b style="width: 6.2%"></b></div><span class="num"><b>0.4×</b> $84</span></div>
+                    </div>
+                    <p class="note">At this pace it will not pay for itself this month.</p>
+                  </div>
+                </div>
+                <div class="panel">
+                  <div class="panel-head"><h4>Before Hakari was installed</h4><span>Not assigned to any account</span></div>
+                  <div class="roi-stack">
+                    <div class="roi-row"><span>Oct</span><div class="roi-track"><i style="width: 12%"></i></div><span class="num">$310</span></div>
+                    <div class="roi-row"><span>Sep</span><div class="roi-track"><i style="width: 58%"></i></div><span class="num">$1,636</span></div>
+                  </div>
+                </div>
+                <p class="note">The dark tick is the plan's public monthly price. A value under 1× means the plan cost more than the same usage would have per token. Usage from before Hakari was installed belongs to no account, so an account can look less worthwhile than it really was. The card for all accounts together counts everything against all the plans, with the plans as they are now.</p>
               </div>
             </div>
 
@@ -2578,6 +2647,8 @@ td .model { font-family: var(--font-mono); font-size: 12px; }
             <div class="setting-control"><div class="segmented" role="group" aria-label="WSL distributions"><button type="button" aria-pressed="false">Off</button><button type="button" aria-pressed="true">Running only</button><button type="button" aria-pressed="false">All</button></div></div></div>
           <div class="setting-row"><svg><use href="#i-folder"/></svg><div><div class="setting-title">Extra config folders</div><div class="setting-desc">For a config folder somewhere Hakari doesn't look on its own</div></div>
             <div class="setting-control"><button class="btn" type="button">Add folder</button></div></div>
+          <div class="setting-row"><svg><use href="#i-list"/></svg><div><div class="setting-title">Session titles</div><div class="setting-desc">Show the short title Claude Code gives each session. Only the title lines are read, never prompts or replies. Turning it on or off reads your logs again.</div></div>
+            <button class="toggle" type="button" role="switch" aria-checked="false" aria-label="Session titles"></button></div>
           <div class="setting-row"><svg><use href="#i-taskbar"/></svg><div><div class="setting-title">Taskbar displays</div><div class="setting-desc">Where the widget is shown</div></div>
             <div class="setting-control"><div class="segmented" role="group" aria-label="Taskbar displays" id="settings-displays"><button type="button" aria-pressed="false" data-displays="main">Main</button><button type="button" aria-pressed="false" data-displays="all">All</button><button type="button" aria-pressed="true" data-displays="choose">Choose</button></div></div></div>
           <div class="setting-row nested" data-display-choice><svg><use href="#i-taskbar"/></svg><div><div class="setting-title">DELL U2720Q · Main display</div><div class="setting-desc">3840 × 2160 · 150%</div></div><button class="toggle" type="button" role="switch" aria-checked="true" aria-label="Show on DELL U2720Q"></button></div>
@@ -2586,27 +2657,27 @@ td .model { font-family: var(--font-mono); font-size: 12px; }
 
         <div class="sub-head"><h3>Accounts</h3></div>
         <div class="setting-card">
-          <div class="setting-row"><svg><use href="#i-list"/></svg><div><div class="setting-title">Order</div><div class="setting-desc">On the taskbar and in the flyout. Moving an account switches to My order.</div></div>
+          <div class="setting-row"><svg><use href="#i-list"/></svg><div><div class="setting-title">Order</div><div class="setting-desc">On the taskbar and in the flyout. Drag a row by its grip to reorder; moving an account switches to My order.</div></div>
             <div class="setting-control"><div class="segmented" role="group" aria-label="Account order" id="settings-order"><button type="button" aria-pressed="true" data-order="pressing">Most pressing first</button><button type="button" aria-pressed="false" data-order="mine">My order</button></div></div></div>
-          <div class="setting-row account-row" data-account="work"><svg><use href="#i-user"/></svg><div><div class="setting-title">work@example.com</div><div class="setting-desc">Team · Example Co</div></div>
+          <div class="setting-row account-row" data-account="work"><span class="grip" aria-hidden="true" title="Drag to reorder"><svg><use href="#i-grip"/></svg></span><div><div class="setting-title">work@example.com</div><div class="setting-desc">Team · Example Co</div></div>
             <div class="setting-control"><input class="input compact is-rest" value="Work" aria-label="Nickname for work@example.com" placeholder="Nickname" data-nickname>
-              <button class="btn subtle icon icon-small" type="button" data-move="up" aria-label="Move work@example.com up"><svg><use href="#i-arrow-up"/></svg></button>
-              <button class="btn subtle icon icon-small" type="button" data-move="down" aria-label="Move work@example.com down"><svg><use href="#i-arrow-down"/></svg></button>
+              <input class="input compact is-rest" style="width: 64px" inputmode="decimal" placeholder="100" title="What this account pays per month in US dollars; empty uses the list price" aria-label="What this account pays per month in US dollars; empty uses the list price" data-plan-price>
               <button class="toggle" type="button" role="switch" aria-checked="true" aria-label="Show work@example.com" data-show-account></button></div></div>
-          <div class="setting-row account-row" data-account="home"><svg><use href="#i-user"/></svg><div><div class="setting-title">home@example.com</div><div class="setting-desc">Max 20x · Personal</div></div>
+          <div class="setting-row account-row" data-account="home"><span class="grip" aria-hidden="true" title="Drag to reorder"><svg><use href="#i-grip"/></svg></span><div><div class="setting-title">home@example.com</div><div class="setting-desc">Max 20x · Personal</div></div>
             <div class="setting-control"><input class="input compact is-rest" value="Home" aria-label="Nickname for home@example.com" placeholder="Nickname" data-nickname>
-              <button class="btn subtle icon icon-small" type="button" data-move="up" aria-label="Move home@example.com up"><svg><use href="#i-arrow-up"/></svg></button>
-              <button class="btn subtle icon icon-small" type="button" data-move="down" aria-label="Move home@example.com down"><svg><use href="#i-arrow-down"/></svg></button>
+              <input class="input compact is-rest" style="width: 64px" inputmode="decimal" placeholder="100" title="What this account pays per month in US dollars; empty uses the list price" aria-label="What this account pays per month in US dollars; empty uses the list price" data-plan-price>
               <button class="toggle" type="button" role="switch" aria-checked="true" aria-label="Show home@example.com" data-show-account></button></div></div>
           <div class="setting-row"><svg><use href="#i-refresh"/></svg><div><div class="setting-title">Renew sign-in automatically</div><div class="setting-desc">When an account's sign-in expires, renew it in the background so its limits keep updating.</div></div>
             <button class="toggle" type="button" role="switch" aria-checked="true" aria-label="Renew sign-in automatically"></button></div>
         </div>
-        <p class="note">Accounts are found automatically: any signed-in <code>.claude*</code> folder in the home folder, <code>CLAUDE_CONFIG_DIR</code>, and running WSL distributions. There is no add-account button; sign in with Claude Code and the account appears. The nickname is optional; without one, the email is shown. Each account row has its nickname, ↑ / ↓ to set My order, and a show / hide switch; a hidden account leaves the taskbar and the flyout. An account that signs out keeps its last known limits, shown with "≈", until you hide it. The preview in the Taskbar card follows these rows.</p>
+        <p class="note">Accounts are found automatically: any signed-in <code>.claude*</code> folder in the home folder, <code>CLAUDE_CONFIG_DIR</code>, and running WSL distributions. There is no add-account button; sign in with Claude Code and the account appears. The nickname is optional; without one, the email is shown. Each account row has a drag grip to set My order (the preview does not implement dragging), its nickname, an optional plan price, and a show / hide switch; a hidden account leaves the taskbar and the flyout. An account that signs out keeps its last known limits, shown with "≈", until you hide it. The preview in the Taskbar card follows these rows.</p>
 
         <div class="sub-head"><h3>General</h3></div>
         <div class="setting-card">
           <div class="setting-row"><svg><use href="#i-power"/></svg><div><div class="setting-title">Start with Windows</div></div>
             <button class="toggle" type="button" role="switch" aria-checked="true" aria-label="Start with Windows"></button></div>
+          <div class="setting-row"><svg><use href="#i-bell"/></svg><div><div class="setting-title">Limit notifications</div><div class="setting-desc">Tell when a limit passes its warning or critical level, and when a well-used one resets.</div></div>
+            <button class="toggle" type="button" role="switch" aria-checked="true" aria-label="Limit notifications"></button></div>
           <div class="setting-row"><svg><use href="#i-globe"/></svg><div><div class="setting-title">Language</div><div class="setting-desc">Each language is named in itself</div></div>
             <div class="setting-control"><div class="segmented" role="group" aria-label="Language"><button type="button" aria-pressed="true">Windows</button><button type="button" aria-pressed="false" lang="en">English</button><button type="button" aria-pressed="false" lang="th" class="lang-option">ไทย</button></div></div></div>
           <div class="setting-row"><svg><use href="#i-flow"/></svg><div><div class="setting-title">Animations</div><div class="setting-desc">Windows follows the system animation effects. Off uses the least power.</div></div>
@@ -2630,7 +2701,7 @@ td .model { font-family: var(--font-mono); font-size: 12px; }
       </div>
 
       <div class="sheet">
-        <div class="sub-head"><h3>Planned · taskbar layout editor</h3><p>Not in the current window. Pick a template, then reorder, swap or restyle slots. Changes preview instantly and apply on Save.</p></div>
+        <div class="sub-head"><h3>Taskbar layout</h3><p>Pick a template, then reorder, swap or restyle slots. Changes preview instantly and apply on Save.</p></div>
         <div class="editor">
           <div class="template-picker" id="template-picker"></div>
           <div style="display: grid; gap: var(--space-3); min-width: 0">
@@ -2641,6 +2712,7 @@ td .model { font-family: var(--font-mono); font-size: 12px; }
               <div class="slot-item"><span class="grip"><svg><use href="#i-grip"/></svg></span><b class="hide-narrow">Slot 3</b><span>Burn rate</span><span class="select hide-narrow">Sparkline</span><button class="btn subtle" type="button">Edit</button></div>
               <button class="slot-add" type="button">+ Add slot (max 4)</button>
             </div>
+            <p class="note">Each slot row has a metric dropdown, a style dropdown (Text / Ring / Sparkline) and move up, move down and remove buttons. The layout editor shows a live preview strip at the top.</p>
             <label class="setting-desc" for="format-string">Custom format (overrides the template)</label>
             <input class="input mono" id="format-string" value="{cost.today:$0.00} · {limit.5h:0%} ↺{limit.5h.reset:h\:mm}">
             <div class="threshold-row">
@@ -3051,14 +3123,14 @@ td .model { font-family: var(--font-mono); font-size: 12px; }
     },
     {
       name: "Accounts",
-      description: "One value per account; wheel or timer cycles.",
+      description: "One value per account, taking turns on a timer.",
       render: function () {
         return '<span class="w-lines"><span class="w-primary">Work 62.4% · Home 18.0%</span><span class="w-secondary faint" style="display: flex; gap: 6px; align-items: center">5-hour limits <span class="w-dots"><i class="on"></i><i></i><i></i></span></span></span>';
       }
     },
     {
       name: "Minimal",
-      description: "Icon and one number. Used when space runs out.",
+      description: "A ring and one number, for when space runs out.",
       render: function () { return '<span class="tone-normal" style="display: flex">' + appIcon + '</span><span class="w-primary">62.4%</span>'; }
     }
   ];
@@ -3076,7 +3148,7 @@ td .model { font-family: var(--font-mono); font-size: 12px; }
     },
     {
       name: "Critical · 95%+",
-      description: "Red tone; the reset is replaced by when it fills.",
+      description: "Red tone; the reset is replaced by when it fills. The ring swells once as it turns critical.",
       render: function () { return ring22(97, "tone-critical") + lines("$181.02 today", "5h 97.1% · full ~13:48", { bottomTone: "tone-critical" }); }
     },
     {
@@ -3101,7 +3173,7 @@ td .model { font-family: var(--font-mono); font-size: 12px; }
     },
     {
       name: "Paused",
-      description: "User paused updates from the menu.",
+      description: "User paused updates from the menu; the widget shows a PAUSED pill and until when.",
       render: function () { return '<span class="w-pill">PAUSED</span><span class="w-secondary faint">until 15:10</span>'; }
     },
     {
@@ -3658,32 +3730,8 @@ td .model { font-family: var(--font-mono); font-size: 12px; }
   });
 
   /* ---------- Settings: account rows (order, nickname, show / hide) ---------- */
-  function syncAccountMoves() {
-    var rows = document.querySelectorAll(".account-row");
-    rows.forEach(function (row, index) {
-      row.querySelector('[data-move="up"]').disabled = index === 0;
-      row.querySelector('[data-move="down"]').disabled = index === rows.length - 1;
-    });
-  }
-  function afterAccountMove(row, direction) {
-    chooseSegment("settings-order", "order", "mine");
-    syncAccountMoves();
-    renderSettingsPreview();
-    var sameButton = row.querySelector('[data-move="' + direction + '"]');
-    var otherButton = row.querySelector('[data-move="' + (direction === "up" ? "down" : "up") + '"]');
-    (sameButton.disabled ? otherButton : sameButton).focus();
-  }
+  /* Reordering is by dragging the grip in the app; this preview does not implement dragging. */
   document.querySelectorAll(".account-row").forEach(function (row) {
-    row.querySelector('[data-move="up"]').addEventListener("click", function () {
-      var previous = row.previousElementSibling;
-      if (previous && previous.classList.contains("account-row")) { row.parentNode.insertBefore(row, previous); }
-      afterAccountMove(row, "up");
-    });
-    row.querySelector('[data-move="down"]').addEventListener("click", function () {
-      var next = row.nextElementSibling;
-      if (next && next.classList.contains("account-row")) { row.parentNode.insertBefore(next, row); }
-      afterAccountMove(row, "down");
-    });
     var showToggle = row.querySelector("[data-show-account]");
     showToggle.addEventListener("click", function () {
       row.classList.toggle("is-off", showToggle.getAttribute("aria-checked") !== "true");
@@ -3691,7 +3739,6 @@ td .model { font-family: var(--font-mono); font-size: 12px; }
     });
     row.querySelector("[data-nickname]").addEventListener("input", renderSettingsPreview);
   });
-  syncAccountMoves();
 
   /* ---------- Flyout account cards fold ---------- */
   document.querySelectorAll("[data-fold]").forEach(function (card) {
@@ -4030,6 +4077,47 @@ td .model { font-family: var(--font-mono); font-size: 12px; }
     }
     parts.push('<text x="' + (left + slot / 2) + '" y="' + (height - 5) + '" text-anchor="middle">Sep 6</text>');
     parts.push('<text x="' + (width - slot / 2) + '" y="' + (height - 5) + '" text-anchor="middle">Oct 5</text>');
+    svg.innerHTML = parts.join("");
+  })();
+
+  /* ---------- Limits over time chart ---------- */
+  (function drawLimits() {
+    var svg = document.getElementById("limits-chart");
+    var width = 560, height = 160, left = 36, top = 6, bottom = 20, right = 6;
+    var plotHeight = height - top - bottom;
+    var plotWidth = width - left - right;
+    var readings = 60;
+    var parts = [];
+    [0, 50, 100].forEach(function (tick) {
+      var y = top + plotHeight - (tick / 100) * plotHeight;
+      parts.push('<line class="grid-line" x1="' + left + '" x2="' + (width - right) + '" y1="' + y + '" y2="' + y + '"/>');
+      parts.push('<text x="' + (left - 6) + '" y="' + (y + 3) + '" text-anchor="end">' + tick + '%</text>');
+    });
+    function pointFor(index, percent) {
+      var x = left + (index / (readings - 1)) * plotWidth;
+      var y = top + plotHeight - (percent / 100) * plotHeight;
+      return x.toFixed(1) + "," + y.toFixed(1);
+    }
+    var fiveHour = [];
+    var week = [];
+    for (var index = 0; index < readings; index++) {
+      fiveHour.push(Math.round(8 + 70 * Math.abs(Math.sin(index / 4.5))));
+      week.push(Math.round(((index + 22) % 40) * 2.2 + 6));
+    }
+    function polylines(values, color) {
+      var segments = [[]];
+      values.forEach(function (percent, index) {
+        if (index > 0 && percent < values[index - 1] - 20) { segments.push([]); }
+        segments[segments.length - 1].push(pointFor(index, percent));
+      });
+      return segments.map(function (segment) {
+        return '<polyline fill="none" stroke="var(' + color + ')" stroke-width="2" stroke-linejoin="round" points="' + segment.join(" ") + '"/>';
+      }).join("");
+    }
+    parts.push(polylines(fiveHour, "--chart-1"));
+    parts.push(polylines(week, "--chart-2"));
+    parts.push('<text x="' + left + '" y="' + (height - 5) + '" text-anchor="start">Sep 6</text>');
+    parts.push('<text x="' + (width - right) + '" y="' + (height - 5) + '" text-anchor="end">Oct 5</text>');
     svg.innerHTML = parts.join("");
   })();
 
