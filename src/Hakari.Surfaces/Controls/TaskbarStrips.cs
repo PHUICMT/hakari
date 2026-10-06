@@ -8,8 +8,8 @@ using Microsoft.UI.Xaml.Media;
 namespace Hakari.Surfaces.Controls;
 
 /// <summary>
-/// The widget as it will sit at the right end of a light taskbar and of a dark one. A widget
-/// wider than the strips scrolls sideways.
+/// The widget as it reads on a light taskbar and on a dark one, centered in each strip. A
+/// widget wider than the strips scrolls sideways.
 /// </summary>
 public sealed partial class TaskbarStrips : UserControl
 {
@@ -113,7 +113,7 @@ public sealed partial class TaskbarStrips : UserControl
 
     private static Border Strip(TaskbarPalette palette, StackPanel blocks)
     {
-        blocks.HorizontalAlignment = HorizontalAlignment.Right;
+        blocks.HorizontalAlignment = HorizontalAlignment.Center;
         return new Border
         {
             Height = StripHeight,
