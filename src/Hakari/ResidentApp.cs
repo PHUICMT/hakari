@@ -1,5 +1,6 @@
 using Hakari.Core.Interprocess;
 using Hakari.Core.Localization;
+using Hakari.Core.Presentation.Widget;
 using Hakari.Core.Settings;
 using Hakari.Core.Startup;
 using Hakari.Feed;
@@ -7,6 +8,7 @@ using Hakari.Settings;
 using Hakari.Surfaces;
 using Hakari.Taskbar;
 using Hakari.Taskbar.Motion;
+using Hakari.Taskbar.Rendering;
 using Hakari.Taskbar.Tray;
 using Hakari.Tray;
 
@@ -31,6 +33,11 @@ internal sealed class ResidentApp : IDisposable
     private readonly CancellationTokenSource listening = new();
     private HakariSettings appliedSettings;
     private TrayBadge? lastBadge;
+    private static readonly TimeSpan StaleCheckInterval = TimeSpan.FromMinutes(1);
+    private Timer? staleCheck;
+    private WidgetContent? lastLive;
+    private DateTimeOffset lastHeard = DateTimeOffset.Now;
+    private bool showingStale;
 
     public ResidentApp(SettingsStore settingsStore)
     {
@@ -127,8 +134,17 @@ internal sealed class ResidentApp : IDisposable
     {
         if (startFeed)
         {
-            feed.Updated += content => widgets.PostContent(content);
-            feed.BadgeUpdated += badge => widgets.PostAction(() => ShowBadge(badge));
+            feed.Updated += content => widgets.PostAction(() => ShowContent(content));
+            feed.BadgeUpdated += badge => widgets.PostAction(() =>
+            {
+                Heard();
+                ShowBadge(badge);
+            });
+            staleCheck = new Timer(
+                _ => widgets.PostAction(ShowIfStale),
+                null,
+                StaleCheckInterval,
+                StaleCheckInterval);
             feed.AlertRaised += (title, text, isWarning) => widgets.PostAction(
                 () => trayIcon.ShowBalloon(title, text, isWarning));
             feed.Start();
@@ -137,8 +153,51 @@ internal sealed class ResidentApp : IDisposable
         MessageLoop.Run();
     }
 
+    /// <summary>Runs on the widget thread: every update from the feed shows as it comes.</summary>
+    private void ShowContent(WidgetContent content)
+    {
+        lastHeard = DateTimeOffset.Now;
+        showingStale = false;
+        if (WidgetText.IsLive(content))
+        {
+            lastLive = content;
+        }
+
+        widgets.PostContent(content);
+    }
+
+    /// <summary>
+    /// The feed only posts what changed, so after a stale spell the last value is put back
+    /// here as soon as the feed is heard from again.
+    /// </summary>
+    private void Heard()
+    {
+        lastHeard = DateTimeOffset.Now;
+        if (showingStale && lastLive is { } live)
+        {
+            showingStale = false;
+            widgets.PostContent(live);
+        }
+    }
+
+    /// <summary>Runs on the widget thread each minute; a pause is never stale.</summary>
+    private void ShowIfStale()
+    {
+        var now = DateTimeOffset.Now;
+        if (lastLive is not { } live
+            || appliedSettings.IsPausedAt(DateTimeOffset.UtcNow)
+            || !StaleWidget.IsStale(lastHeard, now))
+        {
+            return;
+        }
+
+        showingStale = true;
+        widgets.PostContent(WidgetText.Stale(live, lastHeard, now));
+    }
+
     public void Dispose()
     {
+        staleCheck?.Dispose();
         listening.Cancel();
         widgetSurfaces.Dispose();
         settingsWatcher.Dispose();

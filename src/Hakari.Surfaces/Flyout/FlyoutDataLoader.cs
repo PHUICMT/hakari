@@ -317,11 +317,5 @@ internal static class FlyoutDataLoader
             IsRecent: now - activity.LastUsage < RecentSourceWindow)),
     ];
 
-    internal static string LastUsedText(TimeSpan age) => age switch
-    {
-        _ when age < TimeSpan.FromMinutes(1) => Texts.Get("age.justNow"),
-        _ when age < TimeSpan.FromHours(1) => Texts.Format("age.minutes", (int)age.TotalMinutes),
-        _ when age < TimeSpan.FromDays(1) => Texts.Format("age.hours", (int)age.TotalHours),
-        _ => Texts.Format("age.days", (int)age.TotalDays),
-    };
+    internal static string LastUsedText(TimeSpan age) => AgeText.Format(age);
 }

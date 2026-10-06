@@ -39,6 +39,21 @@ internal static class WidgetText
         WidgetTone.Muted,
         Pill: Texts.Get("widget.pausedPill"));
 
+    /// <summary>The last value marked with a dot, dimmed, and how long ago it was heard.</summary>
+    public static WidgetContent Stale(
+        WidgetContent last,
+        DateTimeOffset lastHeard,
+        DateTimeOffset now) => new(
+        StaleWidget.Value(last.PrimaryText),
+        StaleWidget.Age(lastHeard, now),
+        WidgetTone.Muted,
+        WidgetTone.Muted);
+
+    /// <summary>Loading, indexing and paused speak in the muted tone on both lines.</summary>
+    public static bool IsLive(WidgetContent content) =>
+        content.Pill is null
+        && !(content.PrimaryTone == WidgetTone.Muted && content.SecondaryTone == WidgetTone.Muted);
+
     /// <summary>The database part: run on new data or every half minute, not every turn.</summary>
     public static WidgetFacts Facts(
         UsageQuery query,
