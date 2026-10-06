@@ -191,6 +191,11 @@ public sealed partial class SettingsPage
             Title = AccountLabels.Full(account),
             Description = string.Join(DetailSeparator, details),
             Content = controls,
+
+            // Nested under "Order", as the turn speed is under "Several accounts".
+            Padding = NestedRowPadding,
+            Background = (Microsoft.UI.Xaml.Media.Brush)
+                Application.Current.Resources["HakariGroundBrush"],
         };
         if (isFirst)
         {
