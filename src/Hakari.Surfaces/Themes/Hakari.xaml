@@ -607,6 +607,11 @@
                             HorizontalScrollMode="Disabled" VerticalScrollMode="Disabled"
                             HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Hidden"
                             ZoomMode="Disabled" IsTabStop="False" />
+                        <!-- The hint while empty; TextBox shows and hides this part by its name -->
+                        <ContentControl x:Name="PlaceholderTextContentPresenter"
+                            Padding="{TemplateBinding Padding}" VerticalAlignment="Center"
+                            Content="{TemplateBinding PlaceholderText}" IsHitTestVisible="False"
+                            IsTabStop="False" Foreground="{ThemeResource HakariInkFaintBrush}" />
                         <VisualStateManager.VisualStateGroups>
                             <VisualStateGroup x:Name="CommonStates">
                                 <VisualStateGroup.Transitions>

@@ -25,7 +25,7 @@ public sealed partial class SettingsPage
     private const string GripGlyph = "";
     private const double AccountControlSpacing = 4;
     private const double NicknameBoxWidth = 110;
-    private const double PriceBoxWidth = 76;
+    private const double PriceBoxWidth = 100;
     private const int PriceMaximumLength = 8;
     private const int NicknameMaximumLength = 12;
     private const string CurrencyGroup = "Currency";
@@ -241,7 +241,11 @@ public sealed partial class SettingsPage
         var box = new TextBox
         {
             Text = own?.ToString("0.##", CultureInfo.InvariantCulture) ?? string.Empty,
-            PlaceholderText = listPrice?.ToString("0.##", CultureInfo.InvariantCulture) ?? "—",
+            PlaceholderText = listPrice is { } list
+                ? Texts.Format(
+                    "settings.planPrice.placeholder",
+                    list.ToString("0.##", CultureInfo.InvariantCulture))
+                : Texts.Get("settings.planPrice.unknown"),
             Width = PriceBoxWidth,
             MaxLength = PriceMaximumLength,
             Style = (Style)Application.Current.Resources["HakariTextBox"],
@@ -264,6 +268,7 @@ public sealed partial class SettingsPage
         var box = new TextBox
         {
             Text = nickname ?? string.Empty,
+            PlaceholderText = Texts.Get("settings.nickname.placeholder"),
             Width = NicknameBoxWidth,
             MaxLength = NicknameMaximumLength,
             Style = (Style)Application.Current.Resources["HakariTextBox"],
