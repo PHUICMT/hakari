@@ -46,6 +46,12 @@ internal static class UsageFilterSql
             command.Parameters.AddWithValue("$sidechain", isSidechain ? 1 : 0);
         }
 
+        if (filter.SessionId is { } sessionId)
+        {
+            conditions.Add("session_id = $session");
+            command.Parameters.AddWithValue("$session", sessionId);
+        }
+
         if (filter.SourceIds is { Count: > 0 } sourceIds)
         {
             conditions.Add(BuildSourceCondition(sourceIds, command));

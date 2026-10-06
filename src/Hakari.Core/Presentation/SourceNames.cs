@@ -24,6 +24,18 @@ public static class SourceNames
         };
     }
 
+    /// <summary>A badge's worth: "Windows", "WSL" or the folder's name.</summary>
+    public static string Short(string sourceId)
+    {
+        var kind = sourceId.Split(Separator)[0];
+        return kind switch
+        {
+            WindowsPrefix => "Windows",
+            WslPrefix => "WSL",
+            _ => Display(sourceId),
+        };
+    }
+
     private static string FolderName(string path) => Path.GetFileName(path.TrimEnd('\\', '/'));
 
     private static string WithFolder(string name, string folder) =>

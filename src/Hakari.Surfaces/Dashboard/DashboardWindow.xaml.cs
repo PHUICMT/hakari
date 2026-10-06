@@ -320,11 +320,9 @@ public sealed partial class DashboardWindow : Window
         FrameworkElement created = page switch
         {
             DashboardPage.Settings => CreateSettings(),
-            DashboardPage.Sessions =>
-                new BreakdownPage(GroupBy.ProjectSession, "dashboard.sessions"),
-            DashboardPage.Projects => new BreakdownPage(GroupBy.Project, "dashboard.projects"),
-            DashboardPage.Branches =>
-                new BreakdownPage(GroupBy.ProjectBranch, "dashboard.branches"),
+            DashboardPage.Sessions => new SessionsPage(),
+            DashboardPage.Projects => new ProjectsPage(),
+            DashboardPage.Branches => new BranchesPage(),
             DashboardPage.Workflows => new WorkflowsPage(),
             DashboardPage.Accounts => new AccountsPage(),
             DashboardPage.Charts => new ChartsPage(),

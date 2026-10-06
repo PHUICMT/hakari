@@ -28,6 +28,47 @@ internal static class SupportLinks
     private const string ThaiRegion = "TH";
     private const double IconSize = 14;
 
+    private const string CupPath =
+        "M2,4 H11 V8.5 A4.5,4.5 0 0 1 6.5,13 A4.5,4.5 0 0 1 2,8.5 Z";
+    private const string HandlePath = "M11,5.5 H12 A2,2 0 0 1 12,9.5 H10.6";
+    private const string HeartPath =
+        "M6.5,7 C6,6.2 4.6,6.4 4.6,7.4 C4.6,8.4 6.5,9.6 6.5,9.6 C6.5,9.6 8.4,8.4 8.4,7.4 "
+        + "C8.4,6.4 7,6.2 6.5,7 Z";
+    private const double CupCanvas = 15;
+
+    /// <summary>
+    /// Ko-fi's mark drawn as shapes: a white cup with a handle and a heart in the button's
+    /// color, crisp at any size where an emoji cup turned into a blur.
+    /// </summary>
+    private static Viewbox CoffeeCup(Brush heart)
+    {
+        var white = new SolidColorBrush(Microsoft.UI.Colors.White);
+        var canvas = new Canvas { Width = CupCanvas, Height = CupCanvas };
+        canvas.Children.Add(Shape(CupPath, fill: white, stroke: null));
+        canvas.Children.Add(Shape(HandlePath, fill: null, stroke: white));
+        canvas.Children.Add(Shape(HeartPath, fill: heart, stroke: null));
+        return new Viewbox
+        {
+            Width = IconSize + 2,
+            Height = IconSize + 2,
+            Child = canvas,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+    }
+
+    private static Microsoft.UI.Xaml.Shapes.Path Shape(string data, Brush? fill, Brush? stroke) =>
+        new()
+        {
+            Data = (Geometry)Microsoft.UI.Xaml.Markup.XamlBindingHelper.ConvertValue(
+                typeof(Geometry), data),
+            Fill = fill,
+            Stroke = stroke,
+            StrokeThickness = 1.6,
+            StrokeLineJoin = PenLineJoin.Round,
+            StrokeStartLineCap = PenLineCap.Round,
+            StrokeEndLineCap = PenLineCap.Round,
+        };
+
     /// <summary>Each service in its own color and mark, so each button reads at a glance.</summary>
     public static void Brand(Button button, SupportService service)
     {
@@ -53,13 +94,7 @@ internal static class SupportLinks
                 FontFamily = (FontFamily)Application.Current.Resources["HakariIconFont"],
                 Foreground = button.Foreground,
             }
-            : new TextBlock
-            {
-                Text = emoji,
-                FontSize = IconSize,
-                FontFamily = new FontFamily("Segoe UI Emoji"),
-                VerticalAlignment = VerticalAlignment.Center,
-            });
+            : CoffeeCup(brush));
         content.Children.Add(new TextBlock
         {
             Text = text,

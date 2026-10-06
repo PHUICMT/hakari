@@ -7,7 +7,8 @@ public sealed record UsageFilter(
     string? Model = null,
     string? Project = null,
     string? AccountId = null,
-    bool? IsSidechain = null)
+    bool? IsSidechain = null,
+    string? SessionId = null)
 {
     public static UsageFilter Everything { get; } = new();
 }
