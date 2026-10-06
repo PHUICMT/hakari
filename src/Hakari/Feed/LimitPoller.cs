@@ -1,6 +1,7 @@
 using Hakari.Core.Accounts;
 using Hakari.Core.Indexing;
 using Hakari.Core.Limits;
+using Hakari.Core.Limits.Credentials;
 using Hakari.Core.Presentation.Widget;
 using Hakari.Core.Sources;
 
@@ -25,6 +26,7 @@ internal sealed class LimitPoller : IDisposable
     private readonly AccountRepository accountRepository;
     private readonly LimitForecaster forecaster = new();
     private readonly LimitCache limitCache;
+    private readonly Dictionary<string, DateTime> signInTimes = [];
     private DateTimeOffset nextPoll = DateTimeOffset.MinValue;
     private DateTimeOffset lastUsage = DateTimeOffset.MinValue;
 
@@ -54,6 +56,29 @@ internal sealed class LimitPoller : IDisposable
 
     /// <summary>The next pass reads limits, whatever the schedule says.</summary>
     public void PollSoon() => nextPoll = DateTimeOffset.MinValue;
+
+    /// <summary>
+    /// Signing in to another account rewrites the credentials file, so a changed file asks
+    /// for the next pass to read at once instead of waiting out the idle interval. Only the
+    /// file's timestamp is looked at, which costs nothing.
+    /// </summary>
+    public void PollSoonIfSignInChanged()
+    {
+        var changed = false;
+        foreach (var source in sources)
+        {
+            var path = CredentialsFile.For(source).Path;
+            var modified = File.GetLastWriteTimeUtc(path);
+            var known = signInTimes.TryGetValue(path, out var previous);
+            signInTimes[path] = modified;
+            changed |= known && previous != modified;
+        }
+
+        if (changed)
+        {
+            PollSoon();
+        }
+    }
 
     /// <summary>Returns true when new limits were read.</summary>
     public bool PollIfDue(DateTimeOffset now)

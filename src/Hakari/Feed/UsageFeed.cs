@@ -143,6 +143,7 @@ internal sealed class UsageFeed : IDisposable
                 limits.NoteUsage(now);
             }
 
+            limits.PollSoonIfSignInChanged();
             if (refreshRequested)
             {
                 refreshRequested = false;
