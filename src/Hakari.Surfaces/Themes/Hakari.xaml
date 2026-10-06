@@ -133,8 +133,8 @@
     <!-- One button template for every button: hover and press fills, press scale, no Fluent chrome -->
     <Style x:Key="HakariButton" TargetType="Button">
         <Setter Property="Foreground" Value="{ThemeResource HakariInkBrush}" />
-        <Setter Property="Background" Value="Transparent" />
-        <Setter Property="BorderBrush" Value="{ThemeResource HakariLineBrush}" />
+        <Setter Property="Background" Value="{ThemeResource HakariTileBrush}" />
+        <Setter Property="BorderBrush" Value="{ThemeResource HakariLineStrongBrush}" />
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="Padding" Value="12,5" />
         <Setter Property="FontSize" Value="13" />
@@ -194,6 +194,7 @@
     </Style>
 
     <Style x:Key="HakariSubtleButton" TargetType="Button" BasedOn="{StaticResource HakariButton}">
+        <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderBrush" Value="Transparent" />
         <Setter Property="Foreground" Value="{ThemeResource HakariInkMutedBrush}" />
         <Setter Property="Padding" Value="8,5" />
@@ -329,6 +330,7 @@
     </Style>
 
     <Style x:Key="HakariListItemButton" TargetType="Button" BasedOn="{StaticResource HakariButton}">
+        <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderBrush" Value="Transparent" />
         <Setter Property="HorizontalAlignment" Value="Stretch" />
         <Setter Property="HorizontalContentAlignment" Value="Left" />

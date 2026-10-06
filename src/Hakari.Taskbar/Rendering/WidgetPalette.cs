@@ -25,7 +25,7 @@ public sealed record WidgetPalette(
     public static WidgetPalette DarkTaskbar { get; } = new(
         PrimaryText: ColorTranslator.FromHtml("#f1f2f5"),
         SecondaryText: ColorTranslator.FromHtml("#a4a9b6"),
-        Accent: ColorTranslator.FromHtml("#93acea"),
+        Accent: ColorTranslator.FromHtml("#9fb6ee"),
         Warning: ColorTranslator.FromHtml("#f4b14f"),
         Critical: ColorTranslator.FromHtml("#ff7b72"),
         HoverFill: Color.FromArgb(18, 255, 255, 255));
