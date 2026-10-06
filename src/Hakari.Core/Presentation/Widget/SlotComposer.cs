@@ -79,7 +79,8 @@ internal static class SlotComposer
         DateTimeOffset now,
         ToneRules rules)
     {
-        var first = texts.Count > 0 ? texts[0] : WidgetItem.Automatic;
+        // No text slot means no text: only the ring or line the other slots draw.
+        var first = texts.Count > 0 ? texts[0] : WidgetItem.Nothing;
         var second = count > 1 && texts.Count > 1 ? texts[1] : WidgetItem.Nothing;
         return new ComposedWidget(
             WidgetComposer.Line(first, isTop: true, facts, now, rules),

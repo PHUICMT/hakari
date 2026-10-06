@@ -56,6 +56,20 @@ public sealed class WidgetSlotsTests
     }
 
     [Fact]
+    public void A_layout_with_only_a_ring_has_no_text()
+    {
+        var layout = Layout(
+            WidgetTemplate.RingText,
+            new WidgetSlot(WidgetItem.SessionLimit, WidgetSlotStyle.Ring));
+
+        var widget = WidgetComposer.Compose(layout, Facts(Account(40)), Now);
+
+        Assert.NotNull(widget.Ring);
+        Assert.Equal(string.Empty, widget.Top.Text);
+        Assert.Equal(string.Empty, widget.Bottom.Text);
+    }
+
+    [Fact]
     public void Columns_give_every_slot_a_block_with_its_value_over_its_label()
     {
         var layout = Layout(
