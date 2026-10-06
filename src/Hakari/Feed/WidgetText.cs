@@ -16,8 +16,14 @@ internal static class WidgetText
     public static WidgetContent Loading =>
         new(ProductName, Texts.Get("widget.loading"), WidgetTone.Muted);
 
-    public static WidgetContent Paused =>
-        new(ProductName, Texts.Get("widget.paused"), WidgetTone.Muted);
+    /// <summary>A PAUSED pill, and until when, or how to resume.</summary>
+    public static WidgetContent Paused(HakariSettings settings) => new(
+        string.Empty,
+        settings.PausedUntil is { } until
+            ? Texts.Format("widget.pausedUntil", until.ToLocalTime().ToString("HH:mm"))
+            : Texts.Get("widget.pausedManual"),
+        WidgetTone.Muted,
+        Pill: Texts.Get("widget.pausedPill"));
 
     /// <summary>The database part: run on new data or every half minute, not every turn.</summary>
     public static WidgetFacts Facts(

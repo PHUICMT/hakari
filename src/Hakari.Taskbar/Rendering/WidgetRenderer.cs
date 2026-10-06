@@ -29,6 +29,8 @@ public sealed class WidgetRenderer : IDisposable
     private Font? primaryFont;
     private Font? secondaryFont;
     private Font? primaryThaiFont;
+    private Font? pillFont;
+    private Font? pillThaiFont;
     private Font? secondaryThaiFont;
     private double fontScale;
 
@@ -124,12 +126,14 @@ public sealed class WidgetRenderer : IDisposable
 
         var padding = (float)(WidgetMetrics.HorizontalPadding * scale);
         var ringSpace = LeadingSpace(frame.Current, scale);
+        var pillWidth = PillWidth(frame.Current, scale);
         var barSpace = frame.Current.PrimaryBar is null && frame.Current.SecondaryBar is null
             ? 0f
             : (float)((WidgetMetrics.BarWidth + WidgetMetrics.BarGap) * scale);
         var textWidth = MeasureWidestText(lines);
         var dotsSpace = DotsWidth(frame.Current, scale);
-        var width = (int)Math.Ceiling(textWidth + ringSpace + barSpace + dotsSpace + padding * 2);
+        var width = (int)Math.Ceiling(
+            textWidth + ringSpace + pillWidth + barSpace + dotsSpace + padding * 2);
         var height = (int)Math.Round(WidgetMetrics.Height * scale);
 
         var bitmap = new Bitmap(width, height, PixelFormat.Format32bppPArgb);
@@ -145,10 +149,11 @@ public sealed class WidgetRenderer : IDisposable
         var top = (height - (primaryHeight + lineGap + secondaryHeight)) / 2f;
         DrawRing(graphics, frame, palette, scale, padding, height);
         DrawSpark(graphics, frame.Current, palette, scale, padding, height);
-        var dotsLeft = padding + ringSpace + barSpace + textWidth;
+        DrawPill(graphics, frame.Current, palette, scale, padding, height);
+        var dotsLeft = padding + ringSpace + pillWidth + barSpace + textWidth;
         DrawTurnDots(graphics, frame.Current, palette, scale, dotsLeft, height);
-        var textLeft = padding + ringSpace + barSpace;
-        var barLeft = padding + ringSpace;
+        var textLeft = padding + ringSpace + pillWidth + barSpace;
+        var barLeft = padding + ringSpace + pillWidth;
         DrawBar(graphics, frame.Current.PrimaryBar, palette, scale, barLeft, top, primaryHeight);
         var secondaryTop = top + primaryHeight + lineGap;
         DrawBar(
@@ -173,6 +178,54 @@ public sealed class WidgetRenderer : IDisposable
             secondaryTop);
         return bitmap;
     }
+
+    /// <summary>Room for the pill and the gap after it; none without a pill.</summary>
+    private float PillWidth(WidgetContent content, double scale)
+    {
+        if (string.IsNullOrEmpty(content.Pill))
+        {
+            return 0f;
+        }
+
+        var text = MeasureWidth(content.Pill, PillFontFor(content.Pill));
+        var padding = (float)(WidgetMetrics.PillPaddingX * scale);
+        return text + padding * 2 + (float)(WidgetMetrics.RingGap * scale);
+    }
+
+    /// <summary>A small rounded label: faint fill, the strong text color on it.</summary>
+    private void DrawPill(
+        Graphics graphics,
+        WidgetContent content,
+        WidgetPalette palette,
+        double scale,
+        float left,
+        int height)
+    {
+        if (string.IsNullOrEmpty(content.Pill))
+        {
+            return;
+        }
+
+        var font = PillFontFor(content.Pill);
+        var textSize = Measure(content.Pill, font);
+        var padX = (float)(WidgetMetrics.PillPaddingX * scale);
+        var padY = (float)(WidgetMetrics.PillPaddingY * scale);
+        var bounds = new RectangleF(
+            left,
+            (height - textSize.Height - padY * 2) / 2f,
+            textSize.Width + padX * 2,
+            textSize.Height + padY * 2);
+        using var path = RoundedRectangle(bounds, bounds.Height / 2);
+        var fillColor = Color.FromArgb(WidgetMetrics.PillFillAlpha, palette.PrimaryText);
+        using var fill = new SolidBrush(fillColor);
+        graphics.FillPath(fill, path);
+        var textLeft = bounds.Left + padX;
+        DrawText(graphics, content.Pill, font, palette.PrimaryText, textLeft, bounds.Top + padY);
+    }
+
+    private Font PillFontFor(string text) => text.Any(IsThai) ? pillThaiFont! : pillFont!;
+
+    private float MeasureWidth(string text, Font font) => Measure(text, font).Width;
 
     /// <summary>Room before the text for a ring or a sparkline, with the gap after it.</summary>
     private static float LeadingSpace(WidgetContent content, double scale)
@@ -275,6 +328,8 @@ public sealed class WidgetRenderer : IDisposable
         secondaryFont?.Dispose();
         primaryThaiFont?.Dispose();
         secondaryThaiFont?.Dispose();
+        pillFont?.Dispose();
+        pillThaiFont?.Dispose();
         thaiFontFamily.Dispose();
         measuringGraphics.Dispose();
         measuringSurface.Dispose();
@@ -302,6 +357,8 @@ public sealed class WidgetRenderer : IDisposable
         var stroke = (float)(WidgetMetrics.RingStroke * scale);
         var outerDiameter = (float)(WidgetMetrics.RingDiameter * scale);
         var center = new PointF(left + outerDiameter / 2, height / 2f);
+        var saved = graphics.Save();
+        PulseAround(graphics, frame, previous, ring, center);
         var outer = new RingPass(
             Lerp(previous.Fraction, ring.Fraction, frame.ValueProgress),
             ColorBlend.Mix(
@@ -312,6 +369,7 @@ public sealed class WidgetRenderer : IDisposable
 
         if (ring.InnerFraction is not { } innerFraction || outer.Fraction >= FullFraction)
         {
+            graphics.Restore(saved);
             return;
         }
 
@@ -325,6 +383,32 @@ public sealed class WidgetRenderer : IDisposable
                 palette.ForRingTone(ring.InnerTone),
                 frame.ToneProgress));
         DrawOneRing(graphics, palette, center, innerDiameter, innerStroke, inner, scale);
+        graphics.Restore(saved);
+    }
+
+    /// <summary>
+    /// A ring that has just turned critical swells once and settles back, while its color
+    /// changes. Only with full motion; otherwise the color change alone says it.
+    /// </summary>
+    private static void PulseAround(
+        Graphics graphics,
+        WidgetFrame frame,
+        WidgetRing previous,
+        WidgetRing ring,
+        PointF center)
+    {
+        var turnedCritical = ring.Tone == WidgetTone.Critical
+            && previous.Tone != WidgetTone.Critical;
+        if (!frame.MovesText || !frame.IsChanging || !turnedCritical)
+        {
+            return;
+        }
+
+        var wave = (float)Math.Sin(Math.PI * frame.ToneProgress);
+        var swell = 1f + WidgetMetrics.RingPulseGrowth * wave;
+        graphics.TranslateTransform(center.X, center.Y);
+        graphics.ScaleTransform(swell, swell);
+        graphics.TranslateTransform(-center.X, -center.Y);
     }
 
     private readonly record struct RingPass(double Fraction, Color Color);
@@ -610,6 +694,14 @@ public sealed class WidgetRenderer : IDisposable
         secondaryFont?.Dispose();
         primaryThaiFont?.Dispose();
         secondaryThaiFont?.Dispose();
+        pillFont?.Dispose();
+        pillThaiFont?.Dispose();
+        pillThaiFont = new Font(
+            thaiFontFamily,
+            (float)(WidgetMetrics.PillFontPixels * scale),
+            FontStyle.Bold,
+            GraphicsUnit.Pixel);
+        pillFont = CreateFont((float)(WidgetMetrics.PillFontPixels * scale), FontStyle.Bold);
         primaryThaiFont = new Font(
             thaiFontFamily,
             (float)(WidgetMetrics.PrimaryFontPixels * scale),

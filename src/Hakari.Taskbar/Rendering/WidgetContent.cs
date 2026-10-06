@@ -7,6 +7,7 @@ namespace Hakari.Taskbar.Rendering;
 /// <param name="Spark">Points of a small line left of the text, such as recent spending.</param>
 /// <param name="PrimaryBar">A thin bar beside the top line.</param>
 /// <param name="SecondaryBar">A thin bar beside the second line.</param>
+/// <param name="Pill">A small label before the text, such as PAUSED; replaces the ring.</param>
 public sealed record WidgetContent(
     string PrimaryText,
     string SecondaryText,
@@ -18,7 +19,8 @@ public sealed record WidgetContent(
     int TurnCount = 0,
     IReadOnlyList<double>? Spark = null,
     WidgetBar? PrimaryBar = null,
-    WidgetBar? SecondaryBar = null)
+    WidgetBar? SecondaryBar = null,
+    string? Pill = null)
 {
     public IReadOnlyList<WidgetContent> Panels =>
         MorePanels is { Count: > 0 } more ? [this with { MorePanels = null }, .. more] : [this];
@@ -35,6 +37,7 @@ public sealed record WidgetContent(
         && TurnCount == other.TurnCount
         && PrimaryBar == other.PrimaryBar
         && SecondaryBar == other.SecondaryBar
+        && Pill == other.Pill
         && (Spark ?? []).SequenceEqual(other.Spark ?? [])
         && (MorePanels ?? []).SequenceEqual(other.MorePanels ?? []);
 

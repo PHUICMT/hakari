@@ -100,7 +100,7 @@ internal sealed class UsageFeed : IDisposable
             presentation = settings;
             if (settings.IsPausedAt(DateTimeOffset.UtcNow))
             {
-                Updated?.Invoke(WidgetText.Paused);
+                Updated?.Invoke(WidgetText.Paused(settings));
                 WaitForSettingsChange(settings.Paused ? null : settings.PausedUntil);
                 continue;
             }

@@ -13,6 +13,15 @@ internal static class WidgetMetrics
     public const float RingStroke = 3f;
     public const float RingGap = 8f;
 
+    /// <summary>A small rounded label before the text, such as PAUSED.</summary>
+    public const float PillFontPixels = 10f;
+    public const float PillPaddingX = 6f;
+    public const float PillPaddingY = 1f;
+    public const byte PillFillAlpha = 26;
+
+    /// <summary>At critical the ring swells once by this share and settles back.</summary>
+    public const float RingPulseGrowth = 0.14f;
+
     /// <summary>The sparkline of recent spending, drawn where a ring would be.</summary>
     public const float SparkWidth = 36f;
     public const float SparkHeight = 16f;

@@ -1,6 +1,9 @@
 {
   "widget.loading": "กำลังอ่าน log…",
   "widget.paused": "หยุดชั่วคราว",
+  "widget.pausedPill": "หยุดชั่วคราว",
+  "widget.pausedUntil": "จนถึง {0}",
+  "widget.pausedManual": "เปิดต่อจากเมนู",
   "widget.today": "{0} วันนี้",
   "widget.month": "เดือนนี้ {0}",
   "widget.perHour": "{0}/ชม.",
