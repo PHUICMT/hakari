@@ -9,7 +9,11 @@
     <Grid x:Name="Root">
         <ScrollViewer x:Name="Scroller" IsTabStop="True"
             HorizontalScrollMode="Disabled" HorizontalScrollBarVisibility="Disabled">
-            <StackPanel x:Name="Sections" MaxWidth="720" Padding="24,0,24,28">
+            <StackPanel x:Name="Sections" Padding="24,20,24,28">
+
+                <!-- The page title, as every dashboard page has one -->
+                <TextBlock Text="{l:Text Key=dashboard.settings}" FontSize="26" FontWeight="SemiBold"
+                    Foreground="{ThemeResource HakariInkBrush}" Margin="0,0,0,4" />
 
                 <!-- Taskbar layout, with the live preview on top -->
                 <StackPanel Tag="taskbar">

@@ -126,8 +126,56 @@ internal sealed partial class SavedLayoutCard : UserControl
         };
         ToolTipService.SetToolTip(button, Texts.Get("settings.layout.forget"));
         button.Tapped += (_, args) => args.Handled = true;
-        button.Click += (_, _) => Removed?.Invoke(this, Saved);
+        button.Click += (_, _) => AskBeforeRemoving(button);
         return button;
+    }
+
+    /// <summary>Forgetting cannot be undone, so it asks first, next to the button.</summary>
+    private void AskBeforeRemoving(FrameworkElement anchor)
+    {
+        var question = new Microsoft.UI.Xaml.Controls.Flyout
+        {
+            Placement = Microsoft.UI.Xaml.Controls.Primitives.FlyoutPlacementMode.Bottom,
+            FlyoutPresenterStyle = (Style)Application.Current.Resources["HakariListPresenter"],
+            AreOpenCloseAnimationsEnabled =
+                SurfaceMotion.Current() != Core.Settings.AnimationSetting.Off,
+        };
+        var forget = new Button
+        {
+            Content = Texts.Get("settings.layout.forget.confirm"),
+            Style = (Style)Application.Current.Resources["HakariPrimaryButton"],
+            Background = Brush("HakariCriticalBrush"),
+            BorderBrush = Brush("HakariCriticalBrush"),
+        };
+        forget.Click += (_, _) =>
+        {
+            question.Hide();
+            Removed?.Invoke(this, Saved);
+        };
+        var keep = new Button
+        {
+            Content = Texts.Get("settings.layout.forget.cancel"),
+            Style = (Style)Application.Current.Resources["HakariButton"],
+        };
+        keep.Click += (_, _) => question.Hide();
+        var buttons = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            Spacing = 8,
+            HorizontalAlignment = HorizontalAlignment.Right,
+        };
+        buttons.Children.Add(keep);
+        buttons.Children.Add(forget);
+        var body = new StackPanel { Spacing = 10, Padding = new Thickness(12), MaxWidth = 280 };
+        body.Children.Add(new TextBlock
+        {
+            Text = Texts.Format("settings.layout.forget.question", Saved.Name),
+            TextWrapping = TextWrapping.Wrap,
+            Foreground = Brush("HakariInkBrush"),
+        });
+        body.Children.Add(buttons);
+        question.Content = body;
+        question.ShowAt(anchor);
     }
 
     private void Over(bool over)

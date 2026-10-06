@@ -59,22 +59,128 @@ public sealed partial class DashboardWindow : Window
         InitializeComponent();
         Title = Texts.Get("dashboard.windowTitle");
         ConfigureChrome();
+        menuFolded = SettingsStore.Default.Load().DashboardMenuFolded;
         BuildNavigation();
-        WidthSteps.Watch(Root, [FullNavigationWidth], level => SetNavigationCompact(level == 0));
+        WidthSteps.Watch(Root, [FullNavigationWidth], level =>
+        {
+            narrow = level == 0;
+            SetNavigationCompact(menuFolded || narrow, animate: IsShown);
+        });
     }
 
-    /// <summary>A narrow window keeps only the icons, so the page has the room.</summary>
-    private void SetNavigationCompact(bool compact)
+    private bool IsShown => AppWindow.IsVisible;
+
+    /// <summary>Folded by the user's button, or by a window too narrow for the labels.</summary>
+    private bool menuFolded;
+    private bool narrow;
+    private bool compactNow;
+    private DateTimeOffset widthTweenStart;
+    private (double From, double To) widthTween;
+
+    /// <summary>
+    /// Only the icons stay when compact. The menu's width eases between the two and the
+    /// labels fade, so the page slides over instead of jumping. Off changes it at once.
+    /// </summary>
+    private void SetNavigationCompact(bool compact, bool animate)
     {
-        NavigationColumn.Width = new GridLength(compact ? CompactNavigationWidth : NavigationWidth);
-        foreach (var item in navItems.Values)
+        if (compact == compactNow && NavigationColumn.Width.Value > 0)
         {
-            if (item.Content is Grid { Children.Count: 2 } row)
+            return;
+        }
+
+        compactNow = compact;
+        var labels = navItems.Values
+            .Select(item => item.Content)
+            .OfType<Grid>()
+            .Where(row => row.Children.Count == 2)
+            .Select(row => row.Children[1])
+            .ToList();
+        var target = compact ? CompactNavigationWidth : NavigationWidth;
+        if (!animate || SurfaceMotion.Current() == AnimationSetting.Off)
+        {
+            NavigationColumn.Width = new GridLength(target);
+            labels.ForEach(label =>
             {
-                row.Children[1].Visibility = compact ? Visibility.Collapsed : Visibility.Visible;
+                label.Visibility = compact ? Visibility.Collapsed : Visibility.Visible;
+                label.Opacity = 1;
+            });
+            return;
+        }
+
+        foreach (var label in labels)
+        {
+            label.Visibility = Visibility.Visible;
+            if (!compact)
+            {
+                label.Opacity = 0;
+            }
+
+            SurfaceMotion.Settle(label, "Opacity", compact ? 0 : 1);
+        }
+
+        widthTween = (NavigationColumn.Width.Value, target);
+        widthTweenStart = DateTimeOffset.UtcNow;
+        CompositionTarget.Rendering -= OnWidthFrame;
+        CompositionTarget.Rendering += OnWidthFrame;
+    }
+
+    private void OnWidthFrame(object? sender, object args)
+    {
+        var elapsed = DateTimeOffset.UtcNow - widthTweenStart;
+        var progress = Math.Min(1, elapsed / SurfaceMotion.Normal);
+        var eased = 1 - Math.Pow(1 - progress, WidthEase);
+        var (from, to) = widthTween;
+        NavigationColumn.Width = new GridLength(from + (to - from) * eased);
+        if (progress < 1)
+        {
+            return;
+        }
+
+        CompositionTarget.Rendering -= OnWidthFrame;
+        if (compactNow)
+        {
+            foreach (var item in navItems.Values)
+            {
+                if (item.Content is Grid { Children.Count: 2 } row)
+                {
+                    row.Children[1].Visibility = Visibility.Collapsed;
+                }
             }
         }
     }
+
+    private const double WidthEase = 3;
+
+    /// <summary>The menu button folds the menu to its icons or opens it, remembered.</summary>
+    private Button MenuButton()
+    {
+        var button = new Button
+        {
+            Style = (Style)Application.Current.Resources["HakariSubtleButton"],
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Padding = new Thickness(12, 8, 12, 8),
+            Margin = new Thickness(0, 0, 0, 4),
+            Content = new FontIcon
+            {
+                Glyph = MenuGlyph,
+                FontSize = IconSize,
+                FontFamily = (FontFamily)Application.Current.Resources["HakariIconFont"],
+            },
+        };
+        ToolTipService.SetToolTip(button, Texts.Get("dashboard.menu.fold"));
+        button.Click += (_, _) =>
+        {
+            menuFolded = !menuFolded;
+            SettingsStore.Default.Update(current => current with
+            {
+                DashboardMenuFolded = menuFolded,
+            });
+            SetNavigationCompact(menuFolded || narrow, animate: true);
+        };
+        return button;
+    }
+
+    private const string MenuGlyph = "\uE700";
 
     public event EventHandler? LanguageChanged;
 
@@ -96,6 +202,7 @@ public sealed partial class DashboardWindow : Window
 
     private void BuildNavigation()
     {
+        Navigation.Children.Add(MenuButton());
         foreach (var (page, icon, textKey, setApart) in Pages)
         {
             if (setApart)

@@ -16,7 +16,11 @@ public sealed partial class SettingsPage
     private const double ChevronSize = 11;
     private const double FoldedSectionAngle = -90;
     private const string AnglePath = "Angle";
-    private static readonly Thickness SectionHeaderMargin = new(0, 8, 0, 4);
+    private const double SectionTitleSize = 17;
+    private const double MarkWidth = 3;
+    private const double MarkHeight = 18;
+    private static readonly Thickness SectionHeaderMargin = new(0, 28, 0, 8);
+    private static readonly Thickness FirstSectionHeaderMargin = new(0, 12, 0, 8);
     private static readonly Thickness SectionHeaderPadding = new(4, 6, 8, 6);
 
     private void MakeSectionsFoldable()
@@ -34,25 +38,46 @@ public sealed partial class SettingsPage
             var isFolded = folded.Contains(key);
             var chevron = Chevron(isFolded);
             var header = SectionHeader(title.Text, chevron);
+            if (ReferenceEquals(section, Sections.Children.OfType<StackPanel>().First()))
+            {
+                header.Margin = FirstSectionHeaderMargin;
+            }
+
             header.Click += (_, _) => ToggleSection(key, card, chevron);
             section.Children[0] = header;
             card.Visibility = isFolded ? Visibility.Collapsed : Visibility.Visible;
         }
     }
 
+    /// <summary>
+    /// A section's title: an accent mark, the name in a larger weight, and the fold chevron,
+    /// with room above it so each section reads as its own group.
+    /// </summary>
     private static Button SectionHeader(string title, FontIcon chevron)
     {
-        var row = new Grid { ColumnSpacing = 8 };
+        var row = new Grid { ColumnSpacing = 10 };
+        row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         row.ColumnDefinitions.Add(new ColumnDefinition());
         row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        row.Children.Add(new Border
+        {
+            Width = MarkWidth,
+            Height = MarkHeight,
+            CornerRadius = new CornerRadius(MarkWidth / 2),
+            Background = (Brush)Application.Current.Resources["HakariAccentBrush"],
+            VerticalAlignment = VerticalAlignment.Center,
+        });
         var text = new TextBlock
         {
             Text = title,
-            Style = (Style)Application.Current.Resources["HakariSectionText"],
-            Margin = new Thickness(0),
+            FontSize = SectionTitleSize,
+            FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
+            Foreground = (Brush)Application.Current.Resources["HakariInkBrush"],
+            VerticalAlignment = VerticalAlignment.Center,
         };
+        Grid.SetColumn(text, 1);
         row.Children.Add(text);
-        Grid.SetColumn(chevron, 1);
+        Grid.SetColumn(chevron, 2);
         row.Children.Add(chevron);
         return new Button
         {

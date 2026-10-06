@@ -44,6 +44,9 @@ public sealed record HakariSettings
     /// <summary>Accounts folded in the flyout, showing only their summary line.</summary>
     public IReadOnlyList<string> CollapsedAccounts { get; init; } = [];
 
+    /// <summary>The dashboard's menu folded down to its icons.</summary>
+    public bool DashboardMenuFolded { get; init; }
+
     /// <summary>Settings sections folded shut, by their key such as "sources".</summary>
     public IReadOnlyList<string> CollapsedSettingsSections { get; init; } = [];
 

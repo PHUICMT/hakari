@@ -117,9 +117,8 @@ internal sealed partial class PlanValuePage : LoadedPage<PlanValueData>
         var change = (double)((cost - before) / before) * PercentScale;
         var arrow = change >= 0 ? "▲" : "▼";
         return Texts.Format(
-            "dashboard.tile.vsPrevious",
-            $"{arrow} {Math.Abs(change).ToString("F0", CultureInfo.InvariantCulture)}%",
-            Texts.Get("dashboard.planValue.lastMonth"));
+            "dashboard.planValue.lastMonth",
+            $"{arrow} {Math.Abs(change).ToString("F0", CultureInfo.InvariantCulture)}%");
     }
 
     private static string Signed(decimal amount, string currency) =>
