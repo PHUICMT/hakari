@@ -47,7 +47,11 @@
                     TextTrimming="None" />
             </Border>
 
-            <!-- Accounts: a card each, most pressing first; the header folds the card -->
+            <!-- Accounts: a card each, most pressing first; the header folds the card. On a
+                 short screen this part scrolls, so the money and the buttons stay in view -->
+            <ScrollViewer x:Name="AccountScroller" VerticalScrollMode="Auto"
+                VerticalScrollBarVisibility="Auto" HorizontalScrollMode="Disabled"
+                HorizontalScrollBarVisibility="Disabled">
             <ItemsControl x:Name="AccountList">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
@@ -137,6 +141,7 @@
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
+            </ScrollViewer>
 
             <!-- Money: a 2 × 2 grid of equal tiles, so nothing is clipped -->
             <Grid x:Name="StatGrid" ColumnSpacing="8" RowSpacing="8">

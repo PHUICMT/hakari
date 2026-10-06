@@ -33,6 +33,9 @@ public sealed partial class FlyoutWindow : Window
     private DateTimeOffset hiddenAt = DateTimeOffset.MinValue;
     private (int AnchorX, int AnchorY, double Scale)? pendingFit;
     private (int AnchorX, int AnchorY, double Scale)? lastAnchor;
+    private double availableHeight = double.PositiveInfinity;
+    private const double ScreenRoom = 32;
+    private const double MinimumAccountsHeight = 160;
 
     private const int StatColumns = 2;
     private const double SparkWidth = 120;
@@ -99,8 +102,12 @@ public sealed partial class FlyoutWindow : Window
 
     private void Show(int anchorX, int anchorY)
     {
-        Fill(FlyoutDataLoader.Load());
+        var snapshot = FlyoutDataLoader.Load();
+        Fill(snapshot);
         var scale = ScaleAt(anchorX, anchorY);
+        availableHeight = AvailableHeight(anchorX, anchorY, scale);
+        FoldUntilFits(snapshot);
+        LimitAccountsToScreen(measured: true);
         var size = MeasureSize(scale);
 
         // Size the client area, not the outer frame, so the border never eats content.
@@ -125,6 +132,13 @@ public sealed partial class FlyoutWindow : Window
     {
         var contentHeight = Body.ActualHeight + Footer.ActualHeight;
         if (pendingFit is not var (anchorX, anchorY, scale) || contentHeight <= 0)
+        {
+            return;
+        }
+
+        // The real layout can come out taller than measured; the accounts give way first.
+        var tooTall = contentHeight > availableHeight + FitTolerance;
+        if (tooTall && LimitAccountsToScreen(measured: false))
         {
             return;
         }
@@ -160,6 +174,7 @@ public sealed partial class FlyoutWindow : Window
 
     private void Fill(FlyoutSnapshot snapshot)
     {
+        AccountScroller.MaxHeight = double.PositiveInfinity;
         AccountText.Text = snapshot.AccountSummary;
         UpdatedText.Text = snapshot.UpdatedText;
         AccountList.ItemsSource = snapshot.Accounts;
@@ -258,7 +273,13 @@ public sealed partial class FlyoutWindow : Window
             return;
         }
 
+        AccountScroller.MaxHeight = double.PositiveInfinity;
         Root.UpdateLayout();
+        if (LimitAccountsToScreen(measured: false))
+        {
+            Root.UpdateLayout();
+        }
+
         var clientHeight = (int)Math.Ceiling((Body.ActualHeight + Footer.ActualHeight) * scale);
         var frameWidth = AppWindow.Size.Width - AppWindow.ClientSize.Width;
         var frameHeight = AppWindow.Size.Height - AppWindow.ClientSize.Height;
@@ -267,6 +288,73 @@ public sealed partial class FlyoutWindow : Window
             clientHeight + frameHeight);
         var placement = FlyoutPlacement.Above(anchorX, anchorY, outer, scale, AnchorSide.Center);
         AppWindow.MoveAndResize(new RectInt32(placement.X, placement.Y, outer.Width, outer.Height));
+    }
+
+    /// <summary>
+    /// The height the flyout may take on its screen, in layout units: the work area less
+    /// the gap above the taskbar, the margin at the top and the window's frame.
+    /// </summary>
+    private static double AvailableHeight(int anchorX, int anchorY, double scale)
+    {
+        var area = DisplayArea.GetFromPoint(
+            new PointInt32(anchorX, anchorY),
+            DisplayAreaFallback.Primary).WorkArea;
+        return area.Height / scale - ScreenRoom;
+    }
+
+    /// <summary>
+    /// Too tall for the screen: the least pressing open cards fold, from the bottom up, for
+    /// this showing only; the most pressing stays open. What the user folded stays folded.
+    /// </summary>
+    private void FoldUntilFits(FlyoutSnapshot snapshot)
+    {
+        var groups = snapshot.Accounts.ToList();
+        for (var index = groups.Count - 1;
+            index > 0 && MeasuredHeight() > availableHeight;
+            index--)
+        {
+            if (groups[index].IsCollapsed)
+            {
+                continue;
+            }
+
+            groups[index] = groups[index] with { IsCollapsed = true };
+            AccountList.ItemsSource = groups.ToList();
+        }
+    }
+
+    /// <summary>
+    /// Still too tall: the accounts get a scroll of their own, never shorter than room for
+    /// about one card, so the money and the buttons below stay on screen.
+    /// </summary>
+    /// <param name="measured">Measure first (before showing), or use the laid-out sizes.</param>
+    /// <returns>True when the accounts' height changed.</returns>
+    private bool LimitAccountsToScreen(bool measured)
+    {
+        var total = measured ? MeasuredHeight() : Body.ActualHeight + Footer.ActualHeight;
+        var accounts = measured
+            ? AccountScroller.DesiredSize.Height
+            : AccountScroller.ActualHeight;
+        var overflow = total - availableHeight;
+        if (overflow <= 0)
+        {
+            return false;
+        }
+
+        var limited = Math.Max(MinimumAccountsHeight, accounts - overflow);
+        if (Math.Abs(AccountScroller.MaxHeight - limited) < 1)
+        {
+            return false;
+        }
+
+        AccountScroller.MaxHeight = limited;
+        return true;
+    }
+
+    private double MeasuredHeight()
+    {
+        Root.Measure(new Windows.Foundation.Size(LogicalWidth, double.PositiveInfinity));
+        return Root.DesiredSize.Height;
     }
 
     private SizeInt32 MeasureSize(double scale)
