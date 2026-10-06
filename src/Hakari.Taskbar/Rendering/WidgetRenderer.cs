@@ -12,6 +12,7 @@ namespace Hakari.Taskbar.Rendering;
 public sealed class WidgetRenderer : IDisposable
 {
     private const float FullCircleDegrees = 360f;
+    private const float MinimumSweepDegrees = 0.5f;
     private const float TopDegrees = -90f;
     private const char ThaiBlockStart = '฀';
     private const char ThaiBlockEnd = '๿';
@@ -439,8 +440,10 @@ public sealed class WidgetRenderer : IDisposable
         using var trackPen = new Pen(palette.RingTrack, stroke);
         graphics.DrawEllipse(trackPen, bounds);
 
+        // GDI+ refuses an arc too short to draw with round caps, and a NaN, by throwing; a
+        // sliver that small would not show anyway.
         var sweep = (float)(Math.Clamp(pass.Fraction, 0, 1) * FullCircleDegrees);
-        if (sweep <= 0)
+        if (!float.IsFinite(sweep) || sweep < MinimumSweepDegrees)
         {
             return;
         }

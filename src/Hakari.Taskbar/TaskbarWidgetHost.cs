@@ -294,9 +294,18 @@ public sealed class TaskbarWidgetHost : IDisposable
     private void RenderFrame(WidgetWindow widget, TaskbarInfo taskbar, WidgetState state)
     {
         var frame = state.Animation.FrameAt(Stopwatch.GetTimestamp(), motion);
-        using var bitmap = renderer.Render(frame, state.Palette, taskbar.Scale);
-        widget.Present(bitmap, taskbar.Dpi);
-        Diagnostics.Renders++;
+
+        // GDI+ can refuse an odd shape mid-animation; that frame is skipped, not the widget.
+        try
+        {
+            using var bitmap = renderer.Render(frame, state.Palette, taskbar.Scale);
+            widget.Present(bitmap, taskbar.Dpi);
+            Diagnostics.Renders++;
+        }
+        catch (System.Runtime.InteropServices.ExternalException)
+        {
+            Diagnostics.SkippedFrames++;
+        }
     }
 
     private void Place(WidgetWindow widget, TaskbarInfo taskbar)

@@ -29,6 +29,22 @@ public sealed class WidgetRendererTests : IDisposable
         Assert.Equal((int)Math.Round(40 * scale), bitmap.Height);
     }
 
+    [Theory]
+    [InlineData(1e-7)]
+    [InlineData(0.0005)]
+    [InlineData(double.NaN)]
+    public void Draws_a_ring_too_small_to_see_without_failing(double fraction)
+    {
+        var sliver = SampleContent with
+        {
+            Ring = new WidgetRing(fraction, WidgetTone.Normal, fraction, WidgetTone.Normal),
+        };
+
+        using var bitmap = renderer.Render(sliver, WidgetPalette.DarkTaskbar, 1.25, false);
+
+        Assert.True(bitmap.Width > 0);
+    }
+
     [Fact]
     public void Draws_extra_panels_beside_the_first()
     {

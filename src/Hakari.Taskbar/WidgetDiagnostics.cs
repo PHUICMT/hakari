@@ -5,6 +5,9 @@ public sealed class WidgetDiagnostics
 {
     public int Renders { get; set; }
 
+    /// <summary>Frames GDI+ would not draw, skipped instead of ending the process.</summary>
+    public int SkippedFrames { get; set; }
+
     public int Moves { get; set; }
 
     public int Collisions { get; set; }
