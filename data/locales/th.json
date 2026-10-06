@@ -246,6 +246,8 @@
   "settings.slot.moveUp": "เลื่อนขึ้น",
   "settings.slot.moveDown": "เลื่อนลง",
   "settings.slot.remove": "ลบช่อง",
+  "settings.slot.hidden": "ไม่แสดง",
+  "settings.slot.hidden.why": "แม่แบบนี้ไม่มีที่ให้ช่องนี้ เลือกแม่แบบที่มีบรรทัดมากกว่า ใช้แบบคอลัมน์ หรือเปิดสลับมุมมองสำหรับแบบบรรทัดเดียว",
   "settings.slotStyle.text": "ข้อความ",
   "settings.slotStyle.ring": "วง",
   "settings.slotStyle.sparkline": "กราฟเส้นเล็ก",

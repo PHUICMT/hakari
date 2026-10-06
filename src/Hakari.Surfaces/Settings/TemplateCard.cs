@@ -1,5 +1,6 @@
 using Hakari.Core.Localization;
 using Hakari.Core.Presentation.Widget;
+using Hakari.Surfaces.Controls;
 using Hakari.Surfaces.Motion;
 using Microsoft.UI.Input;
 using Microsoft.UI.Text;
@@ -20,6 +21,11 @@ internal sealed partial class TemplateCard : UserControl
     private static readonly Thickness CardPadding = new(12, 10, 12, 10);
 
     private readonly Border frame = new();
+    private readonly StackPanel preview = new()
+    {
+        Orientation = Orientation.Horizontal,
+        Spacing = 4,
+    };
     private bool isChosen;
     private bool isOver;
 
@@ -42,6 +48,13 @@ internal sealed partial class TemplateCard : UserControl
             Foreground = Brush("HakariInkFaintBrush"),
             TextWrapping = TextWrapping.Wrap,
         });
+        body.Children.Add(new Viewbox
+        {
+            Child = preview,
+            StretchDirection = StretchDirection.DownOnly,
+            HorizontalAlignment = HorizontalAlignment.Left,
+            Margin = new Thickness(0, 8, 0, 0),
+        });
         frame.Child = body;
         frame.Padding = CardPadding;
         frame.BorderThickness = new Thickness(1);
@@ -60,6 +73,25 @@ internal sealed partial class TemplateCard : UserControl
     public WidgetTemplate Kind { get; }
 
     public event EventHandler<WidgetTemplate>? Chosen;
+
+    /// <summary>What the widget looks like with this template, from the real numbers.</summary>
+    public void ShowPreview(IReadOnlyList<ComposedWidget> panels)
+    {
+        while (preview.Children.Count > panels.Count)
+        {
+            preview.Children.RemoveAt(preview.Children.Count - 1);
+        }
+
+        for (var index = 0; index < panels.Count; index++)
+        {
+            if (index >= preview.Children.Count)
+            {
+                preview.Children.Add(new WidgetPreview());
+            }
+
+            ((WidgetPreview)preview.Children[index]).Show(panels[index]);
+        }
+    }
 
     public void Choose(bool chosen)
     {

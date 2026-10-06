@@ -23,6 +23,14 @@ public static class WidgetPanels
         TimeSpan? turnLength = null)
     {
         var accounts = facts.Accounts;
+
+        // The accounts template is one value per account, so the accounts never share a block.
+        if (shared is { Template: WidgetTemplate.Accounts, UsesSlots: true }
+            && mode == MultiAccountMode.Together)
+        {
+            mode = MultiAccountMode.SideBySide;
+        }
+
         if (accounts.Count < 2 || mode == MultiAccountMode.Together)
         {
             return shared is { Template: WidgetTemplate.Columns, UsesSlots: true }

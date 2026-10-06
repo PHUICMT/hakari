@@ -251,7 +251,7 @@ public sealed partial class SettingsPage
 
         var layout = EditedLayout(settings);
         ShowLegacyRows(layout);
-        layoutEditor?.Refresh(layout, panels);
+        layoutEditor?.Refresh(layout, panels, facts, settings.AccountsMode);
         UpdateTurnTimer(settings, facts);
     }
 

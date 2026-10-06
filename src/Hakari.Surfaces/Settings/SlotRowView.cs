@@ -14,7 +14,8 @@ namespace Hakari.Surfaces.Settings;
 /// </summary>
 internal sealed partial class SlotRowView : UserControl
 {
-    private const double NumberWidth = 56;
+    private const double NumberWidth = 96;
+    private const double HiddenOpacity = 0.55;
     private const double IconSize = 11;
     private const double RowSpacing = 8;
     private const string UpGlyph = "\uE70E";
@@ -22,17 +23,21 @@ internal sealed partial class SlotRowView : UserControl
     private const string RemoveGlyph = "\uE711";
     private static readonly Thickness RowPadding = new(12, 8, 8, 8);
 
+    /// <param name="isShown">False when the template has no room for it; it is dimmed then.</param>
+    /// <param name="metricSample">What each metric would show now, for the metric list.</param>
     public SlotRowView(
         int number,
         WidgetSlot slot,
         bool canMoveUp,
         bool canMoveDown,
-        bool canRemove)
+        bool canRemove,
+        bool isShown,
+        Func<object, FrameworkElement?> metricSample)
     {
-        var metric = new HakariSelect();
+        var metric = new HakariSelect { Sample = metricSample };
         metric.SetChoices(WidgetItemChoices.ForSlots(), slot.Item);
         metric.Selected += (_, value) => ItemChanged?.Invoke(this, (WidgetItem)value);
-        var style = new HakariSelect();
+        var style = new HakariSelect { Sample = StyleSamples.Of };
         style.SetChoices(WidgetItemChoices.StylesFor(slot.Item), slot.Style);
         style.Selected += (_, value) => StyleChanged?.Invoke(this, (WidgetSlotStyle)value);
 
@@ -41,14 +46,26 @@ internal sealed partial class SlotRowView : UserControl
         row.ColumnDefinitions.Add(new ColumnDefinition());
         row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-        row.Children.Add(new TextBlock
+        var name = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
+        name.Children.Add(new TextBlock
         {
             Text = Texts.Format("settings.slot", number),
             FontWeight = FontWeights.SemiBold,
             FontSize = 13,
             Foreground = Brush("HakariInkBrush"),
-            VerticalAlignment = VerticalAlignment.Center,
         });
+        if (!isShown)
+        {
+            name.Children.Add(new TextBlock
+            {
+                Text = Texts.Get("settings.slot.hidden"),
+                FontSize = 11,
+                Foreground = Brush("HakariInkFaintBrush"),
+                TextWrapping = TextWrapping.Wrap,
+            });
+        }
+
+        row.Children.Add(name);
         Place(row, metric, 1);
         Place(row, style, 2);
         Place(row, Buttons(canMoveUp, canMoveDown, canRemove), 3);
@@ -62,6 +79,8 @@ internal sealed partial class SlotRowView : UserControl
             CornerRadius = new CornerRadius(6),
         };
         HorizontalContentAlignment = HorizontalAlignment.Stretch;
+        Opacity = isShown ? 1 : HiddenOpacity;
+        ToolTipService.SetToolTip(this, isShown ? null : Texts.Get("settings.slot.hidden.why"));
     }
 
     public event EventHandler<WidgetItem>? ItemChanged;

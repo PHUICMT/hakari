@@ -5,7 +5,7 @@ using Hakari.Core.Localization;
 namespace Hakari.Core.Presentation.Widget;
 
 /// <summary>Turns a widget item into a value and a label, for columns, bars and rings.</summary>
-internal static class SlotCells
+public static class SlotCells
 {
     private const string Dash = "—";
     private const string CountFormat = "N0";

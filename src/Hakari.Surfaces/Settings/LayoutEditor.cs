@@ -46,6 +46,7 @@ internal sealed partial class LayoutEditor : StackPanel
     private readonly SettingRow simpleRow = new();
     private readonly DispatcherQueueTimer formatTimer;
     private bool refreshing;
+    private WidgetFacts? previewFacts;
 
     public LayoutEditor(
         Func<WidgetLayout> currentLayout,
@@ -69,15 +70,23 @@ internal sealed partial class LayoutEditor : StackPanel
     }
 
     /// <summary>Shows the layout's state in every control, without changing it.</summary>
-    public void Refresh(WidgetLayout layout, IReadOnlyList<ComposedWidget> panels)
+    public void Refresh(
+        WidgetLayout layout,
+        IReadOnlyList<ComposedWidget> panels,
+        WidgetFacts facts,
+        MultiAccountMode mode)
     {
         refreshing = true;
+        previewFacts = facts;
         try
         {
             ShowPreview(panels);
+            var now = DateTimeOffset.Now;
             foreach (var card in templateCards)
             {
                 card.Choose(layout.UsesSlots && card.Kind == layout.Template);
+                var sample = WidgetTemplates.Apply(layout, card.Kind);
+                card.ShowPreview(WidgetPanels.Compose(mode, sample, _ => sample, facts, now));
             }
 
             RebuildSlots(layout);
@@ -214,6 +223,8 @@ internal sealed partial class LayoutEditor : StackPanel
     private void RebuildSlots(WidgetLayout layout)
     {
         slotList.Children.Clear();
+        var shown = WidgetTemplates.Shown(layout);
+        var rules = ToneRules.Of(layout);
         for (var index = 0; index < layout.Slots.Count; index++)
         {
             var position = index;
@@ -222,7 +233,9 @@ internal sealed partial class LayoutEditor : StackPanel
                 layout.Slots[position],
                 canMoveUp: position > 0,
                 canMoveDown: position < layout.Slots.Count - 1,
-                canRemove: layout.Slots.Count > 1);
+                canRemove: layout.Slots.Count > 1,
+                isShown: position >= shown.Count || shown[position],
+                metricSample: value => MetricSample(value, rules));
             row.ItemChanged += (_, item) => change(current => WithItem(current, position, item));
             row.StyleChanged += (_, style) =>
                 change(current => WithStyle(current, position, style));
@@ -237,6 +250,17 @@ internal sealed partial class LayoutEditor : StackPanel
         slotList.Visibility = layout.UsesSlots ? Visibility.Visible : Visibility.Collapsed;
         addSlot.Visibility = layout.UsesSlots ? Visibility.Visible : Visibility.Collapsed;
     }
+
+    /// <summary>What a metric shows right now, such as "$12.50" or "62%", in the list.</summary>
+    private TextBlock? MetricSample(object value, ToneRules rules) =>
+        previewFacts is null || value is not WidgetItem item
+            ? null
+            : new TextBlock
+            {
+                Text = SlotCells.Of(item, previewFacts, DateTimeOffset.Now, rules).Value,
+                FontSize = HintSize,
+                Foreground = Brush("HakariInkFaintBrush"),
+            };
 
     /// <summary>Changing what a slot shows keeps its style when it still makes sense.</summary>
     private static WidgetLayout WithItem(WidgetLayout layout, int index, WidgetItem item)

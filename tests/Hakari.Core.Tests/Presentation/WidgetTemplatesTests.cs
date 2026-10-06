@@ -35,4 +35,59 @@ public sealed class WidgetTemplatesTests
 
         Assert.Contains(slots, slot => slot.Style == WidgetSlotStyle.Ring);
     }
+
+    [Fact]
+    public void Text_slots_past_a_templates_lines_are_not_shown()
+    {
+        var layout = new WidgetLayout
+        {
+            Template = WidgetTemplate.TwoLines,
+            Slots =
+            [
+                new WidgetSlot(WidgetItem.CostToday),
+                new WidgetSlot(WidgetItem.BurnRate),
+                new WidgetSlot(WidgetItem.SessionLimit),
+            ],
+        };
+
+        Assert.Equal([true, true, false], WidgetTemplates.Shown(layout));
+    }
+
+    [Fact]
+    public void A_sparkline_gives_way_to_a_ring()
+    {
+        var layout = new WidgetLayout
+        {
+            Template = WidgetTemplate.RingText,
+            Slots =
+            [
+                new WidgetSlot(WidgetItem.SessionLimit, WidgetSlotStyle.Ring),
+                new WidgetSlot(WidgetItem.CostToday),
+                new WidgetSlot(WidgetItem.BurnRate, WidgetSlotStyle.Sparkline),
+            ],
+        };
+
+        Assert.Equal([true, true, false], WidgetTemplates.Shown(layout));
+    }
+
+    [Fact]
+    public void Cycling_shows_every_text_slot_of_a_one_line_layout_in_turn()
+    {
+        var layout = new WidgetLayout
+        {
+            Template = WidgetTemplate.SingleLine,
+            CycleSeconds = 8,
+            Slots = [new WidgetSlot(WidgetItem.CostToday), new WidgetSlot(WidgetItem.BurnRate)],
+        };
+
+        Assert.Equal([true, true], WidgetTemplates.Shown(layout));
+    }
+
+    [Fact]
+    public void Columns_show_every_slot()
+    {
+        var layout = WidgetTemplates.Apply(new WidgetLayout(), WidgetTemplate.Columns);
+
+        Assert.All(WidgetTemplates.Shown(layout), Assert.True);
+    }
 }

@@ -20,6 +20,7 @@ public sealed partial class HakariSelect : Button
     private const double CheckSize = 12;
     private const double ContentSpacing = 10;
     private const double ListMinimumWidth = 180;
+    private const double SampleGap = 24;
 
     private readonly TextBlock label = new() { VerticalAlignment = VerticalAlignment.Center };
     private readonly List<(object Value, string Text)> choices = [];
@@ -43,6 +44,12 @@ public sealed partial class HakariSelect : Button
     public event EventHandler<object>? Selected;
 
     public object? SelectedValue { get; private set; }
+
+    /// <summary>
+    /// What a choice looks like, drawn at the end of its row in the list, such as the value it
+    /// would show; null for none.
+    /// </summary>
+    public Func<object, FrameworkElement?>? Sample { get; set; }
 
     public void SetChoices(IEnumerable<(object Value, string Text)> newChoices, object selected)
     {
@@ -86,6 +93,15 @@ public sealed partial class HakariSelect : Button
         var row = new Grid { ColumnSpacing = ContentSpacing };
         row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(CheckSize) });
         row.ColumnDefinitions.Add(new ColumnDefinition());
+        row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        if (Sample?.Invoke(value) is { } sample)
+        {
+            sample.Margin = new Thickness(SampleGap, 0, 0, 0);
+            sample.VerticalAlignment = VerticalAlignment.Center;
+            Grid.SetColumn(sample, 2);
+            row.Children.Add(sample);
+        }
+
         row.Children.Add(new FontIcon
         {
             Glyph = CheckGlyph,

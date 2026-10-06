@@ -24,7 +24,8 @@ internal static class SlotComposer
 
         var widget = layout.Template switch
         {
-            WidgetTemplate.SingleLine => Lines(texts, 1, facts, now, rules),
+            WidgetTemplate.SingleLine or WidgetTemplate.Accounts =>
+                Lines(texts, 1, facts, now, rules),
             WidgetTemplate.Minimal => Minimal(texts, facts, now, rules),
             WidgetTemplate.Bars => Bars(texts, facts, now, rules),
             _ => Lines(texts, 2, facts, now, rules),

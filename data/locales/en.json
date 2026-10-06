@@ -246,6 +246,8 @@
   "settings.slot.moveUp": "Move up",
   "settings.slot.moveDown": "Move down",
   "settings.slot.remove": "Remove slot",
+  "settings.slot.hidden": "Not shown",
+  "settings.slot.hidden.why": "This template has no room for it. Pick a template with more lines, use columns, or turn on cycling for one-line layouts.",
   "settings.slotStyle.text": "Text",
   "settings.slotStyle.ring": "Ring",
   "settings.slotStyle.sparkline": "Sparkline",
