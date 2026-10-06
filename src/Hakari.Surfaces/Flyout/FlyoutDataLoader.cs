@@ -20,6 +20,7 @@ internal static class FlyoutDataLoader
 {
     private const double PercentScale = 100.0;
     private const string DetailSeparator = " · ";
+    private const char NoBreakSpace = ' ';
     private const int FullPercent = 100;
     private const int SparkHours = 12;
     private const double ExtraUsageWarnAt = 0.8;
@@ -112,12 +113,13 @@ internal static class FlyoutDataLoader
         var today = query.Total(new UsageFilter(
             From: TimePeriods.StartOfToday(now),
             AccountId: entry.Account.AccountId));
+        // Each fact keeps its words together, so a narrow card wraps only between facts.
         var facts = string.Join(DetailSeparator, new[]
         {
             PlanNames.Short(entry.Account.Plan),
             Texts.Format("widget.today", MoneyText.Format(today.Cost, query.Currency)),
             UpdatedText(entry.Snapshot, now),
-        });
+        }.Select(fact => fact.Replace(' ', NoBreakSpace)));
 
         // The email gets a line of its own, so the facts after it are never cut off.
         var detail = nickname is null || entry.Account.Email is null
