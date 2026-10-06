@@ -118,10 +118,14 @@ public sealed partial class HakariSelect : Button
         Grid.SetColumn(textBlock, 1);
         row.Children.Add(textBlock);
 
+        // With samples the row spans the list, so every sample lines up at the right edge.
         var button = new Button
         {
             Content = row,
             Style = (Style)Application.Current.Resources["HakariListItemButton"],
+            HorizontalContentAlignment = Sample is null
+                ? HorizontalAlignment.Left
+                : HorizontalAlignment.Stretch,
         };
         button.Click += (_, _) =>
         {
