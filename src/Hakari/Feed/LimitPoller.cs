@@ -37,6 +37,11 @@ internal sealed class LimitPoller : IDisposable
     {
         this.sources = sources;
         accountRepository = new AccountRepository(store);
+        if (store.CreatedAt is { } installedAt)
+        {
+            accountRepository.StartOpeningPeriodsAt(installedAt);
+        }
+
         limitCache = new LimitCache(store);
         accountTracker = new AccountTracker(accountRepository, TimeProvider.System);
         limitService = new LimitService(

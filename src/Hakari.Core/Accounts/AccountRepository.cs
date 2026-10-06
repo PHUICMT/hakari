@@ -31,10 +31,33 @@ public sealed class AccountRepository(IndexStore store)
         LIMIT 1
         """;
 
+    private const string RebaseOpeningPeriodsSql = """
+        UPDATE OR IGNORE account_periods
+        SET started_at_ms = min($installedAtMs, coalesce((
+            SELECT min(later.started_at_ms)
+            FROM account_periods AS later
+            WHERE later.source_id = account_periods.source_id
+                AND later.started_at_ms > 0), $installedAtMs))
+        WHERE started_at_ms = 0
+        """;
+
     private const string InsertPeriodSql = """
         INSERT OR IGNORE INTO account_periods (source_id, account_id, started_at_ms)
         VALUES ($sourceId, $accountId, $startedAtMs)
         """;
+
+    /// <summary>
+    /// Earlier versions gave the first account of a source all of its earlier history, with a
+    /// period starting at the epoch. That history belongs to no account, so those periods are
+    /// moved to when Hakari was first installed, but never past the next period's start.
+    /// </summary>
+    public void StartOpeningPeriodsAt(DateTimeOffset installedAt)
+    {
+        using var command = store.Connection.CreateCommand();
+        command.CommandText = RebaseOpeningPeriodsSql;
+        command.Parameters.AddWithValue("$installedAtMs", installedAt.ToUnixTimeMilliseconds());
+        command.ExecuteNonQuery();
+    }
 
     public void SaveAccount(AccountInfo account, DateTimeOffset seenAt)
     {

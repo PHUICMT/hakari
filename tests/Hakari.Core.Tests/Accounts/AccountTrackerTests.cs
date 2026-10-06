@@ -29,22 +29,57 @@ public sealed class AccountTrackerTests : IDisposable
     }
 
     [Fact]
-    public void Gives_the_first_account_the_whole_earlier_history()
+    public void Counts_the_first_account_only_from_when_it_was_seen()
     {
         WriteAccount("account-a", "a@example.com");
 
         var started = CreateTracker().Observe([source]);
 
-        Assert.Equal(DateTimeOffset.UnixEpoch, Assert.Single(started).StartedAt);
+        Assert.Equal(SwitchTime, Assert.Single(started).StartedAt);
+    }
+
+    [Fact]
+    public void Gives_usage_from_before_the_first_sighting_to_no_account()
+    {
+        WriteAccount("account-a", "a@example.com");
+        CreateTracker().Observe([source]);
+        WriteLog(
+            SampleLogLines.Assistant(messageId: "before", timestamp: "2026-10-05T11:00:00Z"),
+            SampleLogLines.Assistant(messageId: "after", timestamp: "2026-10-05T13:00:00Z"));
+        new Indexer(store).Index([source]);
+
+        var messages = new UsageQuery(store, PricingTable.LoadBundled())
+            .Summarize(UsageFilter.Everything, GroupBy.Account)
+            .ToDictionary(summary => summary.Key, summary => summary.Messages);
+
+        Assert.Equal(1, messages[string.Empty]);
+        Assert.Equal(1, messages["account-a"]);
+    }
+
+    [Fact]
+    public void Moves_an_old_opening_period_to_the_install_time_but_not_past_the_next()
+    {
+        var repository = new AccountRepository(store);
+        var installed = SwitchTime.AddDays(-1);
+        repository.AddPeriod(new AccountPeriod("test", "account-a", DateTimeOffset.UnixEpoch));
+        repository.AddPeriod(new AccountPeriod("other", "account-a", DateTimeOffset.UnixEpoch));
+        repository.AddPeriod(new AccountPeriod("other", "account-b", installed.AddHours(-2)));
+
+        repository.StartOpeningPeriodsAt(installed);
+
+        Assert.Equal(installed, repository.LatestPeriod("test")!.StartedAt);
+        Assert.Equal(installed.AddHours(-2), repository.LatestPeriod("other")!.StartedAt);
     }
 
     [Fact]
     public void Starts_a_new_period_when_another_account_signs_in()
     {
         var tracker = CreateTracker();
+        time.Now = SwitchTime.AddHours(-2);
         WriteAccount("account-a", "a@example.com");
         tracker.Observe([source]);
 
+        time.Now = SwitchTime;
         WriteAccount("account-b", "b@example.com");
         var started = tracker.Observe([source]);
 
@@ -69,8 +104,10 @@ public sealed class AccountTrackerTests : IDisposable
     public void Splits_usage_between_accounts_at_the_switch()
     {
         var tracker = CreateTracker();
+        time.Now = SwitchTime.AddHours(-2);
         WriteAccount("account-a", "a@example.com");
         tracker.Observe([source]);
+        time.Now = SwitchTime;
         WriteAccount("account-b", "b@example.com");
         tracker.Observe([source]);
         WriteLog(
@@ -118,6 +155,8 @@ public sealed class AccountTrackerTests : IDisposable
 
     private sealed class MovableTime(DateTimeOffset now) : TimeProvider
     {
-        public override DateTimeOffset GetUtcNow() => now;
+        public DateTimeOffset Now { get; set; } = now;
+
+        public override DateTimeOffset GetUtcNow() => Now;
     }
 }

@@ -41,6 +41,10 @@ internal static class DashboardData
     public static IReadOnlyList<AccountInfo> Accounts() =>
         Read((_, store) => new AccountRepository(store).ListAccounts(), []);
 
+    public static bool HasUsageBeforeAccounts() => Read(
+        (query, _) => query.Total(new UsageFilter(AccountId: string.Empty)).Messages > 0,
+        false);
+
     public static IReadOnlyList<string> SourceIds() =>
         Read(
             (_, store) => SourceActivity.Load(store).Select(source => source.SourceId).ToList(),

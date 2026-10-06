@@ -4,9 +4,9 @@ using Hakari.Core.Sources;
 namespace Hakari.Core.Accounts;
 
 /// <summary>
-/// Notices which account each source is signed in to, and when that changes. The first
-/// account seen in a source also owns that source's earlier history, since there is no record
-/// of who was signed in before Hakari started.
+/// Notices which account each source is signed in to, and when that changes. Usage from before
+/// Hakari first saw a source belongs to no account, since the logs do not say who was signed
+/// in; an account counts from the moment it was first seen.
 /// </summary>
 public sealed class AccountTracker(AccountRepository repository, TimeProvider timeProvider)
 {
@@ -67,8 +67,7 @@ public sealed class AccountTracker(AccountRepository repository, TimeProvider ti
             return null;
         }
 
-        var startedAt = latest is null ? DateTimeOffset.UnixEpoch : now;
-        var period = new AccountPeriod(source.Id, account.AccountId, startedAt);
+        var period = new AccountPeriod(source.Id, account.AccountId, now);
         repository.AddPeriod(period);
         return period;
     }

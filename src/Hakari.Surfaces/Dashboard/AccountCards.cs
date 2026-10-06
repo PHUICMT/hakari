@@ -23,7 +23,9 @@ internal static class AccountCards
     public static Border Account(AccountCardData data, string periodCaption)
     {
         var body = new StackPanel { Spacing = CardSpacing };
-        var badge = DashboardBadge.Create(data.BadgeText, data.BadgeTone);
+        var badge = data.BadgeText.Length == 0
+            ? null
+            : DashboardBadge.Create(data.BadgeText, data.BadgeTone);
         body.Children.Add(Top(data.Name, data.Detail, badge));
         foreach (var limit in data.Limits)
         {
@@ -31,6 +33,11 @@ internal static class AccountCards
         }
 
         body.Children.Add(Figure(periodCaption, data.PeriodCost, FigureSize));
+        if (data.AllTime is { } allTime && allTime != data.PeriodCost)
+        {
+            body.Children.Add(Figure(Texts.Get("dashboard.period.all"), allTime, FigureSize));
+        }
+
         return Frame(body);
     }
 

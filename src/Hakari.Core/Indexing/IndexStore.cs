@@ -14,6 +14,9 @@ public sealed class IndexStore : IDisposable
         Connection.Open();
         Execute(IndexSchema.ConnectionPragmas);
         MigrateSchema();
+        CreatedAt = databasePath == InMemoryPath
+            ? null
+            : new DateTimeOffset(File.GetCreationTimeUtc(databasePath), TimeSpan.Zero);
     }
 
     private IndexStore(SqliteConnection readOnlyConnection) => Connection = readOnlyConnection;
@@ -38,6 +41,9 @@ public sealed class IndexStore : IDisposable
     private const int ReadOnlyBusyTimeoutSeconds = 2;
 
     public SqliteConnection Connection { get; }
+
+    /// <summary>When the index file was first made, which is when Hakari was first run.</summary>
+    public DateTimeOffset? CreatedAt { get; }
 
     public void DeleteAll() => Execute(IndexSchema.DeleteAll);
 

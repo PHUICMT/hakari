@@ -34,7 +34,7 @@ internal sealed partial class AccountsPage : LoadedPage<AccountsData>
     {
         var page = new StackPanel { Spacing = SectionSpacing };
         page.Children.Add(Cards(data));
-        if (data.Accounts.Count > 1)
+        if (data.Earlier is not null)
         {
             page.Children.Add(Note());
         }
@@ -49,10 +49,13 @@ internal sealed partial class AccountsPage : LoadedPage<AccountsData>
         var cards = new List<(FrameworkElement Card, double Weight)>(
             data.Accounts.Select(account => (
                 (FrameworkElement)AccountCards.Account(account, period),
-                BaseWeight + account.Limits.Count)))
+                BaseWeight + account.Limits.Count)));
+        if (data.Earlier is { } earlier)
         {
-            (AccountCards.Total(data, period, data.Sources.Count), TotalWeight),
-        };
+            cards.Add((AccountCards.Account(earlier, period), BaseWeight));
+        }
+
+        cards.Add((AccountCards.Total(data, period, data.Sources.Count), TotalWeight));
         return CardGrid.Create(cards, MostCardsAcross, MinimumCardWidth);
     }
 

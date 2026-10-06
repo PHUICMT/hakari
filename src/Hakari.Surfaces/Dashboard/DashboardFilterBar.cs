@@ -12,6 +12,7 @@ namespace Hakari.Surfaces.Dashboard;
 internal sealed partial class DashboardFilterBar : StackPanel
 {
     private const string AllChoice = "";
+    private const string EarlierChoice = "earlier";
     private const string RefreshGlyph = "";
     private const double RefreshGlyphSize = 12;
     private const double BarSpacing = 8;
@@ -45,7 +46,7 @@ internal sealed partial class DashboardFilterBar : StackPanel
         FillSelects();
         accountSelect.Selected += (_, value) => Change(DashboardFilter.Current with
         {
-            AccountId = (string)value == AllChoice ? null : (string)value,
+            AccountId = AccountOf((string)value),
         });
         sourceSelect.Selected += (_, value) => Change(DashboardFilter.Current with
         {
@@ -89,20 +90,41 @@ internal sealed partial class DashboardFilterBar : StackPanel
         accountSelect.SetChoices([allAccounts], AllChoice);
         sourceSelect.SetChoices([allSources], AllChoice);
 
-        var (accounts, sourceIds, settings) = await Task.Run(() =>
-            (DashboardData.Accounts(), DashboardData.SourceIds(), SettingsStore.Default.Load()));
+        var (accounts, sourceIds, settings, hasEarlier) = await Task.Run(() => (
+            DashboardData.Accounts(),
+            DashboardData.SourceIds(),
+            SettingsStore.Default.Load(),
+            DashboardData.HasUsageBeforeAccounts()));
         var accountChoices = accounts
             .Select(account => ((object)account.AccountId, AccountLabels.Full(
                 account,
                 settings.NicknameOf(account.AccountId))))
-            .Prepend(allAccounts);
-        accountSelect.SetChoices(accountChoices, DashboardFilter.Current.AccountId ?? AllChoice);
+            .Prepend(allAccounts)
+            .Concat(hasEarlier
+                ? [((object)EarlierChoice, Texts.Get("dashboard.accounts.earlier"))]
+                : []);
+        accountSelect.SetChoices(accountChoices, ChoiceOf(DashboardFilter.Current.AccountId));
 
         var sourceChoices = sourceIds
             .Select(sourceId => ((object)sourceId, SourceNames.Display(sourceId)))
             .Prepend(allSources);
         sourceSelect.SetChoices(sourceChoices, DashboardFilter.Current.SourceId ?? AllChoice);
     }
+
+    /// <summary>The filter's account: none for all, empty for usage before any account.</summary>
+    private static string? AccountOf(string choice) => choice switch
+    {
+        AllChoice => null,
+        EarlierChoice => string.Empty,
+        _ => choice,
+    };
+
+    private static string ChoiceOf(string? accountId) => accountId switch
+    {
+        null => AllChoice,
+        "" => EarlierChoice,
+        _ => accountId,
+    };
 
     private Button RefreshButton()
     {
