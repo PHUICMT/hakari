@@ -160,7 +160,8 @@ internal sealed record ChartsData(
             : Texts.Format("dashboard.mix.otherOf", listed);
     }
 
-    private static List<decimal> CostPerBucket(
+    /// <summary>The cost in each bar of the plan, zero where nothing was spent.</summary>
+    internal static List<decimal> CostPerBucket(
         UsageQuery query,
         UsageFilter usage,
         TimelinePlan plan)
