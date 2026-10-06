@@ -27,6 +27,9 @@ public sealed partial class SettingsPage : UserControl
         InitializeComponent();
         BuildCurrencyChoices();
         CurrencySuggestions.Attach(OtherCurrencyBox, _ => ApplyOtherCurrency());
+        PromptPayButton.Visibility = SupportLinks.ShowsPromptPay
+            ? Visibility.Visible
+            : Visibility.Collapsed;
         Fill();
         MakeSectionsFoldable();
     }

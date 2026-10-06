@@ -380,6 +380,7 @@
   "settings.privacy": "อ่านแค่จำนวน token จาก log ในเครื่อง ไม่อ่านข้อความที่ถามหรือคำตอบ เชื่อมต่อเน็ตเฉพาะเพื่อดู limit ของบัญชีและอัตราแลกเปลี่ยนสาธารณะ",
   "settings.support": "สนับสนุน Hakari",
   "settings.support.description": "เวอร์ชันฟรียังฟรีตลอด กาแฟสักแก้วช่วยให้พัฒนาต่อได้",
+  "settings.support.promptPay.note": "สแกนด้วยแอปธนาคารไหนก็ได้ ใส่จำนวนเท่าไรก็ได้ ขอบคุณที่สนับสนุนนะ",
   "settings.dataFolder": "โฟลเดอร์ข้อมูล",
   "settings.dataFolder.open": "เปิด",
   "currency.USD": "ดอลลาร์สหรัฐ",

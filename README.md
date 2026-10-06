@@ -21,7 +21,7 @@ dotnet run --project src/Hakari.Cli -c Release -- "\\wsl.localhost\Ubuntu-24.04\
 
 ## Support
 
-[Ko-fi](https://ko-fi.com/phuicmt)
+[GitHub Sponsors](https://github.com/sponsors/PHUICMT) · [Ko-fi](https://ko-fi.com/phuicmt)
 
 ## License
 

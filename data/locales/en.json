@@ -380,6 +380,7 @@
   "settings.privacy": "Reads token counts from local logs, never prompts or replies. Network use: your account's usage limits and public exchange rates.",
   "settings.support": "Support Hakari",
   "settings.support.description": "Free builds stay free. A coffee keeps it going.",
+  "settings.support.promptPay.note": "Scan with any Thai banking app and choose any amount. Thank you!",
   "settings.dataFolder": "Data folder",
   "settings.dataFolder.open": "Open",
   "currency.USD": "US Dollar",

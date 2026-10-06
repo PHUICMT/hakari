@@ -19,7 +19,7 @@ namespace Hakari.Surfaces.Settings;
 /// <summary>What each control does when the user changes it.</summary>
 public sealed partial class SettingsPage
 {
-    private const string SupportAddress = "https://ko-fi.com/phuicmt";
+
     private const string AnyFileType = "*";
     private const string FileExplorer = "explorer.exe";
     private const int CurrencyCodeLength = 3;
@@ -331,7 +331,13 @@ public sealed partial class SettingsPage
         Save(current => current with { Paused = PauseToggle.IsChecked == true });
 
     private async void OnSupportClicked(object sender, RoutedEventArgs args) =>
-        await Launcher.LaunchUriAsync(new Uri(SupportAddress));
+        await Launcher.LaunchUriAsync(new Uri(SupportLinks.KoFi));
+
+    private async void OnSponsorsClicked(object sender, RoutedEventArgs args) =>
+        await Launcher.LaunchUriAsync(new Uri(SupportLinks.GitHubSponsors));
+
+    private void OnPromptPayClicked(object sender, RoutedEventArgs args) =>
+        SupportLinks.ShowPromptPay((FrameworkElement)sender);
 
     private void OnOpenDataFolderClicked(object sender, RoutedEventArgs args)
     {

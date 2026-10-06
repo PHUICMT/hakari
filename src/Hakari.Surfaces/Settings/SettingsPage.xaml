@@ -235,8 +235,15 @@
                                 Description="{l:Text Key=settings.privacy}" />
                             <controls:SettingRow Glyph="&#xEB51;" Title="{l:Text Key=settings.support}"
                                 Description="{l:Text Key=settings.support.description}">
-                                <Button Content="Ko-fi" Style="{StaticResource HakariPrimaryButton}"
-                                    Click="OnSupportClicked" />
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <!-- Thai users only, and only once a PromptPay number is set -->
+                                    <Button x:Name="PromptPayButton" Content="PromptPay" Visibility="Collapsed"
+                                        Style="{StaticResource HakariButton}" Click="OnPromptPayClicked" />
+                                    <Button Content="GitHub Sponsors" Style="{StaticResource HakariButton}"
+                                        Click="OnSponsorsClicked" />
+                                    <Button Content="Ko-fi" Style="{StaticResource HakariPrimaryButton}"
+                                        Click="OnSupportClicked" />
+                                </StackPanel>
                             </controls:SettingRow>
                             <controls:SettingRow x:Name="DataFolderRow" Glyph="&#xE8A5;" Title="{l:Text Key=settings.dataFolder}">
                                 <Button Content="{l:Text Key=settings.dataFolder.open}" Style="{StaticResource HakariButton}"
