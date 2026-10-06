@@ -253,8 +253,16 @@ internal static class FlyoutDataLoader
                 ? Texts.Format("flyout.resets", ResetText.Long(resetsAt, now))
                 : Texts.Get("flyout.startsNext"),
             Fraction: Math.Clamp(percentOf(limit) / PercentScale, 0, 1),
-            Tone: limit.Percent >= FullPercent ? Tone.Critical : ToneOf(limit, limits.Freshness))),
+            Tone: limit.Percent >= FullPercent ? Tone.Critical : ToneOf(limit, limits.Freshness),
+            Pace: PaceOf(limit, now),
+            PaceText: PaceOf(limit, now) is { } pace
+                ? Texts.Format("flyout.evenPace", PercentText.Format(pace * PercentScale, 0))
+                : string.Empty)),
     ];
+
+    /// <summary>A full limit has nothing left to pace, so it carries no mark.</summary>
+    private static double? PaceOf(UsageLimit limit, DateTimeOffset now) =>
+        limit.Percent >= FullPercent ? null : EvenPace.Of(limit, now);
 
     private static Tone ToneOf(UsageLimit limit, LimitFreshness freshness) =>
         LimitPriority.SeverityRank(limit.Severity) switch
@@ -276,7 +284,10 @@ internal static class FlyoutDataLoader
         [
             new(Texts.Get("flyout.today"), MoneyText.Format(today.Cost, currency), Replies(today)),
             new(Texts.Get("flyout.thisWeek"), MoneyText.Format(week.Cost, currency), SinceMonday),
-            new(Texts.Get("flyout.thisMonth"), MoneyText.Format(month.Cost, currency), Month(now)),
+            new(
+                Texts.Get("flyout.thisMonth"),
+                MoneyText.Format(month.Cost, currency),
+                MonthDetail(month.Cost, currency, now)),
             new(
                 Texts.Get("flyout.allTime"),
                 MoneyText.Format(allTime.Cost, currency),
@@ -293,7 +304,13 @@ internal static class FlyoutDataLoader
     private static string Replies(UsageSummary today) =>
         Texts.Format("flyout.replies", today.Messages.ToString("N0", CultureInfo.InvariantCulture));
 
-    private static string Month(DateTimeOffset now) => now.ToString("MMMM", Texts.Culture);
+    /// <summary>"≈ ฿9,900 by month end" after the month's first day, else its name.</summary>
+    private static string MonthDetail(decimal spent, string currency, DateTimeOffset now) =>
+        MonthProjection.Of(spent, now) is { } projected
+            ? Texts.Format(
+                "flyout.monthProjection",
+                MoneyText.Format(decimal.Round(projected), currency))
+            : now.ToString("MMMM", Texts.Culture);
 
     /// <summary>Spending in each of the last twelve hours, oldest first.</summary>
     private static List<decimal> HourlyBurn(UsageQuery query, DateTimeOffset now) =>

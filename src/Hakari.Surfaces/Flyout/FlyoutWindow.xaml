@@ -102,16 +102,32 @@
                                                         Style="{StaticResource HakariValueText}"
                                                         Foreground="{x:Bind local:FlyoutBrushes.ForValue(Tone)}" />
                                                 </Grid>
-                                                <Border Height="6" CornerRadius="3" Background="{ThemeResource HakariLineBrush}">
-                                                    <Border x:Name="MeterFill" CornerRadius="3" RenderTransformOrigin="0,0.5"
-                                                        Background="{x:Bind local:FlyoutBrushes.ForTone(Tone)}"
-                                                        Tag="{x:Bind Fraction}">
-                                                        <Border.RenderTransform>
-                                                            <ScaleTransform ScaleX="{x:Bind Fraction}" ScaleY="1" />
-                                                        </Border.RenderTransform>
+                                                <Grid>
+                                                    <Border Height="6" CornerRadius="3" Background="{ThemeResource HakariLineBrush}">
+                                                        <Border x:Name="MeterFill" CornerRadius="3" RenderTransformOrigin="0,0.5"
+                                                            Background="{x:Bind local:FlyoutBrushes.ForTone(Tone)}"
+                                                            Tag="{x:Bind Fraction}">
+                                                            <Border.RenderTransform>
+                                                                <ScaleTransform ScaleX="{x:Bind Fraction}" ScaleY="1" />
+                                                            </Border.RenderTransform>
+                                                        </Border>
                                                     </Border>
-                                                </Border>
-                                                <TextBlock Text="{x:Bind ResetText}" Style="{StaticResource HakariCaptionText}" />
+                                                    <!-- Where an even pace through the week would be by now -->
+                                                    <Grid Visibility="{x:Bind PaceVisibility}" IsHitTestVisible="False">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="{x:Bind PaceBefore}" />
+                                                            <ColumnDefinition Width="{x:Bind PaceAfter}" />
+                                                        </Grid.ColumnDefinitions>
+                                                        <Border Grid.Column="1" Width="2" Height="12" Margin="-1,-3,0,-3"
+                                                            HorizontalAlignment="Left" CornerRadius="1"
+                                                            Background="{ThemeResource HakariInkFaintBrush}" />
+                                                    </Grid>
+                                                </Grid>
+                                                <Grid>
+                                                    <TextBlock Text="{x:Bind ResetText}" Style="{StaticResource HakariCaptionText}" />
+                                                    <TextBlock Text="{x:Bind PaceText}" HorizontalAlignment="Right"
+                                                        Style="{StaticResource HakariCaptionText}" />
+                                                </Grid>
                                             </StackPanel>
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>

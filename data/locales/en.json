@@ -50,6 +50,8 @@
   "flyout.updatedNow": "Updated just now",
   "flyout.updatedAgo": "Updated {0}",
   "flyout.resets": "Resets {0}",
+  "flyout.evenPace": "Even pace {0}",
+  "flyout.monthProjection": "≈ {0} by month end",
   "flyout.startsNext": "Starts with the next request",
   "flyout.lastKnown": "Showing the last known limits. They refresh while Claude Code is in use.",
   "alert.warning": "{0} is at {1}",

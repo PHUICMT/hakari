@@ -50,6 +50,8 @@
   "flyout.updatedNow": "อัปเดตเมื่อสักครู่",
   "flyout.updatedAgo": "อัปเดต {0}",
   "flyout.resets": "รีเซ็ต {0}",
+  "flyout.evenPace": "ถ้าใช้เท่าๆ กัน {0}",
+  "flyout.monthProjection": "≈ {0} ถึงสิ้นเดือน",
   "flyout.startsNext": "เริ่มนับเมื่อส่งคำขอครั้งถัดไป",
   "flyout.lastKnown": "แสดง limit ล่าสุดที่ทราบ จะอัปเดตเมื่อมีการใช้ Claude Code",
   "alert.warning": "{0} อยู่ที่ {1}",
