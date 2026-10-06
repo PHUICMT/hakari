@@ -52,7 +52,7 @@ internal static class FlyoutDataLoader
             Stats: StatTiles(query, now),
             BurnRate: BurnRate(query, now),
             HourlyBurn: HourlyBurn(query, now),
-            Sources: SourceRows(store, now),
+            Sources: SourceRows(store, query, now),
             Notices:
             [
                 .. FullLimits(accounts, settings, now),
@@ -60,6 +60,7 @@ internal static class FlyoutDataLoader
                     ? new[] { NoticeFor(accounts, new LimitCache(store)) }
                     : [],
                 .. Unpriced(query),
+                .. FirstRead(query),
             ]);
     }
 
@@ -101,6 +102,21 @@ internal static class FlyoutDataLoader
                     string.Join(DetailSeparator, new[] { resets, elsewhere }
                         .Where(part => part.Length > 0)));
             }
+        }
+    }
+
+    /// <summary>
+    /// Before the first read of the logs has finished there is nothing to count yet; the
+    /// flyout says so instead of showing zeros.
+    /// </summary>
+    private static IEnumerable<FlyoutNotice> FirstRead(UsageQuery query)
+    {
+        if (query.Total(UsageFilter.Everything).Messages == 0)
+        {
+            yield return new FlyoutNotice(
+                Tone.Normal,
+                Texts.Get("flyout.notice.reading"),
+                Texts.Get("flyout.notice.readingDetail"));
         }
     }
 
@@ -392,13 +408,31 @@ internal static class FlyoutDataLoader
         return $"{MoneyText.Format(lastHour.Cost, query.Currency)}/h";
     }
 
-    private static List<SourceRow> SourceRows(IndexStore store, DateTimeOffset now) =>
-    [
-        .. SourceActivity.Load(store).Select(activity => new SourceRow(
-            Name: SourceNames.Display(activity.SourceId),
-            Detail: Texts.Format("flyout.lastUsed", LastUsedText(now - activity.LastUsage)),
-            IsRecent: now - activity.LastUsage < RecentSourceWindow)),
-    ];
+    /// <summary>"live · ฿6,035": in use now or when it last was, and all it cost.</summary>
+    private static List<SourceRow> SourceRows(
+        IndexStore store,
+        UsageQuery query,
+        DateTimeOffset now)
+    {
+        var costs = query.Summarize(UsageFilter.Everything, GroupBy.Source)
+            .ToDictionary(source => source.Key, source => source.Cost);
+        return
+        [
+            .. SourceActivity.Load(store).Select(activity =>
+            {
+                var isRecent = now - activity.LastUsage < RecentSourceWindow;
+                var when = isRecent
+                    ? Texts.Get("flyout.live")
+                    : Texts.Format("flyout.lastUsed", LastUsedText(now - activity.LastUsage));
+                var cost = MoneyText.Format(
+                    costs.GetValueOrDefault(activity.SourceId), query.Currency);
+                return new SourceRow(
+                    Name: SourceNames.Display(activity.SourceId),
+                    Detail: when + DetailSeparator + cost,
+                    IsRecent: isRecent);
+            }),
+        ];
+    }
 
     internal static string LastUsedText(TimeSpan age) => AgeText.Format(age);
 }

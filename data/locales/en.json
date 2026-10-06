@@ -490,5 +490,8 @@
   "flyout.notice.full": "{0} reached on {1}",
   "flyout.notice.unpriced": "{0} model(s) have no price yet",
   "flyout.notice.unpricedBody": "{0} counted in tokens but not in cost. Update prices or set one in Settings.",
-  "flyout.notice.updatePrices": "Update prices"
+  "flyout.notice.updatePrices": "Update prices",
+  "flyout.live": "live",
+  "flyout.notice.reading": "Reading your logs for the first time",
+  "flyout.notice.readingDetail": "The numbers appear when it finishes. It runs at low priority; your work comes first."
 }

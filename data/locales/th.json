@@ -490,5 +490,8 @@
   "flyout.notice.full": "{0} เต็มแล้วบน {1}",
   "flyout.notice.unpriced": "มี {0} โมเดลที่ยังไม่มีราคา",
   "flyout.notice.unpricedBody": "{0} นับ token แล้วแต่ยังไม่นับค่าใช้จ่าย อัปเดตราคาหรือตั้งราคาเองได้ใน ตั้งค่า",
-  "flyout.notice.updatePrices": "อัปเดตราคา"
+  "flyout.notice.updatePrices": "อัปเดตราคา",
+  "flyout.live": "ใช้อยู่",
+  "flyout.notice.reading": "กำลังอ่าน log ครั้งแรก",
+  "flyout.notice.readingDetail": "ตัวเลขจะขึ้นเมื่ออ่านเสร็จ ทำงานเบื้องหลังแบบไม่แย่งเครื่อง งานของคุณมาก่อน"
 }
