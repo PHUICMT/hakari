@@ -8,7 +8,7 @@ using Microsoft.UI.Xaml.Media;
 
 namespace Hakari.Surfaces.Dashboard;
 
-/// <summary>Period, account and source, plus refresh. Every page shows the same bar.</summary>
+/// <summary>Period, account, source and model, plus refresh; the same on every page.</summary>
 internal sealed partial class DashboardFilterBar : StackPanel
 {
     private const string AllChoice = "";
@@ -30,6 +30,7 @@ internal sealed partial class DashboardFilterBar : StackPanel
     private readonly StackPanel secondLine = Line();
     private readonly HakariSelect accountSelect = new();
     private readonly HakariSelect sourceSelect = new();
+    private readonly HakariSelect modelSelect = new();
 
     public DashboardFilterBar()
     {
@@ -41,6 +42,7 @@ internal sealed partial class DashboardFilterBar : StackPanel
         firstLine.Children.Add(RefreshButton());
         secondLine.Children.Add(accountSelect);
         secondLine.Children.Add(sourceSelect);
+        secondLine.Children.Add(modelSelect);
         Children.Add(firstLine);
         Children.Add(secondLine);
         FillSelects();
@@ -51,6 +53,10 @@ internal sealed partial class DashboardFilterBar : StackPanel
         sourceSelect.Selected += (_, value) => Change(DashboardFilter.Current with
         {
             SourceId = (string)value == AllChoice ? null : (string)value,
+        });
+        modelSelect.Selected += (_, value) => Change(DashboardFilter.Current with
+        {
+            Model = (string)value == AllChoice ? null : (string)value,
         });
     }
 
@@ -87,14 +93,20 @@ internal sealed partial class DashboardFilterBar : StackPanel
     {
         var allAccounts = (AllChoice, Texts.Get("dashboard.allAccounts"));
         var allSources = (AllChoice, Texts.Get("dashboard.allSources"));
+        var allModels = (AllChoice, Texts.Get("dashboard.allModels"));
         accountSelect.SetChoices([allAccounts], AllChoice);
         sourceSelect.SetChoices([allSources], AllChoice);
+        modelSelect.SetChoices([allModels], AllChoice);
 
-        var (accounts, sourceIds, settings, hasEarlier) = await Task.Run(() => (
+        var (accounts, sourceIds, settings, hasEarlier, models) = await Task.Run(() => (
             DashboardData.Accounts(),
             DashboardData.SourceIds(),
             SettingsStore.Default.Load(),
-            DashboardData.HasUsageBeforeAccounts()));
+            DashboardData.HasUsageBeforeAccounts(),
+            DashboardData.Models()));
+        modelSelect.SetChoices(
+            models.Select(model => ((object)model, model)).Prepend(allModels),
+            DashboardFilter.Current.Model ?? AllChoice);
         var accountChoices = accounts
             .Select(account => ((object)account.AccountId, AccountLabels.Full(
                 account,

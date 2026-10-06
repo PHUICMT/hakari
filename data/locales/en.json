@@ -110,6 +110,7 @@
   "dashboard.period.all": "All time",
   "dashboard.allAccounts": "All accounts",
   "dashboard.allSources": "All sources",
+  "dashboard.allModels": "All models",
   "dashboard.refresh": "Read again",
   "dashboard.tile.cost": "Cost · {0}",
   "dashboard.tile.vsPrevious": "{0} vs previous {1}",

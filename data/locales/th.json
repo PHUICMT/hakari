@@ -110,6 +110,7 @@
   "dashboard.period.all": "ทั้งหมด",
   "dashboard.allAccounts": "ทุกบัญชี",
   "dashboard.allSources": "ทุกแหล่งข้อมูล",
+  "dashboard.allModels": "ทุกโมเดล",
   "dashboard.refresh": "อ่านใหม่",
   "dashboard.tile.cost": "ค่าใช้จ่าย · {0}",
   "dashboard.tile.vsPrevious": "{0} เทียบกับ {1} ก่อนหน้า",

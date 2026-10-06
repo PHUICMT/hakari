@@ -47,6 +47,9 @@ public sealed record HakariSettings
     /// <summary>The dashboard's menu folded down to its icons.</summary>
     public bool DashboardMenuFolded { get; init; }
 
+    /// <summary>The page, filter and size the dashboard was left with.</summary>
+    public DashboardMemory Dashboard { get; init; } = new();
+
     /// <summary>Settings sections folded shut, by their key such as "sources".</summary>
     public IReadOnlyList<string> CollapsedSettingsSections { get; init; } = [];
 

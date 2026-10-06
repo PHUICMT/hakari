@@ -103,7 +103,7 @@ public partial class App : Application
 
     private MenuWindow Menu => menu ??= new MenuWindow(
         ShowSettings,
-        () => ShowDashboard(DashboardPage.Overview));
+        () => ShowDashboard(null));
 
     private void ShowFlyout(SurfaceCommand command)
     {
@@ -112,7 +112,7 @@ public partial class App : Application
             flyout = new FlyoutWindow();
             flyout.Hidden += (_, _) => idleExitTimer?.Start();
             flyout.SettingsRequested += (_, _) => ShowSettings();
-            flyout.DashboardRequested += (_, _) => ShowDashboard(DashboardPage.Overview);
+            flyout.DashboardRequested += (_, _) => ShowDashboard(null);
         }
 
         flyout.Toggle(command.AnchorX, command.AnchorY);
@@ -143,8 +143,11 @@ public partial class App : Application
             ? (DashboardPage)command.AnchorX
             : DashboardPage.Overview;
 
-    /// <summary>A closed window cannot be shown again, so each opening builds a new one.</summary>
-    private void ShowDashboard(DashboardPage page)
+    /// <summary>
+    /// A closed window cannot be shown again, so each opening builds a new one. Without a
+    /// page it opens where it was left.
+    /// </summary>
+    private void ShowDashboard(DashboardPage? page)
     {
         idleExitTimer?.Stop();
         if (dashboard is null)
@@ -162,7 +165,7 @@ public partial class App : Application
             dashboard.LanguageChanged += (_, _) => RebuildForLanguage(window);
         }
 
-        dashboard.Present(page);
+        dashboard.Present(page ?? DashboardWindow.RememberedPage());
     }
 
     /// <summary>

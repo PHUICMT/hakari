@@ -60,7 +60,15 @@ public sealed partial class DashboardWindow : Window
         InitializeComponent();
         Title = Texts.Get("dashboard.windowTitle");
         ConfigureChrome();
-        menuFolded = SettingsStore.Default.Load().DashboardMenuFolded;
+        var settings = SettingsStore.Default.Load();
+        menuFolded = settings.DashboardMenuFolded;
+        DashboardFilter.Current = RememberedFilter(settings.Dashboard);
+        DashboardFilter.Changed += RememberFilter;
+        Closed += (_, _) =>
+        {
+            DashboardFilter.Changed -= RememberFilter;
+            RememberSize();
+        };
         BuildNavigation();
         WidthSteps.Watch(Root, [FullNavigationWidth], level =>
         {
@@ -187,6 +195,27 @@ public sealed partial class DashboardWindow : Window
 
     private IntPtr WindowHandle => WinRT.Interop.WindowNative.GetWindowHandle(this);
 
+    /// <summary>The page the dashboard was left on, else the overview.</summary>
+    public static DashboardPage RememberedPage() =>
+        Enum.TryParse<DashboardPage>(SettingsStore.Default.Load().Dashboard.Page, out var page)
+            ? page
+            : DashboardPage.Overview;
+
+    /// <summary>The filter the dashboard was left with, for its first page.</summary>
+    private static DashboardFilter RememberedFilter(DashboardMemory memory) => new(
+        Enum.TryParse<DashboardPeriod>(memory.Period, out var period)
+            ? period
+            : DashboardPeriod.ThirtyDays,
+        memory.AccountId,
+        memory.SourceId,
+        memory.Model);
+
+    private static void Remember(Func<DashboardMemory, DashboardMemory> change) =>
+        SettingsStore.Default.Update(current => current with
+        {
+            Dashboard = change(current.Dashboard),
+        });
+
     /// <summary>Shows the window on a page, or brings it forward and switches page.</summary>
     public void Present(DashboardPage page)
     {
@@ -251,8 +280,18 @@ public sealed partial class DashboardWindow : Window
         return row;
     }
 
+    private static void RememberFilter(object? sender, DashboardFilter filter) =>
+        Remember(memory => memory with
+        {
+            Period = filter.Period.ToString(),
+            AccountId = filter.AccountId,
+            SourceId = filter.SourceId,
+            Model = filter.Model,
+        });
+
     private void Show(DashboardPage page, bool animate)
     {
+        Remember(memory => memory with { Page = page.ToString() });
         current = page;
         choosing = true;
         navItems[page].IsChecked = true;
@@ -330,14 +369,31 @@ public sealed partial class DashboardWindow : Window
         AppWindow.TitleBar.ButtonInactiveBackgroundColor = Colors.Transparent;
     }
 
+    /// <summary>In layout units, so it comes back the same on a screen of another scale.</summary>
+    private void RememberSize()
+    {
+        var scale = NativeDpi.ForDisplay(DisplayArea.Primary) / DefaultDpi;
+        var size = AppWindow.Size;
+        Remember(memory => memory with
+        {
+            Width = size.Width / scale,
+            Height = size.Height / scale,
+        });
+    }
+
     private void PlaceOnPrimaryDisplay()
     {
         var display = DisplayArea.Primary;
         var scale = NativeDpi.ForDisplay(display) / DefaultDpi;
         var workArea = display.WorkArea;
         var margin = (int)(ScreenMargin * scale);
-        var width = Math.Min((int)Math.Ceiling(LogicalWidth * scale), workArea.Width - margin);
-        var height = Math.Min((int)Math.Ceiling(LogicalHeight * scale), workArea.Height - margin);
+        var memory = SettingsStore.Default.Load().Dashboard;
+        var logicalWidth = memory.Width >= MinimumLogicalWidth ? memory.Width : LogicalWidth;
+        var logicalHeight = memory.Height >= MinimumLogicalHeight
+            ? memory.Height
+            : LogicalHeight;
+        var width = Math.Min((int)Math.Ceiling(logicalWidth * scale), workArea.Width - margin);
+        var height = Math.Min((int)Math.Ceiling(logicalHeight * scale), workArea.Height - margin);
         if (AppWindow.Presenter is OverlappedPresenter presenter)
         {
             presenter.PreferredMinimumWidth = (int)Math.Ceiling(MinimumLogicalWidth * scale);

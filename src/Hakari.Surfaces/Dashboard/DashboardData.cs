@@ -45,6 +45,14 @@ internal static class DashboardData
         (query, _) => query.Total(new UsageFilter(AccountId: string.Empty)).Messages > 0,
         false);
 
+    /// <summary>Every model with usage, the costliest first.</summary>
+    public static IReadOnlyList<string> Models() => Read(
+        (query, _) => query.Summarize(UsageFilter.Everything, GroupBy.Model)
+            .Select(model => model.Key)
+            .Where(model => model.Length > 0)
+            .ToList(),
+        []);
+
     public static IReadOnlyList<string> SourceIds() =>
         Read(
             (_, store) => SourceActivity.Load(store).Select(source => source.SourceId).ToList(),
