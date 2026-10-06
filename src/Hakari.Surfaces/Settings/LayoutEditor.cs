@@ -41,6 +41,7 @@ internal sealed partial class LayoutEditor : StackPanel
     private (WidgetLayout Layout, IReadOnlyList<ComposedWidget> Panels, MultiAccountMode Mode,
         int Focused)? shown;
     private WidgetTemplate? hoveredTemplate;
+    private ScrollViewer formatSampleRow = new();
     private readonly List<TemplateCard> templateCards = [];
     private readonly Func<IReadOnlyList<NamedLayout>> saved;
     private readonly Action<Func<IReadOnlyList<NamedLayout>, IReadOnlyList<NamedLayout>>>
@@ -85,7 +86,7 @@ internal sealed partial class LayoutEditor : StackPanel
         TargetBar.Visibility = Visibility.Collapsed;
         Children.Add(TargetBar);
         Children.Add(EditorColumns());
-        Children.Add(MyLayouts());
+
         Children.Add(SimpleRow());
     }
 
@@ -208,11 +209,7 @@ internal sealed partial class LayoutEditor : StackPanel
     /// </summary>
     private StackPanel MyLayouts()
     {
-        var block = new StackPanel
-        {
-            Margin = new Thickness(Gutter, Gutter, Gutter, 0),
-            Spacing = Gap,
-        };
+        var block = new StackPanel { Margin = new Thickness(0, Gap, 0, 0), Spacing = Gap };
         block.Children.Add(new TextBlock
         {
             Text = Texts.Get("settings.layout.mine"),
@@ -371,6 +368,7 @@ internal sealed partial class LayoutEditor : StackPanel
         right.Children.Add(Slots());
         right.Children.Add(FormatBlock());
         right.Children.Add(ColorsAndCycle());
+        right.Children.Add(MyLayouts());
         grid.Children.Add(picker);
         grid.Children.Add(right);
         grid.SizeChanged += (_, args) =>
@@ -452,8 +450,27 @@ internal sealed partial class LayoutEditor : StackPanel
             return;
         }
 
+        // Nothing typed means the template speaks; the sample would only repeat the strips.
         var text = formatBox.Text.Trim();
-        var sample = current.Layout with { CustomFormat = text.Length == 0 ? null : text };
+        var wanted = text.Length > 0;
+        if ((formatSampleRow.Visibility == Visibility.Visible) != wanted)
+        {
+            if (formatSampleRow.IsLoaded && SurfaceMotion.Current() != AnimationSetting.Off)
+            {
+                Flyout.CardFold.Run(formatSampleRow, folding: !wanted, fitWindow: () => { });
+            }
+            else
+            {
+                formatSampleRow.Visibility = wanted ? Visibility.Visible : Visibility.Collapsed;
+            }
+        }
+
+        if (!wanted)
+        {
+            return;
+        }
+
+        var sample = current.Layout with { CustomFormat = text };
         var panels = WidgetPanels.Compose(
             current.Mode, sample, _ => sample, previewFacts, DateTimeOffset.Now);
         while (formatSample.Children.Count > panels.Count)
@@ -738,6 +755,13 @@ internal sealed partial class LayoutEditor : StackPanel
         };
 
         var block = new StackPanel { Spacing = 6 };
+        block.Children.Add(new TextBlock
+        {
+            Text = Texts.Get("settings.format"),
+            FontSize = 13,
+            FontWeight = FontWeights.SemiBold,
+            Foreground = Brush("HakariInkBrush"),
+        });
         block.Children.Add(Hint(Texts.Get("settings.format.description")));
         block.Children.Add(formatBox);
         var sampleRow = new StackPanel { Orientation = Orientation.Horizontal, Spacing = Gap };
@@ -749,7 +773,9 @@ internal sealed partial class LayoutEditor : StackPanel
             VerticalAlignment = VerticalAlignment.Center,
         });
         sampleRow.Children.Add(formatSample);
-        block.Children.Add(SideScroller(sampleRow));
+        formatSampleRow = SideScroller(sampleRow);
+        formatSampleRow.Visibility = Visibility.Collapsed;
+        block.Children.Add(formatSampleRow);
         block.Children.Add(Hint(Texts.Format(
             "settings.format.names",
             string.Join(", ", WidgetValues.Names))));
