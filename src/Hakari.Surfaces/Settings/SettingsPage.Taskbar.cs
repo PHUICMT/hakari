@@ -249,20 +249,7 @@ public sealed partial class SettingsPage
             now,
             settings.TurnLength);
 
-        while (PreviewRow.Children.Count > panels.Count)
-        {
-            PreviewRow.Children.RemoveAt(PreviewRow.Children.Count - 1);
-        }
-
-        for (var index = 0; index < panels.Count; index++)
-        {
-            if (index >= PreviewRow.Children.Count)
-            {
-                PreviewRow.Children.Add(new WidgetPreview());
-            }
-
-            ((WidgetPreview)PreviewRow.Children[index]).Show(panels[index]);
-        }
+        PreviewStrips.Show(panels);
 
         var layout = EditedLayout(settings);
         ShowLegacyRows(layout);

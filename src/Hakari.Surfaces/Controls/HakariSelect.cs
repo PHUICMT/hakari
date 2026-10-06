@@ -28,16 +28,23 @@ public sealed partial class HakariSelect : Button
     public HakariSelect()
     {
         Style = (Style)Application.Current.Resources["HakariButton"];
-        var row = new StackPanel { Orientation = Orientation.Horizontal, Spacing = ContentSpacing };
+        // Stretched wide, the label keeps left and the chevron goes to the far end.
+        var row = new Grid { ColumnSpacing = ContentSpacing };
+        row.ColumnDefinitions.Add(new ColumnDefinition());
+        row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        label.TextTrimming = TextTrimming.CharacterEllipsis;
         row.Children.Add(label);
-        row.Children.Add(new FontIcon
+        var chevron = new FontIcon
         {
             Glyph = ChevronGlyph,
             FontSize = GlyphSize,
             FontFamily = (FontFamily)Application.Current.Resources["HakariIconFont"],
             Foreground = Brush("HakariInkMutedBrush"),
-        });
+        };
+        Grid.SetColumn(chevron, 1);
+        row.Children.Add(chevron);
         Content = row;
+        HorizontalContentAlignment = HorizontalAlignment.Stretch;
         Click += (_, _) => OpenList();
     }
 

@@ -273,6 +273,8 @@
   "settings.format.placeholder": "{cost.today:$0.00} · {limit.5h:0%} ↺{limit.5h.reset:h\\:mm}",
   "settings.format.names": "ชื่อที่ใช้ได้: {0}",
   "settings.thresholds": "สีตามเกณฑ์",
+  "settings.thresholds.below": "ต่ำกว่า {0}%",
+  "settings.thresholds.andUp": "ขึ้นไป",
   "settings.thresholds.description": "ตั้งว่า limit เปลี่ยนเป็นสีเตือนและสีวิกฤตที่กี่เปอร์เซ็นต์",
   "settings.cycle": "สลับมุมมอง",
   "settings.cycle.description": "layout แบบบรรทัดเดียวจะแสดงทีละช่องสลับกัน",

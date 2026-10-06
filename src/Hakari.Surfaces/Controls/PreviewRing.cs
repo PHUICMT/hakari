@@ -65,6 +65,8 @@ internal sealed partial class PreviewRing : Grid
         stopDisc.Fill = brush;
     }
 
+    public void SetTrack(Brush brush) => track.Stroke = brush;
+
     public void Draw(double fraction)
     {
         Fraction = Math.Clamp(fraction, 0, 1);

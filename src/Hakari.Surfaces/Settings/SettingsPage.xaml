@@ -23,11 +23,8 @@
                             <StackPanel Padding="16" Spacing="8" CornerRadius="8,8,0,0"
                                 Background="{ThemeResource HakariGroundBrush}">
                                 <TextBlock Text="{l:Text Key=settings.preview}" Style="{StaticResource HakariCaptionText}" />
-                                <!-- One preview block per widget block; built in code -->
-                                <ScrollViewer HorizontalScrollMode="Enabled" HorizontalScrollBarVisibility="Auto"
-                                    VerticalScrollMode="Disabled" VerticalScrollBarVisibility="Disabled" Margin="0,0,0,-12">
-                                    <StackPanel x:Name="PreviewRow" Orientation="Horizontal" Spacing="6" Margin="0,0,0,14" />
-                                </ScrollViewer>
+                                <!-- The widget on a light and a dark taskbar; filled in code -->
+                                <controls:TaskbarStrips x:Name="PreviewStrips" />
                             </StackPanel>
                             <controls:SettingRow Glyph="&#xE716;" Title="{l:Text Key=settings.accountsMode}"
                                 Description="{l:Text Key=settings.accountsMode.description}">

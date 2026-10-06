@@ -273,6 +273,8 @@
   "settings.format.placeholder": "{cost.today:$0.00} · {limit.5h:0%} ↺{limit.5h.reset:h\\:mm}",
   "settings.format.names": "Names: {0}",
   "settings.thresholds": "Threshold colors",
+  "settings.thresholds.below": "under {0}%",
+  "settings.thresholds.andUp": "and up",
   "settings.thresholds.description": "Where a limit turns to the warning color and then the critical one.",
   "settings.cycle": "Cycle views",
   "settings.cycle.description": "One-line layouts show each slot in turn.",

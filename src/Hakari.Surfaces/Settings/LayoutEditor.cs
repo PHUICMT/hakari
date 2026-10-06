@@ -32,11 +32,15 @@ internal sealed partial class LayoutEditor : StackPanel
 
     private readonly Func<WidgetLayout> currentLayout;
     private readonly Action<Func<WidgetLayout, WidgetLayout>> change;
-    private readonly StackPanel previewRow = new()
+    private readonly TaskbarStrips strips = new();
+    private readonly StackPanel formatSample = new()
     {
         Orientation = Orientation.Horizontal,
-        Spacing = 6,
+        Spacing = 2,
     };
+    private (WidgetLayout Layout, IReadOnlyList<ComposedWidget> Panels, MultiAccountMode Mode,
+        int Focused)? shown;
+    private WidgetTemplate? hoveredTemplate;
     private readonly List<TemplateCard> templateCards = [];
     private readonly Func<IReadOnlyList<NamedLayout>> saved;
     private readonly Action<Func<IReadOnlyList<NamedLayout>, IReadOnlyList<NamedLayout>>>
@@ -80,13 +84,8 @@ internal sealed partial class LayoutEditor : StackPanel
         TargetBar.Margin = new Thickness(Gutter, Gap, Gutter, 0);
         TargetBar.Visibility = Visibility.Collapsed;
         Children.Add(TargetBar);
-        Children.Add(PreviewStrip());
-        Children.Add(Templates());
+        Children.Add(EditorColumns());
         Children.Add(MyLayouts());
-        Children.Add(Slots());
-        Children.Add(FormatBlock());
-        Children.Add(Thresholds());
-        Children.Add(Cycle());
         Children.Add(SimpleRow());
     }
 
@@ -115,16 +114,25 @@ internal sealed partial class LayoutEditor : StackPanel
         previewFacts = facts;
         try
         {
-            ShowPreview(panels, focusedPanel);
+            shown = (layout, panels, mode, focusedPanel);
+            if (hoveredTemplate is { } hovered)
+            {
+                ShowTemplateSample(hovered);
+            }
+            else
+            {
+                strips.Show(panels, focusedPanel);
+            }
+
             var now = DateTimeOffset.Now;
             var isSavedLayout = saved().Any(entry => entry.Layout == layout);
             foreach (var card in templateCards)
             {
                 card.Choose(
                     !isSavedLayout && layout.UsesSlots && card.Kind == layout.Template);
-                var sample = WidgetTemplates.Apply(layout, card.Kind);
-                card.ShowPreview(WidgetPanels.Compose(mode, sample, _ => sample, facts, now));
             }
+
+            ShowFormatSample();
 
             RebuildSaved(layout, facts, mode, now);
             RebuildSlots(layout);
@@ -133,6 +141,7 @@ internal sealed partial class LayoutEditor : StackPanel
                 formatBox.Text = layout.CustomFormat ?? string.Empty;
             }
 
+            belowText.Text = Texts.Format("settings.thresholds.below", layout.WarnAt);
             warnSelect.SetChoices(
                 WarnChoices.Select(percent => ((object)percent, $"{percent}%")),
                 layout.WarnAt);
@@ -178,15 +187,6 @@ internal sealed partial class LayoutEditor : StackPanel
         return header;
     }
 
-    /// <summary>A wide widget scrolls sideways here instead of being cut off.</summary>
-    private Border PreviewStrip() => new()
-    {
-        Margin = new Thickness(Gutter, Gap, Gutter, 0),
-        Padding = new Thickness(Gutter, Gutter, Gutter, ScrollBarRoom / 3),
-        CornerRadius = new CornerRadius(6),
-        Background = Brush("HakariGroundBrush"),
-        Child = SideScroller(previewRow),
-    };
 
     /// <summary>The scroll bar floats over the bottom, so the blocks keep clear of it.</summary>
     private const double ScrollBarRoom = 14;
@@ -200,39 +200,7 @@ internal sealed partial class LayoutEditor : StackPanel
         VerticalScrollBarVisibility = ScrollBarVisibility.Disabled,
     };
 
-    private void ShowPreview(IReadOnlyList<ComposedWidget> panels, int focusedPanel)
-    {
-        while (previewRow.Children.Count > panels.Count)
-        {
-            previewRow.Children.RemoveAt(previewRow.Children.Count - 1);
-        }
 
-        for (var index = 0; index < panels.Count; index++)
-        {
-            if (index >= previewRow.Children.Count)
-            {
-                previewRow.Children.Add(FadingIn(new WidgetPreview()));
-            }
-
-            var block = (WidgetPreview)previewRow.Children[index];
-            block.Show(panels[index]);
-            var opacity = focusedPanel < 0 || focusedPanel == index ? 1 : UnfocusedOpacity;
-            if (SurfaceMotion.Current() == AnimationSetting.Off)
-            {
-                block.Opacity = opacity;
-            }
-            else if (block.IsLoaded && block.Opacity != opacity)
-            {
-                SurfaceMotion.Settle(block, "Opacity", opacity);
-            }
-            else if (!block.IsLoaded)
-            {
-                block.Tag = opacity;
-            }
-        }
-    }
-
-    private const double UnfocusedOpacity = 0.4;
 
     /// <summary>
     /// The user's own layouts, each a card that puts it back, and a field to save the one
@@ -375,33 +343,133 @@ internal sealed partial class LayoutEditor : StackPanel
         return content;
     }
 
-    private Grid Templates()
+    private const double PickerWidth = 240;
+    private const double NarrowWidth = 640;
+    private const double ColumnGap = 16;
+
+    /// <summary>
+    /// The template picker on the left; on the right the preview strips, the slots, the
+    /// custom format and the color and cycle row. A narrow window stacks the two.
+    /// </summary>
+    private Grid EditorColumns()
     {
         var grid = new Grid
         {
             Margin = new Thickness(Gutter, Gutter, Gutter, 0),
-            ColumnSpacing = Gap,
-            RowSpacing = Gap,
+            ColumnSpacing = ColumnGap,
+            RowSpacing = ColumnGap,
         };
+        var pickerColumn = new ColumnDefinition { Width = new GridLength(PickerWidth) };
+        grid.ColumnDefinitions.Add(pickerColumn);
         grid.ColumnDefinitions.Add(new ColumnDefinition());
-        grid.ColumnDefinitions.Add(new ColumnDefinition());
-        var templates = WidgetTemplates.All;
-        for (var index = 0; index < templates.Count; index++)
-        {
-            if (index % 2 == 0)
-            {
-                grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-            }
+        grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+        grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
 
-            var card = new TemplateCard(templates[index]);
-            card.Chosen += (_, template) => change(layout => Pick(layout, template));
-            Grid.SetColumn(card, index % 2);
-            Grid.SetRow(card, index / 2);
-            grid.Children.Add(card);
+        var picker = Templates();
+        var right = new StackPanel { Spacing = 12 };
+        right.Children.Add(strips);
+        right.Children.Add(Slots());
+        right.Children.Add(FormatBlock());
+        right.Children.Add(ColorsAndCycle());
+        grid.Children.Add(picker);
+        grid.Children.Add(right);
+        grid.SizeChanged += (_, args) =>
+        {
+            var narrow = args.NewSize.Width < NarrowWidth;
+            pickerColumn.Width = narrow ? new GridLength(0) : new GridLength(PickerWidth);
+            grid.ColumnSpacing = narrow ? 0 : ColumnGap;
+            Grid.SetColumnSpan(picker, narrow ? 2 : 1);
+            Grid.SetColumn(right, narrow ? 0 : 1);
+            Grid.SetColumnSpan(right, narrow ? 2 : 1);
+            Grid.SetRow(right, narrow ? 1 : 0);
+        };
+        Grid.SetColumn(right, 1);
+        return grid;
+    }
+
+    private StackPanel Templates()
+    {
+        var list = new StackPanel { Spacing = 6 };
+        foreach (var template in WidgetTemplates.All)
+        {
+            var card = new TemplateCard(template);
+            card.Chosen += (_, chosen) =>
+            {
+                hoveredTemplate = null;
+                change(layout => Pick(layout, chosen));
+            };
+            card.Hovered += (_, over) => HoverTemplate(card.Kind, over);
+            list.Children.Add(card);
             templateCards.Add(card);
         }
 
-        return grid;
+        return list;
+    }
+
+    /// <summary>While the pointer rests on a template, the strips show the widget in it.</summary>
+    private void HoverTemplate(WidgetTemplate template, bool over)
+    {
+        if (over)
+        {
+            hoveredTemplate = template;
+            ShowTemplateSample(template);
+            return;
+        }
+
+        if (hoveredTemplate == template)
+        {
+            hoveredTemplate = null;
+            if (shown is { } current)
+            {
+                strips.Show(current.Panels, current.Focused);
+            }
+        }
+    }
+
+    private void ShowTemplateSample(WidgetTemplate template)
+    {
+        if (shown is not { } current || previewFacts is null)
+        {
+            return;
+        }
+
+        if (current.Layout.UsesSlots && current.Layout.Template == template)
+        {
+            strips.Show(current.Panels, current.Focused);
+            return;
+        }
+
+        var sample = WidgetTemplates.Apply(current.Layout, template);
+        strips.Show(WidgetPanels.Compose(
+            current.Mode, sample, _ => sample, previewFacts, DateTimeOffset.Now));
+    }
+
+    /// <summary>What the format being typed gives, before it is applied.</summary>
+    private void ShowFormatSample()
+    {
+        if (shown is not { } current || previewFacts is null)
+        {
+            return;
+        }
+
+        var text = formatBox.Text.Trim();
+        var sample = current.Layout with { CustomFormat = text.Length == 0 ? null : text };
+        var panels = WidgetPanels.Compose(
+            current.Mode, sample, _ => sample, previewFacts, DateTimeOffset.Now);
+        while (formatSample.Children.Count > panels.Count)
+        {
+            formatSample.Children.RemoveAt(formatSample.Children.Count - 1);
+        }
+
+        for (var index = 0; index < panels.Count; index++)
+        {
+            if (index >= formatSample.Children.Count)
+            {
+                formatSample.Children.Add(FadingIn(new WidgetPreview()));
+            }
+
+            ((WidgetPreview)formatSample.Children[index]).Show(panels[index]);
+        }
     }
 
     /// <summary>The accounts template cycles one account's value at a time.</summary>
@@ -410,15 +478,12 @@ internal sealed partial class LayoutEditor : StackPanel
 
     private StackPanel Slots()
     {
-        addSlot.Style = (Style)Application.Current.Resources["HakariButton"];
+        addSlot.Style = (Style)Application.Current.Resources["HakariDashedButton"];
         addSlot.HorizontalAlignment = HorizontalAlignment.Stretch;
+        addSlot.HorizontalContentAlignment = HorizontalAlignment.Left;
         addSlot.Click += (_, _) =>
             ChangeSlot(SlotMotion.Added, WidgetLayout.MaximumSlots, AddSlot);
-        var block = new StackPanel
-        {
-            Margin = new Thickness(Gutter, Gutter, Gutter, 0),
-            Spacing = Gap,
-        };
+        var block = new StackPanel { Spacing = 6 };
         block.Children.Add(slotList);
         block.Children.Add(addSlot);
         return block;
@@ -666,25 +731,25 @@ internal sealed partial class LayoutEditor : StackPanel
         {
             if (!refreshing)
             {
+                ShowFormatSample();
                 formatTimer.Stop();
                 formatTimer.Start();
             }
         };
 
-        var block = new StackPanel
-        {
-            Margin = new Thickness(Gutter, Gutter, Gutter, 0),
-            Spacing = 4,
-        };
-        block.Children.Add(new TextBlock
-        {
-            Text = Texts.Get("settings.format"),
-            FontSize = 13,
-            FontWeight = FontWeights.SemiBold,
-            Foreground = Brush("HakariInkBrush"),
-        });
+        var block = new StackPanel { Spacing = 6 };
         block.Children.Add(Hint(Texts.Get("settings.format.description")));
         block.Children.Add(formatBox);
+        var sampleRow = new StackPanel { Orientation = Orientation.Horizontal, Spacing = Gap };
+        sampleRow.Children.Add(new TextBlock
+        {
+            Text = Texts.Get("settings.preview"),
+            FontSize = HintSize,
+            Foreground = Brush("HakariInkFaintBrush"),
+            VerticalAlignment = VerticalAlignment.Center,
+        });
+        sampleRow.Children.Add(formatSample);
+        block.Children.Add(SideScroller(sampleRow));
         block.Children.Add(Hint(Texts.Format(
             "settings.format.names",
             string.Join(", ", WidgetValues.Names))));
@@ -697,7 +762,14 @@ internal sealed partial class LayoutEditor : StackPanel
         change(layout => layout with { CustomFormat = text.Length == 0 ? null : text });
     }
 
-    private StackPanel Thresholds()
+    private const double NarrowRow = 560;
+
+    /// <summary>
+    /// One row, as in the design: the three colors a limit takes with where each starts, and
+    /// on the right whether the widget cycles through its slots and how fast. Narrow, the
+    /// cycle goes under the colors.
+    /// </summary>
+    private Grid ColorsAndCycle()
     {
         warnSelect.Selected += (_, value) => change(layout => WithWarn(layout, (int)value));
         criticalSelect.Selected += (_, value) => change(layout => layout with
@@ -705,45 +777,59 @@ internal sealed partial class LayoutEditor : StackPanel
             CriticalAt = (int)value,
             WarnAt = Math.Min(layout.WarnAt, (int)value - 5),
         });
-        var controls = new StackPanel { Orientation = Orientation.Horizontal, Spacing = Gap };
-        controls.Children.Add(Dot("HakariWarnBrush"));
-        controls.Children.Add(warnSelect);
-        controls.Children.Add(Dot("HakariCriticalBrush"));
-        controls.Children.Add(criticalSelect);
-        var row = new SettingRow
+        cycleToggle.Click += (_, _) =>
+            ChangeCycle(cycleToggle.IsChecked == true ? DefaultCycleSeconds : 0);
+        cycleSelect.Selected += (_, value) => ChangeCycle((int)value);
+
+        var colors = new StackPanel { Orientation = Orientation.Horizontal, Spacing = Gap };
+        colors.Children.Add(RowText(Texts.Get("settings.thresholds"), isLabel: true));
+        colors.Children.Add(Dot("HakariAccentBrush"));
+        colors.Children.Add(belowText);
+        colors.Children.Add(Dot("HakariWarnBrush"));
+        colors.Children.Add(warnSelect);
+        colors.Children.Add(Dot("HakariCriticalBrush"));
+        colors.Children.Add(criticalSelect);
+        colors.Children.Add(RowText(Texts.Get("settings.thresholds.andUp"), isLabel: false));
+        ToolTipService.SetToolTip(colors, Texts.Get("settings.thresholds.description"));
+
+        var cycle = new StackPanel { Orientation = Orientation.Horizontal, Spacing = Gap };
+        cycle.Children.Add(RowText(Texts.Get("settings.cycle"), isLabel: true));
+        cycle.Children.Add(cycleSelect);
+        cycle.Children.Add(cycleToggle);
+        ToolTipService.SetToolTip(cycle, Texts.Get("settings.cycle.description"));
+
+        var row = new Grid { RowSpacing = Gap, ColumnSpacing = Gap };
+        row.ColumnDefinitions.Add(new ColumnDefinition());
+        row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        row.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+        row.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+        row.Children.Add(colors);
+        row.Children.Add(cycle);
+        Grid.SetColumn(cycle, 1);
+        row.SizeChanged += (_, args) =>
         {
-            Glyph = "\uE790",
-            Title = Texts.Get("settings.thresholds"),
-            Description = Texts.Get("settings.thresholds.description"),
-            Content = controls,
-            Margin = new Thickness(0, Gutter, 0, 0),
+            var narrow = args.NewSize.Width < NarrowRow;
+            Grid.SetColumn(cycle, narrow ? 0 : 1);
+            Grid.SetRow(cycle, narrow ? 1 : 0);
         };
-        return new StackPanel { Children = { row } };
+        return row;
     }
 
+    private readonly TextBlock belowText = RowText(string.Empty, isLabel: false);
+
+    private static TextBlock RowText(string text, bool isLabel) => new()
+    {
+        Text = text,
+        FontSize = 13,
+        Foreground = Brush(isLabel ? "HakariInkBrush" : "HakariInkMutedBrush"),
+        VerticalAlignment = VerticalAlignment.Center,
+        Margin = new Thickness(0, 0, isLabel ? 4 : 0, 0),
+    };
     private static WidgetLayout WithWarn(WidgetLayout layout, int warnAt) => layout with
     {
         WarnAt = warnAt,
         CriticalAt = Math.Max(layout.CriticalAt, warnAt + 5),
     };
-
-    private StackPanel Cycle()
-    {
-        cycleToggle.Click += (_, _) =>
-            ChangeCycle(cycleToggle.IsChecked == true ? DefaultCycleSeconds : 0);
-        cycleSelect.Selected += (_, value) => ChangeCycle((int)value);
-        var controls = new StackPanel { Orientation = Orientation.Horizontal, Spacing = Gap };
-        controls.Children.Add(cycleSelect);
-        controls.Children.Add(cycleToggle);
-        var row = new SettingRow
-        {
-            Glyph = "\uE895",
-            Title = Texts.Get("settings.cycle"),
-            Description = Texts.Get("settings.cycle.description"),
-            Content = controls,
-        };
-        return new StackPanel { Children = { row } };
-    }
 
     private void ChangeCycle(int seconds)
     {

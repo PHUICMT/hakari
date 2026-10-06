@@ -260,6 +260,54 @@
         </Setter>
     </Style>
 
+    <!-- "Add another": a dashed outline that fills on hover; faded when there is no room -->
+    <Style x:Key="HakariDashedButton" TargetType="Button">
+        <Setter Property="Foreground" Value="{ThemeResource HakariInkMutedBrush}" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="Padding" Value="10,8" />
+        <Setter Property="UseSystemFocusVisuals" Value="True" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Grid x:Name="Root" Background="Transparent">
+                        <Border x:Name="StateFill" Background="Transparent"
+                            CornerRadius="{StaticResource HakariControlRadius}" />
+                        <Rectangle Stroke="{ThemeResource HakariLineStrongBrush}" StrokeThickness="1"
+                            StrokeDashArray="4,3" RadiusX="4" RadiusY="4" />
+                        <ContentPresenter x:Name="Presenter" Padding="{TemplateBinding Padding}"
+                            HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                            VerticalContentAlignment="Center" Content="{TemplateBinding Content}"
+                            Foreground="{TemplateBinding Foreground}" />
+                        <VisualStateManager.VisualStateGroups>
+                            <VisualStateGroup x:Name="CommonStates">
+                                <VisualStateGroup.Transitions>
+                                    <VisualTransition GeneratedDuration="0:0:0.12" />
+                                </VisualStateGroup.Transitions>
+                                <VisualState x:Name="Normal" />
+                                <VisualState x:Name="PointerOver">
+                                    <VisualState.Setters>
+                                        <Setter Target="StateFill.Background" Value="{ThemeResource HakariHoverBrush}" />
+                                        <Setter Target="Presenter.Foreground" Value="{ThemeResource HakariInkBrush}" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                                <VisualState x:Name="Pressed">
+                                    <VisualState.Setters>
+                                        <Setter Target="StateFill.Background" Value="{ThemeResource HakariPressedBrush}" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                                <VisualState x:Name="Disabled">
+                                    <VisualState.Setters>
+                                        <Setter Target="Root.Opacity" Value="0.5" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                            </VisualStateGroup>
+                        </VisualStateManager.VisualStateGroups>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <!-- Dashboard navigation: icon and label; the chosen page gets a raised fill and an
          accent bar on the left that grows in -->
     <Style x:Key="HakariNavItem" TargetType="RadioButton">

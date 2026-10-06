@@ -94,6 +94,25 @@ public sealed partial class WidgetPreview : Grid
         Children.Add(row);
     }
 
+    /// <summary>
+    /// Draws as on a taskbar of this kind, on a clear ground so the strip behind shows;
+    /// without one it follows the app's theme.
+    /// </summary>
+    public TaskbarPalette? Palette
+    {
+        get => palette;
+        set
+        {
+            palette = value;
+            Background = value is null ? Brush("HakariTaskbarBrush") : null;
+            var track = value?.Track ?? Brush("HakariLineStrongBrush");
+            outerRing.SetTrack(track);
+            innerRing.SetTrack(track);
+        }
+    }
+
+    private TaskbarPalette? palette;
+
     public void Show(ComposedWidget widget)
     {
         var textChanged = topText.Text != widget.Top.Text
@@ -135,7 +154,7 @@ public sealed partial class WidgetPreview : Grid
         spark.Points = [.. values.Select((value, index) => new Windows.Foundation.Point(
             index * step,
             SparkHeight - (highest <= 0 ? 0 : value / highest * SparkHeight)))];
-        spark.Stroke = Brush(highest <= 0 ? "HakariLineStrongBrush" : "HakariAccentBrush");
+        spark.Stroke = highest <= 0 ? TrackBrush() : RingBrush(LineTone.Normal);
         sparkHost.Visibility = Visibility.Visible;
     }
 
@@ -148,7 +167,7 @@ public sealed partial class WidgetPreview : Grid
         bars.Children.Add(BarCell(bottom, BottomLineHeight));
     }
 
-    private static Grid BarCell(ComposedBar? bar, double lineHeight)
+    private Grid BarCell(ComposedBar? bar, double lineHeight)
     {
         var cell = new Grid { Width = BarWidth, Height = lineHeight };
         if (bar is null)
@@ -160,7 +179,7 @@ public sealed partial class WidgetPreview : Grid
         {
             Height = BarHeight,
             VerticalAlignment = VerticalAlignment.Center,
-            Background = Brush("HakariLineStrongBrush"),
+            Background = TrackBrush(),
             CornerRadius = new CornerRadius(BarHeight / 2),
         };
         track.Children.Add(new Border
@@ -213,16 +232,27 @@ public sealed partial class WidgetPreview : Grid
             CompositionTarget.Rendering -= OnRendering;
         }
     }
-    private static Brush TextBrush(LineTone tone, bool isTop) => tone switch
-    {
-        LineTone.Warning => Brush("HakariWarnBrush"),
-        LineTone.Critical => Brush("HakariCriticalBrush"),
-        LineTone.Muted => Brush("HakariInkFaintBrush"),
-        _ => Brush(isTop ? "HakariInkBrush" : "HakariInkMutedBrush"),
-    };
+    private Brush TextBrush(LineTone tone, bool isTop) => palette is { } colors
+        ? tone switch
+        {
+            LineTone.Warning => colors.Warn,
+            LineTone.Critical => colors.Critical,
+            LineTone.Muted => colors.Faint,
+            _ => isTop ? colors.Ink : colors.Faint,
+        }
+        : tone switch
+        {
+            LineTone.Warning => Brush("HakariWarnBrush"),
+            LineTone.Critical => Brush("HakariCriticalBrush"),
+            LineTone.Muted => Brush("HakariInkFaintBrush"),
+            _ => Brush(isTop ? "HakariInkBrush" : "HakariInkMutedBrush"),
+        };
 
-    private static Brush RingBrush(LineTone tone) =>
-        tone == LineTone.Normal ? Brush("HakariAccentBrush") : TextBrush(tone, isTop: true);
+    private Brush RingBrush(LineTone tone) => tone != LineTone.Normal
+        ? TextBrush(tone, isTop: true)
+        : palette?.Normal ?? Brush("HakariAccentBrush");
+
+    private Brush TrackBrush() => palette?.Track ?? Brush("HakariLineStrongBrush");
 
     private static Brush Brush(string key) => (Brush)Application.Current.Resources[key];
 }

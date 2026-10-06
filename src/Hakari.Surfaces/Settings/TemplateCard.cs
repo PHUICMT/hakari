@@ -11,21 +11,22 @@ using Microsoft.UI.Xaml.Input;
 namespace Hakari.Surfaces.Settings;
 
 /// <summary>
-/// One template to pick: its name and what it is for. The chosen one is outlined in the
-/// accent color on a soft accent ground; the others lift a little under the pointer.
+/// One template in the picker: its name and what it is for. The chosen one is outlined in
+/// the accent color; the others lift a little under the pointer, and the editor's preview
+/// shows the widget in that template while the pointer rests on it.
 /// </summary>
 internal sealed partial class TemplateCard : UserControl
 {
     private const double TitleSize = 13;
-    private const double DescriptionSize = 12;
-    private static readonly Thickness CardPadding = new(12, 10, 12, 10);
+    private const double DescriptionSize = 11;
+    private const double ChosenBorder = 2;
+    private const double PlainBorder = 1;
+    private static readonly Thickness CardPadding = new(10, 8, 10, 8);
+
+    /// <summary>The thicker outline takes its pixel from the padding; nothing moves.</summary>
+    private static readonly Thickness ChosenPadding = new(9, 7, 9, 7);
 
     private readonly Border frame = new();
-    private readonly StackPanel preview = new()
-    {
-        Orientation = Orientation.Horizontal,
-        Spacing = 4,
-    };
     private bool isChosen;
     private bool isOver;
 
@@ -48,16 +49,8 @@ internal sealed partial class TemplateCard : UserControl
             Foreground = Brush("HakariInkFaintBrush"),
             TextWrapping = TextWrapping.Wrap,
         });
-        body.Children.Add(new Viewbox
-        {
-            Child = preview,
-            StretchDirection = StretchDirection.DownOnly,
-            HorizontalAlignment = HorizontalAlignment.Left,
-            Margin = new Thickness(0, 8, 0, 0),
-        });
         frame.Child = body;
         frame.Padding = CardPadding;
-        frame.BorderThickness = new Thickness(1);
         frame.CornerRadius = new CornerRadius(6);
         frame.BackgroundTransition = new BrushTransition { Duration = SurfaceMotion.Normal };
         Content = frame;
@@ -68,6 +61,7 @@ internal sealed partial class TemplateCard : UserControl
         Paint();
         PointerEntered += (_, _) => Over(true);
         PointerExited += (_, _) => Over(false);
+        PointerCanceled += (_, _) => Over(false);
         Tapped += (_, _) => Chosen?.Invoke(this, Kind);
     }
 
@@ -75,24 +69,8 @@ internal sealed partial class TemplateCard : UserControl
 
     public event EventHandler<WidgetTemplate>? Chosen;
 
-    /// <summary>What the widget looks like with this template, from the real numbers.</summary>
-    public void ShowPreview(IReadOnlyList<ComposedWidget> panels)
-    {
-        while (preview.Children.Count > panels.Count)
-        {
-            preview.Children.RemoveAt(preview.Children.Count - 1);
-        }
-
-        for (var index = 0; index < panels.Count; index++)
-        {
-            if (index >= preview.Children.Count)
-            {
-                preview.Children.Add(LayoutEditor.FadingIn(new WidgetPreview()));
-            }
-
-            ((WidgetPreview)preview.Children[index]).Show(panels[index]);
-        }
-    }
+    /// <summary>The pointer came to rest on this template (true) or left it (false).</summary>
+    public event EventHandler<bool>? Hovered;
 
     public void Choose(bool chosen)
     {
@@ -107,16 +85,24 @@ internal sealed partial class TemplateCard : UserControl
 
     private void Over(bool over)
     {
+        if (isOver == over)
+        {
+            return;
+        }
+
         isOver = over;
         Paint();
+        Hovered?.Invoke(this, over);
     }
 
     private void Paint()
     {
         frame.BorderBrush = Brush(isChosen ? "HakariAccentBrush" : "HakariLineBrush");
-        frame.Background = isChosen
-            ? Brush("HakariAccentSoftBrush")
-            : isOver ? Brush("HakariRaisedBrush") : Brush("HakariTileBrush");
+        frame.BorderThickness = new Thickness(isChosen ? ChosenBorder : PlainBorder);
+        frame.Padding = isChosen ? ChosenPadding : CardPadding;
+        frame.Background = isOver && !isChosen
+            ? Brush("HakariRaisedBrush")
+            : Brush("HakariTileBrush");
     }
 
     private static Microsoft.UI.Xaml.Media.Brush Brush(string key) =>
