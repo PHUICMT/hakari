@@ -100,9 +100,11 @@ internal sealed partial class LayoutEditor : StackPanel
         {
             ShowPreview(panels);
             var now = DateTimeOffset.Now;
+            var isSavedLayout = saved().Any(entry => entry.Layout == layout);
             foreach (var card in templateCards)
             {
-                card.Choose(layout.UsesSlots && card.Kind == layout.Template);
+                card.Choose(
+                    !isSavedLayout && layout.UsesSlots && card.Kind == layout.Template);
                 var sample = WidgetTemplates.Apply(layout, card.Kind);
                 card.ShowPreview(WidgetPanels.Compose(mode, sample, _ => sample, facts, now));
             }
