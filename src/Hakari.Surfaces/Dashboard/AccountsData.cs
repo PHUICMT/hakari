@@ -35,11 +35,12 @@ internal sealed record AccountsData(
         var now = DateTimeOffset.Now;
         var settings = SettingsStore.Default.Load();
         var repository = new AccountRepository(store);
-        var accounts = Ordered(repository.ListAccounts(), new LimitCache(store), settings, now);
+        var cache = new LimitCache(store);
+        var accounts = Ordered(repository.ListAccounts(), cache, settings, now);
         var usage = filter.ToUsageFilter(now) with { AccountId = null };
         var today = new UsageFilter(From: TimePeriods.StartOfToday(now));
         return new AccountsData(
-            [.. accounts.Select(entry => Card(entry, query, usage, settings, now))],
+            [.. accounts.Select(entry => Card(entry, query, cache, usage, settings, now))],
             EarlierCard(query, usage),
             Money(query, UsageFilter.Everything),
             Money(query, usage),
@@ -99,6 +100,7 @@ internal sealed record AccountsData(
     private static AccountCardData Card(
         (AccountInfo Account, LimitSnapshot? Snapshot) entry,
         UsageQuery query,
+        LimitCache cache,
         UsageFilter usage,
         HakariSettings settings,
         DateTimeOffset now)
@@ -106,7 +108,8 @@ internal sealed record AccountsData(
         var account = entry.Account;
         var nickname = settings.NicknameOf(account.AccountId);
         var isHidden = settings.HiddenAccounts.Contains(account.AccountId);
-        var (badge, tone) = Badge(entry.Snapshot, isHidden, now);
+        var failure = cache.LoadFailure(account.AccountId);
+        var (badge, tone) = Badge(entry.Snapshot, isHidden, failure, now);
         var cost = query.Total(usage with { AccountId = account.AccountId }).Cost;
         return new AccountCardData(
             AccountLabels.Full(account, nickname),
@@ -140,6 +143,7 @@ internal sealed record AccountsData(
     private static (string Text, BadgeTone Tone) Badge(
         LimitSnapshot? snapshot,
         bool isHidden,
+        LimitFailure failure,
         DateTimeOffset now)
     {
         if (isHidden)
@@ -153,12 +157,20 @@ internal sealed record AccountsData(
         }
 
         var age = now - snapshot.FetchedAt;
-        if (age < LimitsAreLive)
-        {
-            return (Texts.Get("dashboard.accounts.limitsOn"), BadgeTone.Accent);
-        }
-
         var when = FlyoutDataLoader.LastUsedText(age);
-        return (Texts.Format("dashboard.accounts.lastKnown", when), BadgeTone.Neutral);
+        return failure switch
+        {
+            LimitFailure.SignInExpired => (
+                Texts.Format("dashboard.accounts.signInExpired", when), BadgeTone.Warn),
+            LimitFailure.Offline => (
+                Texts.Format("dashboard.accounts.offline", when), BadgeTone.Neutral),
+            LimitFailure.ServiceUnavailable => (
+                Texts.Format("dashboard.accounts.unavailable", when), BadgeTone.Neutral),
+            LimitFailure.NoCredentials => (
+                Texts.Format("dashboard.accounts.signedOut", when), BadgeTone.Neutral),
+            _ when age < LimitsAreLive => (
+                Texts.Get("dashboard.accounts.limitsOn"), BadgeTone.Accent),
+            _ => (Texts.Format("dashboard.accounts.lastKnown", when), BadgeTone.Neutral),
+        };
     }
 }

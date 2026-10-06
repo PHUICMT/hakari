@@ -54,7 +54,9 @@ internal static class PlanCards
     }
 
     private static string Detail(PlanAccount account, string currency) =>
-        account.Price is { } price
+        account.Kind == PlanCardKind.Unassigned
+            ? Texts.Get("dashboard.planValue.unassignedDetail")
+            : account.Price is { } price
             ? Texts.Format(
                 "dashboard.planValue.detail",
                 account.Plan,
@@ -66,7 +68,7 @@ internal static class PlanCards
         PlanAccount account,
         PlanValueData data)
     {
-        if (account.Price is not > 0)
+        if (account.Kind == PlanCardKind.Unassigned || account.Price is not > 0)
         {
             return null;
         }
@@ -84,6 +86,11 @@ internal static class PlanCards
 
     private static string BreakEvenText(PlanAccount account)
     {
+        if (account.Kind == PlanCardKind.Unassigned)
+        {
+            return Texts.Get("dashboard.planValue.unassigned");
+        }
+
         if (account.Price is null)
         {
             return Texts.Get("dashboard.planValue.noPrice");

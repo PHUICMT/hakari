@@ -67,6 +67,11 @@ internal static class IndexSchema
             fetched_at_ms INTEGER NOT NULL
         );
 
+        CREATE TABLE IF NOT EXISTS account_limit_failures (
+            account_id TEXT PRIMARY KEY,
+            failure TEXT NOT NULL
+        );
+
         CREATE TABLE IF NOT EXISTS accounts (
             account_id TEXT PRIMARY KEY,
             email TEXT,

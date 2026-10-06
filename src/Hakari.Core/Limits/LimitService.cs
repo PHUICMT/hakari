@@ -110,6 +110,7 @@ public sealed class LimitService(
 
     private LimitResult FromCache(string accountId, LimitFailure failure)
     {
+        cache.SaveFailure(accountId, failure);
         var cached = cache.Load(accountId);
         if (cached is null)
         {

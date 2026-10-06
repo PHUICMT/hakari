@@ -51,7 +51,25 @@ internal static class FlyoutDataLoader
             BurnRate: BurnRate(query, now),
             HourlyBurn: HourlyBurn(query, now),
             Sources: SourceRows(store, now),
-            Notice: anyLastKnown ? Texts.Get("flyout.lastKnown") : null);
+            Notice: anyLastKnown ? NoticeFor(accounts, new LimitCache(store)) : null);
+    }
+
+    /// <summary>Says why the limits are old when it is known, else only that they are.</summary>
+    private static string NoticeFor(
+        IEnumerable<(AccountInfo Account, LimitSnapshot Snapshot)> accounts,
+        LimitCache cache)
+    {
+        var failures = accounts
+            .Select(entry => cache.LoadFailure(entry.Account.AccountId))
+            .Where(failure => failure != LimitFailure.None)
+            .ToList();
+        return failures.FirstOrDefault() switch
+        {
+            LimitFailure.SignInExpired => Texts.Get("flyout.signInExpired"),
+            LimitFailure.Offline => Texts.Get("flyout.offline"),
+            LimitFailure.ServiceUnavailable => Texts.Get("flyout.unavailable"),
+            _ => Texts.Get("flyout.lastKnown"),
+        };
     }
 
     private static List<(AccountInfo Account, LimitSnapshot Snapshot)> AccountsWithLimits(

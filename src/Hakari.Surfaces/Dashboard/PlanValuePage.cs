@@ -28,7 +28,7 @@ internal sealed partial class PlanValuePage : LoadedPage<PlanValueData>
     protected override UIElement Build(PlanValueData data)
     {
         var page = new StackPanel { Spacing = SectionSpacing };
-        if (data.Accounts.Count == 0)
+        if (data.Accounts.Count == 0 && data.Combined is null && data.Unassigned is null)
         {
             page.Children.Add(DashboardCard.Create(
                 Texts.Get("dashboard.planValue.title"),
@@ -42,22 +42,40 @@ internal sealed partial class PlanValuePage : LoadedPage<PlanValueData>
         }
 
         page.Children.Add(Tiles(data));
+        if (data.Combined is { } combined)
+        {
+            page.Children.Add(PlanCards.Account(combined, data.Currency, data));
+        }
+
         var cards = data.Accounts
             .Select(account => (FrameworkElement)PlanCards.Account(account, data.Currency, data))
             .ToList();
-        page.Children.Add(CardGrid.Create(cards, MostCardsAcross, MinimumCardWidth));
-        page.Children.Add(Note());
+        if (cards.Count > 0)
+        {
+            page.Children.Add(CardGrid.Create(cards, MostCardsAcross, MinimumCardWidth));
+        }
+
+        if (data.Unassigned is { } earlier)
+        {
+            page.Children.Add(PlanCards.Account(earlier, data.Currency, data));
+        }
+
+        page.Children.Add(Note(data.Unassigned is not null));
         return page;
     }
 
     private static Grid Tiles(PlanValueData data)
     {
         var month = data.Today.ToString("MMMM", Texts.Culture);
-        var cost = data.Accounts.Sum(account => account.ThisMonth.Cost);
-        var before = data.Accounts.Sum(account => account.Months.ElementAtOrDefault(1)?.Cost ?? 0);
         var priced = data.Accounts.Where(account => account.Price is not null).ToList();
+        var cost = data.Combined?.ThisMonth.Cost
+            ?? data.Accounts.Sum(account => account.ThisMonth.Cost);
+        var before = data.Combined?.Months[1].Cost
+            ?? data.Accounts.Sum(account => account.Months.ElementAtOrDefault(1)?.Cost ?? 0);
         var paid = priced.Sum(account => account.Price!.Value);
-        var pricedCost = priced.Sum(account => account.ThisMonth.Cost);
+        var pricedCost = data.Combined is null
+            ? priced.Sum(account => account.ThisMonth.Cost)
+            : cost;
         var net = pricedCost - paid;
         var projected = cost / data.Today.Day * data.DaysInMonth;
         return DashboardTiles.Create(
@@ -107,9 +125,12 @@ internal sealed partial class PlanValuePage : LoadedPage<PlanValueData>
     private static string Signed(decimal amount, string currency) =>
         (amount < 0 ? "−" : "+") + MoneyText.Format(Math.Abs(amount), currency);
 
-    private static TextBlock Note() => new()
+    private static TextBlock Note(bool hasEarlier) => new()
     {
-        Text = Texts.Get("dashboard.planValue.note"),
+        Text = hasEarlier
+            ? $"{Texts.Get("dashboard.planValue.note")} "
+                + Texts.Get("dashboard.planValue.earlierNote")
+            : Texts.Get("dashboard.planValue.note"),
         FontSize = 12,
         Foreground = DashboardCard.Brush("HakariInkFaintBrush"),
         TextWrapping = TextWrapping.Wrap,
