@@ -18,24 +18,8 @@ public sealed partial class SettingsPage
     /// <summary>The "layout for" choice that edits the layout every account shares.</summary>
     private const string SharedLayout = "";
 
-    private static readonly (WidgetItem Value, string TextKey)[] LineChoiceKeys =
-    [
-        (WidgetItem.Automatic, "settings.item.automatic"),
-        (WidgetItem.CostToday, "settings.item.costToday"),
-        (WidgetItem.CostThisMonth, "settings.item.costMonth"),
-        (WidgetItem.BurnRate, "settings.item.burnRate"),
-        (WidgetItem.TokensToday, "settings.item.tokensToday"),
-        (WidgetItem.TokensThisMonth, "settings.item.tokensMonth"),
-        (WidgetItem.RepliesToday, "settings.item.repliesToday"),
-        (WidgetItem.SessionLimit, "settings.item.session"),
-        (WidgetItem.WeeklyLimit, "settings.item.weekly"),
-        (WidgetItem.SessionAndWeeklyLimits, "settings.item.both"),
-        (WidgetItem.MostPressingLimit, "settings.item.pressing"),
-        (WidgetItem.SecondAccount, "settings.item.secondAccount"),
-        (WidgetItem.Nothing, "settings.item.nothing"),
-    ];
-
     private WidgetFacts? previewFacts;
+    private LayoutEditor? layoutEditor;
     private string layoutTarget = SharedLayout;
     private DispatcherQueueTimer? turnTimer;
 
@@ -50,7 +34,7 @@ public sealed partial class SettingsPage
 
     /// <summary>"Second account" only makes sense while all accounts share one block.</summary>
     private static IEnumerable<(object Value, string Text)> LineChoicesFor(MultiAccountMode mode) =>
-        LineChoiceKeys
+        WidgetItemChoices.Keys
             .Where(choice => mode == MultiAccountMode.Together
                 || choice.Value != WidgetItem.SecondAccount)
             .Select(choice => ((object)choice.Value, Texts.Get(choice.TextKey)));
@@ -58,6 +42,7 @@ public sealed partial class SettingsPage
     private void FillTaskbar(HakariSettings settings)
     {
         previewFacts ??= WidgetFactsLoader.Load(DateTimeOffset.Now);
+        EnsureLayoutEditor();
         ModeTogether.IsChecked = settings.AccountsMode == MultiAccountMode.Together;
         ModeSideBySide.IsChecked = settings.AccountsMode == MultiAccountMode.SideBySide;
         ModeTakeTurns.IsChecked = settings.AccountsMode == MultiAccountMode.TakeTurns;
@@ -264,7 +249,30 @@ public sealed partial class SettingsPage
             ((WidgetPreview)PreviewRow.Children[index]).Show(panels[index]);
         }
 
+        var layout = EditedLayout(settings);
+        ShowLegacyRows(layout);
+        layoutEditor?.Refresh(layout, panels);
         UpdateTurnTimer(settings, facts);
+    }
+
+    /// <summary>The editor's own slots replace the top line, bottom line and ring.</summary>
+    private void ShowLegacyRows(WidgetLayout layout)
+    {
+        var visibility = layout.UsesSlots ? Visibility.Collapsed : Visibility.Visible;
+        RingRow.Visibility = visibility;
+        TopRow.Visibility = visibility;
+        BottomRow.Visibility = visibility;
+    }
+
+    private void EnsureLayoutEditor()
+    {
+        if (layoutEditor is not null)
+        {
+            return;
+        }
+
+        layoutEditor = new LayoutEditor(() => EditedLayout(store.Load()), ChangeLayout);
+        LayoutEditorCard.Child = layoutEditor;
     }
 
     /// <summary>While taking turns the preview turns too, on the taskbar's clock.</summary>
