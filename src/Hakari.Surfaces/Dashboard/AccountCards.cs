@@ -124,7 +124,7 @@ internal static class AccountCards
         grid.Children.Add(element);
     }
 
-    private static Grid Top(string name, string detail, FrameworkElement? badge)
+    public static Grid Top(string name, string detail, FrameworkElement? badge)
     {
         var top = new Grid { ColumnSpacing = 8 };
         top.ColumnDefinitions.Add(new ColumnDefinition());
