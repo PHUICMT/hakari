@@ -64,6 +64,9 @@ public sealed class TaskbarWidgetHost : IDisposable
 
     public event EventHandler<WidgetClickedEventArgs>? RightClicked;
 
+    /// <summary>The wheel turned over a widget: positive away from the user.</summary>
+    public event EventHandler<int>? Scrolled;
+
     /// <summary>The pointer came onto a widget; for the hover card.</summary>
     public event EventHandler<WidgetClickedEventArgs>? HoverStarted;
 
@@ -238,6 +241,7 @@ public sealed class TaskbarWidgetHost : IDisposable
         var widget = WidgetWindow.Create(target, taskbarHandle, options.Mode);
         widget.Clicked += (_, _) => RaiseClicked(widget);
         widget.RightClicked += (_, _) => Raise(RightClicked, widget);
+        widget.Scrolled += (_, delta) => Scrolled?.Invoke(this, delta);
         widget.HoverChanged += (_, _) =>
         {
             StartHoverTransition(widget);

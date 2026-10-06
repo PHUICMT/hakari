@@ -78,6 +78,24 @@ internal sealed class UsageFeed : IDisposable
         changeTracker?.Wake();
     }
 
+    private volatile int turnShift;
+
+    /// <summary>
+    /// Thread-safe: the wheel over the widget moves the turn to the next or the previous
+    /// account at once, while accounts take turns.
+    /// </summary>
+    public void ShiftTurn(int by)
+    {
+        if (presentation.AccountsMode != MultiAccountMode.TakeTurns)
+        {
+            return;
+        }
+
+        turnShift += by;
+        layoutChanged = true;
+        changeTracker?.Wake();
+    }
+
     /// <summary>Thread-safe: redraws for a new layout, names or language.</summary>
     public void SetPresentation(HakariSettings settings)
     {
@@ -198,7 +216,7 @@ internal sealed class UsageFeed : IDisposable
             }
 
             // Posting redraws every widget, so only a real change is posted.
-            var content = WidgetText.Content(facts, presentation);
+            var content = WidgetText.Content(facts, presentation, turnShift);
             if (content != lastPosted)
             {
                 Updated?.Invoke(content);

@@ -96,7 +96,11 @@
   "menu.settingsPlain": "Settings",  "menu.quit": "Quit Hakari",
 
   "tooltip.limit": "{0} {1} · resets {2}",
-  "tooltip.money": "Today {0} · this month {1} · burn {2}/h",
+  "tooltip.money": "Today {0} · this month {1}",
+  "tooltip.burn": "Burn {0}/h · {1} active sessions",
+  "tooltip.scroll": "scroll to switch account",
+  "tooltip.paused": "Updates are paused; resume from the menu",
+  "tooltip.pausedUntil": "Updates are paused until {0}",
   "dashboard.windowTitle": "Hakari",
   "dashboard.overview": "Overview",
   "dashboard.sessions": "Sessions",

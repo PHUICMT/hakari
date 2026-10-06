@@ -96,7 +96,11 @@
   "menu.settingsPlain": "ตั้งค่า",  "menu.quit": "ออกจาก Hakari",
 
   "tooltip.limit": "{0} {1} · รีเซ็ต {2}",
-  "tooltip.money": "วันนี้ {0} · เดือนนี้ {1} · ใช้ {2}/ชม.",
+  "tooltip.money": "วันนี้ {0} · เดือนนี้ {1}",
+  "tooltip.burn": "อัตรา {0}/ชม. · {1} session ที่ใช้อยู่",
+  "tooltip.scroll": "เลื่อนล้อเมาส์เพื่อสลับบัญชี",
+  "tooltip.paused": "หยุดอัปเดตอยู่ เปิดต่อได้จากเมนู",
+  "tooltip.pausedUntil": "หยุดอัปเดตถึง {0}",
   "dashboard.windowTitle": "Hakari",
   "dashboard.overview": "ภาพรวม",
   "dashboard.sessions": "Session",

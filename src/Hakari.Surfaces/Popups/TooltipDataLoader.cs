@@ -4,6 +4,7 @@ using Hakari.Core.Indexing;
 using Hakari.Core.Limits;
 using Hakari.Core.Localization;
 using Hakari.Core.Presentation;
+using Hakari.Core.Presentation.Widget;
 using Hakari.Core.Pricing;
 using Hakari.Core.Querying;
 using Hakari.Core.Settings;
@@ -54,11 +55,24 @@ internal static class TooltipDataLoader
             entry => entry.Account.AccountId,
             entry => LimitPriority.Rank(entry.Snapshot),
             settings);
-        return
-        [
-            .. arranged.Select(entry =>
-                Card(entry.Account, entry.Snapshot, settings, query, now)),
-        ];
+        var cards = arranged
+            .Select(entry => Card(entry.Account, entry.Snapshot, settings, query, now))
+            .ToList();
+        if (cards.Count > 1 && settings.AccountsMode == MultiAccountMode.TakeTurns)
+        {
+            var last = cards[^1];
+            cards[^1] = last with
+            {
+                Updated = last.Updated + TitleSeparator + Texts.Get("tooltip.scroll"),
+            };
+        }
+
+        if (State(settings, query, now) is { } state)
+        {
+            cards.Insert(0, new TooltipAccount(state, [], string.Empty));
+        }
+
+        return cards;
     }
 
     private static TooltipAccount Card(
@@ -71,7 +85,7 @@ internal static class TooltipDataLoader
         var title = AccountLabels.Full(account, settings.NicknameOf(account.AccountId))
             + TitleSeparator + PlanNames.Short(account.Plan);
         var lines = snapshot.Limits.Select(limit => LimitLine(limit, now)).ToList();
-        lines.Add(MoneyLine(query, account.AccountId, now));
+        lines.AddRange(MoneyLines(query, account.AccountId, now));
         return new TooltipAccount(title, lines, Updated(snapshot, now));
     }
 
@@ -86,16 +100,50 @@ internal static class TooltipDataLoader
             : $"{name} {percent}";
     }
 
-    private static string MoneyLine(UsageQuery query, string accountId, DateTimeOffset now)
+    private static readonly TimeSpan ActiveWindow = TimeSpan.FromMinutes(5);
+
+    /// <summary>
+    /// Why the widget reads as it does when it is not plain numbers: paused, or still
+    /// reading the logs for the first time.
+    /// </summary>
+    private static string? State(HakariSettings settings, UsageQuery query, DateTimeOffset now)
+    {
+        if (settings.Paused)
+        {
+            return Texts.Get("tooltip.paused");
+        }
+
+        if (settings.PausedUntil is { } until && until > now)
+        {
+            return Texts.Format(
+                "tooltip.pausedUntil", until.ToLocalTime().ToString("HH:mm", Texts.Culture));
+        }
+
+        return query.Total(UsageFilter.Everything).Messages == 0
+            ? Texts.Get("flyout.notice.reading")
+            : null;
+    }
+
+    /// <summary>"Today ฿… · this month ฿…", then "Burn ฿…/h · 2 active sessions".</summary>
+    private static IEnumerable<string> MoneyLines(
+        UsageQuery query,
+        string accountId,
+        DateTimeOffset now)
     {
         decimal Since(DateTimeOffset from) =>
             query.Total(new UsageFilter(From: from, AccountId: accountId)).Cost;
 
-        return Texts.Format(
+        yield return Texts.Format(
             "tooltip.money",
             MoneyText.Format(Since(TimePeriods.StartOfToday(now)), query.Currency),
-            MoneyText.Format(Since(TimePeriods.StartOfMonth(now)), query.Currency),
-            MoneyText.Format(Since(now.AddHours(-1)), query.Currency));
+            MoneyText.Format(Since(TimePeriods.StartOfMonth(now)), query.Currency));
+        var active = query.Summarize(
+            new UsageFilter(From: now - ActiveWindow, AccountId: accountId),
+            GroupBy.Session).Count;
+        yield return Texts.Format(
+            "tooltip.burn",
+            MoneyText.Format(Since(now.AddHours(-1)), query.Currency),
+            active);
     }
 
     private static string Updated(LimitSnapshot snapshot, DateTimeOffset now)

@@ -29,6 +29,9 @@ internal sealed class WidgetWindow : IDisposable
 
     public event EventHandler? RightClicked;
 
+    /// <summary>The wheel turned over the widget: positive away from the user.</summary>
+    public event EventHandler<int>? Scrolled;
+
     public event EventHandler? HoverChanged;
 
     public TaskbarTarget Target { get; }
@@ -162,7 +165,7 @@ internal sealed class WidgetWindow : IDisposable
         IntPtr longParameter)
     {
         if (WindowsByHandle.TryGetValue(windowHandle, out var window)
-            && window.HandleMouse(message))
+            && window.HandleMouse(message, wordParameter))
         {
             return IntPtr.Zero;
         }
@@ -170,10 +173,15 @@ internal sealed class WidgetWindow : IDisposable
         return User32.DefWindowProc(windowHandle, message, wordParameter, longParameter);
     }
 
-    private bool HandleMouse(uint message)
+    private const int WheelShift = 16;
+
+    private bool HandleMouse(uint message, IntPtr wordParameter)
     {
         switch (message)
         {
+            case WindowMessages.MouseWheel:
+                Scrolled?.Invoke(this, (short)((wordParameter.ToInt64() >> WheelShift) & 0xFFFF));
+                return true;
             case WindowMessages.MouseMove:
                 SetHovered(true);
                 return true;

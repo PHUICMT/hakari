@@ -103,7 +103,11 @@ internal static class WidgetText
         layout.Slots.Any(slot => slot.Style == WidgetSlotStyle.Sparkline);
 
     /// <summary>The cheap part: lays the facts out, such as for the next account's turn.</summary>
-    public static WidgetContent Content(WidgetFacts facts, HakariSettings presentation)
+    /// <param name="turnShift">Turns moved by the wheel, ahead of or behind the clock.</param>
+    public static WidgetContent Content(
+        WidgetFacts facts,
+        HakariSettings presentation,
+        int turnShift = 0)
     {
         var now = DateTimeOffset.Now;
         var panels = WidgetPanels.Compose(
@@ -112,7 +116,8 @@ internal static class WidgetText
             presentation.LayoutOf,
             facts,
             now,
-            presentation.TurnLength);
+            presentation.TurnLength,
+            turnShift);
         var contents = panels.Select(ToContent).ToList();
         return contents[0] with { MorePanels = contents.Count > 1 ? contents[1..] : null };
     }

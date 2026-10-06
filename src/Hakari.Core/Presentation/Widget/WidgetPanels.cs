@@ -20,7 +20,8 @@ public static class WidgetPanels
         Func<string, WidgetLayout> layoutOf,
         WidgetFacts facts,
         DateTimeOffset now,
-        TimeSpan? turnLength = null)
+        TimeSpan? turnLength = null,
+        int turnShift = 0)
     {
         var accounts = facts.Accounts;
 
@@ -40,7 +41,8 @@ public static class WidgetPanels
 
         if (mode == MultiAccountMode.TakeTurns)
         {
-            var turn = TurnIndex(accounts.Count, now, turnLength ?? DefaultTurnLength);
+            var turn = (TurnIndex(accounts.Count, now, turnLength ?? DefaultTurnLength)
+                + turnShift % accounts.Count + accounts.Count) % accounts.Count;
             var account = accounts[turn];
             var block = ForAccount(layoutOf(account.AccountId), facts, account, now);
             return [block with { Turn = (turn, accounts.Count) }];

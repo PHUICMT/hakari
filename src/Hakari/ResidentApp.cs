@@ -146,6 +146,7 @@ internal sealed class ResidentApp : IDisposable
         if (startFeed)
         {
             feed.Updated += content => widgets.PostAction(() => ShowContent(content));
+            widgets.Scrolled += (_, delta) => feed.ShiftTurn(delta > 0 ? -1 : 1);
             feed.BadgeUpdated += badge => widgets.PostAction(() =>
             {
                 Heard();
