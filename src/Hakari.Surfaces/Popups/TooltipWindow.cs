@@ -40,7 +40,7 @@ public sealed partial class TooltipWindow : PopupWindow
 
         Body = stack;
         stack.Opacity = 0;
-        ShowAbove(anchorX, anchorY, activate: false);
+        ShowAbove(anchorX, anchorY, activate: false, Flyout.AnchorSide.Center);
         SurfaceMotion.Settle(stack, OpacityPath, 1);
     }
 

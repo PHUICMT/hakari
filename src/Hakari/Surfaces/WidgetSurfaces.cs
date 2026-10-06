@@ -19,7 +19,8 @@ internal sealed class WidgetSurfaces : IDisposable
     public WidgetSurfaces(TaskbarWidgetHost widgets)
     {
         tooltipTimer = new Timer(_ => ShowTooltip());
-        widgets.HoverStarted += (_, hover) => OnHoverStarted(AnchorOf(hover));
+        widgets.HoverStarted += (_, hover) =>
+            OnHoverStarted((hover.PointerX, hover.TaskbarBounds.Top));
         widgets.HoverEnded += (_, _) => OnHoverEnded();
         widgets.RightClicked += (_, click) =>
             OpenMenu((click.PointerX, click.TaskbarBounds.Top));
@@ -27,8 +28,6 @@ internal sealed class WidgetSurfaces : IDisposable
 
     public void Dispose() => tooltipTimer.Dispose();
 
-    private static (int X, int Y) AnchorOf(WidgetClickedEventArgs place) =>
-        (place.WidgetBounds.Right, place.TaskbarBounds.Top);
 
     private void OnHoverStarted((int X, int Y) widgetAnchor)
     {

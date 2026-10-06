@@ -6,10 +6,10 @@ namespace Hakari.Surfaces.Flyout;
 /// <summary>Which part of a window lines up with the anchor across the screen.</summary>
 public enum AnchorSide
 {
-    /// <summary>Ends at the anchor, as the hover card does at the widget's edge.</summary>
+    /// <summary>Ends at the anchor.</summary>
     End,
 
-    /// <summary>Centered on it, as the flyout is on the spot that was clicked.</summary>
+    /// <summary>Centered on it, as the flyout and hover card are on the pointer.</summary>
     Center,
 
     /// <summary>Starts at it, as a menu does at the pointer.</summary>
