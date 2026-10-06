@@ -38,8 +38,12 @@ internal static class WidgetText
             presentation.AccountNicknames,
             now,
             limits.FullAt,
-            presentation.PercentDecimals);
+            presentation.PercentDecimals,
+            withHourlySpend: UsesSparkline(presentation.Widget));
     }
+
+    private static bool UsesSparkline(WidgetLayout layout) =>
+        layout.Slots.Any(slot => slot.Style == WidgetSlotStyle.Sparkline);
 
     /// <summary>The cheap part: lays the facts out, such as for the next account's turn.</summary>
     public static WidgetContent Content(WidgetFacts facts, HakariSettings presentation)
@@ -79,7 +83,13 @@ internal static class WidgetText
         ToWidgetTone(widget.Top.Tone),
         widget.Ring is { } ring ? ToRing(ring) : null,
         TurnIndex: widget.Turn?.Index ?? 0,
-        TurnCount: widget.Turn?.Count ?? 0);
+        TurnCount: widget.Turn?.Count ?? 0,
+        Spark: widget.Spark,
+        PrimaryBar: widget.TopBar is { } top ? ToBar(top) : null,
+        SecondaryBar: widget.BottomBar is { } bottom ? ToBar(bottom) : null);
+
+    private static WidgetBar ToBar(ComposedBar bar) =>
+        new(bar.Fraction, ToWidgetTone(bar.Tone));
 
     private static WidgetRing ToRing(ComposedRing ring) => new(
         ring.Fraction,

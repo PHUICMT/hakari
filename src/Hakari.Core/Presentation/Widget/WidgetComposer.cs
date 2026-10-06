@@ -10,7 +10,6 @@ namespace Hakari.Core.Presentation.Widget;
 public static class WidgetComposer
 {
     private const string LastKnownPrefix = "≈ ";
-    private const string WeeklyGroup = "weekly";
     private const double PercentScale = 100.0;
     private const int TwoAccounts = 2;
     private const string Separator = " · ";
@@ -20,6 +19,29 @@ public static class WidgetComposer
         WidgetFacts facts,
         DateTimeOffset now)
     {
+        var rules = ToneRules.Of(layout);
+        var widget = layout.UsesSlots
+            ? SlotComposer.Compose(layout, facts, now, rules)
+            : Classic(layout, facts, now, rules);
+        return layout.CustomFormat is { Length: > 0 } format
+            ? widget with
+            {
+                Top = new ComposedLine(
+                    WidgetFormat.Apply(format, WidgetValues.Lookup(facts, now)),
+                    widget.Top.Tone),
+                Bottom = new ComposedLine(string.Empty),
+                TopBar = null,
+                BottomBar = null,
+            }
+            : widget;
+    }
+
+    private static ComposedWidget Classic(
+        WidgetLayout layout,
+        WidgetFacts facts,
+        DateTimeOffset now,
+        ToneRules rules)
+    {
         var top = layout.Top;
         var bottom = layout.Bottom;
         if (top == WidgetItem.Nothing && bottom == WidgetItem.Nothing)
@@ -28,22 +50,23 @@ public static class WidgetComposer
         }
 
         return new ComposedWidget(
-            Line(top, isTop: true, facts, now),
-            Line(bottom, isTop: false, facts, now),
-            Ring(layout.Ring, facts, now));
+            Line(top, isTop: true, facts, now, rules),
+            Line(bottom, isTop: false, facts, now, rules),
+            Ring(layout.Ring, facts, now, rules));
     }
 
-    private static ComposedLine Line(
+    internal static ComposedLine Line(
         WidgetItem item,
         bool isTop,
         WidgetFacts facts,
-        DateTimeOffset now)
+        DateTimeOffset now,
+        ToneRules rules)
     {
         var labelled = facts.Accounts.Count >= TwoAccounts;
         var first = facts.Accounts.FirstOrDefault();
         return item switch
         {
-            WidgetItem.Automatic => Automatic(isTop, facts, now),
+            WidgetItem.Automatic => Automatic(isTop, facts, now, rules),
             WidgetItem.CostToday => Today(facts),
             WidgetItem.CostThisMonth => Month(facts),
             WidgetItem.BurnRate => PerHour(facts),
@@ -53,13 +76,16 @@ public static class WidgetComposer
                 Texts.Format("widget.tokensMonth", TokenText.Format(facts.TokensThisMonth))),
             WidgetItem.RepliesToday => Money(
                 Texts.Format("widget.repliesToday", TokenText.Format(facts.RepliesToday))),
-            WidgetItem.SessionLimit => LimitLine(first, Session, labelled, facts, now),
-            WidgetItem.WeeklyLimit => LimitLine(first, Weekly, labelled, facts, now),
+            WidgetItem.SessionLimit =>
+                LimitLine(first, LimitPicks.Session, labelled, facts, now, rules),
+            WidgetItem.WeeklyLimit =>
+                LimitLine(first, LimitPicks.Weekly, labelled, facts, now, rules),
             WidgetItem.MostPressingLimit =>
-                LimitLine(first, LimitPriority.MostPressing, labelled, facts, now),
-            WidgetItem.SessionAndWeeklyLimits => BothLimits(first, labelled, facts, now),
+                LimitLine(first, LimitPriority.MostPressing, labelled, facts, now, rules),
+            WidgetItem.SessionAndWeeklyLimits => BothLimits(first, labelled, facts, now, rules),
             WidgetItem.SecondAccount => facts.Accounts.Count >= TwoAccounts
-                ? LimitLine(facts.Accounts[1], LimitPriority.MostPressing, true, facts, now)
+                ? LimitLine(
+                    facts.Accounts[1], LimitPriority.MostPressing, true, facts, now, rules)
                 : new ComposedLine(Texts.Get("widget.noSecondAccount"), LineTone.Muted),
             _ => new ComposedLine(string.Empty),
         };
@@ -69,13 +95,17 @@ public static class WidgetComposer
     /// Two accounts: one line each. One: money on top, its pressing limit below. None:
     /// money on top, burn rate and month below.
     /// </summary>
-    private static ComposedLine Automatic(bool isTop, WidgetFacts facts, DateTimeOffset now)
+    private static ComposedLine Automatic(
+        bool isTop,
+        WidgetFacts facts,
+        DateTimeOffset now,
+        ToneRules rules)
     {
         var accounts = facts.Accounts;
         if (accounts.Count >= TwoAccounts)
         {
             var account = isTop ? accounts[0] : accounts[1];
-            return LimitLine(account, LimitPriority.MostPressing, true, facts, now);
+            return LimitLine(account, LimitPriority.MostPressing, true, facts, now, rules);
         }
 
         if (isTop)
@@ -84,7 +114,7 @@ public static class WidgetComposer
         }
 
         return accounts.Count == 1
-            ? LimitLine(accounts[0], LimitPriority.MostPressing, false, facts, now)
+            ? LimitLine(accounts[0], LimitPriority.MostPressing, false, facts, now, rules)
             : Money(Texts.Format(
                 "widget.burnAndMonth",
                 Format(facts.CostLastHour, facts),
@@ -96,7 +126,8 @@ public static class WidgetComposer
         Func<LimitSnapshot, UsageLimit?> pick,
         bool labelled,
         WidgetFacts facts,
-        DateTimeOffset now)
+        DateTimeOffset now,
+        ToneRules rules)
     {
         if (account is null)
         {
@@ -119,7 +150,9 @@ public static class WidgetComposer
         var fullAt = facts.FullAt?.Invoke(account.AccountId, limit, now);
         var percent = facts.FormatPercent(account.PercentOf(limit));
         var text = $"{prefix}{label}{LimitText.Compact(limit, fullAt, now, percent)}";
-        return new ComposedLine(text, ToneOf(limit, snapshot.Freshness));
+        return new ComposedLine(
+            text,
+            rules.Of(account.PercentOf(limit), snapshot.Freshness));
     }
 
     /// <summary>"5h 5% · Week full": both windows at a glance, in the color of the worse.</summary>
@@ -127,7 +160,8 @@ public static class WidgetComposer
         WidgetAccount? account,
         bool labelled,
         WidgetFacts facts,
-        DateTimeOffset now)
+        DateTimeOffset now,
+        ToneRules rules)
     {
         if (account is null)
         {
@@ -135,7 +169,9 @@ public static class WidgetComposer
         }
 
         var snapshot = account.Snapshot.ProjectedTo(now);
-        var limits = new[] { Session(snapshot), Weekly(snapshot) }.OfType<UsageLimit>().ToList();
+        var limits = new[] { LimitPicks.Session(snapshot), LimitPicks.Weekly(snapshot) }
+            .OfType<UsageLimit>()
+            .ToList();
         if (limits.Count == 0)
         {
             return NoLimits;
@@ -147,14 +183,17 @@ public static class WidgetComposer
         var parts = limits.Select(limit => limit.Percent >= LimitForecaster.FullPercent
             ? Texts.Format("limit.full", LimitNames.Short(limit))
             : $"{LimitNames.Short(limit)} {facts.FormatPercent(account.PercentOf(limit))}");
-        var tone = limits.Select(limit => ToneOf(limit, snapshot.Freshness)).Max();
+        var tone = limits
+            .Select(limit => rules.Of(account.PercentOf(limit), snapshot.Freshness))
+            .Max();
         return new ComposedLine(label + string.Join(Separator, parts), tone);
     }
 
-    private static ComposedRing? Ring(
+    internal static ComposedRing? Ring(
         WidgetRingSource source,
         WidgetFacts facts,
-        DateTimeOffset now)
+        DateTimeOffset now,
+        ToneRules rules)
     {
         if (source == WidgetRingSource.Off || facts.Accounts.FirstOrDefault() is not { } first)
         {
@@ -164,70 +203,52 @@ public static class WidgetComposer
         var snapshot = first.Snapshot.ProjectedTo(now);
         if (source == WidgetRingSource.SessionAndWeekly)
         {
-            return TwoRings(first, snapshot);
+            return TwoRings(first, snapshot, rules);
         }
 
         var limit = source switch
         {
-            WidgetRingSource.Weekly => Weekly(snapshot),
+            WidgetRingSource.Weekly => LimitPicks.Weekly(snapshot),
             WidgetRingSource.MostPressing => LimitPriority.MostPressing(snapshot),
-            _ => Session(snapshot),
+            _ => LimitPicks.Session(snapshot),
         };
         return limit is null
             ? null
             : new ComposedRing(
                 FractionOf(first, limit),
-                ToneOf(limit, snapshot.Freshness));
+                rules.Of(first.PercentOf(limit), snapshot.Freshness));
     }
 
     /// <summary>The week outside, since it is the bigger window; the 5 hours inside.</summary>
-    private static ComposedRing? TwoRings(WidgetAccount account, LimitSnapshot snapshot)
+    private static ComposedRing? TwoRings(
+        WidgetAccount account,
+        LimitSnapshot snapshot,
+        ToneRules rules)
     {
-        var weekly = Weekly(snapshot);
-        var session = Session(snapshot);
+        var weekly = LimitPicks.Weekly(snapshot);
+        var session = LimitPicks.Session(snapshot);
         if (weekly is null || session is null)
         {
             return (weekly ?? session) is { } only
-                ? new ComposedRing(FractionOf(account, only), ToneOf(only, snapshot.Freshness))
+                ? new ComposedRing(
+                    FractionOf(account, only),
+                    rules.Of(account.PercentOf(only), snapshot.Freshness))
                 : null;
         }
 
         return new ComposedRing(
             FractionOf(account, weekly),
-            ToneOf(weekly, snapshot.Freshness),
+            rules.Of(account.PercentOf(weekly), snapshot.Freshness),
             FractionOf(account, session),
-            ToneOf(session, snapshot.Freshness));
+            rules.Of(account.PercentOf(session), snapshot.Freshness));
     }
 
-    private static double FractionOf(WidgetAccount account, UsageLimit limit) =>
+    internal static double FractionOf(WidgetAccount account, UsageLimit limit) =>
         Math.Clamp(account.PercentOf(limit) / PercentScale, 0, 1);
 
-    public static LineTone ToneOf(UsageLimit limit, LimitFreshness freshness)
-    {
-        if (limit.Percent >= LimitForecaster.FullPercent)
-        {
-            return LineTone.Critical;
-        }
-
-        return LimitPriority.SeverityRank(limit.Severity) switch
-        {
-            0 when freshness == LimitFreshness.LastKnown => LineTone.Muted,
-            0 => LineTone.Normal,
-            1 => LineTone.Warning,
-            _ => LineTone.Critical,
-        };
-    }
-
-    private static UsageLimit? Session(LimitSnapshot snapshot) =>
-        snapshot.Limits.FirstOrDefault(limit => limit.Group == LimitPriority.SessionGroup);
-
-    /// <summary>The all-models weekly limit, else the fullest weekly one.</summary>
-    private static UsageLimit? Weekly(LimitSnapshot snapshot) =>
-        snapshot.Limits
-            .Where(limit => limit.Group == WeeklyGroup)
-            .OrderBy(limit => limit.ScopeName is null ? 0 : 1)
-            .ThenByDescending(limit => limit.Percent)
-            .FirstOrDefault();
+    /// <summary>The tone of a limit with the default thresholds, as for the tray icon.</summary>
+    public static LineTone ToneOf(UsageLimit limit, LimitFreshness freshness) =>
+        ToneRules.Default.Of(limit.Percent, freshness);
 
     private static ComposedLine NoLimits => new(Texts.Get("widget.noLimits"), LineTone.Muted);
 

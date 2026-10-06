@@ -1,3 +1,4 @@
+using Hakari.Core.Presentation.Widget;
 using Hakari.Core.Settings;
 using Hakari.Core.Tests.Support;
 
@@ -29,6 +30,29 @@ public sealed class SettingsStoreTests : IDisposable
 
         Assert.Equal(AnimationSetting.Off, store.Load().Animation);
         Assert.Equal("THB", store.Load().Currency);
+    }
+
+    [Fact]
+    public void Remembers_a_layout_with_slots_a_format_and_thresholds()
+    {
+        var store = Store();
+        var layout = new WidgetLayout
+        {
+            Template = WidgetTemplate.Columns,
+            Slots =
+            [
+                new WidgetSlot(WidgetItem.CostToday),
+                new WidgetSlot(WidgetItem.SessionLimit, WidgetSlotStyle.Ring),
+            ],
+            CustomFormat = "{cost.today:$0.00}",
+            WarnAt = 70,
+            CriticalAt = 90,
+            CycleSeconds = 8,
+        };
+
+        store.Update(settings => settings with { Widget = layout });
+
+        Assert.Equal(layout, store.Load().Widget);
     }
 
     [Fact]

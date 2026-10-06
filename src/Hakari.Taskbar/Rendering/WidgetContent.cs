@@ -4,6 +4,9 @@ namespace Hakari.Taskbar.Rendering;
 /// <param name="Ring">A meter left of the text, or null for text only.</param>
 /// <param name="MorePanels">Further blocks drawn to the right, such as one per account.</param>
 /// <param name="TurnCount">More than one draws a dot per account, the current one solid.</param>
+/// <param name="Spark">Points of a small line left of the text, such as recent spending.</param>
+/// <param name="PrimaryBar">A thin bar beside the top line.</param>
+/// <param name="SecondaryBar">A thin bar beside the second line.</param>
 public sealed record WidgetContent(
     string PrimaryText,
     string SecondaryText,
@@ -12,7 +15,10 @@ public sealed record WidgetContent(
     WidgetRing? Ring = null,
     IReadOnlyList<WidgetContent>? MorePanels = null,
     int TurnIndex = 0,
-    int TurnCount = 0)
+    int TurnCount = 0,
+    IReadOnlyList<double>? Spark = null,
+    WidgetBar? PrimaryBar = null,
+    WidgetBar? SecondaryBar = null)
 {
     public IReadOnlyList<WidgetContent> Panels =>
         MorePanels is { Count: > 0 } more ? [this with { MorePanels = null }, .. more] : [this];
@@ -27,6 +33,9 @@ public sealed record WidgetContent(
         && Ring == other.Ring
         && TurnIndex == other.TurnIndex
         && TurnCount == other.TurnCount
+        && PrimaryBar == other.PrimaryBar
+        && SecondaryBar == other.SecondaryBar
+        && (Spark ?? []).SequenceEqual(other.Spark ?? [])
         && (MorePanels ?? []).SequenceEqual(other.MorePanels ?? []);
 
     public override int GetHashCode() => HashCode.Combine(
@@ -35,5 +44,6 @@ public sealed record WidgetContent(
         SecondaryTone,
         PrimaryTone,
         Ring,
-        MorePanels?.Count ?? 0);
+        MorePanels?.Count ?? 0,
+        Spark?.Count ?? 0);
 }

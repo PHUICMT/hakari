@@ -13,6 +13,16 @@ internal static class WidgetMetrics
     public const float RingStroke = 3f;
     public const float RingGap = 8f;
 
+    /// <summary>The sparkline of recent spending, drawn where a ring would be.</summary>
+    public const float SparkWidth = 36f;
+    public const float SparkHeight = 16f;
+    public const float SparkStroke = 1.6f;
+
+    /// <summary>A thin bar beside a line of text, and the space before the text.</summary>
+    public const float BarWidth = 22f;
+    public const float BarHeight = 3f;
+    public const float BarGap = 6f;
+
     /// <summary>The 5-hour ring inside the weekly one: thinner, with a gap between.</summary>
     public const float InnerRingStroke = 2.5f;
     public const float RingSpacing = 1.5f;

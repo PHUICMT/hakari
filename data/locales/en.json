@@ -11,6 +11,12 @@
   "widget.noLimits": "No limits yet",
   "widget.noSecondAccount": "No second account",
   "widget.labelled": "{0} · {1}",
+  "widget.label.today": "Today",
+  "widget.label.month": "Month",
+  "widget.label.burn": "Per hour",
+  "widget.label.tokensToday": "Tokens",
+  "widget.label.tokensMonth": "Tokens · month",
+  "widget.label.replies": "Replies",
 
   "limit.short.session": "5h",
   "limit.short.weekly": "Week",

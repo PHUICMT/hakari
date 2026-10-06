@@ -25,7 +25,9 @@ public static class WidgetPanels
         var accounts = facts.Accounts;
         if (accounts.Count < 2 || mode == MultiAccountMode.Together)
         {
-            return [WidgetComposer.Compose(shared, facts, now)];
+            return shared is { Template: WidgetTemplate.Columns, UsesSlots: true }
+                ? SlotComposer.Columns(shared, facts, now, ToneRules.Of(shared))
+                : [WidgetComposer.Compose(shared, facts, now)];
         }
 
         if (mode == MultiAccountMode.TakeTurns)

@@ -116,15 +116,20 @@ public sealed class WidgetRenderer : IDisposable
         EnsureFonts(scale);
         var lines = WidgetLines.From(frame);
         var primaryHeight = Measure(frame.Current.PrimaryText, primaryFont!).Height;
-        var secondaryHeight = Measure(frame.Current.SecondaryText, secondaryFont!).Height;
+        var hasSecondary = frame.Current.SecondaryText.Length > 0
+            || frame.Previous?.SecondaryText.Length > 0;
+        var secondaryHeight = hasSecondary
+            ? Measure(frame.Current.SecondaryText, secondaryFont!).Height
+            : 0f;
 
         var padding = (float)(WidgetMetrics.HorizontalPadding * scale);
-        var ringSpace = frame.Current.Ring is null
+        var ringSpace = LeadingSpace(frame.Current, scale);
+        var barSpace = frame.Current.PrimaryBar is null && frame.Current.SecondaryBar is null
             ? 0f
-            : (float)((WidgetMetrics.RingDiameter + WidgetMetrics.RingGap) * scale);
+            : (float)((WidgetMetrics.BarWidth + WidgetMetrics.BarGap) * scale);
         var textWidth = MeasureWidestText(lines);
         var dotsSpace = DotsWidth(frame.Current, scale);
-        var width = (int)Math.Ceiling(textWidth + ringSpace + dotsSpace + padding * 2);
+        var width = (int)Math.Ceiling(textWidth + ringSpace + barSpace + dotsSpace + padding * 2);
         var height = (int)Math.Round(WidgetMetrics.Height * scale);
 
         var bitmap = new Bitmap(width, height, PixelFormat.Format32bppPArgb);
@@ -136,17 +141,28 @@ public sealed class WidgetRenderer : IDisposable
         var inset = (float)(WidgetMetrics.MinimumInset * scale);
         graphics.SetClip(new RectangleF(inset, inset, width - inset * 2, height - inset * 2));
 
-        var lineGap = (float)(WidgetMetrics.LineGap * scale);
+        var lineGap = hasSecondary ? (float)(WidgetMetrics.LineGap * scale) : 0f;
         var top = (height - (primaryHeight + lineGap + secondaryHeight)) / 2f;
         DrawRing(graphics, frame, palette, scale, padding, height);
-        var dotsLeft = padding + ringSpace + textWidth;
+        DrawSpark(graphics, frame.Current, palette, scale, padding, height);
+        var dotsLeft = padding + ringSpace + barSpace + textWidth;
         DrawTurnDots(graphics, frame.Current, palette, scale, dotsLeft, height);
-        var textLeft = padding + ringSpace;
+        var textLeft = padding + ringSpace + barSpace;
+        var barLeft = padding + ringSpace;
+        DrawBar(graphics, frame.Current.PrimaryBar, palette, scale, barLeft, top, primaryHeight);
+        var secondaryTop = top + primaryHeight + lineGap;
+        DrawBar(
+            graphics,
+            frame.Current.SecondaryBar,
+            palette,
+            scale,
+            barLeft,
+            secondaryTop,
+            secondaryHeight);
         var primaryColors = PrimaryColors(frame, palette);
         DrawLine(graphics, frame, lines.Primary, primaryFont!, primaryColors, textLeft, top);
 
         var secondaryColors = SecondaryColors(frame, palette);
-        var secondaryTop = top + primaryHeight + lineGap;
         DrawLine(
             graphics,
             frame,
@@ -156,6 +172,101 @@ public sealed class WidgetRenderer : IDisposable
             textLeft,
             secondaryTop);
         return bitmap;
+    }
+
+    /// <summary>Room before the text for a ring or a sparkline, with the gap after it.</summary>
+    private static float LeadingSpace(WidgetContent content, double scale)
+    {
+        if (content.Ring is not null)
+        {
+            return (float)((WidgetMetrics.RingDiameter + WidgetMetrics.RingGap) * scale);
+        }
+
+        return content.Spark is { Count: > 1 }
+            ? (float)((WidgetMetrics.SparkWidth + WidgetMetrics.RingGap) * scale)
+            : 0f;
+    }
+
+    /// <summary>
+    /// Recent spending as a small line, scaled to its own highest point. With nothing spent it
+    /// lies flat along the bottom in the track color.
+    /// </summary>
+    private static void DrawSpark(
+        Graphics graphics,
+        WidgetContent content,
+        WidgetPalette palette,
+        double scale,
+        float left,
+        int height)
+    {
+        if (content.Ring is not null || content.Spark is not { Count: > 1 } points)
+        {
+            return;
+        }
+
+        var width = (float)(WidgetMetrics.SparkWidth * scale);
+        var sparkHeight = (float)(WidgetMetrics.SparkHeight * scale);
+        var bottom = (height + sparkHeight) / 2f;
+        var highest = points.Max();
+        var step = width / (points.Count - 1);
+        var line = points
+            .Select((value, index) => new PointF(
+                left + index * step,
+                bottom - (highest <= 0 ? 0f : (float)(value / highest) * sparkHeight)))
+            .ToArray();
+        var stroke = (float)(WidgetMetrics.SparkStroke * scale);
+        using var pen = new Pen(highest <= 0 ? palette.RingTrack : palette.Accent, stroke)
+        {
+            LineJoin = LineJoin.Round,
+            StartCap = LineCap.Round,
+            EndCap = LineCap.Round,
+        };
+        graphics.DrawLines(pen, line);
+
+        // The newest hour gets a dot, so the end of the line reads as "now".
+        var dot = stroke * 2;
+        using var brush = new SolidBrush(pen.Color);
+        graphics.FillEllipse(brush, line[^1].X - dot / 2, line[^1].Y - dot / 2, dot, dot);
+    }
+
+    /// <summary>A thin track with its fill, centered on a line of text.</summary>
+    private static void DrawBar(
+        Graphics graphics,
+        WidgetBar? bar,
+        WidgetPalette palette,
+        double scale,
+        float left,
+        float lineTop,
+        float lineHeight)
+    {
+        if (bar is null)
+        {
+            return;
+        }
+
+        var width = (float)(WidgetMetrics.BarWidth * scale);
+        var thickness = (float)(WidgetMetrics.BarHeight * scale);
+        var top = lineTop + (lineHeight - thickness) / 2f;
+        using var trackBrush = new SolidBrush(palette.RingTrack);
+        var track = new RectangleF(left, top, width, thickness);
+        using var trackPath = RoundedRectangle(track, thickness / 2);
+        graphics.FillPath(trackBrush, trackPath);
+
+        var filled = (float)(Math.Clamp(bar.Fraction, 0, 1) * width);
+        if (filled < thickness)
+        {
+            filled = bar.Fraction > 0 ? thickness : 0f;
+        }
+
+        if (filled <= 0)
+        {
+            return;
+        }
+
+        using var fillBrush = new SolidBrush(palette.ForRingTone(bar.Tone));
+        var fill = new RectangleF(left, top, filled, thickness);
+        using var fillPath = RoundedRectangle(fill, thickness / 2);
+        graphics.FillPath(fillBrush, fillPath);
     }
 
     public void Dispose()

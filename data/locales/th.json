@@ -11,6 +11,12 @@
   "widget.noLimits": "ยังไม่มีข้อมูล limit",
   "widget.noSecondAccount": "ไม่มีบัญชีที่สอง",
   "widget.labelled": "{0} · {1}",
+  "widget.label.today": "วันนี้",
+  "widget.label.month": "เดือนนี้",
+  "widget.label.burn": "ต่อชั่วโมง",
+  "widget.label.tokensToday": "Token",
+  "widget.label.tokensMonth": "Token · เดือน",
+  "widget.label.replies": "คำตอบ",
 
   "limit.short.session": "5ชม.",
   "limit.short.weekly": "สัปดาห์",

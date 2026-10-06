@@ -195,11 +195,27 @@ internal sealed class UsageFeed : IDisposable
         return !current.SequenceEqual(sources.Select(source => source.Id).Order());
     }
 
-    /// <summary>Wakes for the next account's turn only while there are turns to take.</summary>
-    private TimeSpan RefreshInterval(WidgetFacts facts) =>
-        presentation.AccountsMode == MultiAccountMode.TakeTurns && facts.Accounts.Count > 1
-            ? presentation.TurnLength
-            : ContentRefreshInterval;
+    /// <summary>
+    /// Wakes for the next account's turn or the next cycled slot, only while there is one to
+    /// show; otherwise at the usual pace.
+    /// </summary>
+    private TimeSpan RefreshInterval(WidgetFacts facts)
+    {
+        var interval = ContentRefreshInterval;
+        if (presentation.AccountsMode == MultiAccountMode.TakeTurns && facts.Accounts.Count > 1)
+        {
+            interval = TimeSpan.FromTicks(Math.Min(interval.Ticks, presentation.TurnLength.Ticks));
+        }
+
+        var layout = presentation.Widget;
+        if (layout.CycleSeconds > 0 && layout.Slots.Count > 1)
+        {
+            var cycle = TimeSpan.FromSeconds(layout.CycleSeconds);
+            interval = TimeSpan.FromTicks(Math.Min(interval.Ticks, cycle.Ticks));
+        }
+
+        return interval;
+    }
 
     /// <param name="resumeAt">When a timed pause ends, or null to wait for a change.</param>
     private void WaitForSettingsChange(DateTimeOffset? resumeAt)

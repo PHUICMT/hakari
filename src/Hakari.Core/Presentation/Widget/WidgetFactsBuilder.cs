@@ -18,7 +18,8 @@ public static class WidgetFactsBuilder
         IReadOnlyDictionary<string, string> nicknames,
         DateTimeOffset now,
         Func<string, UsageLimit, DateTimeOffset, DateTimeOffset?>? fullAt = null,
-        int percentDecimals = 0)
+        int percentDecimals = 0,
+        bool withHourlySpend = false)
     {
         var total = UsageOf(query, accountId: null, now);
         var shown = accounts.Select(account => account with
@@ -39,8 +40,19 @@ public static class WidgetFactsBuilder
             TokensToday: total.TokensToday,
             TokensThisMonth: total.TokensThisMonth,
             RepliesToday: total.RepliesToday,
-            PercentDecimals: percentDecimals);
+            PercentDecimals: percentDecimals,
+            HourlySpend: withHourlySpend ? HourlySpendOf(query, now) : null);
     }
+
+    private const int SparkHours = 12;
+
+    /// <summary>Spending in each of the last twelve hours, oldest first.</summary>
+    private static List<decimal> HourlySpendOf(UsageQuery query, DateTimeOffset now) =>
+    [
+        .. Enumerable.Range(0, SparkHours).Select(hour => query.Total(new UsageFilter(
+            From: now.AddHours(hour - SparkHours),
+            To: now.AddHours(hour - SparkHours + 1))).Cost),
+    ];
 
     /// <summary>From any reading, live or last known: it builds on when it was taken.</summary>
     private static Dictionary<string, double>? EstimatesOf(
