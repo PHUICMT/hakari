@@ -253,6 +253,12 @@ public sealed partial class FlyoutWindow : Window
             SurfaceMotion.Settle(turn, AnglePath, folding ? FoldedChevronAngle : 0);
         }
 
+        if (headerGrid.Children[0] is StackPanel { Children.Count: >= 2 } names
+            && names.Children[1] is FrameworkElement details)
+        {
+            CardFold.Run(details, folding, () => { });
+        }
+
         CardFold.Run(limits, folding, FitWindowNow);
         SettingsStore.Default.Update(current => current with
         {

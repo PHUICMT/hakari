@@ -73,8 +73,10 @@
                                         <StackPanel Spacing="1">
                                             <TextBlock Text="{x:Bind Name}" FontWeight="SemiBold" FontSize="13"
                                                 Foreground="{ThemeResource HakariInkBrush}" TextTrimming="CharacterEllipsis" />
+                                            <!-- Folded, the card is its name and one summary; the details fold away -->
                                             <TextBlock Text="{x:Bind Detail}" Style="{StaticResource HakariCaptionText}"
-                                                TextWrapping="Wrap" TextTrimming="None" />
+                                                TextWrapping="Wrap" TextTrimming="None"
+                                                Visibility="{x:Bind LimitsVisibility}" />
                                         </StackPanel>
                                         <TextBlock x:Name="FoldedSummary" Grid.Column="1" Text="{x:Bind Summary}"
                                             Visibility="{x:Bind SummaryVisibility}"
