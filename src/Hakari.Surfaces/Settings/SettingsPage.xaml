@@ -56,21 +56,6 @@
                                         Content="30 s" Checked="OnTurnSpeedChecked" />
                                 </controls:HakariSegmented>
                             </controls:SettingRow>
-                            <controls:SettingRow x:Name="RingRow" Glyph="&#xE9D9;" Title="{l:Text Key=settings.ring}"
-                                Description="{l:Text Key=settings.ring.description}">
-                                <controls:HakariSegmented>
-                                    <controls:HakariSegment x:Name="RingOff" GroupName="Ring"
-                                        Content="{l:Text Key=settings.ring.off}" Checked="OnRingChecked" />
-                                    <controls:HakariSegment x:Name="RingSession" GroupName="Ring"
-                                        Content="{l:Text Key=settings.ring.session}" Checked="OnRingChecked" />
-                                    <controls:HakariSegment x:Name="RingWeekly" GroupName="Ring"
-                                        Content="{l:Text Key=settings.ring.weekly}" Checked="OnRingChecked" />
-                                    <controls:HakariSegment x:Name="RingBoth" GroupName="Ring"
-                                        Content="{l:Text Key=settings.ring.both}" Checked="OnRingChecked" />
-                                    <controls:HakariSegment x:Name="RingPressing" GroupName="Ring"
-                                        Content="{l:Text Key=settings.ring.pressing}" Checked="OnRingChecked" />
-                                </controls:HakariSegmented>
-                            </controls:SettingRow>
                             <controls:SettingRow Glyph="&#xE9D2;" Title="{l:Text Key=settings.precision}"
                                 Description="{l:Text Key=settings.precision.description}">
                                 <controls:HakariSegmented>
@@ -81,13 +66,6 @@
                                     <controls:HakariSegment x:Name="Precision2" GroupName="Precision" Tag="2"
                                         Content="93.41%" Checked="OnPrecisionChecked" />
                                 </controls:HakariSegmented>
-                            </controls:SettingRow>
-                            <controls:SettingRow x:Name="TopRow" Glyph="&#xE8E4;" Title="{l:Text Key=settings.topLine}">
-                                <controls:HakariSelect x:Name="TopSelect" />
-                            </controls:SettingRow>
-                            <controls:SettingRow x:Name="BottomRow" Glyph="&#xE8E4;" Title="{l:Text Key=settings.bottomLine}"
-                                Description="{l:Text Key=settings.bottomLine.description}">
-                                <controls:HakariSelect x:Name="BottomSelect" />
                             </controls:SettingRow>
                         </StackPanel>
                     </Border>

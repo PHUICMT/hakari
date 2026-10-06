@@ -56,7 +56,7 @@ internal sealed partial class LayoutEditor : StackPanel
     private readonly HakariSelect criticalSelect = new();
     private readonly HakariToggle cycleToggle = new();
     private readonly HakariSelect cycleSelect = new();
-    private readonly SettingRow simpleRow = new();
+
     private readonly DispatcherQueueTimer formatTimer;
     private const double ChangedDip = 0.35;
     private bool refreshing;
@@ -73,7 +73,7 @@ internal sealed partial class LayoutEditor : StackPanel
         Action<Func<IReadOnlyList<NamedLayout>, IReadOnlyList<NamedLayout>>> changeSaved)
     {
         this.currentLayout = currentLayout;
-        this.change = change;
+        this.change = edit => change(current => edit(WithSlots(current)));
         this.saved = saved;
         this.changeSaved = changeSaved;
         formatTimer = DispatcherQueue.GetForCurrentThread().CreateTimer();
@@ -87,7 +87,7 @@ internal sealed partial class LayoutEditor : StackPanel
         Children.Add(TargetBar);
         Children.Add(EditorColumns());
 
-        Children.Add(SimpleRow());
+
     }
 
     /// <summary>Whose layout is being edited; hidden while the accounts share one block.</summary>
@@ -102,6 +102,12 @@ internal sealed partial class LayoutEditor : StackPanel
         }
     }
 
+    /// <summary>
+    /// A layout from before templates, with lines and a ring but no slots, is shown and
+    /// edited as the two-lines template it amounts to.
+    /// </summary>
+    private static WidgetLayout WithSlots(WidgetLayout layout) =>
+        layout.UsesSlots ? layout : WidgetTemplates.Apply(layout, WidgetTemplate.TwoLines);
     /// <summary>Shows the layout's state in every control, without changing it.</summary>
     /// <param name="focusedPanel">The block of the account being edited, the rest dimmed.</param>
     public void Refresh(
@@ -111,6 +117,7 @@ internal sealed partial class LayoutEditor : StackPanel
         MultiAccountMode mode,
         int focusedPanel = -1)
     {
+        layout = WithSlots(layout);
         refreshing = true;
         previewFacts = facts;
         try
@@ -156,7 +163,7 @@ internal sealed partial class LayoutEditor : StackPanel
             cycleSelect.SetChoices(
                 CycleChoices.Select(seconds => ((object)seconds, $"{seconds} s")),
                 layout.CycleSeconds > 0 ? layout.CycleSeconds : DefaultCycleSeconds);
-            simpleRow.Visibility = layout.UsesSlots ? Visibility.Visible : Visibility.Collapsed;
+
         }
         finally
         {
@@ -863,26 +870,6 @@ internal sealed partial class LayoutEditor : StackPanel
         {
             change(layout => layout with { CycleSeconds = seconds });
         }
-    }
-
-    private SettingRow SimpleRow()
-    {
-        var button = new Button
-        {
-            Content = Texts.Get("settings.layout.simple.action"),
-            Style = (Style)Application.Current.Resources["HakariButton"],
-        };
-        button.Click += (_, _) => change(layout => layout with
-        {
-            Template = WidgetTemplate.TwoLines,
-            Slots = [],
-            CustomFormat = null,
-        });
-        simpleRow.Glyph = "\uE8FD";
-        simpleRow.Title = Texts.Get("settings.layout.simple");
-        simpleRow.Description = Texts.Get("settings.layout.simple.description");
-        simpleRow.Content = button;
-        return simpleRow;
     }
 
     private static Border Dot(string brushKey) => new()

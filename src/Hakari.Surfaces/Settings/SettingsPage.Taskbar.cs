@@ -23,21 +23,6 @@ public sealed partial class SettingsPage
     private string layoutTarget = SharedLayout;
     private DispatcherQueueTimer? turnTimer;
 
-    /// <summary>
-    /// What a block really shows for the saved choice: one account's block turns "second
-    /// account" into its most pressing limit, so the list names that instead of nothing.
-    /// </summary>
-    private static WidgetItem Shown(WidgetItem item, MultiAccountMode mode) =>
-        mode != MultiAccountMode.Together && item == WidgetItem.SecondAccount
-            ? WidgetItem.MostPressingLimit
-            : item;
-
-    /// <summary>"Second account" only makes sense while all accounts share one block.</summary>
-    private static IEnumerable<(object Value, string Text)> LineChoicesFor(MultiAccountMode mode) =>
-        WidgetItemChoices.Keys
-            .Where(choice => mode == MultiAccountMode.Together
-                || choice.Value != WidgetItem.SecondAccount)
-            .Select(choice => ((object)choice.Value, Texts.Get(choice.TextKey)));
 
     private void FillTaskbar(HakariSettings settings)
     {
@@ -47,10 +32,6 @@ public sealed partial class SettingsPage
         ModeSideBySide.IsChecked = settings.AccountsMode == MultiAccountMode.SideBySide;
         ModeTakeTurns.IsChecked = settings.AccountsMode == MultiAccountMode.TakeTurns;
 
-        TopSelect.Selected -= OnTopSelected;
-        TopSelect.Selected += OnTopSelected;
-        BottomSelect.Selected -= OnBottomSelected;
-        BottomSelect.Selected += OnBottomSelected;
 
         FillLayoutRows(settings);
         ShowPreview(settings);
@@ -88,19 +69,6 @@ public sealed partial class SettingsPage
         }
 
         layoutEditor?.ShowTargets(perAccount ? LayoutTargets(settings) : [], layoutTarget);
-
-        var layout = EditedLayout(settings);
-        var wasFilling = filling;
-        filling = true;
-        RingOff.IsChecked = layout.Ring == WidgetRingSource.Off;
-        RingSession.IsChecked = layout.Ring == WidgetRingSource.Session;
-        RingWeekly.IsChecked = layout.Ring == WidgetRingSource.Weekly;
-        RingPressing.IsChecked = layout.Ring == WidgetRingSource.MostPressing;
-        RingBoth.IsChecked = layout.Ring == WidgetRingSource.SessionAndWeekly;
-        var choices = LineChoicesFor(settings.AccountsMode).ToList();
-        TopSelect.SetChoices(choices, Shown(layout.Top, settings.AccountsMode));
-        BottomSelect.SetChoices(choices, Shown(layout.Bottom, settings.AccountsMode));
-        filling = wasFilling;
     }
 
     private List<LayoutTarget> LayoutTargets(HakariSettings settings) =>
@@ -193,22 +161,6 @@ public sealed partial class SettingsPage
         ShowPreview(updated);
     }
 
-    private void OnRingChecked(object sender, RoutedEventArgs args)
-    {
-        var ring = ReferenceEquals(sender, RingOff) ? WidgetRingSource.Off
-            : ReferenceEquals(sender, RingWeekly) ? WidgetRingSource.Weekly
-            : ReferenceEquals(sender, RingPressing) ? WidgetRingSource.MostPressing
-            : ReferenceEquals(sender, RingBoth) ? WidgetRingSource.SessionAndWeekly
-            : WidgetRingSource.Session;
-        ChangeLayout(layout => layout with { Ring = ring });
-    }
-
-    private void OnTopSelected(object? sender, object value) =>
-        ChangeLayout(layout => layout with { Top = (WidgetItem)value });
-
-    private void OnBottomSelected(object? sender, object value) =>
-        ChangeLayout(layout => layout with { Bottom = (WidgetItem)value });
-
     /// <summary>Edits the shared layout, or gives the chosen account a layout of its own.</summary>
     private void ChangeLayout(Func<WidgetLayout, WidgetLayout> change)
     {
@@ -252,31 +204,10 @@ public sealed partial class SettingsPage
         PreviewStrips.Show(panels);
 
         var layout = EditedLayout(settings);
-        ShowLegacyRows(layout);
+
         var (editorPanels, focused) = EditorPanels(settings, facts, panels, now);
         layoutEditor?.Refresh(layout, editorPanels, facts, settings.AccountsMode, focused);
         UpdateTurnTimer(settings, facts);
-    }
-
-    /// <summary>The editor's own slots replace the top line, bottom line and ring.</summary>
-    private void ShowLegacyRows(WidgetLayout layout)
-    {
-        foreach (var row in new FrameworkElement[] { RingRow, TopRow, BottomRow })
-        {
-            var hide = layout.UsesSlots;
-            if ((row.Visibility == Visibility.Collapsed) == hide)
-            {
-                continue;
-            }
-
-            if (!row.IsLoaded)
-            {
-                row.Visibility = hide ? Visibility.Collapsed : Visibility.Visible;
-                continue;
-            }
-
-            Flyout.CardFold.Run(row, folding: hide, fitWindow: () => { });
-        }
     }
 
     private void EnsureLayoutEditor()
