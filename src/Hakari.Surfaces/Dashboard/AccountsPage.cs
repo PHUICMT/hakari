@@ -5,16 +5,14 @@ using Microsoft.UI.Xaml.Controls;
 namespace Hakari.Surfaces.Dashboard;
 
 /// <summary>
-/// Every account Hakari has seen, each with its limits and what it spent, a card for them all
-/// together, and the places usage is read from.
+/// The totals across accounts, every account Hakari has seen with its limits and what it spent,
+/// the usage from before Hakari ran, and the places usage is read from.
 /// </summary>
 internal sealed partial class AccountsPage : LoadedPage<AccountsData>
 {
     private const double SectionSpacing = 16;
     private const double MinimumCardWidth = 300;
     private const int MostCardsAcross = 3;
-    private const double BaseWeight = 2;
-    private const double TotalWeight = 3;
     private const double NameColumn = 160;
     private const double StatusColumn = 130;
     private const double FilesColumn = 70;
@@ -32,48 +30,21 @@ internal sealed partial class AccountsPage : LoadedPage<AccountsData>
 
     protected override UIElement Build(AccountsData data)
     {
+        var period = PeriodText.Caption();
         var page = new StackPanel { Spacing = SectionSpacing };
-        page.Children.Add(Cards(data));
-        if (data.Earlier is not null)
+        page.Children.Add(AccountCards.Summary(data, period, data.Sources.Count));
+        var cards = data.Accounts
+            .Select(account => (FrameworkElement)AccountCards.Account(account, period))
+            .ToList();
+        page.Children.Add(CardGrid.Create(cards, MostCardsAcross, MinimumCardWidth));
+        if (data.Earlier is { } earlier)
         {
-            page.Children.Add(Note());
+            page.Children.Add(AccountCards.Earlier(earlier, period));
         }
 
         page.Children.Add(Sources(data));
         return page;
     }
-
-    private static Grid Cards(AccountsData data)
-    {
-        var period = PeriodText.Caption();
-        var cards = new List<(FrameworkElement Card, double Weight)>(
-            data.Accounts.Select(account => (
-                (FrameworkElement)AccountCards.Account(account, period),
-                BaseWeight + account.Limits.Count)));
-        if (data.Earlier is { } earlier)
-        {
-            cards.Add((AccountCards.Account(earlier, period), BaseWeight));
-        }
-
-        cards.Add((AccountCards.Total(data, period, data.Sources.Count), TotalWeight));
-        return CardGrid.Create(cards, MostCardsAcross, MinimumCardWidth);
-    }
-
-    /// <summary>Why the split between accounts is a guess for the time before Hakari ran.</summary>
-    private static Border Note() => new()
-    {
-        BorderBrush = DashboardCard.Brush("HakariLineStrongBrush"),
-        BorderThickness = new Thickness(1),
-        CornerRadius = new CornerRadius(6),
-        Padding = new Thickness(14, 10, 14, 10),
-        Child = new TextBlock
-        {
-            Text = Texts.Get("dashboard.accounts.note"),
-            FontSize = 12,
-            Foreground = DashboardCard.Brush("HakariInkMutedBrush"),
-            TextWrapping = TextWrapping.Wrap,
-        },
-    };
 
     private static Border Sources(AccountsData data)
     {
