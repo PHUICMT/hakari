@@ -34,6 +34,11 @@ internal sealed partial class AccountsPage : LoadedPage<AccountsData>
     {
         var page = new StackPanel { Spacing = SectionSpacing };
         page.Children.Add(Cards(data));
+        if (data.Accounts.Count > 1)
+        {
+            page.Children.Add(Note());
+        }
+
         page.Children.Add(Sources(data));
         return page;
     }
@@ -50,6 +55,22 @@ internal sealed partial class AccountsPage : LoadedPage<AccountsData>
         };
         return CardGrid.Create(cards, MostCardsAcross, MinimumCardWidth);
     }
+
+    /// <summary>Why the split between accounts is a guess for the time before Hakari ran.</summary>
+    private static Border Note() => new()
+    {
+        BorderBrush = DashboardCard.Brush("HakariLineStrongBrush"),
+        BorderThickness = new Thickness(1),
+        CornerRadius = new CornerRadius(6),
+        Padding = new Thickness(14, 10, 14, 10),
+        Child = new TextBlock
+        {
+            Text = Texts.Get("dashboard.accounts.note"),
+            FontSize = 12,
+            Foreground = DashboardCard.Brush("HakariInkMutedBrush"),
+            TextWrapping = TextWrapping.Wrap,
+        },
+    };
 
     private static Border Sources(AccountsData data)
     {

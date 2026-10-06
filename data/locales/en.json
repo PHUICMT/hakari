@@ -134,6 +134,7 @@
   "dashboard.accounts.limitsOn": "Limits on",
   "dashboard.accounts.lastKnown": "Last known · {0}",
   "dashboard.accounts.summary": "{0} accounts · {1} sources",
+  "dashboard.accounts.note": "Figures per account from before Hakari started watching a source are approximate. Claude Code's logs do not say which account was signed in, so earlier usage is counted under the first account Hakari saw there, and after a sign-in switch usage counts for the new account from that moment. Totals are not affected.",
   "dashboard.sources.title": "Sources",
   "dashboard.sources.caption": "Where usage is read from",
   "dashboard.sources.source": "Source",

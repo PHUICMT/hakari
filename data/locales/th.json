@@ -134,6 +134,7 @@
   "dashboard.accounts.limitsOn": "เปิด limit",
   "dashboard.accounts.lastKnown": "ค่าล่าสุด · {0}",
   "dashboard.accounts.summary": "{0} บัญชี · {1} แหล่งข้อมูล",
+  "dashboard.accounts.note": "ตัวเลขแยกตามบัญชีของช่วงก่อนที่ Hakari เริ่มเฝ้าดู source นั้นเป็นค่าโดยประมาณ เพราะ log ของ Claude Code ไม่บอกว่าตอนนั้นล็อกอินบัญชีไหน การใช้งานก่อนหน้าจึงนับให้บัญชีแรกที่ Hakari เห็นใน source นั้น และหลังสลับบัญชีจะนับให้บัญชีใหม่ตั้งแต่ขณะนั้น ยอดรวมไม่ได้รับผลกระทบ",
   "dashboard.sources.title": "แหล่งข้อมูล",
   "dashboard.sources.caption": "ที่ที่อ่านข้อมูลการใช้งาน",
   "dashboard.sources.source": "แหล่งข้อมูล",
