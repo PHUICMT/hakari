@@ -5,8 +5,8 @@ namespace Hakari.Surfaces.Dashboard;
 
 /// <summary>
 /// Cards in rows of as many as fit, each at least a minimum width, otherwise one under
-/// another. Cards in a row are as tall as the tallest, so their edges line up. Rearranges only
-/// when the number that fit changes.
+/// another. Cards in a row are as tall as the tallest, so their edges line up, and the last
+/// card widens to fill its row. Rearranges only when the number that fit changes.
 /// </summary>
 internal static class CardGrid
 {
@@ -55,6 +55,11 @@ internal static class CardGrid
         {
             Grid.SetColumn(cards[index], index % across);
             Grid.SetRow(cards[index], index / across);
+            Grid.SetColumnSpan(cards[index], 1);
         }
+
+        // The last card takes the rest of its row, so no hole is left beside it.
+        var last = cards.Count - 1;
+        Grid.SetColumnSpan(cards[last], across - last % across);
     }
 }
