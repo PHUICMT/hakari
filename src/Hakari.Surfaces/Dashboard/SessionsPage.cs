@@ -47,7 +47,10 @@ internal sealed partial class SessionsPage : LoadedPage<SessionRows>
                 IsNumber: true, ShownFrom: 460),
             new(Texts.Get("dashboard.column.cost"), new GridLength(CostColumn), IsNumber: true),
         ];
-        var table = SimpleTable.Create(columns, [.. data.Rows.Select(row => Cells(row, data))]);
+        var table = SimpleTable.CreateSortable(
+            columns,
+            [.. data.Rows.Select(row => Cells(row, data))],
+            [.. data.Rows.Select(Keys)]);
         TableCells.MakeRowsOpen(table, index => SessionSheet.Open(
             this, data.Rows[index], data.Currency));
         return DashboardCard.Create(
@@ -76,6 +79,18 @@ internal sealed partial class SessionsPage : LoadedPage<SessionRows>
                 : cost,
         ];
     }
+
+    /// <summary>What each column sorts by: time, words, share, length, counts and money.</summary>
+    private static IReadOnlyList<IComparable?> Keys(SessionRow row) =>
+    [
+        row.Usage.FirstSeen,
+        RowNames.Project(GroupKeys.Split(row.Usage.Key).Project).Title,
+        row.Source ?? string.Empty,
+        row.TopModel?.Share ?? 0,
+        row.Usage.LastSeen - row.Usage.FirstSeen,
+        row.Usage.Messages,
+        row.Usage.Cost,
+    ];
 
     internal static string When(UsageSummary usage) =>
         usage.FirstSeen.ToLocalTime().ToString("MMM d · HH:mm", Texts.Culture);

@@ -54,10 +54,10 @@ internal sealed partial class TableView : StackPanel
         this.totalCost = totalCost;
         this.currency = currency;
         header = Columns(
-            Header(nameHeader, HorizontalAlignment.Left),
-            Header(Texts.Get("dashboard.column.responses"), HorizontalAlignment.Right),
-            Header(Texts.Get("dashboard.column.tokens"), HorizontalAlignment.Right),
-            Header(Texts.Get("dashboard.column.cost"), HorizontalAlignment.Right));
+            SortHeader(nameHeader, isNumber: false, column: 0),
+            SortHeader(Texts.Get("dashboard.column.responses"), isNumber: true, column: 1),
+            SortHeader(Texts.Get("dashboard.column.tokens"), isNumber: true, column: 2),
+            SortHeader(Texts.Get("dashboard.column.cost"), isNumber: true, column: 3));
         list = new ItemsRepeater
         {
             ItemsSource = items,
@@ -207,14 +207,54 @@ internal sealed partial class TableView : StackPanel
         grid.ColumnDefinitions[3].Width = new GridLength(level >= 1 ? CostWidth : NarrowCostWidth);
     }
 
-    private static TextBlock Header(string text, HorizontalAlignment alignment) => new()
+    private readonly List<FontIcon> arrows = [];
+    private int sortedBy = -1;
+    private bool descending;
+
+    /// <summary>A header that sorts by its column; a second click turns the order round.</summary>
+    private Button SortHeader(string text, bool isNumber, int column)
     {
-        Text = text,
-        FontSize = HeaderSize,
-        Foreground = DashboardCard.Brush("HakariInkFaintBrush"),
-        Padding = CellPadding,
-        HorizontalAlignment = alignment,
-    };
+        var (button, arrow) = SimpleTable.SortButton(text, isNumber);
+        button.Margin = new Thickness(-4, 4, 8, 4);
+        arrows.Add(arrow);
+        button.Click += (_, _) =>
+        {
+            descending = sortedBy == column ? !descending : isNumber;
+            sortedBy = column;
+            SimpleTable.ShowArrow(arrows, column, descending);
+            Sort(column);
+        };
+        return button;
+    }
+
+    /// <summary>
+    /// Sorts the top rows; open groups fold first, so no group's rows end up under another.
+    /// The rows come back fading in, in their new order.
+    /// </summary>
+    private void Sort(int column)
+    {
+        IComparable KeyOf(TableItem item) => column switch
+        {
+            0 => item.Name.Title,
+            1 => item.Summary.Messages,
+            2 => item.Summary.Tokens.TotalInput + item.Summary.Tokens.Output,
+            _ => item.Summary.Cost,
+        };
+
+        var top = items.Where(item => !item.IsIndented).ToList();
+        var ordered = top.OrderBy(KeyOf).ToList();
+        if (descending)
+        {
+            ordered.Reverse();
+        }
+
+        openGroups.Clear();
+        items.Clear();
+        foreach (var item in ordered)
+        {
+            items.Add(item with { FadeIn = true });
+        }
+    }
 
     /// <summary>The name, with where it belongs underneath when there is a second line.</summary>
     private static StackPanel NameCell((string Title, string? Detail) name)

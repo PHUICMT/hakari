@@ -72,6 +72,14 @@ internal sealed partial class ProjectsPage : LoadedPage<ProjectRows>
         return DashboardCard.Create(
             Texts.Get("dashboard.projects"),
             Texts.Get("dashboard.projects.caption"),
-            SimpleTable.Create(columns, [.. rows]));
+            SimpleTable.CreateSortable(columns, [.. rows], [.. data.Rows.Select(row =>
+                (IReadOnlyList<IComparable?>)
+                [
+                    RowNames.Project(row.Usage.Key).Title,
+                    row.Sessions,
+                    row.Usage.Messages,
+                    row.Usage.Tokens.CacheHitRate,
+                    row.Usage.Cost,
+                ])]));
     }
 }

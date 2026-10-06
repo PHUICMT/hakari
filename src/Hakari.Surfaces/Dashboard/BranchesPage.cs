@@ -60,7 +60,17 @@ internal sealed partial class BranchesPage : LoadedPage<BranchRows>
         return DashboardCard.Create(
             Texts.Get("dashboard.branches"),
             Texts.Get("dashboard.branches.caption"),
-            SimpleTable.Create(columns, [.. rows]));
+            SimpleTable.CreateSortable(columns, [.. rows], [.. data.Rows.Select(row =>
+            {
+                var (project, branch) = GroupKeys.Split(row.Key);
+                return (IReadOnlyList<IComparable?>)
+                [
+                    branch,
+                    RowNames.Project(project).Title,
+                    row.Messages,
+                    row.Cost,
+                ];
+            })]));
     }
 
     private static TextBlock Mono(string text) => new()

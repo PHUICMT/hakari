@@ -53,13 +53,20 @@ internal static class AccountCards
             Texts.Get("dashboard.allAccounts"),
             Texts.Format("dashboard.accounts.summary", data.Accounts.Count, sources),
             null);
-        return Frame(Strip(
-            title,
-            [
-                Block(Texts.Get("dashboard.period.all"), data.AllTime, BigFigureSize),
-                Block(periodCaption, data.Period, BigFigureSize),
-                Block(Texts.Get("dashboard.period.today"), data.Today, BigFigureSize),
-            ]));
+        // All time and the chosen period say the same when the period is all time; once is
+        // enough. The same goes for today.
+        var figures = new List<FrameworkElement>
+        {
+            Block(Texts.Get("dashboard.period.all"), data.AllTime, BigFigureSize),
+        };
+        if (DashboardFilter.Current.Period is not (DashboardPeriod.AllTime
+            or DashboardPeriod.Today))
+        {
+            figures.Add(Block(periodCaption, data.Period, BigFigureSize));
+        }
+
+        figures.Add(Block(Texts.Get("dashboard.period.today"), data.Today, BigFigureSize));
+        return Frame(Strip(title, figures));
     }
 
     /// <summary>Usage from before Hakari ran, with why it belongs to no account.</summary>

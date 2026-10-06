@@ -81,7 +81,7 @@ internal static class TableCells
                 continue;
             }
 
-            var position = index - 1;
+            var position = row.Tag is int first ? first : index - 1;
             row.Background = new SolidColorBrush(Microsoft.UI.Colors.Transparent);
             row.CornerRadius = new CornerRadius(4);
             row.PointerEntered += (_, _) =>
