@@ -4,24 +4,21 @@ using Microsoft.UI.Xaml.Controls;
 namespace Hakari.Surfaces.Dashboard;
 
 /// <summary>
-/// Cards side by side as many as fit, each at least a minimum width, otherwise one under
-/// another. Rearranges only when the number that fit changes.
+/// Cards of different heights in as many columns as fit, each at least a minimum width. Every
+/// card goes to the column with the least on it so far, so the columns end about level and no
+/// gap opens under a short card. Rearranges only when the number of columns changes.
 /// </summary>
 internal static class CardGrid
 {
     private const double Gap = 12;
 
+    /// <param name="cards">Each card with a rough height, such as its number of lines.</param>
     public static Grid Create(
-        IReadOnlyList<FrameworkElement> cards,
+        IReadOnlyList<(FrameworkElement Card, double Weight)> cards,
         int mostAcross,
         double minWidth)
     {
-        var grid = new Grid { ColumnSpacing = Gap, RowSpacing = Gap };
-        foreach (var card in cards)
-        {
-            grid.Children.Add(card);
-        }
-
+        var grid = new Grid { ColumnSpacing = Gap };
         var across = 0;
         grid.SizeChanged += (_, args) =>
         {
@@ -35,24 +32,34 @@ internal static class CardGrid
         return grid;
     }
 
-    private static void Arrange(Grid grid, IReadOnlyList<FrameworkElement> cards, int across)
+    private static void Arrange(
+        Grid grid,
+        IReadOnlyList<(FrameworkElement Card, double Weight)> cards,
+        int across)
     {
+        foreach (var column in grid.Children.OfType<StackPanel>())
+        {
+            column.Children.Clear();
+        }
+
+        grid.Children.Clear();
         grid.ColumnDefinitions.Clear();
-        grid.RowDefinitions.Clear();
-        for (var column = 0; column < across; column++)
+        var columns = new List<StackPanel>();
+        var loads = new double[across];
+        for (var index = 0; index < across; index++)
         {
             grid.ColumnDefinitions.Add(new ColumnDefinition());
+            var column = new StackPanel { Spacing = Gap };
+            Grid.SetColumn(column, index);
+            grid.Children.Add(column);
+            columns.Add(column);
         }
 
-        for (var row = 0; row < (cards.Count + across - 1) / across; row++)
+        foreach (var (card, weight) in cards)
         {
-            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-        }
-
-        for (var index = 0; index < cards.Count; index++)
-        {
-            Grid.SetColumn(cards[index], index % across);
-            Grid.SetRow(cards[index], index / across);
+            var lightest = Array.IndexOf(loads, loads.Min());
+            columns[lightest].Children.Add(card);
+            loads[lightest] += weight;
         }
     }
 }

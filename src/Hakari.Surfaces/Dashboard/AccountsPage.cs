@@ -13,6 +13,8 @@ internal sealed partial class AccountsPage : LoadedPage<AccountsData>
     private const double SectionSpacing = 16;
     private const double MinimumCardWidth = 300;
     private const int MostCardsAcross = 3;
+    private const double BaseWeight = 2;
+    private const double TotalWeight = 3;
     private const double NameColumn = 160;
     private const double StatusColumn = 130;
     private const double FilesColumn = 70;
@@ -39,10 +41,12 @@ internal sealed partial class AccountsPage : LoadedPage<AccountsData>
     private static Grid Cards(AccountsData data)
     {
         var period = PeriodText.Caption();
-        var cards = new List<FrameworkElement>(
-            data.Accounts.Select(account => AccountCards.Account(account, period)))
+        var cards = new List<(FrameworkElement Card, double Weight)>(
+            data.Accounts.Select(account => (
+                (FrameworkElement)AccountCards.Account(account, period),
+                BaseWeight + account.Limits.Count)))
         {
-            AccountCards.Total(data, period, data.Sources.Count),
+            (AccountCards.Total(data, period, data.Sources.Count), TotalWeight),
         };
         return CardGrid.Create(cards, MostCardsAcross, MinimumCardWidth);
     }

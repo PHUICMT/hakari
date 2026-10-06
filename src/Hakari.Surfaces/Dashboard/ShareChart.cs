@@ -23,10 +23,14 @@ internal static class ShareChart
 
     public static Grid Create(IReadOnlyList<string> labels, IReadOnlyList<MixSeries> series)
     {
-        var chart = new Grid { ColumnSpacing = 8, Padding = new Thickness(0, LabelSize, 0, 0) };
+        var chart = new Grid { ColumnSpacing = 8 };
         chart.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(AxisWidth) });
         chart.ColumnDefinitions.Add(new ColumnDefinition());
-        chart.RowDefinitions.Add(new RowDefinition { Height = new GridLength(ChartHeight) });
+        // Headroom above the top gridline, so the "100%" label is never clipped.
+        chart.RowDefinitions.Add(new RowDefinition
+        {
+            Height = new GridLength(ChartHeight + LabelSize),
+        });
         chart.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
         chart.Children.Add(Axis());
         var plot = Plot(labels.Count, series);
@@ -60,7 +64,12 @@ internal static class ShareChart
 
     private static Grid Plot(int bars, IReadOnlyList<MixSeries> series)
     {
-        var plot = new Grid { ColumnSpacing = BarGap };
+        var plot = new Grid
+        {
+            ColumnSpacing = BarGap,
+            Height = ChartHeight,
+            VerticalAlignment = VerticalAlignment.Bottom,
+        };
         foreach (var step in AxisSteps)
         {
             var line = new Border

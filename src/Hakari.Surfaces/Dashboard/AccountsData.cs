@@ -98,8 +98,15 @@ internal sealed record AccountsData(
             {
                 nickname is null ? null : account.Email,
                 PlanNames.Short(account.Plan),
-                account.OrganizationName,
+                OrganizationOf(account),
             }.Where(part => !string.IsNullOrEmpty(part)));
+
+    /// <summary>A personal organization is named after the email, which is said already.</summary>
+    private static string? OrganizationOf(AccountInfo account) =>
+        account.Email is { } email
+        && account.OrganizationName?.StartsWith(email, StringComparison.OrdinalIgnoreCase) == true
+            ? null
+            : account.OrganizationName;
 
     private static (string Text, BadgeTone Tone) Badge(
         LimitSnapshot? snapshot,
