@@ -30,7 +30,7 @@ internal static class FlyoutDataLoader
     {
         var settings = SettingsStore.Default.Load();
         using var store = IndexStore.OpenReadOnly(HakariPaths.DefaultIndexPath);
-        var pricing = PricingTable.LoadBundled();
+        var pricing = PricingSources.LoadCurrent();
         var query = new UsageQuery(store, pricing, StoredConverter(store, settings));
         var now = DateTimeOffset.Now;
 

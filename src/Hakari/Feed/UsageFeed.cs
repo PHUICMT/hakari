@@ -24,6 +24,9 @@ internal sealed class UsageFeed : IDisposable
     /// <summary>Time-based values (burn rate, a new day) refresh even without new usage.</summary>
     private static readonly TimeSpan ContentRefreshInterval = TimeSpan.FromSeconds(30);
 
+    /// <summary>How often spending is held against the budgets and usual sessions.</summary>
+    private static readonly TimeSpan SpendCheckInterval = TimeSpan.FromMinutes(1);
+
     /// <summary>How often to look for newly started WSL distributions and new sign-ins.</summary>
     private static readonly TimeSpan SourceCheckInterval = TimeSpan.FromMinutes(1);
 
@@ -39,6 +42,7 @@ internal sealed class UsageFeed : IDisposable
     private static readonly TimeSpan ProgressInterval = TimeSpan.FromMilliseconds(250);
     private long lastProgressShown;
     private LimitAlertEngine? alertEngine;
+    private DateTime pricesVersion;
     private (int Warn, int Critical) alertLevels;
 
     public UsageFeed(SettingsStore settingsStore)
@@ -93,11 +97,14 @@ internal sealed class UsageFeed : IDisposable
     {
         using var backgroundMode = BackgroundThreadMode.Enter();
         using var store = new IndexStore(HakariPaths.DefaultIndexPath);
-        var pricing = PricingTable.LoadBundled();
 
         while (!cancellation.IsCancellationRequested)
         {
             settingsChanged = false;
+
+            // Read each pass: "check now" or the user's own prices may have changed it.
+            var pricing = PricingSources.LoadCurrent();
+            pricesVersion = PricingSources.Version();
             var settings = settingsStore.Load();
             presentation = settings;
             if (settings.IsPausedAt(DateTimeOffset.UtcNow))
@@ -138,6 +145,8 @@ internal sealed class UsageFeed : IDisposable
         WidgetFacts? facts = null;
         WidgetContent? lastPosted = null;
         var nextSourceCheck = DateTimeOffset.UtcNow + SourceCheckInterval;
+        var nextSpendCheck = DateTimeOffset.UtcNow + SpendCheckInterval;
+        var spendWatch = new SpendWatch(store);
 
         while (!cancellation.IsCancellationRequested && !settingsChanged)
         {
@@ -145,9 +154,10 @@ internal sealed class UsageFeed : IDisposable
             if (now >= nextSourceCheck)
             {
                 nextSourceCheck = now + SourceCheckInterval;
-                if (SourcesChanged(sources, discoveryOptions))
+                if (SourcesChanged(sources, discoveryOptions)
+                    || PricingSources.Version() != pricesVersion)
                 {
-                    // Start over with the new sources, like a settings change.
+                    // Start over with the new sources or prices, like a settings change.
                     break;
                 }
             }
@@ -163,6 +173,12 @@ internal sealed class UsageFeed : IDisposable
             {
                 refreshRequested = false;
                 limits.PollSoon();
+            }
+
+            if (now >= nextSpendCheck)
+            {
+                nextSpendCheck = now + SpendCheckInterval;
+                RaiseSpendAlerts(spendWatch, query, now);
             }
 
             var limitsChanged = limits.PollIfDue(now);
@@ -253,7 +269,8 @@ internal sealed class UsageFeed : IDisposable
                     account.AccountId, limit, account.PercentOf(limit)))
                 {
                     // The engine keeps watching while muted, so nothing piles up for later.
-                    if (settings.AlertsMutedAt(now))
+                    if (settings.AlertsMutedAt(now)
+                        || (alert.Kind == LimitAlertKind.Reset && !settings.NotifyOnResets))
                     {
                         continue;
                     }
@@ -266,6 +283,28 @@ internal sealed class UsageFeed : IDisposable
                         RoomElsewhere(shown, account, limit, settings, now)));
                 }
             }
+        }
+    }
+
+    /// <summary>Budgets passed and costly sessions; quiet while alerts are muted.</summary>
+    private void RaiseSpendAlerts(SpendWatch watch, UsageQuery query, DateTimeOffset now)
+    {
+        var settings = presentation;
+        if (settings.AlertsMutedAt(now)
+            || (settings.DailyBudget is null && settings.MonthlyBudget is null
+                && !settings.NotifyOnUnusualSessions))
+        {
+            return;
+        }
+
+        foreach (var alert in watch.Check(
+            query,
+            settings.DailyBudget,
+            settings.MonthlyBudget,
+            settings.NotifyOnUnusualSessions,
+            now.ToLocalTime()))
+        {
+            AlertRaised?.Invoke(SpendAlertText.Compose(alert, query.Currency));
         }
     }
 

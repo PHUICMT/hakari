@@ -26,7 +26,7 @@ internal sealed class ReportCommand : ICliCommand
         using var store = CommandContext.OpenStore(arguments);
         CommandContext.RunIndexer(store, CommandContext.DiscoverSources(arguments), rebuild: false);
 
-        var pricing = PricingTable.LoadBundled();
+        var pricing = PricingSources.LoadCurrent();
         var converter = CurrencyContext.CreateConverter(arguments, store, pricing);
         var query = new UsageQuery(store, pricing, converter);
 

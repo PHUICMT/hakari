@@ -42,7 +42,7 @@ internal static class TooltipDataLoader
     {
         var query = new UsageQuery(
             store,
-            PricingTable.LoadBundled(),
+            PricingSources.LoadCurrent(),
             FlyoutDataLoader.StoredConverter(store, settings));
         var cache = new LimitCache(store);
         var known = new AccountRepository(store).ListAccounts()

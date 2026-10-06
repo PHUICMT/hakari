@@ -16,6 +16,10 @@ public sealed partial class PricingTable
         PropertyNameCaseInsensitive = true,
     };
 
+    /// <summary>The day the table was last checked against the official prices.</summary>
+    [JsonPropertyName("updated")]
+    public string Updated { get; init; } = string.Empty;
+
     [JsonPropertyName("models")]
     public Dictionary<string, List<ModelPrice>> Models { get; init; } = [];
 

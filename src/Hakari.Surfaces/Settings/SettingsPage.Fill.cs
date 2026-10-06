@@ -51,6 +51,7 @@ public sealed partial class SettingsPage
             FillSources(settings);
             FillAccounts(settings);
             FillGeneral(settings);
+            FillAlerts(settings);
             FillAbout();
         }
         finally

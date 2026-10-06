@@ -66,5 +66,5 @@ internal sealed record OverviewData(
             ? Math.Max(1, DateOnly.FromDateTime(now.Date).DayNumber - day.DayNumber + 1)
             : 1;
 
-    private static PricingTable PricingTableOrEmpty() => PricingTable.LoadBundled();
+    private static PricingTable PricingTableOrEmpty() => PricingSources.LoadCurrent();
 }

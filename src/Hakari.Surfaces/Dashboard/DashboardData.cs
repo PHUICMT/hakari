@@ -28,7 +28,7 @@ internal static class DashboardData
             var settings = SettingsStore.Default.Load();
             var query = new UsageQuery(
                 store,
-                PricingTable.LoadBundled(),
+                PricingSources.LoadCurrent(),
                 FlyoutDataLoader.StoredConverter(store, settings));
             return read(query, store);
         }

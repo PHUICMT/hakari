@@ -39,7 +39,7 @@ internal static class WidgetFactsLoader
     private static WidgetFacts Read(IndexStore store, HakariSettings settings, DateTimeOffset now)
     {
         var converter = Flyout.FlyoutDataLoader.StoredConverter(store, settings);
-        var query = new UsageQuery(store, PricingTable.LoadBundled(), converter);
+        var query = new UsageQuery(store, PricingSources.LoadCurrent(), converter);
         var cache = new LimitCache(store);
         var accounts = new AccountRepository(store).ListAccounts()
             .Select(account => cache.Load(account.AccountId) is { } snapshot

@@ -147,10 +147,7 @@
                                 </controls:HakariSegmented>
                             </controls:SettingRow>
                             <StackPanel x:Name="AccountList" BorderThickness="0,1,0,0"
-                                BorderBrush="{ThemeResource HakariLineBrush}" />                            <controls:SettingRow Glyph="&#xEA8F;" Title="{l:Text Key=settings.notify}"
-                                Description="{l:Text Key=settings.notify.description}">
-                                <controls:HakariToggle x:Name="NotifyToggle" Click="OnNotifyClicked" />
-                            </controls:SettingRow>
+                                BorderBrush="{ThemeResource HakariLineBrush}" />
                             <controls:SettingRow Glyph="&#xE72C;" Title="{l:Text Key=settings.renew}"
                                 Description="{l:Text Key=settings.renew.description}">
                                 <controls:HakariToggle x:Name="RenewSignInToggle" Click="OnRenewSignInClicked" />
@@ -221,6 +218,68 @@
                             <controls:SettingRow Glyph="&#xE769;" Title="{l:Text Key=settings.pause}"
                                 Description="{l:Text Key=settings.pause.description}">
                                 <controls:HakariToggle x:Name="PauseToggle" Click="OnPauseClicked" />
+                            </controls:SettingRow>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <!-- Alerts: limit levels, resets, budgets and sessions that cost far more than usual -->
+                <StackPanel Tag="alerts">
+                    <TextBlock Text="{l:Text Key=settings.alerts}" Style="{StaticResource HakariSectionText}" />
+                    <Border Style="{StaticResource HakariCard}">
+                        <StackPanel>
+                            <controls:SettingRow Glyph="&#xEA8F;" Title="{l:Text Key=settings.notify}"
+                                Description="{l:Text Key=settings.notify.description}" BorderThickness="0">
+                                <controls:HakariToggle x:Name="NotifyToggle" Click="OnNotifyClicked" />
+                            </controls:SettingRow>
+                            <controls:SettingRow Glyph="&#xE7BA;" Title="{l:Text Key=settings.alerts.levels}"
+                                Description="{l:Text Key=settings.alerts.levels.description}">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <Ellipse Width="9" Height="9" Fill="{ThemeResource HakariWarnBrush}" VerticalAlignment="Center" />
+                                    <controls:HakariSelect x:Name="AlertWarnSelect" />
+                                    <Ellipse Width="9" Height="9" Fill="{ThemeResource HakariCriticalBrush}" VerticalAlignment="Center" />
+                                    <controls:HakariSelect x:Name="AlertCriticalSelect" />
+                                </StackPanel>
+                            </controls:SettingRow>
+                            <controls:SettingRow Glyph="&#xE72C;" Title="{l:Text Key=settings.alerts.resets}"
+                                Description="{l:Text Key=settings.alerts.resets.description}">
+                                <controls:HakariToggle x:Name="ResetAlertToggle" Click="OnResetAlertClicked" />
+                            </controls:SettingRow>
+                            <controls:SettingRow Glyph="&#xE8C7;" Title="{l:Text Key=settings.alerts.budget}"
+                                Description="{l:Text Key=settings.alerts.budget.description}">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <TextBox x:Name="DailyBudgetBox" Width="120" MaxLength="12"
+                                        Style="{StaticResource HakariTextBox}"
+                                        PlaceholderText="{l:Text Key=settings.alerts.budget.day}"
+                                        LostFocus="OnBudgetLostFocus" KeyDown="OnBudgetKeyDown" />
+                                    <TextBox x:Name="MonthlyBudgetBox" Width="120" MaxLength="12"
+                                        Style="{StaticResource HakariTextBox}"
+                                        PlaceholderText="{l:Text Key=settings.alerts.budget.month}"
+                                        LostFocus="OnBudgetLostFocus" KeyDown="OnBudgetKeyDown" />
+                                </StackPanel>
+                            </controls:SettingRow>
+                            <controls:SettingRow Glyph="&#xE7BA;" Title="{l:Text Key=settings.alerts.unusual}"
+                                Description="{l:Text Key=settings.alerts.unusual.description}">
+                                <controls:HakariToggle x:Name="UnusualToggle" Click="OnUnusualClicked" />
+                            </controls:SettingRow>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <!-- Prices: the table in use, a check for a newer one, and the user's own -->
+                <StackPanel Tag="prices">
+                    <TextBlock Text="{l:Text Key=settings.prices}" Style="{StaticResource HakariSectionText}" />
+                    <Border Style="{StaticResource HakariCard}">
+                        <StackPanel>
+                            <controls:SettingRow x:Name="PriceTableRow" Glyph="&#xE72C;"
+                                Title="{l:Text Key=settings.prices.table}" BorderThickness="0">
+                                <Button x:Name="CheckPricesButton" Content="{l:Text Key=settings.prices.check}"
+                                    Style="{StaticResource HakariButton}" Click="OnCheckPricesClicked" />
+                            </controls:SettingRow>
+                            <controls:SettingRow Glyph="&#xE8FD;" Title="{l:Text Key=settings.prices.custom}"
+                                Description="{l:Text Key=settings.prices.custom.description}">
+                                <Button Content="{l:Text Key=settings.prices.custom.open}"
+                                    Style="{StaticResource HakariButton}" Click="OnCustomPricesClicked" />
                             </controls:SettingRow>
                         </StackPanel>
                     </Border>
