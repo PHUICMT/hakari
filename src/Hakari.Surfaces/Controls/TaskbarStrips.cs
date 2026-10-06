@@ -8,8 +8,8 @@ using Microsoft.UI.Xaml.Media;
 namespace Hakari.Surfaces.Controls;
 
 /// <summary>
-/// The widget as it will sit at the right end of a light taskbar and of a dark one, next to
-/// a faint stand-in for the tray. A widget wider than the strips scrolls sideways.
+/// The widget as it will sit at the right end of a light taskbar and of a dark one. A widget
+/// wider than the strips scrolls sideways.
 /// </summary>
 public sealed partial class TaskbarStrips : UserControl
 {
@@ -17,9 +17,7 @@ public sealed partial class TaskbarStrips : UserControl
     private const double StripRadius = 6;
     private const double StripGap = 6;
     private const double BlockGap = 2;
-    private const double TrayWidth = 120;
-    private const double TrayHeight = 20;
-    private const double TrayOpacity = 0.12;
+
     private const double UnfocusedOpacity = 0.4;
     private const double ScrollBarRoom = 14;
     private static readonly Thickness StripPadding = new(8, 0, 8, 0);
@@ -115,23 +113,7 @@ public sealed partial class TaskbarStrips : UserControl
 
     private static Border Strip(TaskbarPalette palette, StackPanel blocks)
     {
-        var row = new StackPanel
-        {
-            Orientation = Orientation.Horizontal,
-            Spacing = BlockGap,
-            HorizontalAlignment = HorizontalAlignment.Right,
-            VerticalAlignment = VerticalAlignment.Center,
-        };
-        row.Children.Add(blocks);
-        row.Children.Add(new Border
-        {
-            Width = TrayWidth,
-            Height = TrayHeight,
-            Margin = new Thickness(6, 0, 0, 0),
-            CornerRadius = new CornerRadius(3),
-            Background = palette.Ink,
-            Opacity = TrayOpacity,
-        });
+        blocks.HorizontalAlignment = HorizontalAlignment.Right;
         return new Border
         {
             Height = StripHeight,
@@ -140,7 +122,7 @@ public sealed partial class TaskbarStrips : UserControl
             BorderThickness = new Thickness(1),
             BorderBrush = (Brush)Application.Current.Resources["HakariLineBrush"],
             Background = palette.Background,
-            Child = row,
+            Child = blocks,
         };
     }
 }
