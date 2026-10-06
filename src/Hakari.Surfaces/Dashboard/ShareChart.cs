@@ -1,3 +1,5 @@
+using Hakari.Core.Localization;
+using Hakari.Core.Presentation;
 using Hakari.Core.Settings;
 using Hakari.Surfaces.Motion;
 using Microsoft.UI.Xaml;
@@ -21,7 +23,10 @@ internal static class ShareChart
     private const double GrowStaggerMilliseconds = 12;
     private static readonly int[] AxisSteps = [0, 50, 100];
 
-    public static Grid Create(IReadOnlyList<string> labels, IReadOnlyList<MixSeries> series)
+    public static Grid Create(
+        IReadOnlyList<string> labels,
+        IReadOnlyList<MixSeries> series,
+        string currency)
     {
         var chart = new Grid { ColumnSpacing = 8 };
         chart.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(AxisWidth) });
@@ -33,7 +38,7 @@ internal static class ShareChart
         });
         chart.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
         chart.Children.Add(Axis());
-        var plot = Plot(labels.Count, series);
+        var plot = Plot(labels, series, currency);
         Grid.SetColumn(plot, 1);
         chart.Children.Add(plot);
         var captions = Captions(labels);
@@ -62,8 +67,12 @@ internal static class ShareChart
         return axis;
     }
 
-    private static Grid Plot(int bars, IReadOnlyList<MixSeries> series)
+    private static Grid Plot(
+        IReadOnlyList<string> labels,
+        IReadOnlyList<MixSeries> series,
+        string currency)
     {
+        var bars = labels.Count;
         var plot = new Grid
         {
             ColumnSpacing = BarGap,
@@ -101,7 +110,27 @@ internal static class ShareChart
         }
 
         plot.Loaded += (_, _) => storyboard.Begin();
+        ChartHover.Attach(plot, bars, index => (labels[index], Readout(index, series, currency)));
         return plot;
+    }
+
+    /// <summary>Each series' share of the bar and its cost, the top of the bar first.</summary>
+    private static List<ReadoutRow> Readout(
+        int index,
+        IReadOnlyList<MixSeries> series,
+        string currency)
+    {
+        var total = series.Sum(part => part.Costs[index]);
+        return
+        [
+            .. series.Reverse()
+                .Where(part => part.Costs[index] > 0)
+                .Select(part => new ReadoutRow(
+                    part.BrushKey,
+                    part.Name.Length == 0 ? Texts.Get("dashboard.mix.other") : part.Name,
+                    $"{PercentText.Format((double)(part.Costs[index] / total) * 100, 0)}"
+                    + $" · {MoneyText.Format(part.Costs[index], currency)}")),
+        ];
     }
 
     /// <summary>The first series sits at the bottom, as in the legend's order.</summary>

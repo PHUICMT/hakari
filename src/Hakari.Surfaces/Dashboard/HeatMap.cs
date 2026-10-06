@@ -18,11 +18,13 @@ internal sealed partial class HeatMap : Grid
     private const double Gap = 3;
     private const double LabelSize = 10;
     private const double CellRadius = 2;
+    private const double OutlineWidth = 1.5;
     private const int LabelEveryHours = 6;
     private const double StaggerMilliseconds = 14;
     private static readonly double[] LevelFloors = [0.15, 0.4, 0.7];
 
     private readonly List<RowDefinition> cellRows = [];
+    private readonly ChartReadout readout = new();
 
     public HeatMap(IReadOnlyList<decimal> costs, string currency)
     {
@@ -100,9 +102,7 @@ internal sealed partial class HeatMap : Grid
                 CornerRadius = new CornerRadius(CellRadius),
                 Background = DashboardCard.Brush(LevelBrush(LevelOf(cost, highest))),
             };
-            ToolTipService.SetToolTip(
-                cell,
-                $"{dayName} {hour:00}:00 · {MoneyText.Format(cost, currency)}");
+            Hover(cell, $"{dayName} {hour:00}:00", MoneyText.Format(cost, currency));
             SetColumn(cell, hour + 1);
             SetRow(cell, day + 1);
             Children.Add(cell);
@@ -114,6 +114,26 @@ internal sealed partial class HeatMap : Grid
                     cell, "Opacity", 0, 1, SurfaceMotion.Normal, delay));
             }
         }
+    }
+
+    /// <summary>The square under the pointer gets an outline and a readout of its cost.</summary>
+    private void Hover(Border cell, string when, string money)
+    {
+        cell.PointerEntered += (_, args) =>
+        {
+            cell.BorderBrush = DashboardCard.Brush("HakariInkBrush");
+            cell.BorderThickness = new Thickness(OutlineWidth);
+            readout.Show(
+                cell,
+                args.GetCurrentPoint(cell).Position,
+                when,
+                [new ReadoutRow(null, Texts.Get("dashboard.column.cost"), money)]);
+        };
+        cell.PointerExited += (_, _) =>
+        {
+            cell.BorderThickness = new Thickness(0);
+            readout.Hide();
+        };
     }
 
     /// <summary>Nothing spent is the lightest; the rest spread over the four darker.</summary>

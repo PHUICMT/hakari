@@ -38,7 +38,7 @@ internal sealed partial class ChartsPage : LoadedPage<ChartsData>
     private static Border MixCard(ChartsData data)
     {
         var body = new StackPanel();
-        body.Children.Add(ShareChart.Create(data.Labels, data.Mix));
+        body.Children.Add(ShareChart.Create(data.Labels, data.Mix, data.Currency));
         body.Children.Add(DashboardLegend.Create(
             data.Mix.Select(series => (
                 series.BrushKey,

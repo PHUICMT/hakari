@@ -1,3 +1,4 @@
+using Hakari.Core.Localization;
 using Hakari.Core.Presentation;
 using Hakari.Core.Settings;
 using Hakari.Surfaces.Motion;
@@ -36,7 +37,7 @@ internal static class CostChart
         chart.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
 
         chart.Children.Add(Axis(top, currency));
-        var plot = Plot(bars, top);
+        var plot = Plot(bars, top, currency);
         Grid.SetColumn(plot, 1);
         chart.Children.Add(plot);
         var labels = Labels(bars);
@@ -79,7 +80,10 @@ internal static class CostChart
         return axis;
     }
 
-    private static Grid Plot(IReadOnlyList<(string Label, decimal Cost)> bars, double top)
+    private static Grid Plot(
+        IReadOnlyList<(string Label, decimal Cost)> bars,
+        double top,
+        string currency)
     {
         var plot = new Grid { ColumnSpacing = BarGap };
         for (var line = 0; line <= Gridlines; line++)
@@ -116,6 +120,12 @@ internal static class CostChart
         }
 
         plot.Loaded += (_, _) => storyboard.Begin();
+        ChartHover.Attach(plot, bars.Count, index => (
+            bars[index].Label,
+            [new ReadoutRow(
+                null,
+                Texts.Get("dashboard.column.cost"),
+                MoneyText.Format(bars[index].Cost, currency))]));
         return plot;
     }
 
@@ -131,7 +141,6 @@ internal static class CostChart
             RenderTransformOrigin = new Windows.Foundation.Point(0.5, 1),
             RenderTransform = new ScaleTransform(),
         };
-        ToolTipService.SetToolTip(view, $"{bar.Label} · {bar.Cost:N2}");
         return view;
     }
 
