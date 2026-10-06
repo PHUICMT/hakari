@@ -48,7 +48,7 @@
   "flyout.accounts": "{0} accounts",
   "flyout.noLimits": "No limits yet",
   "flyout.updatedNow": "Updated just now",
-  "flyout.updatedMinutes": "Updated {0} min ago",
+  "flyout.updatedAgo": "Updated {0}",
   "flyout.resets": "Resets {0}",
   "flyout.startsNext": "Starts with the next request",
   "flyout.lastKnown": "Showing the last known limits. They refresh while Claude Code is in use.",

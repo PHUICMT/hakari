@@ -44,7 +44,11 @@ public abstract partial class PopupWindow : Window
     public bool IsShowing { get; private set; }
 
     /// <summary>Sizes to the content at the anchor's scale, placed above the widget.</summary>
-    protected void ShowAbove(int anchorX, int anchorY, bool activate)
+    protected void ShowAbove(
+        int anchorX,
+        int anchorY,
+        bool activate,
+        AnchorSide side = AnchorSide.End)
     {
         var display = DisplayArea.GetFromPoint(
             new PointInt32(anchorX, anchorY),
@@ -57,7 +61,7 @@ public abstract partial class PopupWindow : Window
         var frameWidth = AppWindow.Size.Width - AppWindow.ClientSize.Width;
         var frameHeight = AppWindow.Size.Height - AppWindow.ClientSize.Height;
         var outer = new SizeInt32(client.Width + frameWidth, client.Height + frameHeight);
-        AppWindow.MoveAndResize(FlyoutPlacement.Above(anchorX, anchorY, outer, scale));
+        AppWindow.MoveAndResize(FlyoutPlacement.Above(anchorX, anchorY, outer, scale, side));
         IsShowing = true;
         AppWindow.Show(activate);
         if (activate)

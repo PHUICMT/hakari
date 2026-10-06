@@ -106,7 +106,7 @@ public sealed partial class FlyoutWindow : Window
         // Size the client area, not the outer frame, so the border never eats content.
         ResizeToClient(size);
         var outer = AppWindow.Size;
-        var placement = FlyoutPlacement.Above(anchorX, anchorY, outer, scale, centered: true);
+        var placement = FlyoutPlacement.Above(anchorX, anchorY, outer, scale, AnchorSide.Center);
         AppWindow.Move(new PointInt32(placement.X, placement.Y));
         IsShowing = true;
         lastAnchor = (anchorX, anchorY, scale);
@@ -138,7 +138,7 @@ public sealed partial class FlyoutWindow : Window
             fitAttempts++;
             ResizeToClient(new SizeInt32(AppWindow.ClientSize.Width, targetHeight));
             var placement = FlyoutPlacement.Above(
-                anchorX, anchorY, AppWindow.Size, scale, centered: true);
+                anchorX, anchorY, AppWindow.Size, scale, AnchorSide.Center);
             AppWindow.Move(new PointInt32(placement.X, placement.Y));
             return;
         }
@@ -265,7 +265,7 @@ public sealed partial class FlyoutWindow : Window
         var outer = new SizeInt32(
             AppWindow.ClientSize.Width + frameWidth,
             clientHeight + frameHeight);
-        var placement = FlyoutPlacement.Above(anchorX, anchorY, outer, scale, centered: true);
+        var placement = FlyoutPlacement.Above(anchorX, anchorY, outer, scale, AnchorSide.Center);
         AppWindow.MoveAndResize(new RectInt32(placement.X, placement.Y, outer.Width, outer.Height));
     }
 

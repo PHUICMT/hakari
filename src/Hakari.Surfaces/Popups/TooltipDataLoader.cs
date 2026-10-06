@@ -103,6 +103,6 @@ internal static class TooltipDataLoader
         var age = now - snapshot.FetchedAt;
         return age < TimeSpan.FromMinutes(1)
             ? Texts.Get("flyout.updatedNow")
-            : Texts.Format("flyout.updatedMinutes", (int)age.TotalMinutes);
+            : Texts.Format("flyout.updatedAgo", AgeText.Format(age));
     }
 }

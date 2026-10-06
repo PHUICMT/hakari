@@ -1,5 +1,6 @@
 using Hakari.Core.Interprocess;
 using Hakari.Core.Localization;
+using Hakari.Surfaces.Flyout;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
@@ -52,7 +53,7 @@ public sealed partial class MenuWindow : PopupWindow
         items.Children.Add(Item("", "menu.quit", () => Send(ResidentCommand.Quit)));
         AddEscape(items);
         Body = items;
-        ShowAbove(anchorX, anchorY, activate: true);
+        ShowAbove(anchorX, anchorY, activate: true, AnchorSide.Start);
     }
 
     private static void Send(ResidentCommand command) =>

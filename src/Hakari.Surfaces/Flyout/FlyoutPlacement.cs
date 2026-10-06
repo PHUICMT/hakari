@@ -3,10 +3,20 @@ using Microsoft.UI.Windowing;
 
 namespace Hakari.Surfaces.Flyout;
 
-/// <summary>
-/// A small gap above the taskbar, kept on screen: menus and tooltips end at the anchor, the
-/// flyout centers on it, so it opens over the spot that was clicked.
-/// </summary>
+/// <summary>Which part of a window lines up with the anchor across the screen.</summary>
+public enum AnchorSide
+{
+    /// <summary>Ends at the anchor, as the hover card does at the widget's edge.</summary>
+    End,
+
+    /// <summary>Centered on it, as the flyout is on the spot that was clicked.</summary>
+    Center,
+
+    /// <summary>Starts at it, as a menu does at the pointer.</summary>
+    Start,
+}
+
+/// <summary>A small gap above the taskbar, lined up with the anchor, kept on screen.</summary>
 internal static class FlyoutPlacement
 {
     private const int GapAboveTaskbar = 12;
@@ -17,7 +27,7 @@ internal static class FlyoutPlacement
         int anchorY,
         SizeInt32 size,
         double scale,
-        bool centered = false)
+        AnchorSide side = AnchorSide.End)
     {
         var gap = (int)Math.Round(GapAboveTaskbar * scale);
         var margin = (int)Math.Round(ScreenMargin * scale);
@@ -27,8 +37,12 @@ internal static class FlyoutPlacement
 
         var hasAnchor = anchorX != 0 || anchorY != 0;
         var right = !hasAnchor ? workArea.X + workArea.Width - margin
-            : centered ? anchorX + size.Width / 2
-            : anchorX;
+            : side switch
+            {
+                AnchorSide.Center => anchorX + size.Width / 2,
+                AnchorSide.Start => anchorX + size.Width,
+                _ => anchorX,
+            };
         var bottom = hasAnchor ? anchorY - gap : workArea.Y + workArea.Height - gap;
 
         var left = Math.Clamp(

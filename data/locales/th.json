@@ -48,7 +48,7 @@
   "flyout.accounts": "{0} บัญชี",
   "flyout.noLimits": "ยังไม่มีข้อมูล limit",
   "flyout.updatedNow": "อัปเดตเมื่อสักครู่",
-  "flyout.updatedMinutes": "อัปเดต {0} นาทีที่แล้ว",
+  "flyout.updatedAgo": "อัปเดต {0}",
   "flyout.resets": "รีเซ็ต {0}",
   "flyout.startsNext": "เริ่มนับเมื่อส่งคำขอครั้งถัดไป",
   "flyout.lastKnown": "แสดง limit ล่าสุดที่ทราบ จะอัปเดตเมื่อมีการใช้ Claude Code",

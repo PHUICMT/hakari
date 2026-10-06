@@ -194,7 +194,7 @@ internal static class FlyoutDataLoader
         var age = now - limits.FetchedAt;
         return age < TimeSpan.FromMinutes(1)
             ? Texts.Get("flyout.updatedNow")
-            : Texts.Format("flyout.updatedMinutes", (int)age.TotalMinutes);
+            : Texts.Format("flyout.updatedAgo", AgeText.Format(age));
     }
 
     /// <summary>The limit lines of one account, as the flyout draws them.</summary>
