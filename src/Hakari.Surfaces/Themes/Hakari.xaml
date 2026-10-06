@@ -77,6 +77,9 @@
     <!-- Mostly opaque: acrylic only tints the edges, so what is behind never hurts legibility -->
     <SolidColorBrush x:Key="HakariSurfaceBrush" Color="{ThemeResource HakariSurfaceColor}" Opacity="0.9" />
     <SolidColorBrush x:Key="HakariTileBrush" Color="{ThemeResource HakariTileColor}" />
+    <!-- The raised surface, fully opaque: a hover fill that eases from the tile without
+         letting the page show through halfway -->
+    <SolidColorBrush x:Key="HakariRaisedBrush" Color="{ThemeResource HakariSurfaceColor}" />
     <SolidColorBrush x:Key="HakariLineBrush" Color="{ThemeResource HakariLineColor}" />
     <SolidColorBrush x:Key="HakariLineStrongBrush" Color="{ThemeResource HakariLineStrongColor}" />
     <SolidColorBrush x:Key="HakariGroundBrush" Color="{ThemeResource HakariGroundColor}" />

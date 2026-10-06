@@ -149,20 +149,22 @@ internal sealed partial class LayoutEditor : StackPanel
     private Border PreviewStrip() => new()
     {
         Margin = new Thickness(Gutter, Gap, Gutter, 0),
-        Padding = new Thickness(Gutter),
+        Padding = new Thickness(Gutter, Gutter, Gutter, ScrollBarRoom / 3),
         CornerRadius = new CornerRadius(6),
         Background = Brush("HakariGroundBrush"),
         Child = SideScroller(previewRow),
     };
 
-    internal static ScrollViewer SideScroller(UIElement content) => new()
+    /// <summary>The scroll bar floats over the bottom, so the blocks keep clear of it.</summary>
+    private const double ScrollBarRoom = 14;
+
+    internal static ScrollViewer SideScroller(FrameworkElement content) => new()
     {
-        Content = content,
+        Content = WithRoomBelow(content),
         HorizontalScrollMode = ScrollMode.Enabled,
         HorizontalScrollBarVisibility = ScrollBarVisibility.Auto,
         VerticalScrollMode = ScrollMode.Disabled,
         VerticalScrollBarVisibility = ScrollBarVisibility.Disabled,
-        Padding = new Thickness(0, 0, 0, 4),
     };
 
     private void ShowPreview(IReadOnlyList<ComposedWidget> panels)
@@ -194,6 +196,12 @@ internal sealed partial class LayoutEditor : StackPanel
         preview.Opacity = 0;
         preview.Loaded += (_, _) => SurfaceMotion.Settle(preview, "Opacity", 1);
         return preview;
+    }
+
+    private static FrameworkElement WithRoomBelow(FrameworkElement content)
+    {
+        content.Margin = new Thickness(0, 0, 0, ScrollBarRoom);
+        return content;
     }
 
     private Grid Templates()

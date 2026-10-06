@@ -116,7 +116,7 @@ internal sealed partial class TemplateCard : UserControl
         frame.BorderBrush = Brush(isChosen ? "HakariAccentBrush" : "HakariLineBrush");
         frame.Background = isChosen
             ? Brush("HakariAccentSoftBrush")
-            : isOver ? Brush("HakariHoverBrush") : Brush("HakariTileBrush");
+            : isOver ? Brush("HakariRaisedBrush") : Brush("HakariTileBrush");
     }
 
     private static Microsoft.UI.Xaml.Media.Brush Brush(string key) =>
