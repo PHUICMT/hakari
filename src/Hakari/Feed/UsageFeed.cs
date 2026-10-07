@@ -45,7 +45,7 @@ internal sealed class UsageFeed : IDisposable
     private static readonly TimeSpan ProgressInterval = TimeSpan.FromMilliseconds(250);
     private long lastProgressShown;
     private LimitAlertEngine? alertEngine;
-    private DateTime pricesVersion;
+    private string pricesVersion = string.Empty;
     private (int Warn, int Critical) alertLevels;
 
     public UsageFeed(SettingsStore settingsStore)
@@ -161,8 +161,9 @@ internal sealed class UsageFeed : IDisposable
         settingsChanged = false;
 
         // Read each pass: "check now" or the user's own prices may have changed it.
-        var pricing = PricingSources.LoadCurrent();
+        // The version first: a table written in between is then seen as a change next pass.
         pricesVersion = PricingSources.Version();
+        var pricing = PricingSources.LoadCurrent();
         var settings = settingsStore.Load();
         presentation = settings;
         if (settings.IsPausedAt(DateTimeOffset.UtcNow))

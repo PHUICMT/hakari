@@ -23,7 +23,7 @@ public static class PricingSources
     public static string CustomPath => Path.Combine(HakariPaths.DataDirectory, CustomFileName);
 
     private static readonly Lock CacheLock = new();
-    private static (DateTime Version, PricingTable Table)? cached;
+    private static (string Version, PricingTable Table)? cached;
 
     /// <summary>
     /// The newer of the shipped and fetched tables, with the user's prices. Read from disk
@@ -68,10 +68,17 @@ public static class PricingSources
         return table;
     }
 
-    /// <summary>Changes when a fetched table or the user's prices change, for a reload.</summary>
-    public static DateTime Version() => new[] { DownloadedPath, CustomPath }
-        .Select(path => File.Exists(path) ? File.GetLastWriteTimeUtc(path) : DateTime.MinValue)
-        .Max();
+    /// <summary>
+    /// Changes when a fetched table or the user's prices are written, replaced or deleted:
+    /// each file's presence and write time, not only the newest, so removing the newer-dated
+    /// file is noticed too.
+    /// </summary>
+    public static string Version() => string.Join(
+        '|',
+        new[] { DownloadedPath, CustomPath }.Select(path => File.Exists(path)
+            ? File.GetLastWriteTimeUtc(path).Ticks.ToString(
+                System.Globalization.CultureInfo.InvariantCulture)
+            : "-"));
 
     /// <summary>
     /// Keeps a fetched table when it reads as a price table and is newer than what Hakari

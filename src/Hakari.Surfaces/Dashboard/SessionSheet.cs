@@ -60,20 +60,25 @@ internal static class SessionSheet
 
         var (project, session) = GroupKeys.Split(row.Usage.Key);
         var byDay = row.Usage.LastSeen - row.Usage.FirstSeen > TimeSpan.FromDays(1);
+        var period = DashboardFilter.Current.ToUsageFilter(DateTimeOffset.Now);
         var detail = await Task.Run(() => DashboardData.Read(
-            (query, _) => Read(query, project, session, byDay),
+            (query, _) => Read(query, period, project, session, byDay),
             new SessionDetail([], byDay, 0, 0, [])));
         Show(root, row, detail, currency);
     }
 
-    /// <summary>The row's own project and session, so every share is of the row's cost.</summary>
+    /// <summary>
+    /// The row's own project and session under the dashboard's period, account, source and
+    /// model, the same filter the row was read with, so every share is of the row's cost.
+    /// </summary>
     private static SessionDetail Read(
         UsageQuery query,
+        UsageFilter period,
         string project,
         string session,
         bool byDay)
     {
-        var filter = new UsageFilter(Project: project, SessionId: session);
+        var filter = period with { Project = project, SessionId = session };
         return new SessionDetail(
             [
                 .. query.Summarize(filter, byDay ? GroupBy.Day : GroupBy.Hour)

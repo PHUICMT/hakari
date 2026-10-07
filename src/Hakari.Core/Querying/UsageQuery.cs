@@ -32,8 +32,9 @@ public sealed class UsageQuery(
             return null;
         }
 
+        // The local day, as the dashboard counts days by the local calendar.
         var firstUsage = DateTimeOffset.FromUnixTimeMilliseconds(milliseconds);
-        return DateOnly.FromDateTime(firstUsage.UtcDateTime);
+        return DateOnly.FromDateTime(firstUsage.LocalDateTime);
     }
 
     /// <summary>A pause longer than this between replies is time away, not work.</summary>
@@ -71,13 +72,23 @@ public sealed class UsageQuery(
         return times;
     }
 
-    /// <summary>How many records match, counted without pricing them.</summary>
-    public long Count(UsageFilter filter)
+    /// <summary>
+    /// How many records match and how many tokens they hold, read without pricing them:
+    /// changes when a record is added, removed or rewritten with other counts.
+    /// </summary>
+    public (long Records, long Tokens) Fingerprint(UsageFilter filter)
     {
         using var command = store.Connection.CreateCommand();
         var whereClause = UsageFilterSql.BuildWhereClause(filter, command, project);
-        command.CommandText = $"SELECT COUNT(*) FROM usage_records {whereClause}";
-        return command.ExecuteScalar() is long count ? count : 0;
+        command.CommandText = $"""
+            SELECT COUNT(*), TOTAL(input_tokens + output_tokens + cache_write_five_minutes
+                + cache_write_one_hour + cache_read_tokens + web_search_requests)
+            FROM usage_records {whereClause}
+            """;
+        using var reader = command.ExecuteReader();
+        return reader.Read()
+            ? (reader.GetInt64(0), (long)reader.GetDouble(1))
+            : (0, 0);
     }
 
     /// <summary>Whether anything was indexed yet, without adding anything up.</summary>

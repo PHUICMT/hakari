@@ -23,9 +23,15 @@ internal sealed record OverviewData(
         new("USD", UsageSummary.Empty, null, 1, [], [], []);
 
     public static OverviewData Load(DashboardFilter filter) =>
-        DashboardData.Read((query, _) => Read(query, filter), Empty);
+        DashboardData.Read((query, store) => Read(query, store, filter), Empty);
 
-    private static OverviewData Read(UsageQuery query, DashboardFilter filter)
+    /// <summary>The index option Hakari.exe sets once it has read the logs with marks.</summary>
+    private const string ThinkingMarksOption = "thinkingMarks";
+
+    private static OverviewData Read(
+        UsageQuery query,
+        Hakari.Core.Indexing.IndexStore store,
+        DashboardFilter filter)
     {
         var now = DateTimeOffset.Now;
         var usage = filter.ToUsageFilter(now);
@@ -44,7 +50,10 @@ internal sealed record OverviewData(
             ReadTimeline(query, filter, now),
             [.. byModel.Take(TopModels)],
             query.CacheSavings(usage),
+            // Right after it is turned on the logs are still being read again; until then
+            // every reply would look unmarked and the share would read 0%.
             Hakari.Core.Settings.SettingsStore.Default.Load().CountThinking
+                && store.GetOption(ThinkingMarksOption) == bool.TrueString
                 ? query.ThinkingShare(usage)
                 : null);
     }

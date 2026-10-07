@@ -2,8 +2,8 @@ namespace Hakari.Core.Querying;
 
 /// <summary>
 /// Everything ever spent, without adding up the whole history every half minute: the days
-/// before today are added up once and kept while their record count, the day and the query
-/// (its prices and currency) stay the same; only today is added on each read.
+/// before today are added up once and kept while their records and token counts, the day
+/// and the query (its prices and currency) stay the same; only today is added on each read.
 /// </summary>
 public static class AllTimeCost
 {
@@ -14,7 +14,7 @@ public static class AllTimeCost
     {
         var startOfToday = TimePeriods.StartOfToday(now);
         var before = new UsageFilter(To: startOfToday);
-        var rowsBefore = query.Count(before);
+        var rowsBefore = query.Fingerprint(before);
         decimal costBefore;
         lock (KeptLock)
         {
@@ -41,6 +41,6 @@ public static class AllTimeCost
     private sealed record Kept(
         UsageQuery Query,
         DateTimeOffset StartOfToday,
-        long RowsBefore,
+        (long Records, long Tokens) RowsBefore,
         decimal CostBefore);
 }
