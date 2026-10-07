@@ -79,24 +79,11 @@ internal sealed partial class LimitTrendChart : Grid
         };
     }
 
-    private Grid Axis()
-    {
-        var axis = new Grid();
-        foreach (var step in AxisSteps)
-        {
-            axis.Children.Add(new TextBlock
-            {
-                Text = $"{step}%",
-                FontSize = LabelSize,
-                Foreground = DashboardCard.Brush("HakariInkFaintBrush"),
-                HorizontalAlignment = HorizontalAlignment.Right,
-                VerticalAlignment = VerticalAlignment.Bottom,
-                Margin = new Thickness(0, 0, 0, ChartHeight * step / 100 - LabelSize / 2),
-            });
-        }
-
-        return axis;
-    }
+    private Canvas Axis() => ChartAxis.Create(
+        AxisSteps.Select(step => ($"{step}%", step / 100.0)),
+        ChartHeight,
+        AxisWidth,
+        LabelSize);
 
     private Grid Ends()
     {

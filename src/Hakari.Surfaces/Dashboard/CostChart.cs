@@ -60,25 +60,13 @@ internal static class CostChart
         return steps.Select(step => step * magnitude).First(value => value >= highest);
     }
 
-    private static Grid Axis(double top, string currency)
-    {
-        var axis = new Grid();
-        for (var line = 0; line <= Gridlines; line++)
-        {
-            var value = top * line / Gridlines;
-            axis.Children.Add(new TextBlock
-            {
-                Text = MoneyText.Format((decimal)value, currency),
-                FontSize = LabelSize,
-                Foreground = DashboardCard.Brush("HakariInkFaintBrush"),
-                HorizontalAlignment = HorizontalAlignment.Right,
-                VerticalAlignment = VerticalAlignment.Bottom,
-                Margin = new Thickness(0, 0, 0, ChartHeight * line / Gridlines - LabelSize / 2),
-            });
-        }
-
-        return axis;
-    }
+    private static Canvas Axis(double top, string currency) => ChartAxis.Create(
+        Enumerable.Range(0, Gridlines + 1).Select(line => (
+            MoneyText.Format((decimal)(top * line / Gridlines), currency),
+            (double)line / Gridlines)),
+        ChartHeight,
+        AxisWidth,
+        LabelSize);
 
     private static Grid Plot(
         IReadOnlyList<(string Label, decimal Cost)> bars,
