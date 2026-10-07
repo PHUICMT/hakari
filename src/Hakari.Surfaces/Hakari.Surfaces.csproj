@@ -36,4 +36,15 @@
   <ItemGroup>
     <Content Include="..\..\assets\promptpay.png" Link="promptpay.png" CopyToOutputDirectory="PreserveNewest" Condition="Exists('..\..\assets\promptpay.png')" />
   </ItemGroup>
+  <!-- An unpackaged WinUI publish leaves out the compiled XAML and the resource index, and the
+       app cannot start without them; they are copied from the build output. -->
+  <Target Name="CopyXamlToPublish" AfterTargets="Publish">
+    <ItemGroup>
+      <CompiledXaml Include="$(OutDir)**\*.xbf;$(OutDir)$(AssemblyName).pri"
+        Exclude="$(OutDir)publish\**" />
+    </ItemGroup>
+    <Copy SourceFiles="@(CompiledXaml)"
+      DestinationFiles="@(CompiledXaml->'$(PublishDir)%(RecursiveDir)%(Filename)%(Extension)')"
+      SkipUnchangedFiles="true" />
+  </Target>
 </Project>
