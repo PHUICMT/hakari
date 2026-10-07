@@ -6,23 +6,29 @@
     The version written into the binaries and the zip name, such as 1.0.0.
 .PARAMETER Output
     Where the folder and the zip are written.
+.PARAMETER Architecture
+    x64 or arm64; arm64 runs natively on Windows on Arm PCs.
 #>
 param(
     [string]$Version = "0.0.0",
-    [string]$Output = "artifacts/release"
+    [string]$Output = "artifacts/release",
+    [ValidateSet("x64", "arm64")]
+    [string]$Architecture = "x64"
 )
 
 $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $PSScriptRoot
-$folder = Join-Path $root "$Output/Hakari"
-$zip = Join-Path $root "$Output/Hakari-$Version-win-x64.zip"
+$runtime = "win-$Architecture"
+$platform = if ($Architecture -eq "arm64") { "ARM64" } else { "x64" }
+$folder = Join-Path $root "$Output/$Architecture/Hakari"
+$zip = Join-Path $root "$Output/Hakari-$Version-$runtime.zip"
 
 if (Test-Path $folder) { Remove-Item $folder -Recurse -Force }
 if (Test-Path $zip) { Remove-Item $zip -Force }
 
 $common = @(
     "-c", "Release",
-    "-r", "win-x64",
+    "-r", $runtime,
     "--self-contained", "true",
     "-p:Version=$Version",
     "-p:DebugType=none",
@@ -33,7 +39,7 @@ $common = @(
 dotnet publish (Join-Path $root "src/Hakari/Hakari.csproj") @common
 if ($LASTEXITCODE -ne 0) { throw "Publishing Hakari.exe failed." }
 
-dotnet publish (Join-Path $root "src/Hakari.Surfaces/Hakari.Surfaces.csproj") @common -p:Platform=x64
+dotnet publish (Join-Path $root "src/Hakari.Surfaces/Hakari.Surfaces.csproj") @common -p:Platform=$platform
 if ($LASTEXITCODE -ne 0) { throw "Publishing Hakari.Surfaces.exe failed." }
 
 foreach ($required in "Hakari.exe", "Hakari.Surfaces.exe", "pricing.json") {

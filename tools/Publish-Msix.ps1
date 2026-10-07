@@ -15,6 +15,8 @@
     Package/Properties/PublisherDisplayName from Partner Center.
 .PARAMETER DisplayName
     The reserved Store name, matched exactly by the Store.
+.PARAMETER Architecture
+    x64 or arm64. Upload one package per architecture to the same submission.
 #>
 param(
     [string]$Version = "0.9.1",
@@ -24,7 +26,9 @@ param(
     [string]$DisplayName = "Hakari - Usage Meter",
     [string]$CertificatePath = "",
     [string]$CertificatePassword = "",
-    [string]$Output = "artifacts/msix"
+    [string]$Output = "artifacts/msix",
+    [ValidateSet("x64", "arm64")]
+    [string]$Architecture = "x64"
 )
 
 $ErrorActionPreference = "Stop"
@@ -34,22 +38,23 @@ $makeAppx = Get-ChildItem $kits -Recurse -Filter makeappx.exe |
     Where-Object FullName -like "*\x64\*" | Sort-Object FullName | Select-Object -Last 1
 if (-not $makeAppx) { throw "makeappx.exe not found; install the Windows SDK." }
 
-& (Join-Path $PSScriptRoot "Publish-Release.ps1") -Version $Version -Output "$Output/portable" | Out-Null
-$staging = Join-Path $root "$Output/portable/Hakari"
+& (Join-Path $PSScriptRoot "Publish-Release.ps1") -Version $Version -Output "$Output/portable" `
+    -Architecture $Architecture | Out-Null
+$staging = Join-Path $root "$Output/portable/$Architecture/Hakari"
 
 & (Join-Path $PSScriptRoot "New-PackageAssets.ps1") -OutputDirectory (Join-Path $staging "Assets") | Out-Null
 $manifest = Get-Content (Join-Path $root "packaging/msix/AppxManifest.xml") -Raw
 $manifest = $manifest.Replace('$Name$', $Name).Replace('$Publisher$', $Publisher)
 $manifest = $manifest.Replace('$PublisherDisplayName$', $PublisherDisplayName)
 $manifest = $manifest.Replace('$DisplayName$', $DisplayName)
-$manifest = $manifest.Replace('$Version$', "$Version.0")
+$manifest = $manifest.Replace('$Version$', "$Version.0").Replace('$Architecture$', $Architecture)
 Set-Content (Join-Path $staging "AppxManifest.xml") $manifest -Encoding utf8
 
 # A packaged app looks up ms-appx resources in resources.pri only; the window app's own
 # index already holds WinUI's resources too, so it serves as the package's.
 Copy-Item (Join-Path $staging "Hakari.Surfaces.pri") (Join-Path $staging "resources.pri") -Force
 
-$package = Join-Path $root "$Output/Hakari-$Version-x64.msix"
+$package = Join-Path $root "$Output/Hakari-$Version-$Architecture.msix"
 if (Test-Path $package) { Remove-Item $package -Force }
 & $makeAppx.FullName pack /d $staging /p $package /o | Out-Null
 if ($LASTEXITCODE -ne 0) { throw "makeappx failed." }

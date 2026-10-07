@@ -27,19 +27,22 @@ jobs:
         run: |
           $version = "${{ github.ref_name }}".TrimStart("v")
           if ($version -notmatch '^\d+\.\d+\.\d+') { $version = "0.0.0" }
-          ./tools/Publish-Release.ps1 -Version $version
+          ./tools/Publish-Release.ps1 -Version $version -Architecture x64
+          ./tools/Publish-Release.ps1 -Version $version -Architecture arm64
           "VERSION=$version" >> $env:GITHUB_ENV
 
       - name: Checksum
         shell: pwsh
         run: |
-          $zip = "artifacts/release/Hakari-$env:VERSION-win-x64.zip"
-          $hash = (Get-FileHash $zip -Algorithm SHA256).Hash.ToLower()
-          "$hash  Hakari-$env:VERSION-win-x64.zip" | Set-Content "$zip.sha256" -Encoding ascii
+          foreach ($arch in "x64", "arm64") {
+            $name = "Hakari-$env:VERSION-win-$arch.zip"
+            $hash = (Get-FileHash "artifacts/release/$name" -Algorithm SHA256).Hash.ToLower()
+            "$hash  $name" | Set-Content "artifacts/release/$name.sha256" -Encoding ascii
+          }
 
       - uses: actions/upload-artifact@v7
         with:
-          name: Hakari-${{ env.VERSION }}-win-x64
+          name: Hakari-${{ env.VERSION }}-win
           path: artifacts/release/*.zip*
 
       - name: Release
