@@ -32,6 +32,12 @@ internal sealed class LimitPoller : IDisposable
     private DateTimeOffset lastUsage = DateTimeOffset.MinValue;
 
     private readonly Func<string, bool, bool> mayRead;
+    private readonly Func<UsageSource, bool> canTouch;
+    private DateTimeOffset nextSignInCheck = DateTimeOffset.MinValue;
+    private static readonly TimeSpan SignInCheckInterval = TimeSpan.FromSeconds(30);
+
+    /// <summary>The sources that may be read now: a WSL one only while it runs.</summary>
+    private List<UsageSource> Reachable() => [.. sources.Where(canTouch)];
 
     /// <param name="mayRead">
     /// Whether an account's limits may be asked for, given whether they were read before.
@@ -40,10 +46,12 @@ internal sealed class LimitPoller : IDisposable
         IndexStore store,
         IReadOnlyList<UsageSource> sources,
         bool refreshSignInAutomatically,
-        Func<string, bool, bool> mayRead)
+        Func<string, bool, bool> mayRead,
+        Func<UsageSource, bool>? canTouch = null)
     {
         this.sources = sources;
         this.mayRead = mayRead;
+        this.canTouch = canTouch ?? (_ => true);
         accountRepository = new AccountRepository(store);
         if (store.CreatedAt is { } installedAt)
         {
@@ -79,8 +87,15 @@ internal sealed class LimitPoller : IDisposable
     /// </summary>
     public void PollSoonIfSignInChanged()
     {
+        var now = DateTimeOffset.UtcNow;
+        if (now < nextSignInCheck)
+        {
+            return;
+        }
+
+        nextSignInCheck = now + SignInCheckInterval;
         var changed = false;
-        foreach (var source in sources)
+        foreach (var source in Reachable())
         {
             var path = CredentialsFile.For(source).Path;
             var modified = File.GetLastWriteTimeUtc(path);
@@ -103,10 +118,12 @@ internal sealed class LimitPoller : IDisposable
             return false;
         }
 
-        accountTracker.Observe(sources);
+        var reachable = Reachable();
+        accountTracker.Observe(reachable);
         var details = accountRepository.ListAccounts()
-            .ToDictionary(account => account.AccountId);
-        var live = accountTracker.SourcesByCurrentAccount(sources)
+            .GroupBy(account => account.AccountId)
+            .ToDictionary(group => group.Key, group => group.First());
+        var live = accountTracker.SourcesByCurrentAccount(reachable)
             .Where(account => mayRead(account.Key, limitCache.Load(account.Key) is not null))
             .Select(account => Read(account.Key, account.Value, details))
             .OfType<WidgetAccount>()

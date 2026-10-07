@@ -67,7 +67,7 @@ public sealed partial class DashboardWindow : Window
         Closed += (_, _) =>
         {
             DashboardFilter.Changed -= RememberFilter;
-            RememberSize();
+            RememberOnClose();
         };
         BuildNavigation();
         WidthSteps.Watch(Root, [FullNavigationWidth], level =>
@@ -280,18 +280,13 @@ public sealed partial class DashboardWindow : Window
         return row;
     }
 
-    private static void RememberFilter(object? sender, DashboardFilter filter) =>
-        Remember(memory => memory with
-        {
-            Period = filter.Period.ToString(),
-            AccountId = filter.AccountId,
-            SourceId = filter.SourceId,
-            Model = filter.Model,
-        });
+    private DashboardFilter lastFilter = DashboardFilter.Current;
+
+    /// <summary>Kept in memory; written once, when the window closes.</summary>
+    private void RememberFilter(object? sender, DashboardFilter filter) => lastFilter = filter;
 
     private void Show(DashboardPage page, bool animate)
     {
-        Remember(memory => memory with { Page = page.ToString() });
         current = page;
         choosing = true;
         navItems[page].IsChecked = true;
@@ -367,13 +362,24 @@ public sealed partial class DashboardWindow : Window
         AppWindow.TitleBar.ButtonInactiveBackgroundColor = Colors.Transparent;
     }
 
-    /// <summary>In layout units, so it comes back the same on a screen of another scale.</summary>
-    private void RememberSize()
+    /// <summary>
+    /// Page, filter and size in one write when the window closes, rather than a write per
+    /// click, which would also make Hakari.exe redraw the widget each time. The size is in
+    /// layout units, so it comes back the same on a screen of another scale.
+    /// </summary>
+    private void RememberOnClose()
     {
         var scale = NativeDpi.ForDisplay(DisplayArea.Primary) / DefaultDpi;
         var size = AppWindow.Size;
+        var filter = lastFilter;
+        var page = current;
         Remember(memory => memory with
         {
+            Page = page.ToString(),
+            Period = filter.Period.ToString(),
+            AccountId = filter.AccountId,
+            SourceId = filter.SourceId,
+            Model = filter.Model,
             Width = size.Width / scale,
             Height = size.Height / scale,
         });

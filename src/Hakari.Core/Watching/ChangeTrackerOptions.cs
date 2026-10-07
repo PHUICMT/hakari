@@ -11,6 +11,6 @@ public sealed record ChangeTrackerOptions(
     /// </summary>
     public static ChangeTrackerOptions Default { get; } = new(
         Debounce: TimeSpan.FromMilliseconds(500),
-        RemotePollInterval: TimeSpan.FromSeconds(30),
+        RemotePollInterval: TimeSpan.FromSeconds(60),
         LocalSafetyScanInterval: TimeSpan.FromMinutes(10));
 }

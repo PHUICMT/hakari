@@ -309,8 +309,18 @@ internal sealed class ResidentApp : IDisposable
     /// <summary>Runs on the UI thread after a menu change or a save in Settings.</summary>
     private void Apply(HakariSettings settings)
     {
-        widgets.SetMotion(ToMotion(settings.Animation));
-        widgets.SetDisplayFilter(DisplayFilter.From(settings));
+        // Only what changed is applied: a settings write from a window (a folded card, a
+        // remembered page) must not make every widget redraw.
+        if (settings.Animation != appliedSettings.Animation)
+        {
+            widgets.SetMotion(ToMotion(settings.Animation));
+        }
+
+        if (settings.Displays != appliedSettings.Displays
+            || !settings.ChosenDisplays.SequenceEqual(appliedSettings.ChosenDisplays))
+        {
+            widgets.SetDisplayFilter(DisplayFilter.From(settings));
+        }
         var languageChanged = Texts.Use(settings.Language);
         if (!settings.FeedsSameDataAs(appliedSettings))
         {

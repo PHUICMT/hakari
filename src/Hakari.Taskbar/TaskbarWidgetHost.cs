@@ -162,7 +162,8 @@ public sealed class TaskbarWidgetHost : IDisposable
     /// are new, changed DPI, or are asked for (<paramref name="renderAll"/>) are redrawn;
     /// the rest are just kept in place, so the timer costs almost nothing.
     /// </summary>
-    private void SynchronizeWidgets(bool renderAll)
+    /// <param name="sampleTheme">Read the taskbar's color again; defaults to a full render.</param>
+    private void SynchronizeWidgets(bool renderAll, bool? sampleTheme = null)
     {
         RemoveDeadWidgets();
         var wanted = WantedTargets();
@@ -179,7 +180,7 @@ public sealed class TaskbarWidgetHost : IDisposable
 
             if (renderAll || widget.RenderedDpi != taskbar.Dpi)
             {
-                RenderFull(widget, taskbar);
+                RenderFull(widget, taskbar, sampleTheme ?? renderAll);
             }
 
             Place(widget, taskbar);
@@ -286,12 +287,21 @@ public sealed class TaskbarWidgetHost : IDisposable
     }
 
     /// <summary>Samples the taskbar's color again, then draws the current frame.</summary>
-    private void RenderFull(WidgetWindow widget, TaskbarInfo taskbar)
+    /// <summary>
+    /// Draws the current frame, sampling the taskbar's color first only when asked or never
+    /// done for this widget: reading the screen is slow, and content updates do not need it.
+    /// </summary>
+    private void RenderFull(WidgetWindow widget, TaskbarInfo taskbar, bool sampleTheme)
     {
         var state = states[widget];
-        state.Palette = TaskbarTheme.IsLight(taskbar)
-            ? WidgetPalette.LightTaskbar
-            : WidgetPalette.DarkTaskbar;
+        if (sampleTheme || !state.PaletteSampled)
+        {
+            state.Palette = TaskbarTheme.IsLight(taskbar)
+                ? WidgetPalette.LightTaskbar
+                : WidgetPalette.DarkTaskbar;
+            state.PaletteSampled = true;
+        }
+
         RenderFrame(widget, taskbar, state);
     }
 
@@ -409,7 +419,7 @@ public sealed class TaskbarWidgetHost : IDisposable
             state.Animation.ChangeContent(content, now, motion);
         }
 
-        SynchronizeWidgets(renderAll: true);
+        SynchronizeWidgets(renderAll: true, sampleTheme: false);
         StartAnimationTimerIfNeeded();
     }
 

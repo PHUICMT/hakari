@@ -196,15 +196,18 @@ internal sealed class UsageFeed : IDisposable
             settings.ShowSessionTitles,
             collectThinkingMarks: settings.CountThinking);
         indexer.Progressed += ShowIndexProgress;
+        var reach = new WslReach(TimeProvider.System, settings.WslMode);
         using var tracker = new ChangeTracker(
             sources,
             ChangeTrackerOptions.Default,
-            TimeProvider.System);
+            TimeProvider.System,
+            reach.CanTouch);
         using var limits = new LimitPoller(
             store,
             sources,
             settings.RefreshSignInAutomatically,
-            (accountId, readBefore) => presentation.MayReadLimits(accountId, readBefore));
+            (accountId, readBefore) => presentation.MayReadLimits(accountId, readBefore),
+            reach.CanTouch);
         changeTracker = tracker;
         var lastPublished = DateTimeOffset.MinValue;
         WidgetFacts? facts = null;

@@ -20,13 +20,19 @@ public sealed class ChangeTracker : IDisposable
     private readonly object stateLock = new();
     private DateTimeOffset lastChange = DateTimeOffset.MinValue;
 
+    private readonly Func<UsageSource, bool> canTouch;
+
+    /// <param name="canTouch">Whether a source may be scanned now; a WSL one only while its
+    /// distribution runs. Its scan waits for the next turn when it may not.</param>
     public ChangeTracker(
         IEnumerable<UsageSource> sources,
         ChangeTrackerOptions options,
-        TimeProvider timeProvider)
+        TimeProvider timeProvider,
+        Func<UsageSource, bool>? canTouch = null)
     {
         this.options = options;
         this.timeProvider = timeProvider;
+        this.canTouch = canTouch ?? (_ => true);
         var now = timeProvider.GetUtcNow();
 
         foreach (var source in sources)
@@ -107,7 +113,7 @@ public sealed class ChangeTracker : IDisposable
             nextFullScan[source] = now + interval;
         }
 
-        return due;
+        return [.. due.Where(canTouch)];
     }
 
     private Dictionary<UsageSource, IReadOnlyCollection<string>> TakeChangedFiles(

@@ -18,16 +18,29 @@ internal static class SurfaceMotion
 
     private const double EaseExponent = 6;
 
+    /// <summary>
+    /// Asked for on every animation, so the answer is kept for a moment instead of reading
+    /// the settings file each time; a change in Settings still shows within a second.
+    /// </summary>
+    private static readonly TimeSpan KeepFor = TimeSpan.FromSeconds(1);
+    private static readonly UISettings SystemSettings = new();
+    private static AnimationSetting kept;
+    private static long keptAt = long.MinValue;
+
     public static AnimationSetting Current()
     {
-        var setting = SettingsStore.Default.Load().Animation;
-        if (setting != AnimationSetting.FollowWindows)
+        var now = Environment.TickCount64;
+        if (now - keptAt < KeepFor.TotalMilliseconds)
         {
-            return setting;
+            return kept;
         }
 
-        var animationsEnabled = new UISettings().AnimationsEnabled;
-        return animationsEnabled ? AnimationSetting.Full : AnimationSetting.Reduced;
+        var setting = SettingsStore.Default.Load().Animation;
+        kept = setting != AnimationSetting.FollowWindows
+            ? setting
+            : SystemSettings.AnimationsEnabled ? AnimationSetting.Full : AnimationSetting.Reduced;
+        keptAt = now;
+        return kept;
     }
 
     public static DoubleAnimation Animate(

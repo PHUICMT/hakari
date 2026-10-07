@@ -13,6 +13,9 @@ internal sealed class WidgetState(WidgetContent initialContent)
 
     public WidgetPalette Palette { get; set; } = WidgetPalette.DarkTaskbar;
 
+    /// <summary>The taskbar's color has been read at least once for this widget.</summary>
+    public bool PaletteSampled { get; set; }
+
     /// <summary>Showing the compact form because the full one had no room on its taskbar.</summary>
     public bool IsCompact { get; set; }
 }
