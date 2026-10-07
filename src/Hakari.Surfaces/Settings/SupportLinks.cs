@@ -108,7 +108,7 @@ internal static class SupportLinks
     private const double CardWidth = 240;
 
     /// <summary>A PromptPay QR picture shipped next to the app, when there is one.</summary>
-    private const string QrPictureFile = "promptpay-qr.png";
+    private const string QrPictureFile = "promptpay.png";
 
     private static string QrPicturePath => Path.Combine(AppContext.BaseDirectory, QrPictureFile);
 

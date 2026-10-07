@@ -34,6 +34,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="..\..\assets\promptpay-qr.png" Link="promptpay-qr.png" CopyToOutputDirectory="PreserveNewest" Condition="Exists('..\..\assets\promptpay-qr.png')" />
+    <Content Include="..\..\assets\promptpay.png" Link="promptpay.png" CopyToOutputDirectory="PreserveNewest" Condition="Exists('..\..\assets\promptpay.png')" />
   </ItemGroup>
 </Project>
