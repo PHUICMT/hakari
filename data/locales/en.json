@@ -491,6 +491,7 @@
   "dashboard.sheet.subagents": "Subagent share",
   "dashboard.sheet.saved": "cache saved {0}",
   "dashboard.sheet.timeline": "Cost by hour",
+  "dashboard.sheet.timelineDays": "Cost by day",
   "dashboard.sheet.folder": "Working folder",
   "dashboard.sheet.privacy": "Hakari reads usage numbers only. Prompt and response text is never read or stored.",
   "flyout.notice.full": "{0} reached on {1}",

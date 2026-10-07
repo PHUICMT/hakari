@@ -8,7 +8,7 @@ internal static class GroupByExpressions
     /// A Windows folder recorded once as "D:\x" and once as "d:\x" is the same folder, so the
     /// drive letter is written in capitals.
     /// </summary>
-    private const string Project =
+    internal const string Project =
         "coalesce(CASE WHEN project LIKE '_:%' "
         + "THEN upper(substr(project, 1, 1)) || substr(project, 2) ELSE project END, '')";
 

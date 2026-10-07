@@ -13,8 +13,10 @@ using Microsoft.UI.Xaml.Media.Animation;
 namespace Hakari.Surfaces.Dashboard;
 
 /// <summary>What one session's sheet shows; read only when the sheet opens.</summary>
+/// <param name="ByDay">A session over more than a day is charted per day, not per hour.</param>
 internal sealed record SessionDetail(
     IReadOnlyList<(string Label, decimal Cost)> Timeline,
+    bool ByDay,
     decimal SubagentCost,
     decimal CacheSaved,
     IReadOnlyList<UsageSummary> Models);
@@ -56,21 +58,29 @@ internal static class SessionSheet
             return;
         }
 
-        var session = GroupKeys.Split(row.Usage.Key).Item;
+        var (project, session) = GroupKeys.Split(row.Usage.Key);
+        var byDay = row.Usage.LastSeen - row.Usage.FirstSeen > TimeSpan.FromDays(1);
         var detail = await Task.Run(() => DashboardData.Read(
-            (query, _) => Read(query, session),
-            new SessionDetail([], 0, 0, [])));
+            (query, _) => Read(query, project, session, byDay),
+            new SessionDetail([], byDay, 0, 0, [])));
         Show(root, row, detail, currency);
     }
 
-    private static SessionDetail Read(UsageQuery query, string session)
+    /// <summary>The row's own project and session, so every share is of the row's cost.</summary>
+    private static SessionDetail Read(
+        UsageQuery query,
+        string project,
+        string session,
+        bool byDay)
     {
-        var filter = new UsageFilter(SessionId: session);
+        var filter = new UsageFilter(Project: project, SessionId: session);
         return new SessionDetail(
             [
-                .. query.Summarize(filter, GroupBy.Hour).OrderBy(hour => hour.Key)
-                    .Select(hour => (Label(hour.Key), hour.Cost)),
+                .. query.Summarize(filter, byDay ? GroupBy.Day : GroupBy.Hour)
+                    .OrderBy(step => step.Key)
+                    .Select(step => (byDay ? DayLabel(step.Key) : Label(step.Key), step.Cost)),
             ],
+            byDay,
             query.Total(filter with { IsSidechain = true }).Cost,
             query.CacheSavings(filter),
             query.Summarize(filter, GroupBy.Model));
@@ -79,6 +89,13 @@ internal static class SessionSheet
     /// <summary>"2026-10-04 09:00" becomes "09:00".</summary>
     private static string Label(string hourKey) =>
         hourKey.Length > 11 ? hourKey[11..] : hourKey;
+
+    /// <summary>"2026-09-08" becomes "8 Sep" (or "8 ก.ย.").</summary>
+    private static string DayLabel(string dayKey) =>
+        DateOnly.TryParseExact(dayKey, "yyyy-MM-dd", CultureInfo.InvariantCulture,
+            DateTimeStyles.None, out var day)
+            ? day.ToString("d MMM", Texts.Culture)
+            : dayKey;
 
     private static void Show(XamlRoot root, SessionRow row, SessionDetail detail, string currency)
     {
@@ -108,18 +125,24 @@ internal static class SessionSheet
                 return;
             }
 
+            // Slides back off the right edge, picking up speed as it goes, as a sheet put away.
             var duration = motion == AnimationSetting.Full
-                ? SurfaceMotion.Normal
-                : SurfaceMotion.Fast;
+                ? SurfaceMotion.Entrance
+                : SurfaceMotion.Normal;
+            var easeIn = new CubicEase { EasingMode = EasingMode.EaseIn };
             var leave = new Storyboard();
-            if (motion == AnimationSetting.Full)
+            foreach (var (target, property, to) in new (DependencyObject, string, double)[]
             {
-                leave.Children.Add(SurfaceMotion.Animate(
-                    offset, "X", null, SlideDistance, duration));
+                (offset, "X", sheetRef.ActualWidth),
+                (sheetRef, "Opacity", 0),
+                (backdrop, "Opacity", 0),
+            })
+            {
+                var animation = SurfaceMotion.Animate(target, property, null, to, duration);
+                animation.EasingFunction = easeIn;
+                leave.Children.Add(animation);
             }
 
-            leave.Children.Add(SurfaceMotion.Animate(sheetRef, "Opacity", null, 0, duration));
-            leave.Children.Add(SurfaceMotion.Animate(backdrop, "Opacity", null, 0, duration));
             leave.Completed += (_, _) => popup.IsOpen = false;
             leave.Begin();
         }
@@ -206,7 +229,9 @@ internal static class SessionSheet
         if (detail.Timeline.Count > 0)
         {
             body.Children.Add(DashboardCard.Create(
-                Texts.Get("dashboard.sheet.timeline"),
+                Texts.Get(detail.ByDay
+                    ? "dashboard.sheet.timelineDays"
+                    : "dashboard.sheet.timeline"),
                 null,
                 ChartOrTable.Create(
                     CostChart.Create(detail.Timeline, currency),

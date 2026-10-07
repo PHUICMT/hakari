@@ -491,6 +491,7 @@
   "dashboard.sheet.subagents": "ส่วนของ subagent",
   "dashboard.sheet.saved": "cache ประหยัดไป {0}",
   "dashboard.sheet.timeline": "ค่าใช้จ่ายรายชั่วโมง",
+  "dashboard.sheet.timelineDays": "ค่าใช้จ่ายรายวัน",
   "dashboard.sheet.folder": "โฟลเดอร์ที่ทำงาน",
   "dashboard.sheet.privacy": "Hakari อ่านแค่ตัวเลขการใช้งาน ไม่อ่านและไม่เก็บข้อความที่ถามหรือคำตอบ",
   "flyout.notice.full": "{0} เต็มแล้วบน {1}",

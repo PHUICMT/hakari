@@ -30,7 +30,8 @@ internal static class UsageFilterSql
 
         if (filter.Project is { } project)
         {
-            conditions.Add("project = $project");
+            // Matched as grouped, so a key from a project summary finds its own rows.
+            conditions.Add($"{GroupByExpressions.Project} = $project");
             command.Parameters.AddWithValue("$project", project);
         }
 
