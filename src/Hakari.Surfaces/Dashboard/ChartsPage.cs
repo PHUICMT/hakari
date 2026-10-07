@@ -38,15 +38,34 @@ internal sealed partial class ChartsPage : LoadedPage<ChartsData>
             body);
     }
 
+    private const double TrendSpacing = 12;
+
     private static Border TrendCard(ChartsData data)
     {
-        var body = new StackPanel();
-        if (data.Trend is { } trend)
+        var body = new StackPanel { Spacing = TrendSpacing };
+        var trends = data.Trends ?? [];
+        foreach (var trend in trends)
         {
+            // With several accounts each chart is named; one account is named in the caption.
+            if (trends.Count > 1)
+            {
+                body.Children.Add(new TextBlock
+                {
+                    Text = trend.AccountName,
+                    FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
+                    Foreground = DashboardCard.Brush("HakariInkMutedBrush"),
+                    TextTrimming = TextTrimming.CharacterEllipsis,
+                });
+            }
+
             body.Children.Add(ChartOrTable.Create(
                 new LimitTrendChart(trend), () => ChartOrTable.Readings(trend)));
+        }
+
+        if (trends.Count > 0)
+        {
             body.Children.Add(DashboardLegend.Create(
-                trend.Series.Select(series => (series.BrushKey, series.Name))));
+                trends[0].Series.Select(series => (series.BrushKey, series.Name))));
         }
         else
         {
@@ -60,9 +79,9 @@ internal sealed partial class ChartsPage : LoadedPage<ChartsData>
 
         return DashboardCard.Create(
             Texts.Get("dashboard.trend.title"),
-            data.Trend is { } shown
-                ? Texts.Format("dashboard.trend.caption", shown.AccountName)
-                : null,
+            trends.Count == 1
+                ? Texts.Format("dashboard.trend.caption", trends[0].AccountName)
+                : trends.Count > 1 ? Texts.Get("dashboard.trend.captionAll") : null,
             body);
     }
 

@@ -28,6 +28,8 @@ internal sealed partial class LimitTrendChart : Grid
     private const double ValueLineHeight = LabelSize * 1.4;
     private const int TimeTicks = 4;
     private const double GapLabelRoom = 90;
+    private const double GapOpacity = 0.45;
+    private const double GapLabelTop = 22;
     private static readonly TimeSpan RecordingGap = TimeSpan.FromMinutes(45);
     private static readonly int[] AxisSteps = [0, 50, 100];
 
@@ -168,8 +170,8 @@ internal sealed partial class LimitTrendChart : Grid
     }
 
     /// <summary>
-    /// Stretches with no reading at all, when Hakari was not running: shaded, and named when
-    /// wide enough, so an empty stretch is not read as zero use.
+    /// Stretches with no reading, such as when Hakari was off or nothing used the limits:
+    /// lightly shaded, and named when wide enough, so an empty stretch is not read as zero.
     /// </summary>
     private void DrawGaps()
     {
@@ -191,6 +193,7 @@ internal sealed partial class LimitTrendChart : Grid
                 Width = width,
                 Height = ChartHeight,
                 Background = DashboardCard.Brush("HakariHoverBrush"),
+                Opacity = GapOpacity,
                 IsHitTestVisible = false,
             };
             if (width >= GapLabelRoom)
@@ -201,9 +204,10 @@ internal sealed partial class LimitTrendChart : Grid
                     FontSize = LabelSize,
                     Foreground = DashboardCard.Brush("HakariInkFaintBrush"),
                     HorizontalAlignment = HorizontalAlignment.Center,
-                    VerticalAlignment = VerticalAlignment.Center,
+                    VerticalAlignment = VerticalAlignment.Top,
+                    Margin = new Thickness(0, GapLabelTop, 0, 0),
                     TextAlignment = TextAlignment.Center,
-                    TextWrapping = TextWrapping.Wrap,
+                    TextTrimming = TextTrimming.CharacterEllipsis,
                 };
             }
 

@@ -16,7 +16,7 @@ internal sealed record ChartsData(
     IReadOnlyList<decimal> Heat,
     IReadOnlyList<string> Labels,
     IReadOnlyList<MixSeries> Mix,
-    LimitTrend? Trend = null)
+    IReadOnlyList<LimitTrend>? Trends = null)
 {
     public const int Weekdays = 7;
     public const int Hours = 24;
@@ -45,7 +45,7 @@ internal sealed record ChartsData(
             ReadHeat(query, usage),
             [.. plan.Buckets.Select(bucket => bucket.Label)],
             ReadMix(query, usage with { From = plan.From }, plan),
-            ReadTrend(store, filter, now));
+            ReadTrends(store, filter, now));
     }
 
     private const int TrendDays = 90;
@@ -53,46 +53,48 @@ internal sealed record ChartsData(
     private const string WeeklyKind = "weekly_all";
 
     /// <summary>
-    /// How full the chosen account's 5-hour and weekly limits were; with no account chosen,
-    /// the one most recently seen. Null when nothing has been recorded.
+    /// How full each account's 5-hour and weekly limits were: the chosen account, or every
+    /// shown account with readings, all over the same stretch of time so they line up.
     /// </summary>
-    private static LimitTrend? ReadTrend(
+    private static List<LimitTrend> ReadTrends(
         IndexStore store,
         DashboardFilter filter,
         DateTimeOffset now)
     {
         var settings = SettingsStore.Default.Load();
-        var accounts = new AccountRepository(store).ListAccounts();
-        var account = filter.AccountId is { Length: > 0 } chosen
-            ? accounts.FirstOrDefault(entry => entry.AccountId == chosen)
-            : accounts.FirstOrDefault();
-        if (account is null)
-        {
-            return null;
-        }
-
+        var accounts = new AccountRepository(store).ListAccounts()
+            .Where(account => filter.AccountId is { Length: > 0 } chosen
+                ? account.AccountId == chosen
+                : !settings.HiddenAccounts.Contains(account.AccountId))
+            .ToList();
         var from = filter.Period == DashboardPeriod.Today
             ? now.AddHours(-24)
             : filter.From(now) ?? now.AddDays(-TrendDays);
         var history = new LimitHistory(store);
-        List<TrendSeries> series =
+        var read = accounts
+            .Select(account => (Account: account, Series: new List<TrendSeries>
+            {
+                new(
+                    Texts.Get("dashboard.trend.session"),
+                    "HakariChart3Brush",
+                    history.Load(account.AccountId, SessionKind, from)),
+                new(
+                    Texts.Get("dashboard.trend.weekly"),
+                    "HakariChart5Brush",
+                    history.Load(account.AccountId, WeeklyKind, from),
+                    IsDashed: true),
+            }))
+            .Where(entry => entry.Series.Any(series => series.Readings.Count > 0))
+            .ToList();
+        var start = ChartStart(read.SelectMany(entry => entry.Series), from, now);
+        return
         [
-            new TrendSeries(
-                Texts.Get("dashboard.trend.session"),
-                "HakariChart3Brush",
-                history.Load(account.AccountId, SessionKind, from)),
-            new TrendSeries(
-                Texts.Get("dashboard.trend.weekly"),
-                "HakariChart5Brush",
-                history.Load(account.AccountId, WeeklyKind, from),
-                IsDashed: true),
+            .. read.Select(entry => new LimitTrend(
+                AccountLabels.Full(entry.Account, settings.NicknameOf(entry.Account.AccountId)),
+                start,
+                now,
+                entry.Series)),
         ];
-        var trend = new LimitTrend(
-            AccountLabels.Full(account, settings.NicknameOf(account.AccountId)),
-            ChartStart(series, from, now),
-            now,
-            series);
-        return trend.HasReadings ? trend : null;
     }
 
     private static readonly TimeSpan ShortestTrendSpan = TimeSpan.FromHours(6);
