@@ -78,13 +78,14 @@ internal sealed record ChartsData(
         List<TrendSeries> series =
         [
             new TrendSeries(
-                Texts.Get("limit.short.session"),
+                Texts.Get("dashboard.trend.session"),
                 "HakariChart3Brush",
                 history.Load(account.AccountId, SessionKind, from)),
             new TrendSeries(
-                Texts.Get("limit.short.weekly"),
-                "HakariChart2Brush",
-                history.Load(account.AccountId, WeeklyKind, from)),
+                Texts.Get("dashboard.trend.weekly"),
+                "HakariChart5Brush",
+                history.Load(account.AccountId, WeeklyKind, from),
+                IsDashed: true),
         ];
         var trend = new LimitTrend(
             AccountLabels.Full(account, settings.NicknameOf(account.AccountId)),
