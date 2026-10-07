@@ -149,7 +149,7 @@ internal sealed partial class HeatMap : Grid
     }
 
     /// <summary>Monday first, in the language of the app.</summary>
-    private static string DayName(int day) =>
+    internal static string DayName(int day) =>
         Texts.Culture.DateTimeFormat.AbbreviatedDayNames[(day + 1) % ChartsData.Weekdays];
 
     private void FitSquares(double width)

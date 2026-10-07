@@ -28,7 +28,9 @@ internal sealed partial class ChartsPage : LoadedPage<ChartsData>
     private static Border HeatCard(ChartsData data)
     {
         var body = new StackPanel();
-        body.Children.Add(new HeatMap(data.Heat, data.Currency));
+        body.Children.Add(ChartOrTable.Create(
+            new HeatMap(data.Heat, data.Currency),
+            () => ChartOrTable.Week(data.Heat, data.Currency)));
         body.Children.Add(HeatScale.Create());
         return DashboardCard.Create(
             Texts.Get("dashboard.heat.title"),
@@ -41,7 +43,8 @@ internal sealed partial class ChartsPage : LoadedPage<ChartsData>
         var body = new StackPanel();
         if (data.Trend is { } trend)
         {
-            body.Children.Add(new LimitTrendChart(trend));
+            body.Children.Add(ChartOrTable.Create(
+                new LimitTrendChart(trend), () => ChartOrTable.Readings(trend)));
             body.Children.Add(DashboardLegend.Create(
                 trend.Series.Select(series => (series.BrushKey, series.Name))));
         }
@@ -64,7 +67,9 @@ internal sealed partial class ChartsPage : LoadedPage<ChartsData>
     private static Border MixCard(ChartsData data)
     {
         var body = new StackPanel();
-        body.Children.Add(ShareChart.Create(data.Labels, data.Mix, data.Currency));
+        body.Children.Add(ChartOrTable.Create(
+            ShareChart.Create(data.Labels, data.Mix, data.Currency),
+            () => ChartOrTable.Shares(data.Labels, data.Mix, data.Currency)));
         body.Children.Add(DashboardLegend.Create(
             data.Mix.Select(series => (
                 series.BrushKey,

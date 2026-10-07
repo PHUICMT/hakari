@@ -511,5 +511,14 @@
   "settings.accounts.showShort": "แสดง",
   "onboarding.showLimits": "แสดง limit ของบัญชีนี้",
   "flyout.notice.wslStopped": "{0} ไม่ได้รันอยู่",
-  "flyout.notice.wslStoppedDetail": "การใช้งานในนั้นจะขึ้นเมื่อเปิดครั้งหน้า Hakari ไม่เปิด WSL ให้เอง"
+  "flyout.notice.wslStoppedDetail": "การใช้งานในนั้นจะขึ้นเมื่อเปิดครั้งหน้า Hakari ไม่เปิด WSL ให้เอง",
+  "dashboard.asTable": "ดูเป็นตาราง",
+  "dashboard.asChart": "ดูเป็นกราฟ",
+  "dashboard.column.when": "ช่วงเวลา",
+  "dashboard.column.total": "รวม",
+  "dashboard.column.day": "วัน",
+  "dashboard.column.busiestHour": "ชั่วโมงที่ใช้มากสุด",
+  "dashboard.column.hourCost": "ค่าใช้จ่ายชั่วโมงนั้น",
+  "dashboard.column.limit": "Limit",
+  "dashboard.column.used": "ใช้ไป"
 }

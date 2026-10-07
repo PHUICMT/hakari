@@ -50,7 +50,9 @@ internal sealed partial class OverviewPage : LoadedPage<OverviewData>
         var chart = DashboardCard.Create(
             Texts.Get("dashboard.dailyCost"),
             PeriodText.Caption(),
-            CostChart.Create(data.Timeline, data.Currency));
+            ChartOrTable.Create(
+                CostChart.Create(data.Timeline, data.Currency),
+                () => ChartOrTable.Costs(data.Timeline, data.Currency)));
         var models = DashboardCard.Create(
             Texts.Get("dashboard.byModel"),
             Texts.Get("dashboard.costShare"),

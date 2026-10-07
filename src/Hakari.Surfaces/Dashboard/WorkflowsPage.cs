@@ -80,7 +80,9 @@ internal sealed partial class WorkflowsPage : LoadedPage<WorkflowsData>
     private static Microsoft.UI.Xaml.Controls.Border DailyCard(WorkflowsData data)
     {
         var body = new StackPanel();
-        body.Children.Add(ShareChart.Create(data.Labels, data.Daily, data.Currency));
+        body.Children.Add(ChartOrTable.Create(
+            ShareChart.Create(data.Labels, data.Daily, data.Currency),
+            () => ChartOrTable.Shares(data.Labels, data.Daily, data.Currency)));
         body.Children.Add(DashboardLegend.Create(
             data.Daily.Select(series => (series.BrushKey, series.Name))));
         return DashboardCard.Create(

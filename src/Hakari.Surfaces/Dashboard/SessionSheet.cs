@@ -147,7 +147,9 @@ internal static class SessionSheet
             body.Children.Add(DashboardCard.Create(
                 Texts.Get("dashboard.sheet.timeline"),
                 null,
-                CostChart.Create(detail.Timeline, currency)));
+                ChartOrTable.Create(
+                    CostChart.Create(detail.Timeline, currency),
+                    () => ChartOrTable.Costs(detail.Timeline, currency))));
         }
 
         body.Children.Add(DashboardCard.Create(

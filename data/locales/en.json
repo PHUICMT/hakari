@@ -511,5 +511,14 @@
   "settings.accounts.showShort": "Show",
   "onboarding.showLimits": "Show usage limits for this account",
   "flyout.notice.wslStopped": "{0} isn't running",
-  "flyout.notice.wslStoppedDetail": "Its usage will appear the next time you start it. Hakari doesn't start WSL on its own."
+  "flyout.notice.wslStoppedDetail": "Its usage will appear the next time you start it. Hakari doesn't start WSL on its own.",
+  "dashboard.asTable": "Show as table",
+  "dashboard.asChart": "Show as chart",
+  "dashboard.column.when": "When",
+  "dashboard.column.total": "Total",
+  "dashboard.column.day": "Day",
+  "dashboard.column.busiestHour": "Busiest hour",
+  "dashboard.column.hourCost": "That hour",
+  "dashboard.column.limit": "Limit",
+  "dashboard.column.used": "Used"
 }
