@@ -394,6 +394,8 @@
   "settings.privacy": "Reads token counts from local logs, never prompts or replies. Network use: your account's usage limits, public exchange rates, and once a day the public release list.",
   "settings.support": "Support Hakari",
   "settings.support.description": "Free builds stay free. A coffee keeps it going.",
+  "settings.support.storeTip": "Tip in Store",
+  "settings.support.thanks": "Thank you!",
   "settings.support.promptPay.note": "Scan with any Thai banking app and choose any amount. Thank you!",
   "settings.dataFolder": "Data folder",
   "settings.dataFolder.open": "Open",

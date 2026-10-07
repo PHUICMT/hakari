@@ -35,6 +35,25 @@ public sealed partial class SettingsPage : UserControl
             : Visibility.Collapsed;
         Fill();
         MakeSectionsFoldable();
+        Loaded += (_, _) => OfferStoreTips();
+    }
+
+    private IReadOnlyList<Windows.Services.Store.StoreProduct> storeTips = [];
+
+    /// <summary>Shows the Store tip button once the Store says there are tips to give.</summary>
+    private async void OfferStoreTips()
+    {
+        try
+        {
+            storeTips = await StoreTips.ListAsync(HostWindowHandle);
+            StoreTipButton.Visibility = storeTips.Count > 0
+                ? Visibility.Visible
+                : Visibility.Collapsed;
+        }
+        catch (Exception exception)
+        {
+            CrashLog.Write(exception, "store tips");
+        }
     }
 
     public event EventHandler? LanguageChanged;

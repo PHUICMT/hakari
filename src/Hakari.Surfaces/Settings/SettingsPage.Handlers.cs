@@ -342,6 +342,13 @@ public sealed partial class SettingsPage
     private async void OnSponsorsClicked(object sender, RoutedEventArgs args) =>
         await Launcher.LaunchUriAsync(new Uri(SupportLinks.GitHubSponsors));
 
+    private void OnStoreTipClicked(object sender, RoutedEventArgs args) =>
+        StoreTips.ShowList(
+            (FrameworkElement)sender,
+            storeTips,
+            HostWindowHandle,
+            thanks => StoreTipButton.Content = thanks);
+
     private void OnPromptPayClicked(object sender, RoutedEventArgs args) =>
         SupportLinks.ShowPromptPay((FrameworkElement)sender);
 
