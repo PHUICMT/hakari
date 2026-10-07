@@ -45,6 +45,10 @@ $manifest = $manifest.Replace('$DisplayName$', $DisplayName)
 $manifest = $manifest.Replace('$Version$', "$Version.0")
 Set-Content (Join-Path $staging "AppxManifest.xml") $manifest -Encoding utf8
 
+# A packaged app looks up ms-appx resources in resources.pri only; the window app's own
+# index already holds WinUI's resources too, so it serves as the package's.
+Copy-Item (Join-Path $staging "Hakari.Surfaces.pri") (Join-Path $staging "resources.pri") -Force
+
 $package = Join-Path $root "$Output/Hakari-$Version-x64.msix"
 if (Test-Path $package) { Remove-Item $package -Force }
 & $makeAppx.FullName pack /d $staging /p $package /o | Out-Null

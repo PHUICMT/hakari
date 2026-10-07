@@ -24,23 +24,25 @@ internal static class SurfaceMotion
     /// </summary>
     private static readonly TimeSpan KeepFor = TimeSpan.FromSeconds(1);
     private static readonly UISettings SystemSettings = new();
-    private static AnimationSetting kept;
-    private static long keptAt = long.MinValue;
+    private static AnimationSetting? kept;
+    private static long keptAt;
 
     public static AnimationSetting Current()
     {
         var now = Environment.TickCount64;
-        if (now - keptAt < KeepFor.TotalMilliseconds)
+        if (kept is { } recent && now - keptAt < KeepFor.TotalMilliseconds)
         {
-            return kept;
+            return recent;
         }
 
+        // Always one of Full, Reduced or Off: callers compare against those.
         var setting = SettingsStore.Default.Load().Animation;
-        kept = setting != AnimationSetting.FollowWindows
+        var resolved = setting != AnimationSetting.FollowWindows
             ? setting
             : SystemSettings.AnimationsEnabled ? AnimationSetting.Full : AnimationSetting.Reduced;
+        kept = resolved;
         keptAt = now;
-        return kept;
+        return resolved;
     }
 
     public static DoubleAnimation Animate(
