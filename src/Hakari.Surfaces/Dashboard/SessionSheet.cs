@@ -31,6 +31,10 @@ internal static class SessionSheet
     private const double SlideDistance = 40;
     private const double PercentScale = 100;
     private const double BackdropOpacity = 0.35;
+
+    /// <summary>The dashboard's title bar row; the sheet starts below it, clear of the
+    /// window's own minimize, maximize and close buttons.</summary>
+    private const double TitleBarHeight = 48;
     private static readonly Thickness SheetPadding = new(24, 20, 24, 24);
 
     public static async void Open(FrameworkElement owner, SessionRow row, string currency)
@@ -134,7 +138,11 @@ internal static class SessionSheet
                 Padding = SheetPadding,
             },
         };
-        var layer = new Grid { Width = root.Size.Width, Height = root.Size.Height };
+        var layer = new Grid
+        {
+            Width = root.Size.Width,
+            Height = Math.Max(0, root.Size.Height - TitleBarHeight),
+        };
         layer.Children.Add(backdrop);
         layer.Children.Add(sheet);
         layer.KeyDown += (_, args) =>
@@ -147,6 +155,7 @@ internal static class SessionSheet
         sheetRef = sheet;
         sheet.RenderTransform = offset;
         popup.Child = layer;
+        popup.VerticalOffset = TitleBarHeight;
         popup.IsOpen = true;
         sheet.Focus(FocusState.Programmatic);
         if (SurfaceMotion.Current() != AnimationSetting.Off)
