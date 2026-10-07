@@ -4,7 +4,10 @@ name: release
 #   1. test, build the x64 and arm64 zips and the Store upload, write the notes;
 #   2. publish the GitHub release with the zips and their checksums;
 #   3. open the winget pull request (needs the WINGET_TOKEN secret);
-#   4. send the Store submission (needs the STORE_* secrets).
+#   4. send the Store submission (needs the STORE_* secrets and the repository variable
+#      STORE_AUTOMATION set to "on"; Individual Partner Center accounts cannot yet link the
+#      Entra app the API needs, so until then the .msixupload is left on the run to upload
+#      by hand).
 # A step whose secret is missing is skipped, so the rest still runs. One workflow, because a
 # release published by this workflow's own token would not start another workflow.
 on:
@@ -124,6 +127,7 @@ jobs:
 
   store:
     needs: [build, github]
+    if: vars.STORE_AUTOMATION == 'on'
     runs-on: windows-latest
     env:
       STORE_TENANT_ID: ${{ secrets.STORE_TENANT_ID }}
