@@ -3,12 +3,14 @@ namespace Hakari.Core.Sources;
 /// <summary>
 /// Whether a source may be touched right now. A WSL source's files live inside its
 /// distribution, and opening them while it is stopped would start it, so they are only
-/// touched while it runs. Which distributions run is asked at most every so often.
+/// touched while it runs. Which distributions run is asked right before, at most every few
+/// seconds: WSL stops an idle distribution within seconds, and an older answer could wake it.
+/// Callers touch WSL folders rarely (a full scan a minute, a sign-in check every 30 s).
 /// </summary>
 public sealed class WslReach(TimeProvider timeProvider, WslScanMode mode)
 {
     private const char IdSeparator = ':';
-    private static readonly TimeSpan Fresh = TimeSpan.FromSeconds(30);
+    private static readonly TimeSpan Fresh = TimeSpan.FromSeconds(2);
 
     private DateTimeOffset checkedAt = DateTimeOffset.MinValue;
     private IReadOnlySet<string> running = new HashSet<string>();

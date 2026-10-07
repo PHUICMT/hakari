@@ -347,13 +347,25 @@ public sealed partial class SettingsPage
     /// Registering needs Hakari.exe's path, which it records when it starts; this window is a
     /// different program.
     /// </summary>
-    private void FillStartup()
+    private async void FillStartup()
     {
-        var resident = ResidentLocation.Read();
-        var canChange = Hakari.Shared.StartWithWindows.CanChange(resident);
-        StartupToggle.IsEnabled = canChange;
-        StartupToggle.IsChecked = Hakari.Shared.StartWithWindows.IsOn(resident);
-        StartupRow.Description = canChange ? "" : Texts.Get("settings.startup.unavailable");
+        try
+        {
+            // The packaged task is asked through WinRT, off the UI thread so it never waits.
+            var resident = ResidentLocation.Read();
+            var (canChange, isOn) = await Task.Run(() => (
+                Hakari.Shared.StartWithWindows.CanChange(resident),
+                Hakari.Shared.StartWithWindows.IsOn(resident)));
+            StartupToggle.IsEnabled = canChange;
+            StartupToggle.IsChecked = isOn;
+            StartupRow.Description = canChange
+                ? ""
+                : Texts.Get("settings.startup.unavailable");
+        }
+        catch (Exception exception)
+        {
+            CrashLog.Write(exception, "start with Windows");
+        }
     }
 
     private void BuildCurrencyChoices()

@@ -27,8 +27,15 @@ public sealed class SettingsStore(string path)
 
     public string Path { get; } = path;
 
-    public HakariSettings Load()
+    public HakariSettings Load() => TryLoad(out _);
+
+    /// <param name="readable">
+    /// False when the file exists but could not be read just now (locked, denied), so its
+    /// content is unknown; a broken file reads as defaults and counts as readable.
+    /// </param>
+    private HakariSettings TryLoad(out bool readable)
     {
+        readable = true;
         try
         {
             if (!File.Exists(Path))
@@ -40,8 +47,14 @@ public sealed class SettingsStore(string path)
                 JsonSerializer.Deserialize<HakariSettings>(ReadShared(), SerializerOptions)
                 ?? new HakariSettings());
         }
-        catch (Exception exception) when (exception is IOException or JsonException
-            or UnauthorizedAccessException or NotSupportedException)
+        catch (Exception exception) when (exception is IOException
+            or UnauthorizedAccessException)
+        {
+            readable = false;
+            return new HakariSettings();
+        }
+        catch (Exception exception) when (exception is JsonException
+            or NotSupportedException)
         {
             return new HakariSettings();
         }
@@ -130,10 +143,47 @@ public sealed class SettingsStore(string path)
         }
     }
 
+    /// <summary>
+    /// Reads, changes and writes as one step across both processes, so neither loses the
+    /// other's change. When the file could not be read, nothing is written: writing the
+    /// defaults over it would wipe the user's settings.
+    /// </summary>
     public HakariSettings Update(Func<HakariSettings, HakariSettings> change)
     {
-        var updated = change(Load());
-        Save(updated);
-        return updated;
+        using var turn = new Mutex(initiallyOwned: false, UpdateMutexName);
+        var owned = WaitForTurn(turn);
+        try
+        {
+            var updated = change(TryLoad(out var readable));
+            if (readable)
+            {
+                Save(updated);
+            }
+
+            return updated;
+        }
+        finally
+        {
+            if (owned)
+            {
+                turn.ReleaseMutex();
+            }
+        }
+    }
+
+    private const string UpdateMutexName = @"Local\Hakari.Settings.Update";
+    private static readonly TimeSpan UpdateWait = TimeSpan.FromSeconds(2);
+
+    /// <summary>A crashed holder leaves the mutex abandoned; that still counts as a turn.</summary>
+    private static bool WaitForTurn(Mutex turn)
+    {
+        try
+        {
+            return turn.WaitOne(UpdateWait);
+        }
+        catch (AbandonedMutexException)
+        {
+            return true;
+        }
     }
 }

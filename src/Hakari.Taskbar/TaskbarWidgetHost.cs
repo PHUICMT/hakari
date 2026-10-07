@@ -64,8 +64,25 @@ public sealed class TaskbarWidgetHost : IDisposable
 
     public event EventHandler<WidgetClickedEventArgs>? RightClicked;
 
-    /// <summary>The wheel turned over a widget: positive away from the user.</summary>
+    /// <summary>
+    /// The wheel turned one notch over a widget: positive away from the user. A touchpad's
+    /// many small steps add up to a notch first, so one swipe does not skip several accounts.
+    /// </summary>
     public event EventHandler<int>? Scrolled;
+
+    private const int WheelNotch = 120;
+    private int wheelBuildUp;
+
+    private void AddWheel(int delta)
+    {
+        wheelBuildUp += delta;
+        while (Math.Abs(wheelBuildUp) >= WheelNotch)
+        {
+            var step = Math.Sign(wheelBuildUp) * WheelNotch;
+            wheelBuildUp -= step;
+            Scrolled?.Invoke(this, step);
+        }
+    }
 
     /// <summary>The pointer came onto a widget; for the hover card.</summary>
     public event EventHandler<WidgetClickedEventArgs>? HoverStarted;
@@ -77,6 +94,9 @@ public sealed class TaskbarWidgetHost : IDisposable
     public int LayoutRefreshes => layoutMonitor.Refreshes;
 
     public int WidgetCount => widgets.Count;
+
+    /// <summary>Widgets on the taskbar now; one hidden for want of room does not count.</summary>
+    public int ShownWidgetCount => widgets.Count(widget => User32.IsWindowVisible(widget.Handle));
 
     /// <summary>One line per widget, for diagnostics. Call on the widget thread.</summary>
     public IReadOnlyList<string> DescribeWidgets() =>
@@ -242,7 +262,7 @@ public sealed class TaskbarWidgetHost : IDisposable
         var widget = WidgetWindow.Create(target, taskbarHandle, options.Mode);
         widget.Clicked += (_, _) => RaiseClicked(widget);
         widget.RightClicked += (_, _) => Raise(RightClicked, widget);
-        widget.Scrolled += (_, delta) => Scrolled?.Invoke(this, delta);
+        widget.Scrolled += (_, delta) => AddWheel(delta);
         widget.HoverChanged += (_, _) =>
         {
             StartHoverTransition(widget);

@@ -134,7 +134,7 @@ internal sealed class UsageFeed : IDisposable
                     store ??= new IndexStore(HakariPaths.DefaultIndexPath);
                     RunPass(store);
                 }
-                catch (Exception exception) when (exception is not OperationCanceledException)
+                catch (Exception exception) when (!cancellation.IsCancellationRequested)
                 {
                     // The widget says something is wrong rather than showing old numbers as
                     // new, and the feed starts over after a pause with a fresh connection.

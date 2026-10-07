@@ -238,11 +238,21 @@ public sealed partial class SettingsPage
             RefreshSignInAutomatically = RenewSignInToggle.IsChecked == true,
         });
 
-    private void OnStartupClicked(object sender, RoutedEventArgs args)
+    /// <summary>Set off the UI thread, then the toggle shows what Windows really holds.</summary>
+    private async void OnStartupClicked(object sender, RoutedEventArgs args)
     {
-        Hakari.Shared.StartWithWindows.Set(
-            ResidentLocation.Read(),
-            StartupToggle.IsChecked == true);
+        var resident = ResidentLocation.Read();
+        var wanted = StartupToggle.IsChecked == true;
+        try
+        {
+            await Task.Run(() => Hakari.Shared.StartWithWindows.Set(resident, wanted));
+        }
+        catch (Exception exception)
+        {
+            CrashLog.Write(exception, "start with Windows");
+        }
+
+        FillStartup();
     }
 
     private void OnMotionChecked(object sender, RoutedEventArgs args)

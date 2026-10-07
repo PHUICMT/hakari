@@ -156,6 +156,9 @@ internal sealed class LimitPoller : IDisposable
         DateTimeOffset now) =>
         known
             .Where(account => live.All(current => current.AccountId != account.AccountId))
+
+            // An account whose limits were turned off shows none, not its last ones.
+            .Where(account => mayRead(account.AccountId, true))
             .Select(account => limitCache.Load(account.AccountId) is { } snapshot
                     ? new WidgetAccount(
                         account.AccountId,

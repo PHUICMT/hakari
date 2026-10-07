@@ -55,6 +55,12 @@ public sealed class TrayIcon : IDisposable
     /// </summary>
     public event EventHandler<System.Drawing.Point>? MenuRequested;
 
+    /// <summary>
+    /// A menu action or an icon event threw. It is reported here instead of crossing back
+    /// into Windows, which would end the process.
+    /// </summary>
+    public event Action<Exception>? Faulted;
+
     public void SetTooltip(string text)
     {
         tooltip = text;
@@ -188,6 +194,23 @@ public sealed class TrayIcon : IDisposable
     };
 
     private IntPtr HandleMessage(
+        IntPtr handle,
+        uint message,
+        IntPtr wordParameter,
+        IntPtr longParameter)
+    {
+        try
+        {
+            return Dispatch(handle, message, wordParameter, longParameter);
+        }
+        catch (Exception exception)
+        {
+            Faulted?.Invoke(exception);
+            return IntPtr.Zero;
+        }
+    }
+
+    private IntPtr Dispatch(
         IntPtr handle,
         uint message,
         IntPtr wordParameter,

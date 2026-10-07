@@ -61,6 +61,7 @@ internal sealed class ResidentApp : IDisposable
         feed = new UsageFeed(settingsStore);
         menu = new ResidentMenu(settingsStore, Apply, OpenSettings);
         trayIcon = new TrayIcon(TrayTooltip, menu.Build);
+        trayIcon.Faulted += ErrorLog.Write;
         settingsWatcher = new SettingsWatcher(settingsStore);
         settingsWatcher.Changed += (_, _) =>
             widgets.PostAction(() => Apply(settingsStore.Load()));
@@ -217,7 +218,7 @@ internal sealed class ResidentApp : IDisposable
     /// </summary>
     private void TellTrayFallbackOnce()
     {
-        if (widgets.WidgetCount > 0 || appliedSettings.TrayFallbackTold)
+        if (widgets.ShownWidgetCount > 0 || appliedSettings.TrayFallbackTold)
         {
             return;
         }
