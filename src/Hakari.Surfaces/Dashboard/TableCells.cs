@@ -89,6 +89,7 @@ internal static class TableCells
             row.PointerExited += (_, _) =>
                 row.Background = new SolidColorBrush(Microsoft.UI.Colors.Transparent);
             row.Tapped += (_, _) => open(position);
+            Hakari.Surfaces.Controls.HandCursor.Apply(row);
         }
     }
 }

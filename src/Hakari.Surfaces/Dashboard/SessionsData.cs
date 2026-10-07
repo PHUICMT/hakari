@@ -37,6 +37,7 @@ internal sealed record SessionRows(IReadOnlyList<SessionRow> Rows, string Curren
         var usual = SpendWatch.Median(all.Where(row => row.Cost > 0).Select(row => row.Cost));
         var titles = SessionTitles.Load(store);
         var sources = SourcesOf(query, store, usage);
+        var topModels = TopModels(query, usage);
         return new SessionRows(
             [
                 .. all.Take(MostRows).Select(row =>
@@ -46,7 +47,7 @@ internal sealed record SessionRows(IReadOnlyList<SessionRow> Rows, string Curren
                         row,
                         titles.GetValueOrDefault(session),
                         sources.GetValueOrDefault(row.Key),
-                        TopModel(query, usage, session, row.Cost),
+                        TopModel(topModels, row.Key, row.Cost),
                         all.Count >= SpendWatch.SessionsForUsual
                             && row.Cost > usual * SpendWatch.UnusualFactor);
                 }),
@@ -75,16 +76,35 @@ internal sealed record SessionRows(IReadOnlyList<SessionRow> Rows, string Curren
         return sources;
     }
 
-    private static (string, double)? TopModel(
+    /// <summary>
+    /// Each session's costliest model, keyed the same way as the rows (project and session),
+    /// so the share is of that row's cost and never over 100%. One summary per model.
+    /// </summary>
+    private static Dictionary<string, (string Model, decimal Cost)> TopModels(
         UsageQuery query,
-        UsageFilter usage,
-        string session,
-        decimal total)
+        UsageFilter usage)
     {
-        var top = query.Summarize(usage with { SessionId = session }, GroupBy.Model)
-            .FirstOrDefault();
-        return top is null || total <= 0
-            ? null
-            : (ShortModel(top.Key), (double)(top.Cost / total));
+        var top = new Dictionary<string, (string Model, decimal Cost)>(StringComparer.Ordinal);
+        foreach (var model in query.Summarize(usage, GroupBy.Model))
+        {
+            foreach (var row in query.Summarize(usage with { Model = model.Key },
+                GroupBy.ProjectSession))
+            {
+                if (!top.TryGetValue(row.Key, out var best) || row.Cost > best.Cost)
+                {
+                    top[row.Key] = (model.Key, row.Cost);
+                }
+            }
+        }
+
+        return top;
     }
+
+    private static (string, double)? TopModel(
+        Dictionary<string, (string Model, decimal Cost)> topModels,
+        string key,
+        decimal total) =>
+        total <= 0 || !topModels.TryGetValue(key, out var top)
+            ? null
+            : (ShortModel(top.Model), Math.Min(1, (double)(top.Cost / total)));
 }

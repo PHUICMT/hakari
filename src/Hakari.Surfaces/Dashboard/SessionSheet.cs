@@ -8,6 +8,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Media.Animation;
 
 namespace Hakari.Surfaces.Dashboard;
 
@@ -83,7 +84,43 @@ internal static class SessionSheet
             Background = new SolidColorBrush(Microsoft.UI.Colors.Black),
             Opacity = BackdropOpacity,
         };
-        backdrop.Tapped += (_, _) => popup.IsOpen = false;
+        var offset = new TranslateTransform();
+        Border? sheetRef = null;
+        var closing = false;
+
+        // Leaves the way it came: slides back out and fades, then the popup goes.
+        void Close()
+        {
+            if (closing)
+            {
+                return;
+            }
+
+            closing = true;
+            var motion = SurfaceMotion.Current();
+            if (motion == AnimationSetting.Off || sheetRef is null)
+            {
+                popup.IsOpen = false;
+                return;
+            }
+
+            var duration = motion == AnimationSetting.Full
+                ? SurfaceMotion.Normal
+                : SurfaceMotion.Fast;
+            var leave = new Storyboard();
+            if (motion == AnimationSetting.Full)
+            {
+                leave.Children.Add(SurfaceMotion.Animate(
+                    offset, "X", null, SlideDistance, duration));
+            }
+
+            leave.Children.Add(SurfaceMotion.Animate(sheetRef, "Opacity", null, 0, duration));
+            leave.Children.Add(SurfaceMotion.Animate(backdrop, "Opacity", null, 0, duration));
+            leave.Completed += (_, _) => popup.IsOpen = false;
+            leave.Begin();
+        }
+
+        backdrop.Tapped += (_, _) => Close();
         var sheet = new Border
         {
             Width = Math.Min(SheetWidth, root.Size.Width),
@@ -93,7 +130,7 @@ internal static class SessionSheet
             BorderThickness = new Thickness(1, 0, 0, 0),
             Child = new ScrollViewer
             {
-                Content = Body(row, detail, currency, () => popup.IsOpen = false),
+                Content = Body(row, detail, currency, Close),
                 Padding = SheetPadding,
             },
         };
@@ -104,17 +141,20 @@ internal static class SessionSheet
         {
             if (args.Key == Windows.System.VirtualKey.Escape)
             {
-                popup.IsOpen = false;
+                Close();
             }
         };
+        sheetRef = sheet;
+        sheet.RenderTransform = offset;
         popup.Child = layer;
         popup.IsOpen = true;
         sheet.Focus(FocusState.Programmatic);
         if (SurfaceMotion.Current() != AnimationSetting.Off)
         {
-            var offset = new TranslateTransform { X = SlideDistance };
-            sheet.RenderTransform = offset;
+            offset.X = SlideDistance;
             sheet.Opacity = 0;
+            backdrop.Opacity = 0;
+            SurfaceMotion.Settle(backdrop, "Opacity", BackdropOpacity);
             SurfaceMotion.Settle(offset, "X", 0);
             SurfaceMotion.Settle(sheet, "Opacity", 1);
         }
