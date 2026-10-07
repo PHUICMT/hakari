@@ -60,11 +60,42 @@ public sealed partial class FlyoutWindow : Window
 
     public event EventHandler? SettingsRequested;
 
-    /// <summary>A notice's button: for now, prices live in Settings.</summary>
+    /// <summary>A notice's main button: prices open Settings, "turn on" allows limits.</summary>
     private void OnNoticeActionClicked(object sender, RoutedEventArgs args)
     {
+        if ((sender as FrameworkElement)?.DataContext is not FlyoutNotice notice)
+        {
+            return;
+        }
+
+        if (notice.Action == NoticeAction.TurnOnLimits)
+        {
+            AnswerLimits(notice, on: true);
+            return;
+        }
+
         HideFlyout();
         SettingsRequested?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>"Use estimate": the account's sign-in is left alone.</summary>
+    private void OnNoticeSecondActionClicked(object sender, RoutedEventArgs args)
+    {
+        if ((sender as FrameworkElement)?.DataContext is FlyoutNotice notice)
+        {
+            AnswerLimits(notice, on: false);
+        }
+    }
+
+    /// <summary>Saves the answer; Hakari.exe reads limits at once when they were allowed.</summary>
+    private void AnswerLimits(FlyoutNotice notice, bool on)
+    {
+        SettingsStore.Default.Update(current => current.WithLimitsChoice(notice.AccountId, on));
+        if (NoticeList.ItemsSource is IReadOnlyList<FlyoutNotice> notices)
+        {
+            NoticeList.ItemsSource = notices.Where(other => other != notice).ToList();
+            FitWindowNow();
+        }
     }
 
     public event EventHandler? DashboardRequested;

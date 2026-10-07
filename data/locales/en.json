@@ -501,5 +501,13 @@
   "flyout.notice.reading": "Reading your logs for the first time",
   "flyout.notice.readingDetail": "The numbers appear when it finishes. It runs at low priority; your work comes first.",
   "tray.fallback.title": "Hakari is in the tray",
-  "tray.fallback.body": "The widget could not be placed on the taskbar, so the limit shows on the tray icon instead. Click it for details."
+  "tray.fallback.body": "The widget could not be placed on the taskbar, so the limit shows on the tray icon instead. Click it for details.",
+  "flyout.notice.limitsAsk": "Show usage limits for {0}?",
+  "flyout.notice.limitsAskDetail": "Hakari reads this account's sign-in token on this PC to ask for your 5-hour and weekly usage. It isn't copied or stored.",
+  "flyout.notice.turnOn": "Turn on",
+  "flyout.notice.useEstimate": "Use estimate",
+  "settings.accounts.limits": "Limits",
+  "settings.accounts.limits.description": "Read this account's sign-in to ask for its limits; off uses the last known or an estimate",
+  "settings.accounts.showShort": "Show",
+  "onboarding.showLimits": "Show usage limits for this account"
 }

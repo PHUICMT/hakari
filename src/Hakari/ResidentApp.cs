@@ -317,7 +317,16 @@ internal sealed class ResidentApp : IDisposable
             feed.SetPresentation(settings);
         }
 
+        var limitsChoiceChanged =
+            !settings.LimitsOffAccounts.SequenceEqual(appliedSettings.LimitsOffAccounts)
+            || !settings.LimitsAskedAccounts.SequenceEqual(appliedSettings.LimitsAskedAccounts);
         appliedSettings = settings;
+        if (limitsChoiceChanged)
+        {
+            feed.SetPresentation(settings);
+            feed.RefreshNow();
+        }
+
         ShowBadge(lastBadge);
     }
 

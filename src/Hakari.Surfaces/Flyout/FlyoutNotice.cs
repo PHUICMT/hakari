@@ -10,6 +10,9 @@ public enum NoticeAction
 
     /// <summary>Opens Settings, where prices can be checked or set.</summary>
     OpenPrices,
+
+    /// <summary>Lets Hakari ask for this account's limits.</summary>
+    TurnOnLimits,
 }
 
 /// <summary>
@@ -21,8 +24,13 @@ public sealed record FlyoutNotice(
     string Title,
     string Detail = "",
     NoticeAction Action = NoticeAction.None,
-    string ActionText = "")
+    string ActionText = "",
+    string AccountId = "",
+    string SecondActionText = "")
 {
+    public Visibility SecondActionVisibility =>
+        SecondActionText.Length == 0 ? Visibility.Collapsed : Visibility.Visible;
+
     private const string InfoGlyph = "\uE946";
     private const string WarningGlyph = "\uE7BA";
 

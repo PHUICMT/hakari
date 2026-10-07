@@ -185,7 +185,10 @@ public sealed partial class SettingsPage
         var nickname = settings.NicknameOf(account.AccountId);
         controls.Children.Add(NicknameBox(account.AccountId, nickname));
         controls.Children.Add(PriceBox(account, settings));
-        controls.Children.Add(ShowToggle(account.AccountId, settings));
+        controls.Children.Add(Labeled(
+            Texts.Get("settings.accounts.limits"), LimitsToggle(account.AccountId, settings)));
+        controls.Children.Add(Labeled(
+            Texts.Get("settings.accounts.showShort"), ShowToggle(account.AccountId, settings)));
 
         var row = new SettingRow
         {
@@ -220,6 +223,35 @@ public sealed partial class SettingsPage
         RowReorder.Attach(AccountList, order => ReorderAccounts(
             [.. order.Where(index => index < shownAccountOrder.Count)
                 .Select(index => shownAccountOrder[index])]));
+    }
+
+    /// <summary>A small caption over a switch, so a row of switches says which is which.</summary>
+    private static StackPanel Labeled(string caption, FrameworkElement control)
+    {
+        var stack = new StackPanel { Spacing = 2, VerticalAlignment = VerticalAlignment.Center };
+        stack.Children.Add(new TextBlock
+        {
+            Text = caption,
+            FontSize = 11,
+            Foreground = (Microsoft.UI.Xaml.Media.Brush)
+                Application.Current.Resources["HakariInkFaintBrush"],
+            HorizontalAlignment = HorizontalAlignment.Center,
+        });
+        stack.Children.Add(control);
+        return stack;
+    }
+
+    /// <summary>Off leaves the account's sign-in alone; its numbers become estimates.</summary>
+    private HakariToggle LimitsToggle(string accountId, HakariSettings settings)
+    {
+        var toggle = new HakariToggle
+        {
+            IsChecked = !settings.LimitsOffAccounts.Contains(accountId),
+        };
+        ToolTipService.SetToolTip(toggle, Texts.Get("settings.accounts.limits.description"));
+        toggle.Click += (_, _) =>
+            Save(current => current.WithLimitsChoice(accountId, toggle.IsChecked == true));
+        return toggle;
     }
 
     private HakariToggle ShowToggle(string accountId, HakariSettings settings)

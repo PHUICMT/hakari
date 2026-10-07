@@ -147,17 +147,21 @@ internal sealed class OnboardingSteps(SettingsStore store)
         name.LostFocus += (_, _) => SaveNickname(account.AccountId, name.Text);
         block.Children.Add(name);
 
-        var shown = new HakariToggle
+        // As in the design: whether to ask for this account's limits, on unless turned off.
+        var limits = new HakariToggle
         {
-            IsChecked = !settings.HiddenAccounts.Contains(account.AccountId),
+            IsChecked = !settings.LimitsOffAccounts.Contains(account.AccountId),
         };
-        shown.Click += (_, _) => SaveShown(account.AccountId, shown.IsChecked == true);
+        store.Update(current =>
+            current.WithLimitsChoice(account.AccountId, limits.IsChecked == true));
+        limits.Click += (_, _) => store.Update(current =>
+            current.WithLimitsChoice(account.AccountId, limits.IsChecked == true));
         var row = new Grid();
         row.ColumnDefinitions.Add(new ColumnDefinition());
         row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-        row.Children.Add(Text(Texts.Get("onboarding.showAccount")));
-        Grid.SetColumn(shown, 1);
-        row.Children.Add(shown);
+        row.Children.Add(Text(Texts.Get("onboarding.showLimits")));
+        Grid.SetColumn(limits, 1);
+        row.Children.Add(limits);
         block.Children.Add(row);
         return block;
     }
@@ -181,12 +185,6 @@ internal sealed class OnboardingSteps(SettingsStore store)
         });
     }
 
-    private void SaveShown(string accountId, bool isShown) => store.Update(current => current with
-    {
-        HiddenAccounts = isShown
-            ? [.. current.HiddenAccounts.Where(id => id != accountId)]
-            : [.. current.HiddenAccounts.Append(accountId).Distinct()],
-    });
 
     /// <summary>The index may not exist yet on the very first run; then none are known.</summary>
     private static IReadOnlyList<AccountInfo> KnownAccounts()

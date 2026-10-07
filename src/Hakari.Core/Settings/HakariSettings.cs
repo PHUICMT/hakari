@@ -83,6 +83,30 @@ public sealed record HakariSettings
     /// <summary>The first-run steps were finished or closed; they never show again.</summary>
     public bool OnboardingDone { get; init; }
 
+    /// <summary>Accounts whose limits are not asked for: their sign-in is left alone.</summary>
+    public IReadOnlyList<string> LimitsOffAccounts { get; init; } = [];
+
+    /// <summary>Accounts the user has answered "show limits?" for, either way.</summary>
+    public IReadOnlyList<string> LimitsAskedAccounts { get; init; } = [];
+
+    /// <summary>
+    /// Whether Hakari may read this account's sign-in to ask for its limits: not when turned
+    /// off, and for an account never read before only once the user said yes. Accounts read
+    /// before this choice existed carry on as they were.
+    /// </summary>
+    public bool MayReadLimits(string accountId, bool readBefore) =>
+        !LimitsOffAccounts.Contains(accountId)
+        && (readBefore || LimitsAskedAccounts.Contains(accountId));
+
+    /// <summary>The account answered: limits on, or estimates only.</summary>
+    public HakariSettings WithLimitsChoice(string accountId, bool on) => this with
+    {
+        LimitsAskedAccounts = [.. LimitsAskedAccounts.Append(accountId).Distinct()],
+        LimitsOffAccounts = on
+            ? [.. LimitsOffAccounts.Where(id => id != accountId)]
+            : [.. LimitsOffAccounts.Append(accountId).Distinct()],
+    };
+
     /// <summary>The note that the meter moved to the tray, told once and never again.</summary>
     public bool TrayFallbackTold { get; init; }
 

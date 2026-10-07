@@ -62,8 +62,13 @@
                                         Foreground="{ThemeResource HakariInkBrush}" TextWrapping="Wrap" />
                                     <TextBlock Text="{x:Bind Detail}" Visibility="{x:Bind DetailVisibility}"
                                         Style="{StaticResource HakariCaptionText}" TextWrapping="Wrap" TextTrimming="None" />
-                                    <Button Content="{x:Bind ActionText}" Visibility="{x:Bind ActionVisibility}"
-                                        Style="{StaticResource HakariButton}" Margin="0,6,0,0" Click="OnNoticeActionClicked" />
+                                    <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,6,0,0"
+                                        Visibility="{x:Bind ActionVisibility}">
+                                        <Button Content="{x:Bind ActionText}" Style="{StaticResource HakariPrimaryButton}"
+                                            Click="OnNoticeActionClicked" />
+                                        <Button Content="{x:Bind SecondActionText}" Visibility="{x:Bind SecondActionVisibility}"
+                                            Style="{StaticResource HakariButton}" Click="OnNoticeSecondActionClicked" />
+                                    </StackPanel>
                                 </StackPanel>
                             </Grid>
                         </Border>

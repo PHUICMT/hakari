@@ -61,6 +61,7 @@ internal static class FlyoutDataLoader
                     : [],
                 .. Unpriced(query),
                 .. FirstRead(query),
+                .. LimitsQuestions(store, settings),
             ]);
     }
 
@@ -117,6 +118,35 @@ internal static class FlyoutDataLoader
                 Tone.Normal,
                 Texts.Get("flyout.notice.reading"),
                 Texts.Get("flyout.notice.readingDetail"));
+        }
+    }
+
+    /// <summary>
+    /// A newly seen account whose limits were never read: Hakari asks before reading its
+    /// sign-in, and offers estimates from its usage instead.
+    /// </summary>
+    private static IEnumerable<FlyoutNotice> LimitsQuestions(
+        IndexStore store,
+        HakariSettings settings)
+    {
+        var cache = new LimitCache(store);
+        foreach (var account in new AccountRepository(store).ListAccounts())
+        {
+            if (settings.LimitsAskedAccounts.Contains(account.AccountId)
+                || cache.Load(account.AccountId) is not null)
+            {
+                continue;
+            }
+
+            var name = AccountLabels.Full(account, settings.NicknameOf(account.AccountId));
+            yield return new FlyoutNotice(
+                Tone.Normal,
+                Texts.Format("flyout.notice.limitsAsk", name),
+                Texts.Get("flyout.notice.limitsAskDetail"),
+                NoticeAction.TurnOnLimits,
+                Texts.Get("flyout.notice.turnOn"),
+                account.AccountId,
+                Texts.Get("flyout.notice.useEstimate"));
         }
     }
 

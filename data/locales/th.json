@@ -501,5 +501,13 @@
   "flyout.notice.reading": "กำลังอ่าน log ครั้งแรก",
   "flyout.notice.readingDetail": "ตัวเลขจะขึ้นเมื่ออ่านเสร็จ ทำงานเบื้องหลังแบบไม่แย่งเครื่อง งานของคุณมาก่อน",
   "tray.fallback.title": "Hakari อยู่ที่ tray แทน",
-  "tray.fallback.body": "วาง widget บน taskbar ไม่ได้ ตัวเลข limit จะแสดงที่ไอคอนใน tray แทน กดไอคอนเพื่อเปิดรายละเอียด"
+  "tray.fallback.body": "วาง widget บน taskbar ไม่ได้ ตัวเลข limit จะแสดงที่ไอคอนใน tray แทน กดไอคอนเพื่อเปิดรายละเอียด",
+  "flyout.notice.limitsAsk": "แสดง limit ของ {0} ไหม?",
+  "flyout.notice.limitsAskDetail": "Hakari จะอ่าน token ลงชื่อเข้าใช้ของบัญชีนี้บนเครื่องนี้ เพื่อถาม limit 5 ชั่วโมงและรายสัปดาห์ ไม่คัดลอกหรือเก็บ token ไว้",
+  "flyout.notice.turnOn": "เปิด",
+  "flyout.notice.useEstimate": "ใช้ค่าประมาณ",
+  "settings.accounts.limits": "Limit",
+  "settings.accounts.limits.description": "อ่าน token ลงชื่อเข้าใช้ของบัญชีนี้เพื่อถาม limit ปิดแล้วจะใช้ค่าล่าสุดที่รู้หรือค่าประมาณแทน",
+  "settings.accounts.showShort": "แสดง",
+  "onboarding.showLimits": "แสดง limit ของบัญชีนี้"
 }

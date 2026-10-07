@@ -31,12 +31,19 @@ internal sealed class LimitPoller : IDisposable
     private DateTimeOffset nextPoll = DateTimeOffset.MinValue;
     private DateTimeOffset lastUsage = DateTimeOffset.MinValue;
 
+    private readonly Func<string, bool, bool> mayRead;
+
+    /// <param name="mayRead">
+    /// Whether an account's limits may be asked for, given whether they were read before.
+    /// </param>
     public LimitPoller(
         IndexStore store,
         IReadOnlyList<UsageSource> sources,
-        bool refreshSignInAutomatically)
+        bool refreshSignInAutomatically,
+        Func<string, bool, bool> mayRead)
     {
         this.sources = sources;
+        this.mayRead = mayRead;
         accountRepository = new AccountRepository(store);
         if (store.CreatedAt is { } installedAt)
         {
@@ -100,6 +107,7 @@ internal sealed class LimitPoller : IDisposable
         var details = accountRepository.ListAccounts()
             .ToDictionary(account => account.AccountId);
         var live = accountTracker.SourcesByCurrentAccount(sources)
+            .Where(account => mayRead(account.Key, limitCache.Load(account.Key) is not null))
             .Select(account => Read(account.Key, account.Value, details))
             .OfType<WidgetAccount>()
             .ToList();

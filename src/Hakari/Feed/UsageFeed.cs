@@ -173,7 +173,11 @@ internal sealed class UsageFeed : IDisposable
             sources,
             ChangeTrackerOptions.Default,
             TimeProvider.System);
-        using var limits = new LimitPoller(store, sources, settings.RefreshSignInAutomatically);
+        using var limits = new LimitPoller(
+            store,
+            sources,
+            settings.RefreshSignInAutomatically,
+            (accountId, readBefore) => presentation.MayReadLimits(accountId, readBefore));
         changeTracker = tracker;
         var lastPublished = DateTimeOffset.MinValue;
         WidgetFacts? facts = null;
