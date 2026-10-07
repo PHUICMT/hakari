@@ -9,8 +9,19 @@ public static class UsageLineParser
     private static readonly byte[] AssistantLineMarker =
         Encoding.UTF8.GetBytes($"\"{LogFieldNames.Type}\":\"{LogFieldValues.AssistantType}\"");
 
-    public static UsageRecord? TryParse(ReadOnlySpan<byte> line)
+    public static UsageRecord? TryParse(ReadOnlySpan<byte> line) =>
+        TryParse(line, checkThinking: false, out _);
+
+    /// <summary>
+    /// Reads the usage record and, when asked, whether the response had a thinking part,
+    /// from one parse of the line.
+    /// </summary>
+    public static UsageRecord? TryParse(
+        ReadOnlySpan<byte> line,
+        bool checkThinking,
+        out bool hasThinking)
     {
+        hasThinking = false;
         if (line.IndexOf(AssistantLineMarker) < 0)
         {
             return null;
@@ -19,7 +30,10 @@ public static class UsageLineParser
         try
         {
             using var document = JsonDocument.Parse(line.ToArray());
-            return ReadRecord(document.RootElement);
+            var record = ReadRecord(document.RootElement);
+            hasThinking = record is not null && checkThinking
+                && ThinkingMarkParser.HasThinking(line, document.RootElement);
+            return record;
         }
         catch (Exception exception) when (exception is JsonException
             or InvalidOperationException or FormatException)

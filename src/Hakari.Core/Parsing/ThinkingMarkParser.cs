@@ -26,13 +26,7 @@ public static class ThinkingMarkParser
         try
         {
             using var document = JsonDocument.Parse(line.ToArray());
-            return document.RootElement.TryGetObject(LogFieldNames.Message, out var message)
-                && message.TryGetField(ContentField, out var content)
-                && content.ValueKind == JsonValueKind.Array
-                && content.EnumerateArray().Any(part =>
-                    part.ValueKind == JsonValueKind.Object
-                    && part.GetStringOrNull(LogFieldNames.Type)
-                        is ThinkingType or RedactedThinkingType);
+            return HasThinkingPart(document.RootElement);
         }
         catch (Exception exception) when (exception is JsonException
             or InvalidOperationException or FormatException)
@@ -40,4 +34,16 @@ public static class ThinkingMarkParser
             return false;
         }
     }
+
+    /// <summary>The same answer from a line already parsed, so it is not parsed twice.</summary>
+    public static bool HasThinking(ReadOnlySpan<byte> line, JsonElement root) =>
+        line.IndexOf(ThinkingMarker) >= 0 && HasThinkingPart(root);
+
+    private static bool HasThinkingPart(JsonElement root) =>
+        root.TryGetObject(LogFieldNames.Message, out var message)
+        && message.TryGetField(ContentField, out var content)
+        && content.ValueKind == JsonValueKind.Array
+        && content.EnumerateArray().Any(part =>
+            part.ValueKind == JsonValueKind.Object
+            && part.GetStringOrNull(LogFieldNames.Type) is ThinkingType or RedactedThinkingType);
 }

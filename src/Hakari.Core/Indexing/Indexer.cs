@@ -180,9 +180,9 @@ public sealed class Indexer
         {
             endOffset = CompleteLineReader.ReadFrom(file.Path, file.IndexedOffset, line =>
             {
-                var record = UsageLineParser.TryParse(line);
-                if (record is not null && collectThinkingMarks
-                    && ThinkingMarkParser.HasThinking(line))
+                var record = UsageLineParser.TryParse(
+                    line, collectThinkingMarks, out var hasThinking);
+                if (record is not null && hasThinking)
                 {
                     thinkingWriter.Mark(record.DeduplicationKey);
                 }

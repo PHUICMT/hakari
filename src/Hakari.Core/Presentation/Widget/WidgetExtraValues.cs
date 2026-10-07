@@ -73,7 +73,7 @@ public static class WidgetExtraValues
         {
             CostWeek => Money(query.Total(
                 new UsageFilter(From: TimePeriods.StartOfWeek(now))).Cost),
-            CostAll => Money(query.Total(UsageFilter.Everything).Cost),
+            CostAll => Money(AllTimeCost.Of(query, now)),
             CostSession => LatestSession(query, now) is { } session ? Money(session.Cost) : null,
             CostProjection => MonthProjection.Of(month.Value.Cost, now) is { } projected
                 ? FormatValue.Words(

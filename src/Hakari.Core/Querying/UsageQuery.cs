@@ -71,6 +71,15 @@ public sealed class UsageQuery(
         return times;
     }
 
+    /// <summary>How many records match, counted without pricing them.</summary>
+    public long Count(UsageFilter filter)
+    {
+        using var command = store.Connection.CreateCommand();
+        var whereClause = UsageFilterSql.BuildWhereClause(filter, command, project);
+        command.CommandText = $"SELECT COUNT(*) FROM usage_records {whereClause}";
+        return command.ExecuteScalar() is long count ? count : 0;
+    }
+
     /// <summary>Whether anything was indexed yet, without adding anything up.</summary>
     public bool HasAny()
     {
