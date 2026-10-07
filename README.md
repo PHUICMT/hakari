@@ -15,7 +15,7 @@ A lightweight Windows taskbar meter and dashboard for **Claude Code** usage. It 
 
 <sub>Pictures use made-up sample accounts and numbers.</sub>
 
-Status: **early release**. See [docs/SPEC.md](docs/SPEC.md), [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), [docs/ROADMAP.md](docs/ROADMAP.md).
+Status: **early release**. See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for how it works and [docs/PRIVACY.md](docs/PRIVACY.md) for what it reads and sends.
 
 ## Download
 
