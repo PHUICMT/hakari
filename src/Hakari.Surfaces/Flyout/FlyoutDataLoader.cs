@@ -96,7 +96,7 @@ internal static class FlyoutDataLoader
                     ? new[] { NoticeFor(accounts, new LimitCache(store)) }
                     : [],
                 .. Unpriced(query),
-                .. FirstRead(query),
+                .. FirstRead(query, store),
                 .. LimitsQuestions(store, settings),
                 .. StoppedDistributions(store, settings),
             ]);
@@ -147,15 +147,23 @@ internal static class FlyoutDataLoader
     /// Before the first read of the logs has finished there is nothing to count yet; the
     /// flyout says so instead of showing zeros.
     /// </summary>
-    private static IEnumerable<FlyoutNotice> FirstRead(UsageQuery query)
+    private static IEnumerable<FlyoutNotice> FirstRead(UsageQuery query, IndexStore store)
     {
-        if (!query.HasAny())
+        if (query.HasAny())
         {
-            yield return new FlyoutNotice(
+            yield break;
+        }
+
+        // With no Claude Code folder anywhere there is nothing to read; waiting would never end.
+        yield return CurrentSources.FoundNone(store)
+            ? new FlyoutNotice(
+                Tone.Normal,
+                Texts.Get("flyout.notice.noLogs"),
+                Texts.Get("flyout.notice.noLogsDetail"))
+            : new FlyoutNotice(
                 Tone.Normal,
                 Texts.Get("flyout.notice.reading"),
                 Texts.Get("flyout.notice.readingDetail"));
-        }
     }
 
     /// <summary>

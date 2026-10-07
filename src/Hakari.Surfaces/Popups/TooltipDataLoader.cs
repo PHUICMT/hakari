@@ -8,6 +8,7 @@ using Hakari.Core.Presentation.Widget;
 using Hakari.Core.Pricing;
 using Hakari.Core.Querying;
 using Hakari.Core.Settings;
+using Hakari.Core.Sources;
 using Hakari.Surfaces.Flyout;
 using Microsoft.Data.Sqlite;
 
@@ -67,7 +68,7 @@ internal static class TooltipDataLoader
             };
         }
 
-        if (State(settings, query, now) is { } state)
+        if (State(settings, query, store, now) is { } state)
         {
             cards.Insert(0, new TooltipAccount(state, [], string.Empty));
         }
@@ -106,7 +107,11 @@ internal static class TooltipDataLoader
     /// Why the widget reads as it does when it is not plain numbers: paused, or still
     /// reading the logs for the first time.
     /// </summary>
-    private static string? State(HakariSettings settings, UsageQuery query, DateTimeOffset now)
+    private static string? State(
+        HakariSettings settings,
+        UsageQuery query,
+        IndexStore store,
+        DateTimeOffset now)
     {
         if (settings.Paused)
         {
@@ -119,9 +124,14 @@ internal static class TooltipDataLoader
                 "tooltip.pausedUntil", until.ToLocalTime().ToString("HH:mm", Texts.Culture));
         }
 
-        return query.HasAny()
-            ? null
-            : Texts.Get("flyout.notice.reading");
+        if (query.HasAny())
+        {
+            return null;
+        }
+
+        return Texts.Get(CurrentSources.FoundNone(store)
+            ? "flyout.notice.noLogs"
+            : "flyout.notice.reading");
     }
 
     /// <summary>"Today ฿… · this month ฿…", then "Burn ฿…/h · 2 active sessions".</summary>

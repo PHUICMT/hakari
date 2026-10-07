@@ -511,6 +511,8 @@
   "flyout.notice.unpricedBody": "{0} นับ token แล้วแต่ยังไม่นับค่าใช้จ่าย อัปเดตราคาหรือตั้งราคาเองได้ใน ตั้งค่า",
   "flyout.notice.updatePrices": "อัปเดตราคา",
   "flyout.live": "ใช้อยู่",
+  "flyout.notice.noLogs": "ยังไม่พบ log ของ Claude Code",
+  "flyout.notice.noLogsDetail": "Hakari หาโฟลเดอร์ .claude ในโฟลเดอร์ผู้ใช้และใน WSL ใช้ Claude Code สักครั้งแล้วตัวเลขจะขึ้นเอง หรือเพิ่มโฟลเดอร์เองได้ที่ Settings หมวดแหล่งข้อมูล",
   "flyout.notice.reading": "กำลังอ่าน log ครั้งแรก",
   "flyout.notice.readingDetail": "ตัวเลขจะขึ้นเมื่ออ่านเสร็จ ทำงานเบื้องหลังแบบไม่แย่งเครื่อง งานของคุณมาก่อน",
   "tray.fallback.title": "Hakari อยู่ที่ tray แทน",

@@ -511,6 +511,8 @@
   "flyout.notice.unpricedBody": "{0} counted in tokens but not in cost. Update prices or set one in Settings.",
   "flyout.notice.updatePrices": "Update prices",
   "flyout.live": "live",
+  "flyout.notice.noLogs": "No Claude Code logs found",
+  "flyout.notice.noLogsDetail": "Hakari looks for .claude folders in your user folder and in WSL. Use Claude Code once and they appear here, or add a folder under Settings, Sources.",
   "flyout.notice.reading": "Reading your logs for the first time",
   "flyout.notice.readingDetail": "The numbers appear when it finishes. It runs at low priority; your work comes first.",
   "tray.fallback.title": "Hakari is in the tray",

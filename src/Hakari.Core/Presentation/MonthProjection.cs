@@ -10,12 +10,14 @@ public static class MonthProjection
 {
     private static readonly TimeSpan Settled = TimeSpan.FromDays(1);
 
-    /// <returns>The projected total, or null while the month is too young to say.</returns>
+    /// <returns>
+    /// The projected total, or null while the month is too young to say or nothing was spent.
+    /// </returns>
     public static decimal? Of(decimal spentSoFar, DateTimeOffset now)
     {
         var start = TimePeriods.StartOfMonth(now);
         var elapsed = now - start;
-        if (elapsed < Settled)
+        if (elapsed < Settled || spentSoFar <= 0)
         {
             return null;
         }
