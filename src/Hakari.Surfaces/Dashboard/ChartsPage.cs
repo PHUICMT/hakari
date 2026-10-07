@@ -60,7 +60,9 @@ internal sealed partial class ChartsPage : LoadedPage<ChartsData>
 
         return DashboardCard.Create(
             Texts.Get("dashboard.trend.title"),
-            data.Trend?.AccountName,
+            data.Trend is { } shown
+                ? Texts.Format("dashboard.trend.caption", shown.AccountName)
+                : null,
             body);
     }
 

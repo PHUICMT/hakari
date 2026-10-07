@@ -88,14 +88,19 @@ internal sealed partial class LimitTrendChart : Grid
     private Grid Ends()
     {
         var ends = new Grid { Margin = new Thickness(0, 6, 0, 0) };
-        ends.Children.Add(Caption(trend.From, HorizontalAlignment.Left));
-        ends.Children.Add(Caption(trend.To, HorizontalAlignment.Right));
+        // A short stretch names the hours too, or both ends could read the same day.
+        var format = trend.To - trend.From < TimeSpan.FromDays(2) ? "MMM d HH:mm" : "MMM d";
+        ends.Children.Add(Caption(trend.From, format, HorizontalAlignment.Left));
+        ends.Children.Add(Caption(trend.To, format, HorizontalAlignment.Right));
         return ends;
     }
 
-    private static TextBlock Caption(DateTimeOffset at, HorizontalAlignment alignment) => new()
+    private static TextBlock Caption(
+        DateTimeOffset at,
+        string format,
+        HorizontalAlignment alignment) => new()
     {
-        Text = at.ToLocalTime().ToString("MMM d", Texts.Culture),
+        Text = at.ToLocalTime().ToString(format, Texts.Culture),
         FontSize = LabelSize,
         Foreground = DashboardCard.Brush("HakariInkFaintBrush"),
         HorizontalAlignment = alignment,

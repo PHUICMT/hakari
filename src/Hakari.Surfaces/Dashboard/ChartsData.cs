@@ -75,21 +75,46 @@ internal sealed record ChartsData(
             ? now.AddHours(-24)
             : filter.From(now) ?? now.AddDays(-TrendDays);
         var history = new LimitHistory(store);
+        List<TrendSeries> series =
+        [
+            new TrendSeries(
+                Texts.Get("limit.short.session"),
+                "HakariChart3Brush",
+                history.Load(account.AccountId, SessionKind, from)),
+            new TrendSeries(
+                Texts.Get("limit.short.weekly"),
+                "HakariChart2Brush",
+                history.Load(account.AccountId, WeeklyKind, from)),
+        ];
         var trend = new LimitTrend(
             AccountLabels.Full(account, settings.NicknameOf(account.AccountId)),
-            from,
+            ChartStart(series, from, now),
             now,
-            [
-                new TrendSeries(
-                    Texts.Get("limit.short.session"),
-                    "HakariChart3Brush",
-                    history.Load(account.AccountId, SessionKind, from)),
-                new TrendSeries(
-                    Texts.Get("limit.short.weekly"),
-                    "HakariChart2Brush",
-                    history.Load(account.AccountId, WeeklyKind, from)),
-            ]);
+            series);
         return trend.HasReadings ? trend : null;
+    }
+
+    private static readonly TimeSpan ShortestTrendSpan = TimeSpan.FromHours(6);
+
+    /// <summary>
+    /// Readings exist only from when Hakari started recording, so the chart starts at the
+    /// first one rather than squeezing them all against the right edge of a long period;
+    /// it still spans at least a few hours so a fresh start is not one stretched dot.
+    /// </summary>
+    private static DateTimeOffset ChartStart(
+        IEnumerable<TrendSeries> series,
+        DateTimeOffset from,
+        DateTimeOffset now)
+    {
+        var readings = series.SelectMany(one => one.Readings).ToList();
+        if (readings.Count == 0)
+        {
+            return from;
+        }
+
+        var first = readings.Min(reading => reading.At);
+        var start = first < now - ShortestTrendSpan ? first : now - ShortestTrendSpan;
+        return start > from ? start : from;
     }
 
     /// <summary>The database counts Sunday as 0; the chart starts its week on Monday.</summary>
