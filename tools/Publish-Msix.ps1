@@ -13,12 +13,15 @@
     Package/Identity/Publisher from Partner Center, such as "CN=1234ABCD-...".
 .PARAMETER PublisherDisplayName
     Package/Properties/PublisherDisplayName from Partner Center.
+.PARAMETER DisplayName
+    The reserved Store name, matched exactly by the Store.
 #>
 param(
     [string]$Version = "0.9.1",
-    [string]$Name = "PHUICMT.Hakari",
-    [string]$Publisher = "CN=PHUICMT",
+    [string]$Name = "PHUICMT.Hakari-UsageMeter",
+    [string]$Publisher = "CN=E8A21397-069F-43DB-88E4-553FE9E1D75F",
     [string]$PublisherDisplayName = "PHUICMT",
+    [string]$DisplayName = "Hakari - Usage Meter",
     [string]$CertificatePath = "",
     [string]$CertificatePassword = "",
     [string]$Output = "artifacts/msix"
@@ -38,6 +41,7 @@ $staging = Join-Path $root "$Output/portable/Hakari"
 $manifest = Get-Content (Join-Path $root "packaging/msix/AppxManifest.xml") -Raw
 $manifest = $manifest.Replace('$Name$', $Name).Replace('$Publisher$', $Publisher)
 $manifest = $manifest.Replace('$PublisherDisplayName$', $PublisherDisplayName)
+$manifest = $manifest.Replace('$DisplayName$', $DisplayName)
 $manifest = $manifest.Replace('$Version$', "$Version.0")
 Set-Content (Join-Path $staging "AppxManifest.xml") $manifest -Encoding utf8
 

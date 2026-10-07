@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Filled in by tools/Publish-Msix.ps1: $Name$, $Publisher$, $PublisherDisplayName$ and
-     $Version$ come from Partner Center's product identity (or local test values). -->
+     $DisplayName$ come from Partner Center's product identity; $DisplayName$ must match the
+     reserved Store name exactly. -->
 <Package
   xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
   xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
@@ -12,7 +13,7 @@
   <Identity Name="$Name$" Publisher="$Publisher$" Version="$Version$" ProcessorArchitecture="x64" />
 
   <Properties>
-    <DisplayName>Hakari</DisplayName>
+    <DisplayName>$DisplayName$</DisplayName>
     <PublisherDisplayName>$PublisherDisplayName$</PublisherDisplayName>
     <Logo>Assets\StoreLogo.png</Logo>
   </Properties>
@@ -29,7 +30,7 @@
   <Applications>
     <Application Id="Hakari" Executable="Hakari.exe" EntryPoint="Windows.FullTrustApplication">
       <uap:VisualElements
-        DisplayName="Hakari"
+        DisplayName="$DisplayName$"
         Description="Taskbar meter and dashboard for Claude Code usage"
         BackgroundColor="transparent"
         Square150x150Logo="Assets\Square150x150Logo.png"
