@@ -4,10 +4,16 @@ A lightweight Windows taskbar meter and dashboard for **Claude Code** usage. It 
 
 > Not affiliated with or endorsed by Anthropic. "Claude" is a trademark of Anthropic, PBC.
 
+![Hakari on the taskbar, with its flyout and dashboard](docs/images/hero.png)
+
 - Live cost, limits, and burn rate on the taskbar, in a layout you choose
 - Incremental indexing: reads only new log bytes, so it stays fast with logs of several GB
 - Correct cache pricing (5-minute vs 1-hour cache writes, fast mode)
 - Local-only. Hakari never reads prompt or response text and sends no telemetry.
+
+![The dashboard overview: cost, cache, daily spend and models](docs/images/dashboard.png)
+
+<sub>Pictures use made-up sample accounts and numbers.</sub>
 
 Status: **early release**. See [docs/SPEC.md](docs/SPEC.md), [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), [docs/ROADMAP.md](docs/ROADMAP.md).
 
