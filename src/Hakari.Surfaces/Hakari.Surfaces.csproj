@@ -33,4 +33,7 @@
     <None Include="..\..\assets\Hakari.ico" Link="Hakari.ico" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Include="..\..\assets\promptpay-qr.png" Link="promptpay-qr.png" CopyToOutputDirectory="PreserveNewest" Condition="Exists('..\..\assets\promptpay-qr.png')" />
+  </ItemGroup>
 </Project>

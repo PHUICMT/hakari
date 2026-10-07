@@ -107,9 +107,14 @@ internal static class SupportLinks
     private const double CodeSize = 200;
     private const double CardWidth = 240;
 
+    /// <summary>A PromptPay QR picture shipped next to the app, when there is one.</summary>
+    private const string QrPictureFile = "promptpay-qr.png";
+
+    private static string QrPicturePath => Path.Combine(AppContext.BaseDirectory, QrPictureFile);
+
     /// <summary>Thai by the app's language or by the region Windows is set to.</summary>
     public static bool ShowsPromptPay =>
-        PromptPay.Payload(PromptPayId) is not null
+        (File.Exists(QrPicturePath) || PromptPay.Payload(PromptPayId) is not null)
         && (Texts.Language == Texts.Thai
             || string.Equals(
                 RegionInfo.CurrentRegion.TwoLetterISORegionName,
@@ -119,13 +124,19 @@ internal static class SupportLinks
     /// <summary>The code on a white square, so any banking app can read it in any theme.</summary>
     public static async void ShowPromptPay(FrameworkElement anchor)
     {
-        if (PromptPay.Payload(PromptPayId) is not { } payload)
+        var image = new Image { Width = CodeSize, Height = CodeSize };
+        if (File.Exists(QrPicturePath))
+        {
+            image.Source = new BitmapImage(new Uri(QrPicturePath));
+        }
+        else if (PromptPay.Payload(PromptPayId) is { } payload)
+        {
+            image.Source = await CodeImage(payload);
+        }
+        else
         {
             return;
         }
-
-        var image = new Image { Width = CodeSize, Height = CodeSize };
-        image.Source = await CodeImage(payload);
         var body = new StackPanel { Spacing = 10, Width = CardWidth, Padding = new Thickness(12) };
         body.Children.Add(new Border
         {
