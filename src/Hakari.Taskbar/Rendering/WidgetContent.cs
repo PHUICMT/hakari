@@ -36,6 +36,17 @@ public sealed record WidgetContent(
         TurnCount = 0,
     };
 
+    /// <summary>
+    /// Everything the widget says, as one line of words, for a screen reader and for the
+    /// tray's tooltip: each block's lines joined.
+    /// </summary>
+    public string Spoken() => string.Join(
+        "; ",
+        Panels.Select(panel => string.Join(
+            ", ",
+            new[] { panel.Pill, panel.PrimaryText, panel.SecondaryText }
+                .Where(part => !string.IsNullOrWhiteSpace(part)))));
+
     public IReadOnlyList<WidgetContent> Panels =>
         MorePanels is { Count: > 0 } more ? [this with { MorePanels = null }, .. more] : [this];
 

@@ -124,7 +124,7 @@ internal sealed partial class SavedLayoutCard : UserControl
                 FontFamily = (FontFamily)Application.Current.Resources["HakariIconFont"],
             },
         };
-        ToolTipService.SetToolTip(button, Texts.Get("settings.layout.forget"));
+        Accessible.Name(button, Texts.Get("settings.layout.forget"));
         button.Tapped += (_, args) => args.Handled = true;
         button.Click += (_, _) => AskBeforeRemoving(button);
         return button;

@@ -251,6 +251,9 @@ internal sealed class ResidentApp : IDisposable
         }
 
         widgets.PostContent(content);
+
+        // Win+B reaches the tray icon; its tooltip reads out what the widget shows.
+        trayIcon.SetTooltip(TrayTooltip + ": " + content.Spoken());
     }
 
     /// <summary>

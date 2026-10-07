@@ -134,7 +134,7 @@ internal sealed partial class SlotRowView : UserControl
                 FontFamily = (FontFamily)Application.Current.Resources["HakariIconFont"],
             },
         };
-        ToolTipService.SetToolTip(button, Texts.Get(tooltipKey));
+        Accessible.Name(button, Texts.Get(tooltipKey));
         button.Click += (_, _) => click();
         return button;
     }

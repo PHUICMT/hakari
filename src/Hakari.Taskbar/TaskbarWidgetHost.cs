@@ -387,6 +387,12 @@ public sealed class TaskbarWidgetHost : IDisposable
 
         motion = ResolveMotion();
         var now = Stopwatch.GetTimestamp();
+        var spoken = "Hakari: " + content.Spoken();
+        foreach (var widget in widgets)
+        {
+            widget.SetAccessibleName(spoken);
+        }
+
         foreach (var state in states.Values)
         {
             state.IsCompact = false;

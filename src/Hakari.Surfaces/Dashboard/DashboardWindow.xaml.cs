@@ -176,7 +176,7 @@ public sealed partial class DashboardWindow : Window
                 FontFamily = (FontFamily)Application.Current.Resources["HakariIconFont"],
             },
         };
-        ToolTipService.SetToolTip(button, Texts.Get("dashboard.menu.fold"));
+        Accessible.Name(button, Texts.Get("dashboard.menu.fold"));
         button.Click += (_, _) =>
         {
             menuFolded = !menuFolded;

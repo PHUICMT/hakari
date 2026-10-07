@@ -53,6 +53,21 @@ public sealed partial class SettingRow : ContentControl
         private set => SetValue(DescriptionVisibilityProperty, value);
     }
 
+    /// <summary>
+    /// The control on the right is named by the row's title, so a screen reader says what a
+    /// switch or a choice is for, unless the control already has a name of its own.
+    /// </summary>
+    protected override void OnContentChanged(object oldContent, object newContent)
+    {
+        base.OnContentChanged(oldContent, newContent);
+        if (newContent is DependencyObject control
+            && string.IsNullOrEmpty(Microsoft.UI.Xaml.Automation.AutomationProperties.GetName(
+                control)))
+        {
+            Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(control, Title);
+        }
+    }
+
     private static void OnDescriptionChanged(
         DependencyObject owner,
         DependencyPropertyChangedEventArgs change)

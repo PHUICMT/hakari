@@ -183,4 +183,8 @@ internal static class User32
         uint parameter,
         ref bool value,
         uint flags);
+
+    [DllImport(Library, CharSet = CharSet.Unicode, SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool SetWindowText(IntPtr windowHandle, string text);
 }

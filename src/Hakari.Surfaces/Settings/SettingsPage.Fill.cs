@@ -248,7 +248,7 @@ public sealed partial class SettingsPage
         {
             IsChecked = !settings.LimitsOffAccounts.Contains(accountId),
         };
-        ToolTipService.SetToolTip(toggle, Texts.Get("settings.accounts.limits.description"));
+        Accessible.Name(toggle, Texts.Get("settings.accounts.limits.description"));
         toggle.Click += (_, _) =>
             Save(current => current.WithLimitsChoice(accountId, toggle.IsChecked == true));
         return toggle;
@@ -257,7 +257,7 @@ public sealed partial class SettingsPage
     private HakariToggle ShowToggle(string accountId, HakariSettings settings)
     {
         var toggle = new HakariToggle { IsChecked = !settings.HiddenAccounts.Contains(accountId) };
-        ToolTipService.SetToolTip(toggle, Texts.Get("settings.accounts.show"));
+        Accessible.Name(toggle, Texts.Get("settings.accounts.show"));
         toggle.Click += (_, _) => SetAccountShown(accountId, toggle.IsChecked == true);
         return toggle;
     }
@@ -284,7 +284,7 @@ public sealed partial class SettingsPage
             MaxLength = PriceMaximumLength,
             Style = (Style)Application.Current.Resources["HakariTextBox"],
         };
-        ToolTipService.SetToolTip(box, Texts.Get("settings.planPrice"));
+        Accessible.Name(box, Texts.Get("settings.planPrice"));
         box.LostFocus += (_, _) => SavePlanPrice(account.AccountId, box.Text);
         box.KeyDown += (_, args) =>
         {
@@ -307,7 +307,7 @@ public sealed partial class SettingsPage
             MaxLength = NicknameMaximumLength,
             Style = (Style)Application.Current.Resources["HakariTextBox"],
         };
-        ToolTipService.SetToolTip(box, Texts.Get("settings.nickname"));
+        Accessible.Name(box, Texts.Get("settings.nickname"));
         box.LostFocus += (_, _) => SaveNickname(accountId, box.Text);
         box.KeyDown += (_, args) =>
         {

@@ -25,6 +25,9 @@ internal sealed class WidgetWindow : IDisposable
         this.mode = mode;
     }
 
+    /// <summary>The window's text, which screen readers read as the widget's name.</summary>
+    public void SetAccessibleName(string text) => User32.SetWindowText(Handle, text);
+
     public event EventHandler? Clicked;
 
     public event EventHandler? RightClicked;

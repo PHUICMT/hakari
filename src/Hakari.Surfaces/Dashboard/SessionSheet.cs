@@ -184,7 +184,7 @@ internal static class SessionSheet
             },
             VerticalAlignment = VerticalAlignment.Top,
         };
-        ToolTipService.SetToolTip(button, Texts.Get("flyout.close"));
+        Hakari.Surfaces.Controls.Accessible.Name(button, Texts.Get("flyout.close"));
         button.Click += (_, _) => close();
         Grid.SetColumn(button, 1);
         header.Children.Add(button);

@@ -151,7 +151,7 @@ internal sealed partial class DashboardFilterBar : StackPanel
             Style = (Style)Application.Current.Resources["HakariButton"],
             Padding = RefreshPadding,
         };
-        ToolTipService.SetToolTip(button, Texts.Get("dashboard.refresh"));
+        Accessible.Name(button, Texts.Get("dashboard.refresh"));
         button.Click += (_, _) => Changed?.Invoke(this, EventArgs.Empty);
         return button;
     }
