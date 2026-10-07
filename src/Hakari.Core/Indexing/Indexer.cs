@@ -197,8 +197,10 @@ public sealed class Indexer
                 }
             });
         }
-        catch (IOException)
+        catch (Exception exception) when (exception is IOException
+            or UnauthorizedAccessException)
         {
+            // A log that cannot be read now is tried again on the next pass.
             return;
         }
 

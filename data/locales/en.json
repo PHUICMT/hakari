@@ -523,5 +523,6 @@
   "dashboard.column.used": "Used",
   "settings.thinking": "Count thinking",
   "settings.thinking.description": "Note which responses thought first, from the kind of their parts only, never what they say. Turning it on or off reads the logs again.",
-  "dashboard.tile.thinking": "Thinking in {0} of responses"
+  "dashboard.tile.thinking": "Thinking in {0} of responses",
+  "dashboard.pageFailed": "This page could not be loaded. Try refresh."
 }

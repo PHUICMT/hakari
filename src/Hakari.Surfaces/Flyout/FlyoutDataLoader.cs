@@ -27,7 +27,40 @@ internal static class FlyoutDataLoader
     private const double ExtraUsageWarnAt = 0.8;
     private static readonly TimeSpan RecentSourceWindow = TimeSpan.FromMinutes(10);
 
+    /// <summary>
+    /// Never fails: before the first index exists, or when it cannot be read, the flyout
+    /// opens with a note instead of numbers.
+    /// </summary>
     public static FlyoutSnapshot Load()
+    {
+        try
+        {
+            if (File.Exists(HakariPaths.DefaultIndexPath))
+            {
+                return Read();
+            }
+        }
+        catch (Exception exception) when (exception is Microsoft.Data.Sqlite.SqliteException
+            or IOException or UnauthorizedAccessException or InvalidOperationException)
+        {
+            // Shown as not ready below.
+        }
+
+        return new FlyoutSnapshot(
+            string.Empty,
+            Texts.Get("flyout.noAccount"),
+            [],
+            [],
+            string.Empty,
+            [],
+            [],
+            [new FlyoutNotice(
+                Tone.Normal,
+                Texts.Get("flyout.notice.reading"),
+                Texts.Get("flyout.notice.readingDetail"))]);
+    }
+
+    private static FlyoutSnapshot Read()
     {
         var settings = SettingsStore.Default.Load();
         using var store = IndexStore.OpenReadOnly(HakariPaths.DefaultIndexPath);

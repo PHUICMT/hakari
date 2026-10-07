@@ -49,7 +49,18 @@ internal sealed partial class HeatMap : Grid
             AddDay(day, costs, highest, currency, storyboard, animate);
         }
 
-        SizeChanged += (_, args) => FitSquares(args.NewSize.Width);
+        // Squares follow the width after layout, and only when it really changed, so a
+        // scroll bar coming and going cannot set the size passes chasing each other.
+        SizeChanged += (_, args) =>
+        {
+            if (Math.Abs(args.NewSize.Width - fittedWidth) < 1)
+            {
+                return;
+            }
+
+            fittedWidth = args.NewSize.Width;
+            DispatcherQueue.TryEnqueue(() => FitSquares(fittedWidth));
+        };
         ChartEntrance.PlayOnce(this, storyboard);
     }
 
@@ -151,6 +162,8 @@ internal sealed partial class HeatMap : Grid
     /// <summary>Monday first, in the language of the app.</summary>
     internal static string DayName(int day) =>
         Texts.Culture.DateTimeFormat.AbbreviatedDayNames[(day + 1) % ChartsData.Weekdays];
+
+    private double fittedWidth = -1;
 
     private void FitSquares(double width)
     {

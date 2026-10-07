@@ -57,6 +57,7 @@ internal sealed class ResidentApp : IDisposable
             ShowOnDisplay = DisplayFilter.From(settings),
         };
         widgets = new TaskbarWidgetHost(hostOptions, WidgetText.Loading);
+        widgets.Faulted += ErrorLog.Write;
         feed = new UsageFeed(settingsStore);
         menu = new ResidentMenu(settingsStore, Apply, OpenSettings);
         trayIcon = new TrayIcon(TrayTooltip, menu.Build);

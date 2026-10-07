@@ -114,40 +114,62 @@ internal sealed class UsageFeed : IDisposable
         changeTracker?.Wake();
     }
 
+    /// <summary>
+    /// Nothing in here may end the thread: anything that goes wrong, opening the index
+    /// included, is logged, shown on the widget, and tried again after a pause.
+    /// </summary>
     private void RunLoop()
     {
         using var backgroundMode = BackgroundThreadMode.Enter();
-        using var store = new IndexStore(HakariPaths.DefaultIndexPath);
-
-        while (!cancellation.IsCancellationRequested)
+        IndexStore? store = null;
+        try
         {
-            settingsChanged = false;
-
-            // Read each pass: "check now" or the user's own prices may have changed it.
-            var pricing = PricingSources.LoadCurrent();
-            pricesVersion = PricingSources.Version();
-            var settings = settingsStore.Load();
-            presentation = settings;
-            if (settings.IsPausedAt(DateTimeOffset.UtcNow))
+            while (!cancellation.IsCancellationRequested)
             {
-                Updated?.Invoke(WidgetText.Paused(settings));
-                WaitForSettingsChange(settings.Paused ? null : settings.PausedUntil);
-                continue;
-            }
-
-            try
-            {
-                RunUntilSettingsChange(store, pricing, settings);
-            }
-            catch (Exception exception) when (exception is not OperationCanceledException)
-            {
-                // The widget says something is wrong rather than showing old numbers as new,
-                // and the feed starts over after a pause.
-                ErrorLog.Write(exception);
-                Updated?.Invoke(WidgetText.Error());
-                settingsSignal.WaitOne(ErrorRetryDelay);
+                try
+                {
+                    store ??= new IndexStore(HakariPaths.DefaultIndexPath);
+                    RunPass(store);
+                }
+                catch (Exception exception) when (exception is not OperationCanceledException)
+                {
+                    // The widget says something is wrong rather than showing old numbers as
+                    // new, and the feed starts over after a pause with a fresh connection.
+                    ErrorLog.Write(exception);
+                    Updated?.Invoke(WidgetText.Error());
+                    store?.Dispose();
+                    store = null;
+                    settingsSignal.WaitOne(ErrorRetryDelay);
+                }
             }
         }
+        catch (OperationCanceledException)
+        {
+            // Hakari is closing.
+        }
+        finally
+        {
+            store?.Dispose();
+        }
+    }
+
+    private void RunPass(IndexStore store)
+    {
+        settingsChanged = false;
+
+        // Read each pass: "check now" or the user's own prices may have changed it.
+        var pricing = PricingSources.LoadCurrent();
+        pricesVersion = PricingSources.Version();
+        var settings = settingsStore.Load();
+        presentation = settings;
+        if (settings.IsPausedAt(DateTimeOffset.UtcNow))
+        {
+            Updated?.Invoke(WidgetText.Paused(settings));
+            WaitForSettingsChange(settings.Paused ? null : settings.PausedUntil);
+            return;
+        }
+
+        RunUntilSettingsChange(store, pricing, settings);
     }
 
     private static readonly TimeSpan ErrorRetryDelay = TimeSpan.FromSeconds(30);

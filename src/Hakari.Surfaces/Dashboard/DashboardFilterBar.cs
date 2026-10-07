@@ -91,6 +91,18 @@ internal sealed partial class DashboardFilterBar : StackPanel
     /// <summary>"All" at once; the accounts and sources are read off the UI thread.</summary>
     private async void FillSelects()
     {
+        try
+        {
+            await FillSelectsAsync();
+        }
+        catch (Exception exception)
+        {
+            CrashLog.Write(exception, "filter choices");
+        }
+    }
+
+    private async Task FillSelectsAsync()
+    {
         var allAccounts = (AllChoice, Texts.Get("dashboard.allAccounts"));
         var allSources = (AllChoice, Texts.Get("dashboard.allSources"));
         var allModels = (AllChoice, Texts.Get("dashboard.allModels"));

@@ -76,7 +76,9 @@ public sealed partial class PricingTable
         var fastPrice = speed == SpeedNames.Fast ? price.Fast : null;
         var inputPrice = fastPrice?.Input ?? price.Input;
         var outputPrice = fastPrice?.Output ?? price.Output;
-        var cacheMultiplier = fastPrice is null ? NoMultiplier : fastPrice.Input / price.Input;
+        var cacheMultiplier = fastPrice is null || price.Input == 0
+            ? NoMultiplier
+            : fastPrice.Input / price.Input;
 
         var totalPriceUnits =
             tokens.Input * inputPrice
@@ -101,13 +103,13 @@ public sealed partial class PricingTable
     private List<ModelPrice>? FindPriceHistory(string model)
     {
         var resolvedModel = Aliases.GetValueOrDefault(model, model);
-        if (Models.TryGetValue(resolvedModel, out var history))
+        if (Models.TryGetValue(resolvedModel, out var history) && history is { Count: > 0 })
         {
             return history;
         }
 
         var modelWithoutDate = DateSuffixPattern().Replace(resolvedModel, string.Empty);
-        return Models.GetValueOrDefault(modelWithoutDate);
+        return Models.GetValueOrDefault(modelWithoutDate) is { Count: > 0 } dated ? dated : null;
     }
 
     [GeneratedRegex(@"-\d{8}$")]

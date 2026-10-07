@@ -27,14 +27,15 @@ public static class ThinkingMarkParser
         {
             using var document = JsonDocument.Parse(line.ToArray());
             return document.RootElement.TryGetObject(LogFieldNames.Message, out var message)
-                && message.TryGetProperty(ContentField, out var content)
+                && message.TryGetField(ContentField, out var content)
                 && content.ValueKind == JsonValueKind.Array
                 && content.EnumerateArray().Any(part =>
                     part.ValueKind == JsonValueKind.Object
                     && part.GetStringOrNull(LogFieldNames.Type)
                         is ThinkingType or RedactedThinkingType);
         }
-        catch (JsonException)
+        catch (Exception exception) when (exception is JsonException
+            or InvalidOperationException or FormatException)
         {
             return false;
         }

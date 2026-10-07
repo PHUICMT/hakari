@@ -34,7 +34,8 @@ public static class SessionTitleParser
                     ? new SessionTitle(sessionId, title.Trim(), isCustom)
                     : null;
         }
-        catch (JsonException)
+        catch (Exception exception) when (exception is JsonException
+            or InvalidOperationException or FormatException)
         {
             return null;
         }

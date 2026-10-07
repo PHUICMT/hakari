@@ -28,7 +28,21 @@ public partial class App : Application
     public App()
     {
         InitializeComponent();
-        UnhandledException += (_, args) => CrashLog.Write(args.Exception, args.Message);
+
+        // A failure on the UI thread is logged and survived: one broken page or popup must
+        // not close every window. Background failures are logged too.
+        UnhandledException += (_, args) =>
+        {
+            CrashLog.Write(args.Exception, args.Message);
+            args.Handled = true;
+        };
+        AppDomain.CurrentDomain.UnhandledException += (_, args) =>
+            CrashLog.Write(args.ExceptionObject as Exception, "background thread");
+        TaskScheduler.UnobservedTaskException += (_, args) =>
+        {
+            CrashLog.Write(args.Exception, "unobserved task");
+            args.SetObserved();
+        };
     }
 
     protected override void OnLaunched(LaunchActivatedEventArgs args)

@@ -523,5 +523,6 @@
   "dashboard.column.used": "ใช้ไป",
   "settings.thinking": "นับการ thinking",
   "settings.thinking.description": "จดว่าคำตอบไหนมีการ thinking โดยดูแค่ชนิดของส่วนในคำตอบ ไม่อ่านข้อความ เปิดหรือปิดแล้ว log จะถูกอ่านใหม่",
-  "dashboard.tile.thinking": "Thinking ใน {0} ของคำตอบ"
+  "dashboard.tile.thinking": "Thinking ใน {0} ของคำตอบ",
+  "dashboard.pageFailed": "หน้านี้โหลดไม่ได้ ลองกดรีเฟรชอีกครั้ง"
 }

@@ -38,7 +38,7 @@ public static class UsageLimitParser
 
     private static List<UsageLimit> ReadLimits(JsonElement root)
     {
-        if (!root.TryGetProperty(LimitsProperty, out var limits)
+        if (!root.TryGetField(LimitsProperty, out var limits)
             || limits.ValueKind != JsonValueKind.Array)
         {
             return [];
@@ -47,10 +47,13 @@ public static class UsageLimitParser
         return [.. limits.EnumerateArray().Select(ReadLimit)];
     }
 
+    private const long MaximumPercent = 1_000;
+    private const long MaximumDecimalPlaces = 8;
+
     private static UsageLimit ReadLimit(JsonElement limit) => new(
         Kind: limit.GetStringOrNull(KindProperty) ?? string.Empty,
         Group: limit.GetStringOrNull(GroupProperty) ?? string.Empty,
-        Percent: (int)limit.GetInt64OrZero(PercentProperty),
+        Percent: (int)Math.Clamp(limit.GetInt64OrZero(PercentProperty), 0, MaximumPercent),
         Severity: limit.GetStringOrNull(SeverityProperty) ?? NormalSeverity,
         ResetsAt: ReadTimestamp(limit, ResetsAtProperty),
         ScopeName: ReadScopeName(limit),
@@ -75,7 +78,8 @@ public static class UsageLimitParser
             return null;
         }
 
-        var decimalPlaces = (int)extra.GetInt64OrZero(DecimalPlacesProperty);
+        var decimalPlaces = (int)Math.Clamp(
+            extra.GetInt64OrZero(DecimalPlacesProperty), 0, MaximumDecimalPlaces);
         var divisor = (decimal)Math.Pow(10, decimalPlaces);
         return new ExtraUsage(
             IsEnabled: extra.IsTrue(IsEnabledProperty),
@@ -86,8 +90,11 @@ public static class UsageLimitParser
 
     private static decimal ReadDecimal(JsonElement element, string propertyName)
     {
-        var found = element.TryGetProperty(propertyName, out var value);
-        return found && value.ValueKind == JsonValueKind.Number ? value.GetDecimal() : 0;
+        return element.TryGetField(propertyName, out var value)
+            && value.ValueKind == JsonValueKind.Number
+            && value.TryGetDecimal(out var number)
+                ? number
+                : 0;
     }
 
     private static DateTimeOffset? ReadTimestamp(JsonElement element, string propertyName) =>

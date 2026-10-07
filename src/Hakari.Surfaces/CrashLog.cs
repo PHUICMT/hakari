@@ -12,7 +12,7 @@ internal static class CrashLog
     private const string FileName = "surfaces-errors.log";
     private const long MaximumBytes = 256 * 1024;
 
-    public static void Write(Exception exception, string message)
+    public static void Write(Exception? exception, string message)
     {
         try
         {

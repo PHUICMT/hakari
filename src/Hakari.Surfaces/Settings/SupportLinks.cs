@@ -124,6 +124,18 @@ internal static class SupportLinks
     /// <summary>The code on a white square, so any banking app can read it in any theme.</summary>
     public static async void ShowPromptPay(FrameworkElement anchor)
     {
+        try
+        {
+            await ShowPromptPayAsync(anchor);
+        }
+        catch (Exception exception)
+        {
+            CrashLog.Write(exception, "PromptPay");
+        }
+    }
+
+    private static async Task ShowPromptPayAsync(FrameworkElement anchor)
+    {
         var image = new Image { Width = CodeSize, Height = CodeSize };
         if (File.Exists(QrPicturePath))
         {

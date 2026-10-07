@@ -25,12 +25,17 @@ public static class PricingSources
     /// <summary>The newer of the shipped and fetched tables, with the user's prices.</summary>
     public static PricingTable LoadCurrent()
     {
-        var table = Newest(PricingTable.LoadBundled(), TryLoad(DownloadedPath));
-        if (TryLoad(CustomPath) is { } custom)
+        var table = Newest(Shipped(), TryLoad(DownloadedPath));
+        if (TryLoad(CustomPath) is { Models: not null } custom)
         {
             foreach (var (model, prices) in custom.Models)
             {
-                table.Models[model] = prices;
+                // A hand-written entry with a missing list or a missing price is left out.
+                var usable = prices?.Where(price => price is not null).ToList();
+                if (!string.IsNullOrWhiteSpace(model) && usable is { Count: > 0 })
+                {
+                    table.Models[model] = usable;
+                }
             }
         }
 
@@ -59,7 +64,7 @@ public static class PricingSources
             return false;
         }
 
-        var current = Newest(PricingTable.LoadBundled(), TryLoad(DownloadedPath));
+        var current = Newest(Shipped(), TryLoad(DownloadedPath));
         if (fetched.Models.Count == 0
             || string.CompareOrdinal(fetched.Updated, current.Updated) <= 0)
         {
@@ -99,6 +104,10 @@ public static class PricingSources
         }
         """;
 
+    /// <summary>The table shipped with Hakari, or an empty one if it cannot be read.</summary>
+    private static PricingTable Shipped() =>
+        TryLoad(PricingFiles.BundledPath) ?? new PricingTable();
+
     private static PricingTable Newest(PricingTable bundled, PricingTable? downloaded) =>
         downloaded is { Models.Count: > 0 }
             && string.CompareOrdinal(downloaded.Updated, bundled.Updated) > 0
@@ -112,7 +121,8 @@ public static class PricingSources
             return File.Exists(path) ? PricingTable.LoadFile(path) : null;
         }
         catch (Exception exception) when (exception is JsonException or IOException
-            or UnauthorizedAccessException)
+            or UnauthorizedAccessException or NotSupportedException
+            or InvalidOperationException)
         {
             return null;
         }

@@ -34,6 +34,18 @@ internal static class SessionSheet
 
     public static async void Open(FrameworkElement owner, SessionRow row, string currency)
     {
+        try
+        {
+            await OpenAsync(owner, row, currency);
+        }
+        catch (Exception exception)
+        {
+            CrashLog.Write(exception, "session sheet");
+        }
+    }
+
+    private static async Task OpenAsync(FrameworkElement owner, SessionRow row, string currency)
+    {
         if (owner.XamlRoot is not { } root)
         {
             return;

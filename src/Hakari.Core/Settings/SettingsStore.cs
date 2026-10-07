@@ -36,14 +36,38 @@ public sealed class SettingsStore(string path)
                 return new HakariSettings();
             }
 
-            return JsonSerializer.Deserialize<HakariSettings>(ReadShared(), SerializerOptions)
-                ?? new HakariSettings();
+            return Normalized(
+                JsonSerializer.Deserialize<HakariSettings>(ReadShared(), SerializerOptions)
+                ?? new HakariSettings());
         }
-        catch (Exception exception) when (exception is IOException or JsonException)
+        catch (Exception exception) when (exception is IOException or JsonException
+            or UnauthorizedAccessException or NotSupportedException)
         {
             return new HakariSettings();
         }
     }
+
+    /// <summary>A hand-edited file may say null for a list; that reads as an empty one.</summary>
+    private static HakariSettings Normalized(HakariSettings settings) => settings with
+    {
+        Widget = settings.Widget ?? new(),
+        Dashboard = settings.Dashboard ?? new(),
+        SavedLayouts = settings.SavedLayouts ?? [],
+        AccountLayouts = settings.AccountLayouts
+            ?? new Dictionary<string, Presentation.Widget.WidgetLayout>(),
+        CustomAccountOrder = settings.CustomAccountOrder ?? [],
+        CollapsedAccounts = settings.CollapsedAccounts ?? [],
+        CollapsedSettingsSections = settings.CollapsedSettingsSections ?? [],
+        HiddenAccounts = settings.HiddenAccounts ?? [],
+        PlanPriceOverrides = settings.PlanPriceOverrides ?? new Dictionary<string, decimal>(),
+        AccountNicknames = settings.AccountNicknames ?? new Dictionary<string, string>(),
+        ChosenDisplays = settings.ChosenDisplays ?? [],
+        ExtraConfigDirectories = settings.ExtraConfigDirectories ?? [],
+        LimitsOffAccounts = settings.LimitsOffAccounts ?? [],
+        LimitsAskedAccounts = settings.LimitsAskedAccounts ?? [],
+        Language = settings.Language ?? Localization.Texts.FollowSystem,
+        Currency = settings.Currency ?? Currency.CurrencyCodes.Dollar,
+    };
 
     /// <summary>
     /// Two processes share this file, so a read can land in the middle of the other one's
@@ -57,7 +81,8 @@ public sealed class SettingsStore(string path)
             {
                 return File.ReadAllText(Path);
             }
-            catch (IOException) when (attempt < ReadAttempts)
+            catch (Exception exception) when (exception is IOException
+                or UnauthorizedAccessException && attempt < ReadAttempts)
             {
                 Thread.Sleep(ReadRetryDelay);
             }
@@ -72,9 +97,35 @@ public sealed class SettingsStore(string path)
             Directory.CreateDirectory(directory);
         }
 
-        var temporaryPath = Path + TemporarySuffix;
-        File.WriteAllText(temporaryPath, JsonSerializer.Serialize(settings, SerializerOptions));
-        File.Move(temporaryPath, Path, overwrite: true);
+        // Each writer has its own temporary file, so the two processes never write into the
+        // same one; a replace that meets the other process reading is tried again, and one
+        // that still fails is dropped rather than taking the caller down.
+        var temporaryPath = $"{Path}.{Environment.ProcessId}.{Guid.NewGuid():N}{TemporarySuffix}";
+        var json = JsonSerializer.Serialize(settings, SerializerOptions);
+        for (var attempt = 1; attempt <= ReadAttempts; attempt++)
+        {
+            try
+            {
+                File.WriteAllText(temporaryPath, json);
+                File.Move(temporaryPath, Path, overwrite: true);
+                return;
+            }
+            catch (Exception exception) when (exception is IOException
+                or UnauthorizedAccessException)
+            {
+                Thread.Sleep(ReadRetryDelay);
+            }
+        }
+
+        try
+        {
+            File.Delete(temporaryPath);
+        }
+        catch (Exception exception) when (exception is IOException
+            or UnauthorizedAccessException)
+        {
+            // Left for the next start to overwrite; it is never read.
+        }
     }
 
     public HakariSettings Update(Func<HakariSettings, HakariSettings> change)

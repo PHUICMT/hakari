@@ -53,16 +53,36 @@ internal sealed class PageLoader<T>(
             SurfaceMotion.Settle(body, "Opacity", LoadingOpacity);
         }
 
-        var data = await Task.Run(() => read(filter));
-
-        // A newer request started while this one read; its result wins.
-        if (mine != generation)
+        UIElement view;
+        try
         {
+            var data = await Task.Run(() => read(filter));
+
+            // A newer request started while this one read; its result wins.
+            if (mine != generation)
+            {
+                return;
+            }
+
+            var quiet = !firstRead && !asked;
+            view = quiet ? ChartEntrance.Quietly(() => build(data)) : build(data);
+        }
+        catch (Exception exception)
+        {
+            // A page that cannot be read or drawn says so; the window and the other pages
+            // carry on.
+            CrashLog.Write(exception, "page load");
+            body.Opacity = 1;
+            body.Content = new TextBlock
+            {
+                Text = Hakari.Core.Localization.Texts.Get("dashboard.pageFailed"),
+                Foreground = DashboardCard.Brush("HakariInkFaintBrush"),
+                TextWrapping = TextWrapping.Wrap,
+                Margin = new Thickness(4, 12, 4, 12),
+            };
             return;
         }
 
-        var quiet = !firstRead && !asked;
-        var view = quiet ? ChartEntrance.Quietly(() => build(data)) : build(data);
         body.Content = view;
         if (firstRead)
         {

@@ -306,7 +306,9 @@ public sealed class TaskbarWidgetHost : IDisposable
             widget.Present(bitmap, taskbar.Dpi);
             Diagnostics.Renders++;
         }
-        catch (System.Runtime.InteropServices.ExternalException)
+        catch (Exception exception) when (
+            exception is System.Runtime.InteropServices.ExternalException
+                or ArgumentException or OutOfMemoryException or InvalidOperationException)
         {
             Diagnostics.SkippedFrames++;
         }
@@ -360,7 +362,15 @@ public sealed class TaskbarWidgetHost : IDisposable
     {
         while (TakePendingAction() is { } action)
         {
-            action();
+            // One failing action never stops the ones queued after it.
+            try
+            {
+                action();
+            }
+            catch (Exception exception)
+            {
+                Faulted?.Invoke(exception);
+            }
         }
     }
 
@@ -460,7 +470,31 @@ public sealed class TaskbarWidgetHost : IDisposable
     private void ScheduleThemeRecheck() =>
         User32.SetTimer(hostHandle, ThemeSettleTimerId, ThemeSettleDelay, IntPtr.Zero);
 
+    /// <summary>Anything that goes wrong in here is told, never thrown into Windows.</summary>
+    public event Action<Exception>? Faulted;
+
+    /// <summary>
+    /// Called by Windows: an exception that escaped would end Hakari, so each message is
+    /// handled on its own and a failure is reported and skipped.
+    /// </summary>
     private IntPtr HandleMessage(
+        IntPtr windowHandle,
+        uint message,
+        IntPtr wordParameter,
+        IntPtr longParameter)
+    {
+        try
+        {
+            return Dispatch(windowHandle, message, wordParameter, longParameter);
+        }
+        catch (Exception exception)
+        {
+            Faulted?.Invoke(exception);
+            return IntPtr.Zero;
+        }
+    }
+
+    private IntPtr Dispatch(
         IntPtr windowHandle,
         uint message,
         IntPtr wordParameter,

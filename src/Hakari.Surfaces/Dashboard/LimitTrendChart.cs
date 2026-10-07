@@ -59,7 +59,18 @@ internal sealed partial class LimitTrendChart : Grid
         SetRow(ends, 1);
         Children.Add(ends);
 
-        plot.SizeChanged += (_, _) => Redraw();
+        // Redrawn after layout, not inside it, and only when the width really changed: a
+        // redraw from within the size pass can start a layout cycle that Windows ends hard.
+        plot.SizeChanged += (_, args) =>
+        {
+            if (Math.Abs(args.NewSize.Width - drawnWidth) < 1)
+            {
+                return;
+            }
+
+            drawnWidth = args.NewSize.Width;
+            DispatcherQueue.TryEnqueue(Redraw);
+        };
         plot.PointerMoved += (_, args) => Hover(args.GetCurrentPoint(plot).Position);
         plot.PointerExited += (_, _) =>
         {
@@ -103,8 +114,15 @@ internal sealed partial class LimitTrendChart : Grid
         HorizontalAlignment = alignment,
     };
 
+    private double drawnWidth = -1;
+
     private void Redraw()
     {
+        if (plot.XamlRoot is null)
+        {
+            return;
+        }
+
         plot.Children.Clear();
         foreach (var step in AxisSteps)
         {

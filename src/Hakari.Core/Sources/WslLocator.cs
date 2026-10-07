@@ -87,13 +87,30 @@ public static class WslLocator
             return [];
         }
 
-        var output = process.StandardOutput.ReadToEnd();
-        if (!process.WaitForExit(ListRunningTimeout) || process.ExitCode != 0)
+        // Read while waiting, so a wsl.exe that hangs is given up on after the timeout rather
+        // than holding the caller forever.
+        var reading = process.StandardOutput.ReadToEndAsync();
+        if (!process.WaitForExit(ListRunningTimeout))
+        {
+            try
+            {
+                process.Kill();
+            }
+            catch (Exception exception) when (exception is InvalidOperationException
+                or Win32Exception)
+            {
+                // It ended on its own in the meantime.
+            }
+
+            return [];
+        }
+
+        if (process.ExitCode != 0 || !reading.Wait(ListRunningTimeout))
         {
             return [];
         }
 
-        return output.Split(OutputSeparators, OutputSplitOptions).ToList();
+        return reading.Result.Split(OutputSeparators, OutputSplitOptions).ToList();
     }
 
     public static IReadOnlyList<string> FindDistributions()

@@ -21,7 +21,8 @@ public static class UsageLineParser
             using var document = JsonDocument.Parse(line.ToArray());
             return ReadRecord(document.RootElement);
         }
-        catch (JsonException)
+        catch (Exception exception) when (exception is JsonException
+            or InvalidOperationException or FormatException)
         {
             return null;
         }

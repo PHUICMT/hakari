@@ -92,13 +92,18 @@ public sealed class UsageLimitClient(HttpClient httpClient, TimeProvider timePro
             return null;
         }
 
-        var lifetime = TimeSpan.FromSeconds(root.GetInt64OrZero(ExpiresInProperty));
+        var lifetime = TimeSpan.FromSeconds(
+            Math.Clamp(root.GetInt64OrZero(ExpiresInProperty), 0, MaximumLifetimeSeconds));
         return new TokenGrant(
             AccessToken: accessToken,
             RefreshToken: root.GetStringOrNull(RefreshTokenProperty),
             ExpiresAt: timeProvider.GetUtcNow() + lifetime);
     }
 
+    private const long MaximumLifetimeSeconds = 365L * 24 * 60 * 60;
+
+    /// <summary>Anything the service or the network can send back, odd shapes included.</summary>
     private static bool IsNetworkProblem(Exception exception) =>
-        exception is HttpRequestException or TaskCanceledException or JsonException;
+        exception is HttpRequestException or TaskCanceledException or JsonException
+            or InvalidOperationException or FormatException or OverflowException;
 }
