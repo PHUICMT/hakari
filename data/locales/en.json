@@ -509,5 +509,7 @@
   "settings.accounts.limits": "Limits",
   "settings.accounts.limits.description": "Read this account's sign-in to ask for its limits; off uses the last known or an estimate",
   "settings.accounts.showShort": "Show",
-  "onboarding.showLimits": "Show usage limits for this account"
+  "onboarding.showLimits": "Show usage limits for this account",
+  "flyout.notice.wslStopped": "{0} isn't running",
+  "flyout.notice.wslStoppedDetail": "Its usage will appear the next time you start it. Hakari doesn't start WSL on its own."
 }

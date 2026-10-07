@@ -509,5 +509,7 @@
   "settings.accounts.limits": "Limit",
   "settings.accounts.limits.description": "อ่าน token ลงชื่อเข้าใช้ของบัญชีนี้เพื่อถาม limit ปิดแล้วจะใช้ค่าล่าสุดที่รู้หรือค่าประมาณแทน",
   "settings.accounts.showShort": "แสดง",
-  "onboarding.showLimits": "แสดง limit ของบัญชีนี้"
+  "onboarding.showLimits": "แสดง limit ของบัญชีนี้",
+  "flyout.notice.wslStopped": "{0} ไม่ได้รันอยู่",
+  "flyout.notice.wslStoppedDetail": "การใช้งานในนั้นจะขึ้นเมื่อเปิดครั้งหน้า Hakari ไม่เปิด WSL ให้เอง"
 }

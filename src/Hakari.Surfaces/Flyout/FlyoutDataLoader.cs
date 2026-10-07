@@ -9,6 +9,7 @@ using Hakari.Core.Presentation;
 using Hakari.Core.Pricing;
 using Hakari.Core.Querying;
 using Hakari.Core.Settings;
+using Hakari.Core.Sources;
 
 namespace Hakari.Surfaces.Flyout;
 
@@ -62,6 +63,7 @@ internal static class FlyoutDataLoader
                 .. Unpriced(query),
                 .. FirstRead(query),
                 .. LimitsQuestions(store, settings),
+                .. StoppedDistributions(store, settings),
             ]);
     }
 
@@ -147,6 +149,36 @@ internal static class FlyoutDataLoader
                 Texts.Get("flyout.notice.turnOn"),
                 account.AccountId,
                 Texts.Get("flyout.notice.useEstimate"));
+        }
+    }
+
+    private const string WslPrefix = "wsl:";
+
+    /// <summary>
+    /// A WSL distribution with usage before that is not running now: its new usage shows up
+    /// the next time it runs, since Hakari never starts WSL itself.
+    /// </summary>
+    private static IEnumerable<FlyoutNotice> StoppedDistributions(
+        IndexStore store,
+        HakariSettings settings)
+    {
+        if (settings.WslMode != WslScanMode.RunningOnly
+            || CurrentSources.Load(store) is not { } current)
+        {
+            yield break;
+        }
+
+        foreach (var activity in SourceActivity.Load(store))
+        {
+            if (activity.SourceId.StartsWith(WslPrefix, StringComparison.OrdinalIgnoreCase)
+                && !current.Contains(activity.SourceId))
+            {
+                yield return new FlyoutNotice(
+                    Tone.Warning,
+                    Texts.Format(
+                        "flyout.notice.wslStopped", SourceNames.Display(activity.SourceId)),
+                    Texts.Get("flyout.notice.wslStoppedDetail"));
+            }
         }
     }
 

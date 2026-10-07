@@ -161,6 +161,7 @@ internal sealed class UsageFeed : IDisposable
             settings.WslMode,
             settings.ExtraConfigDirectories);
         var sources = SourceDiscovery.Discover(discoveryOptions);
+        CurrentSources.Save(store, sources);
         var converter = CreateConverter(store, pricing, settings);
         var query = new UsageQuery(store, pricing, converter);
         Func<decimal, decimal> fromDollars = dollars => converter is null
