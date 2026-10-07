@@ -6,7 +6,10 @@ internal static class UsageFilterSql
 {
     private const string SourceParameterPrefix = "$source";
 
-    public static string BuildWhereClause(UsageFilter filter, SqliteCommand command)
+    public static string BuildWhereClause(
+        UsageFilter filter,
+        SqliteCommand command,
+        string projectSql = GroupByExpressions.Project)
     {
         var conditions = new List<string>();
 
@@ -31,7 +34,7 @@ internal static class UsageFilterSql
         if (filter.Project is { } project)
         {
             // Matched as grouped, so a key from a project summary finds its own rows.
-            conditions.Add($"{GroupByExpressions.Project} = $project");
+            conditions.Add($"{projectSql} = $project");
             command.Parameters.AddWithValue("$project", project);
         }
 

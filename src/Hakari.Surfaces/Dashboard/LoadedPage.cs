@@ -31,6 +31,9 @@ internal abstract partial class LoadedPage<T> : UserControl
         Loaded += (_, _) => loader.Load();
     }
 
+    /// <summary>Reads again at once, such as after a change the page itself made.</summary>
+    protected void Reload() => loader.Load(force: true);
+
     /// <summary>Runs off the UI thread.</summary>
     protected abstract T Read(DashboardFilter filter);
 

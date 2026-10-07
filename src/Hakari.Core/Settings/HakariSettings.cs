@@ -63,6 +63,13 @@ public sealed record HakariSettings
     public IReadOnlyDictionary<string, decimal> PlanPriceOverrides { get; init; } =
         new Dictionary<string, decimal>();
 
+    /// <summary>
+    /// Project folders joined into another, such as a project moved or copied: each joined
+    /// path keyed to the path it is counted under. Only the dashboard reads it.
+    /// </summary>
+    public IReadOnlyDictionary<string, string> ProjectMerges { get; init; } =
+        new Dictionary<string, string>();
+
     /// <summary>Names the user gave accounts, keyed by account id.</summary>
     public IReadOnlyDictionary<string, string> AccountNicknames { get; init; } =
         new Dictionary<string, string>();

@@ -14,20 +14,21 @@ internal static class GroupByExpressions
 
     private const string Separator = "char(31)";
 
-    public static string For(GroupBy groupBy) => groupBy switch
+    /// <param name="project">The project expression, such as one with joins applied.</param>
+    public static string For(GroupBy groupBy, string project = Project) => groupBy switch
     {
         GroupBy.None => "''",
         GroupBy.Model => "model",
         GroupBy.Source => "source_id",
         GroupBy.Day => $"date({LocalSeconds})",
         GroupBy.Hour => $"strftime('%Y-%m-%d %H:00', {LocalSeconds})",
-        GroupBy.Project => Project,
+        GroupBy.Project => project,
         GroupBy.Session => "session_id",
         GroupBy.Branch => "coalesce(git_branch, '')",
         GroupBy.Account => AccountSql.AccountOfRecord,
-        GroupBy.ProjectBranch => $"{Project} || {Separator} || coalesce(git_branch, '')",
+        GroupBy.ProjectBranch => $"{project} || {Separator} || coalesce(git_branch, '')",
         GroupBy.WeekdayHour => $"strftime('%w %H', {LocalSeconds})",
-        GroupBy.ProjectSession => $"{Project} || {Separator} || session_id",
+        GroupBy.ProjectSession => $"{project} || {Separator} || session_id",
         _ => throw new ArgumentOutOfRangeException(nameof(groupBy), groupBy, null),
     };
 }

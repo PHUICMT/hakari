@@ -29,7 +29,8 @@ internal static class DashboardData
             var query = new UsageQuery(
                 store,
                 PricingSources.LoadCurrent(),
-                FlyoutDataLoader.StoredConverter(store, settings));
+                FlyoutDataLoader.StoredConverter(store, settings),
+                new ProjectMerges(settings.ProjectMerges));
             return read(query, store);
         }
         catch (Exception exception) when (exception is SqliteException or IOException)

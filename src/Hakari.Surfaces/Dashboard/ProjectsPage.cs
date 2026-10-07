@@ -2,12 +2,13 @@ using System.Globalization;
 using Hakari.Core.Localization;
 using Hakari.Core.Presentation;
 using Hakari.Core.Querying;
+using Hakari.Core.Settings;
 using Microsoft.UI.Xaml;
 
 namespace Hakari.Surfaces.Dashboard;
 
-/// <summary>One project: its usage and how many sessions it had.</summary>
-internal sealed record ProjectRow(UsageSummary Usage, int Sessions);
+/// <summary>One project: its usage, how many sessions it had, and folders joined into it.</summary>
+internal sealed record ProjectRow(UsageSummary Usage, int Sessions, int Joined);
 
 internal sealed record ProjectRows(IReadOnlyList<ProjectRow> Rows, string Currency);
 
@@ -31,6 +32,7 @@ internal sealed partial class ProjectsPage : LoadedPage<ProjectRows>
         (query, _) =>
         {
             var usage = filter.ToUsageFilter(DateTimeOffset.Now);
+            var merges = new ProjectMerges(SettingsStore.Default.Load().ProjectMerges);
             var sessions = query.Summarize(usage, GroupBy.ProjectSession)
                 .GroupBy(session => GroupKeys.Split(session.Key).Project)
                 .ToDictionary(group => group.Key, group => group.Count());
@@ -38,7 +40,9 @@ internal sealed partial class ProjectsPage : LoadedPage<ProjectRows>
                 [
                     .. query.Summarize(usage, GroupBy.Project).Take(MostRows)
                         .Select(project => new ProjectRow(
-                            project, sessions.GetValueOrDefault(project.Key))),
+                            project,
+                            sessions.GetValueOrDefault(project.Key),
+                            merges.JoinedInto(project.Key).Count)),
                 ],
                 query.Currency);
         },
@@ -60,6 +64,11 @@ internal sealed partial class ProjectsPage : LoadedPage<ProjectRows>
         var rows = data.Rows.Select(row =>
         {
             var (title, detail) = RowNames.Project(row.Usage.Key);
+            if (row.Joined > 0)
+            {
+                detail += " · " + Texts.Format("dashboard.merge.count", row.Joined);
+            }
+
             return (IReadOnlyList<object>)
             [
                 TableCells.TwoLines(title, detail),
@@ -69,17 +78,21 @@ internal sealed partial class ProjectsPage : LoadedPage<ProjectRows>
                 MoneyText.Format(row.Usage.Cost, data.Currency),
             ];
         });
+        var table = SimpleTable.CreateSortable(columns, [.. rows], [.. data.Rows.Select(row =>
+            (IReadOnlyList<IComparable?>)
+            [
+                RowNames.Project(row.Usage.Key).Title,
+                row.Sessions,
+                row.Usage.Messages,
+                row.Usage.Tokens.CacheHitRate,
+                row.Usage.Cost,
+            ])]);
+        var keys = data.Rows.Select(row => row.Usage.Key).ToList();
+        TableCells.MakeRowsOpen(table, (index, row) =>
+            ProjectMergeMenu.Show(row, keys[index], keys, Reload));
         return DashboardCard.Create(
             Texts.Get("dashboard.projects"),
             Texts.Get("dashboard.projects.caption"),
-            SimpleTable.CreateSortable(columns, [.. rows], [.. data.Rows.Select(row =>
-                (IReadOnlyList<IComparable?>)
-                [
-                    RowNames.Project(row.Usage.Key).Title,
-                    row.Sessions,
-                    row.Usage.Messages,
-                    row.Usage.Tokens.CacheHitRate,
-                    row.Usage.Cost,
-                ])]));
+            table);
     }
 }

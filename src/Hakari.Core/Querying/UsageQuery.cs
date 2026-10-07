@@ -7,11 +7,16 @@ using Microsoft.Data.Sqlite;
 namespace Hakari.Core.Querying;
 
 /// <param name="converter">Converts dollar costs per usage day; null keeps US dollars.</param>
+/// <param name="merges">Project folders the user joined into others.</param>
 public sealed class UsageQuery(
     IndexStore store,
     PricingTable pricing,
-    CurrencyConverter? converter = null)
+    CurrencyConverter? converter = null,
+    ProjectMerges? merges = null)
 {
+    private readonly string project =
+        (merges ?? ProjectMerges.None).Apply(GroupByExpressions.Project);
+
     private const long MillisecondsPerDay = 86_400_000;
     private const decimal TokensPerPriceUnit = 1_000_000m;
 
@@ -42,8 +47,8 @@ public sealed class UsageQuery(
     public IReadOnlyDictionary<string, TimeSpan> ActiveTime(UsageFilter filter)
     {
         using var command = store.Connection.CreateCommand();
-        var whereClause = UsageFilterSql.BuildWhereClause(filter, command);
-        var key = GroupByExpressions.For(GroupBy.ProjectSession);
+        var whereClause = UsageFilterSql.BuildWhereClause(filter, command, project);
+        var key = GroupByExpressions.For(GroupBy.ProjectSession, project);
         command.CommandText = $"""
             SELECT session_key, sum(CASE WHEN gap <= $idle THEN gap ELSE 0 END)
             FROM (
@@ -77,8 +82,10 @@ public sealed class UsageQuery(
     public IReadOnlyList<UsageSummary> Summarize(UsageFilter filter, GroupBy groupBy)
     {
         using var command = store.Connection.CreateCommand();
-        var whereClause = UsageFilterSql.BuildWhereClause(filter, command);
-        command.CommandText = BuildSummarySql(GroupByExpressions.For(groupBy), whereClause);
+        var whereClause = UsageFilterSql.BuildWhereClause(filter, command, project);
+        command.CommandText = BuildSummarySql(
+            GroupByExpressions.For(groupBy, project),
+            whereClause);
 
         var summariesByKey = new Dictionary<string, UsageSummary>();
         using var reader = command.ExecuteReader();
@@ -113,8 +120,10 @@ public sealed class UsageQuery(
     public decimal CacheSavings(UsageFilter filter)
     {
         using var command = store.Connection.CreateCommand();
-        var whereClause = UsageFilterSql.BuildWhereClause(filter, command);
-        command.CommandText = BuildSummarySql(GroupByExpressions.For(GroupBy.None), whereClause);
+        var whereClause = UsageFilterSql.BuildWhereClause(filter, command, project);
+        command.CommandText = BuildSummarySql(
+            GroupByExpressions.For(GroupBy.None, project),
+            whereClause);
 
         var saved = 0m;
         using var reader = command.ExecuteReader();
@@ -141,7 +150,7 @@ public sealed class UsageQuery(
     public double? ThinkingShare(UsageFilter filter)
     {
         using var command = store.Connection.CreateCommand();
-        var whereClause = UsageFilterSql.BuildWhereClause(filter, command);
+        var whereClause = UsageFilterSql.BuildWhereClause(filter, command, project);
         command.CommandText = $"""
             SELECT COUNT(*),
                    SUM(CASE WHEN deduplication_key IN

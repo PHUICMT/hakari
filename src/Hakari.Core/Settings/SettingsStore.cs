@@ -61,6 +61,7 @@ public sealed class SettingsStore(string path)
         HiddenAccounts = settings.HiddenAccounts ?? [],
         PlanPriceOverrides = settings.PlanPriceOverrides ?? new Dictionary<string, decimal>(),
         AccountNicknames = settings.AccountNicknames ?? new Dictionary<string, string>(),
+        ProjectMerges = settings.ProjectMerges ?? new Dictionary<string, string>(),
         ChosenDisplays = settings.ChosenDisplays ?? [],
         ExtraConfigDirectories = settings.ExtraConfigDirectories ?? [],
         LimitsOffAccounts = settings.LimitsOffAccounts ?? [],

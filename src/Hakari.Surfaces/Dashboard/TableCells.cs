@@ -72,7 +72,11 @@ internal static class TableCells
     }
 
     /// <summary>The rows below the header light up under the pointer and open.</summary>
-    public static void MakeRowsOpen(Panel table, Action<int> open)
+    public static void MakeRowsOpen(Panel table, Action<int> open) =>
+        MakeRowsOpen(table, (index, _) => open(index));
+
+    /// <summary>As above, also handing over the clicked row, to show a menu at.</summary>
+    public static void MakeRowsOpen(Panel table, Action<int, FrameworkElement> open)
     {
         for (var index = 1; index < table.Children.Count; index++)
         {
@@ -88,7 +92,7 @@ internal static class TableCells
                 row.Background = DashboardCard.Brush("HakariHoverBrush");
             row.PointerExited += (_, _) =>
                 row.Background = new SolidColorBrush(Microsoft.UI.Colors.Transparent);
-            row.Tapped += (_, _) => open(position);
+            row.Tapped += (_, _) => open(position, row);
             Hakari.Surfaces.Controls.HandCursor.Apply(row);
         }
     }
