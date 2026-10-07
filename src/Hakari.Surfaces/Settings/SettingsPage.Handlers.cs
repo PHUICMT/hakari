@@ -240,10 +240,9 @@ public sealed partial class SettingsPage
 
     private void OnStartupClicked(object sender, RoutedEventArgs args)
     {
-        if (ResidentLocation.Read() is { } resident)
-        {
-            StartupRegistration.Set(resident, StartupToggle.IsChecked == true);
-        }
+        Hakari.Shared.StartWithWindows.Set(
+            ResidentLocation.Read(),
+            StartupToggle.IsChecked == true);
     }
 
     private void OnMotionChecked(object sender, RoutedEventArgs args)

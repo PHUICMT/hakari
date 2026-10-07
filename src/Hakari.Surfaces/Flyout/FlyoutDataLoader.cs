@@ -172,6 +172,7 @@ internal static class FlyoutDataLoader
     {
         var current = typeof(FlyoutDataLoader).Assembly.GetName().Version;
         if (!settings.CheckForUpdates
+            || Hakari.Core.Startup.PackageIdentity.IsPackaged
             || current is null
             || Hakari.Core.Updates.UpdateCheck.NewerThan(current) is not { } update)
         {

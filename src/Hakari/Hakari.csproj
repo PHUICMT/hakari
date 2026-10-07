@@ -22,4 +22,8 @@
     <None Include="..\..\data\pricing.json" Link="pricing.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Include="..\Shared\StartWithWindows.cs" Link="Shared\StartWithWindows.cs" />
+  </ItemGroup>
+
 </Project>

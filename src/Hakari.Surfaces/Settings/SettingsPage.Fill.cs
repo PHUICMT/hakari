@@ -168,6 +168,11 @@ public sealed partial class SettingsPage
         TitlesToggle.IsChecked = settings.ShowSessionTitles;
         ThinkingToggle.IsChecked = settings.CountThinking;
         UpdatesToggle.IsChecked = settings.CheckForUpdates;
+
+        // The Store keeps its copies up to date on its own.
+        UpdatesRow.Visibility = PackageIdentity.IsPackaged
+            ? Visibility.Collapsed
+            : Visibility.Visible;
     }
 
     /// <summary>
@@ -345,10 +350,10 @@ public sealed partial class SettingsPage
     private void FillStartup()
     {
         var resident = ResidentLocation.Read();
-        StartupToggle.IsEnabled = resident is not null;
-        StartupToggle.IsChecked = resident is not null
-            && StartupRegistration.IsRegistered(resident);
-        StartupRow.Description = resident is null ? Texts.Get("settings.startup.unavailable") : "";
+        var canChange = Hakari.Shared.StartWithWindows.CanChange(resident);
+        StartupToggle.IsEnabled = canChange;
+        StartupToggle.IsChecked = Hakari.Shared.StartWithWindows.IsOn(resident);
+        StartupRow.Description = canChange ? "" : Texts.Get("settings.startup.unavailable");
     }
 
     private void BuildCurrencyChoices()

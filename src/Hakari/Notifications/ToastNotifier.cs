@@ -31,9 +31,18 @@ internal static class ToastNotifier
 
     private static bool registered;
 
-    /// <summary>Writes the identity and the link scheme; cheap and safe to repeat.</summary>
+    /// <summary>
+    /// Writes the identity and the link scheme; cheap and safe to repeat. A packaged copy has
+    /// both from its manifest, so nothing is written.
+    /// </summary>
     public static void Register()
     {
+        if (Hakari.Core.Startup.PackageIdentity.IsPackaged)
+        {
+            registered = true;
+            return;
+        }
+
         if (Environment.ProcessPath is not { } executable)
         {
             return;
@@ -83,8 +92,10 @@ internal static class ToastNotifier
         {
             var document = new XmlDocument();
             document.LoadXml(Xml(message));
-            ToastNotificationManager.CreateToastNotifier(AppId).Show(
-                new ToastNotification(document));
+            var notifier = Hakari.Core.Startup.PackageIdentity.IsPackaged
+                ? ToastNotificationManager.CreateToastNotifier()
+                : ToastNotificationManager.CreateToastNotifier(AppId);
+            notifier.Show(new ToastNotification(document));
             return true;
         }
         catch (Exception exception) when (exception is ArgumentException

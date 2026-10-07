@@ -9,6 +9,7 @@ using Hakari.Core.Pricing;
 using Hakari.Core.Querying;
 using Hakari.Core.Settings;
 using Hakari.Core.Sources;
+using Hakari.Core.Startup;
 using Hakari.Core.Updates;
 using Hakari.Core.Watching;
 using Hakari.Taskbar.Rendering;
@@ -246,7 +247,8 @@ internal sealed class UsageFeed : IDisposable
                 limits.PollSoon();
             }
 
-            if (settings.CheckForUpdates && now >= nextUpdateCheck)
+            if (settings.CheckForUpdates && !PackageIdentity.IsPackaged
+                && now >= nextUpdateCheck)
             {
                 nextUpdateCheck = now + UpdateCheckInterval;
                 StartUpdateCheck(now);

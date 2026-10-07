@@ -49,10 +49,10 @@ internal sealed class ResidentMenu(
         {
             Displays = onEveryDisplay ? TaskbarDisplays.Primary : TaskbarDisplays.All,
         }), onEveryDisplay));
-        var startsWithWindows = StartupRegistration.IsRegistered(ExecutablePath);
+        var startsWithWindows = Hakari.Shared.StartWithWindows.IsOn(ExecutablePath);
         items.Add(new(
             Texts.Get("menu.startup"),
-            () => StartupRegistration.Set(ExecutablePath, !startsWithWindows),
+            () => Hakari.Shared.StartWithWindows.Set(ExecutablePath, !startsWithWindows),
             startsWithWindows));
         items.Add(TrayMenuItem.Separator);
         items.Add(new(
