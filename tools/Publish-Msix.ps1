@@ -16,7 +16,10 @@
 .PARAMETER DisplayName
     The reserved Store name, matched exactly by the Store.
 .PARAMETER Architecture
-    x64 or arm64. Upload one package per architecture to the same submission.
+    x64 or arm64. tools/Publish-StoreUpload.ps1 bundles both for the Store.
+.PARAMETER PortableFolder
+    An already published portable folder (from Publish-Release.ps1) to package instead of
+    publishing again; it is copied, so the folder itself is left as it was.
 #>
 param(
     [string]$Version = "0.9.1",
@@ -28,7 +31,8 @@ param(
     [string]$CertificatePassword = "",
     [string]$Output = "artifacts/msix",
     [ValidateSet("x64", "arm64")]
-    [string]$Architecture = "x64"
+    [string]$Architecture = "x64",
+    [string]$PortableFolder = ""
 )
 
 $ErrorActionPreference = "Stop"
@@ -38,9 +42,17 @@ $makeAppx = Get-ChildItem $kits -Recurse -Filter makeappx.exe |
     Where-Object FullName -like "*\x64\*" | Sort-Object FullName | Select-Object -Last 1
 if (-not $makeAppx) { throw "makeappx.exe not found; install the Windows SDK." }
 
-& (Join-Path $PSScriptRoot "Publish-Release.ps1") -Version $Version -Output "$Output/portable" `
-    -Architecture $Architecture | Out-Null
-$staging = Join-Path $root "$Output/portable/$Architecture/Hakari"
+if ($PortableFolder) {
+    $staging = Join-Path $root "$Output/staging/$Architecture/Hakari"
+    if (Test-Path $staging) { Remove-Item $staging -Recurse -Force }
+    New-Item -ItemType Directory -Force (Split-Path $staging) | Out-Null
+    Copy-Item $PortableFolder $staging -Recurse
+}
+else {
+    & (Join-Path $PSScriptRoot "Publish-Release.ps1") -Version $Version -Output "$Output/portable" `
+        -Architecture $Architecture | Out-Null
+    $staging = Join-Path $root "$Output/portable/$Architecture/Hakari"
+}
 
 & (Join-Path $PSScriptRoot "New-PackageAssets.ps1") -OutputDirectory (Join-Path $staging "Assets") | Out-Null
 $manifest = Get-Content (Join-Path $root "packaging/msix/AppxManifest.xml") -Raw
