@@ -43,7 +43,10 @@ public sealed partial class HakariSegmented : Grid
         indicator.RenderTransform = indicatorOffset;
         indicator.Background = (Brush)Application.Current.Resources["HakariAccentBrush"];
         Loaded += (_, _) => Adopt();
-        LayoutUpdated += (_, _) => SnapIfMoved();
+
+        // Only a choice changing size can move the indicator's place, so this listens to
+        // those rather than to every layout pass in the window.
+        choices.SizeChanged += (_, _) => SnapIfMoved();
     }
 
     /// <summary>Every choice, whether or not it has moved into the inner row yet.</summary>
@@ -62,6 +65,7 @@ public sealed partial class HakariSegmented : Grid
             Children.Remove(choice);
             choices.Children.Add(choice);
             choice.Checked += (_, _) => MoveIndicator(animate: true);
+            choice.SizeChanged += (_, _) => SnapIfMoved();
         }
 
         if (!Children.Contains(indicator))

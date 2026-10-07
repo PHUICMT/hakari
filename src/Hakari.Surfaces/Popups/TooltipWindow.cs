@@ -18,14 +18,36 @@ public sealed partial class TooltipWindow : PopupWindow
     private const double AccountSpacing = 10;
     private const string OpacityPath = "Opacity";
 
+    private int generation;
+
     public TooltipWindow()
         : base(MaximumWidth)
     {
     }
 
-    public void ShowAt(int anchorX, int anchorY)
+    /// <summary>
+    /// Reads off the UI thread, so a hover never stalls the app; a hide or a newer hover
+    /// while reading drops this one.
+    /// </summary>
+    public async void ShowAt(int anchorX, int anchorY)
     {
-        var accounts = TooltipDataLoader.Load();
+        var mine = ++generation;
+        IReadOnlyList<TooltipAccount> accounts;
+        try
+        {
+            accounts = await Task.Run(TooltipDataLoader.Load);
+        }
+        catch (Exception exception)
+        {
+            CrashLog.Write(exception, "hover card");
+            return;
+        }
+
+        if (mine != generation)
+        {
+            return;
+        }
+
         if (accounts.Count == 0)
         {
             HidePopup();
@@ -43,6 +65,8 @@ public sealed partial class TooltipWindow : PopupWindow
         ShowAbove(anchorX, anchorY, activate: false, Flyout.AnchorSide.Center);
         SurfaceMotion.Settle(stack, OpacityPath, 1);
     }
+
+    protected override void OnHiding() => generation++;
 
     private static StackPanel AccountBlock(TooltipAccount account)
     {

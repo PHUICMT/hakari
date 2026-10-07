@@ -276,6 +276,7 @@ internal sealed class OnboardingSteps(SettingsStore store)
         piece.RenderTransform = offset;
         track.Children.Add(piece);
         var storyboard = new Storyboard { RepeatBehavior = RepeatBehavior.Forever };
+        track.Unloaded += (_, _) => storyboard.Stop();
         track.SizeChanged += (_, args) =>
         {
             var width = args.NewSize.Width;

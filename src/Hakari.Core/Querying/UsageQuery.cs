@@ -31,6 +31,14 @@ public sealed class UsageQuery(
         return DateOnly.FromDateTime(firstUsage.UtcDateTime);
     }
 
+    /// <summary>Whether anything was indexed yet, without adding anything up.</summary>
+    public bool HasAny()
+    {
+        using var command = store.Connection.CreateCommand();
+        command.CommandText = "SELECT EXISTS (SELECT 1 FROM usage_records)";
+        return command.ExecuteScalar() is long found && found != 0;
+    }
+
     public IReadOnlyList<UsageSummary> Summarize(UsageFilter filter, GroupBy groupBy)
     {
         using var command = store.Connection.CreateCommand();

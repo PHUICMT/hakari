@@ -68,13 +68,29 @@ internal sealed partial class TableView : StackPanel
         WidthSteps.Watch(this, [CompactWidth, FullWidth], SetLevel);
     }
 
-    /// <summary>Rebuilds the visible rows for the new width; the list is unchanged.</summary>
+    /// <summary>
+    /// Rebuilds the visible rows for the new width; the list is unchanged. The first size
+    /// usually matches the rows already built, and a rebuild waits until layout is done.
+    /// </summary>
     private void SetLevel(int newLevel)
     {
+        if (newLevel == level)
+        {
+            return;
+        }
+
         level = newLevel;
-        ApplyColumns(header);
-        list.ItemsSource = null;
-        list.ItemsSource = items;
+        DispatcherQueue.TryEnqueue(() =>
+        {
+            if (level != newLevel)
+            {
+                return;
+            }
+
+            ApplyColumns(header);
+            list.ItemsSource = null;
+            list.ItemsSource = items;
+        });
     }
 
     private UIElement BuildRow(TableItem item)

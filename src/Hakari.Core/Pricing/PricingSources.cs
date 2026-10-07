@@ -22,8 +22,34 @@ public static class PricingSources
 
     public static string CustomPath => Path.Combine(HakariPaths.DataDirectory, CustomFileName);
 
-    /// <summary>The newer of the shipped and fetched tables, with the user's prices.</summary>
+    private static readonly Lock CacheLock = new();
+    private static (DateTime Version, PricingTable Table)? cached;
+
+    /// <summary>
+    /// The newer of the shipped and fetched tables, with the user's prices. Read from disk
+    /// only when one of those files changed; the table is shared and must not be changed.
+    /// </summary>
     public static PricingTable LoadCurrent()
+    {
+        var version = Version();
+        lock (CacheLock)
+        {
+            if (cached is { } hit && hit.Version == version)
+            {
+                return hit.Table;
+            }
+        }
+
+        var table = Read();
+        lock (CacheLock)
+        {
+            cached = (version, table);
+        }
+
+        return table;
+    }
+
+    private static PricingTable Read()
     {
         var table = Newest(Shipped(), TryLoad(DownloadedPath));
         if (TryLoad(CustomPath) is { Models: not null } custom)

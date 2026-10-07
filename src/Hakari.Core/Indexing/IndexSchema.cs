@@ -62,6 +62,9 @@ internal static class IndexSchema
         CREATE INDEX IF NOT EXISTS index_usage_source_timestamp
             ON usage_records (source_id, timestamp_ms);
 
+        CREATE INDEX IF NOT EXISTS index_usage_session
+            ON usage_records (session_id);
+
         CREATE TABLE IF NOT EXISTS session_titles (
             session_id TEXT PRIMARY KEY,
             title TEXT NOT NULL,

@@ -74,7 +74,13 @@ public abstract partial class PopupWindow : Window
     public void HidePopup()
     {
         IsShowing = false;
+        OnHiding();
         AppWindow.Hide();
+    }
+
+    /// <summary>Lets a popup drop work it started for showing.</summary>
+    protected virtual void OnHiding()
+    {
     }
 
     protected static Brush Brush(string key) => (Brush)Application.Current.Resources[key];

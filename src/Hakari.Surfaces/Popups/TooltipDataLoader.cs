@@ -119,9 +119,9 @@ internal static class TooltipDataLoader
                 "tooltip.pausedUntil", until.ToLocalTime().ToString("HH:mm", Texts.Culture));
         }
 
-        return query.Total(UsageFilter.Everything).Messages == 0
-            ? Texts.Get("flyout.notice.reading")
-            : null;
+        return query.HasAny()
+            ? null
+            : Texts.Get("flyout.notice.reading");
     }
 
     /// <summary>"Today ฿… · this month ฿…", then "Burn ฿…/h · 2 active sessions".</summary>

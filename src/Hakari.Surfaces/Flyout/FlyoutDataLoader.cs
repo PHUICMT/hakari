@@ -76,6 +76,8 @@ internal static class FlyoutDataLoader
         var newest = accounts.Count == 0
             ? null
             : accounts.MaxBy(account => account.Snapshot.FetchedAt).Snapshot;
+        // One pass over everything serves both the all-time tile and the per-source costs.
+        var bySource = query.Summarize(UsageFilter.Everything, GroupBy.Source);
         var anyLastKnown = accounts.Any(
             account => account.Snapshot.Freshness == LimitFreshness.LastKnown);
 
@@ -83,10 +85,10 @@ internal static class FlyoutDataLoader
             UpdatedText: accounts.Count > 1 ? string.Empty : UpdatedText(newest, now),
             AccountSummary: AccountSummary(accounts, settings),
             Accounts: [.. accounts.Select(account => Group(account, settings, query, now))],
-            Stats: StatTiles(query, now),
+            Stats: StatTiles(query, bySource.Sum(source => source.Cost), now),
             BurnRate: BurnRate(query, now),
             HourlyBurn: HourlyBurn(query, now),
-            Sources: SourceRows(store, query, now),
+            Sources: SourceRows(store, query, bySource, now),
             Notices:
             [
                 .. FullLimits(accounts, settings, now),
@@ -147,7 +149,7 @@ internal static class FlyoutDataLoader
     /// </summary>
     private static IEnumerable<FlyoutNotice> FirstRead(UsageQuery query)
     {
-        if (query.Total(UsageFilter.Everything).Messages == 0)
+        if (!query.HasAny())
         {
             yield return new FlyoutNotice(
                 Tone.Normal,
@@ -450,13 +452,15 @@ internal static class FlyoutDataLoader
             _ => Tone.Critical,
         };
 
-    private static List<StatTile> StatTiles(UsageQuery query, DateTimeOffset now)
+    private static List<StatTile> StatTiles(
+        UsageQuery query,
+        decimal allTimeCost,
+        DateTimeOffset now)
     {
         var currency = query.Currency;
         var today = query.Total(new UsageFilter(From: TimePeriods.StartOfToday(now)));
         var week = query.Total(new UsageFilter(From: TimePeriods.StartOfWeek(now)));
         var month = query.Total(new UsageFilter(From: TimePeriods.StartOfMonth(now)));
-        var allTime = query.Total(UsageFilter.Everything);
         return
         [
             new(Texts.Get("flyout.today"), MoneyText.Format(today.Cost, currency), Replies(today)),
@@ -467,7 +471,7 @@ internal static class FlyoutDataLoader
                 MonthDetail(month.Cost, currency, now)),
             new(
                 Texts.Get("flyout.allTime"),
-                MoneyText.Format(allTime.Cost, currency),
+                MoneyText.Format(allTimeCost, currency),
                 Since(query.FirstUsageDay())),
         ];
     }
@@ -507,10 +511,10 @@ internal static class FlyoutDataLoader
     private static List<SourceRow> SourceRows(
         IndexStore store,
         UsageQuery query,
+        IReadOnlyList<UsageSummary> bySource,
         DateTimeOffset now)
     {
-        var costs = query.Summarize(UsageFilter.Everything, GroupBy.Source)
-            .ToDictionary(source => source.Key, source => source.Cost);
+        var costs = bySource.ToDictionary(source => source.Key, source => source.Cost);
         return
         [
             .. SourceActivity.Load(store).Select(activity =>

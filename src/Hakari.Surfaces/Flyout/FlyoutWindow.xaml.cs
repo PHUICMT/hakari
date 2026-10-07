@@ -156,6 +156,7 @@ public sealed partial class FlyoutWindow : Window
         IsShowing = true;
         lastAnchor = (anchorX, anchorY, scale);
         pendingFit = (anchorX, anchorY, scale);
+        Root.LayoutUpdated -= FitAfterLayout;
         Root.LayoutUpdated += FitAfterLayout;
         Activate();
         NativeFocus.BringToFront(WinRT.Interop.WindowNative.GetWindowHandle(this));
