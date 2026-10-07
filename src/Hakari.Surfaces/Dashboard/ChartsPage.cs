@@ -39,6 +39,31 @@ internal sealed partial class ChartsPage : LoadedPage<ChartsData>
     }
 
     private const double TrendSpacing = 12;
+    private const string TrendFoldPrefix = "trend:";
+
+    private static Grid AccountHeader(string accountName, FrameworkElement chart)
+    {
+        var header = new Grid
+        {
+            ColumnSpacing = 4,
+            Background = new Microsoft.UI.Xaml.Media.SolidColorBrush(
+                Microsoft.UI.Colors.Transparent),
+        };
+        header.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        header.ColumnDefinitions.Add(new ColumnDefinition());
+        var name = new TextBlock
+        {
+            Text = accountName,
+            FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
+            Foreground = DashboardCard.Brush("HakariInkMutedBrush"),
+            TextTrimming = TextTrimming.CharacterEllipsis,
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+        Grid.SetColumn(name, 1);
+        header.Children.Add(name);
+        header.Children.Add(DashboardFold.Attach(header, chart, TrendFoldPrefix + accountName));
+        return header;
+    }
 
     private static Border TrendCard(ChartsData data)
     {
@@ -46,26 +71,23 @@ internal sealed partial class ChartsPage : LoadedPage<ChartsData>
         var trends = data.Trends ?? [];
         foreach (var trend in trends)
         {
-            // With several accounts each chart is named; one account is named in the caption.
+            var chart = ChartOrTable.Create(
+                new LimitTrendChart(trend), () => ChartOrTable.Readings(trend));
+
+            // With several accounts each chart is named and folds on its own; one account is
+            // named in the caption.
             if (trends.Count > 1)
             {
-                body.Children.Add(new TextBlock
-                {
-                    Text = trend.AccountName,
-                    FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
-                    Foreground = DashboardCard.Brush("HakariInkMutedBrush"),
-                    TextTrimming = TextTrimming.CharacterEllipsis,
-                });
+                body.Children.Add(AccountHeader(trend.AccountName, chart));
             }
 
-            body.Children.Add(ChartOrTable.Create(
-                new LimitTrendChart(trend), () => ChartOrTable.Readings(trend)));
+            body.Children.Add(chart);
         }
 
         if (trends.Count > 0)
         {
-            body.Children.Add(DashboardLegend.Create(
-                trends[0].Series.Select(series => (series.BrushKey, series.Name))));
+            body.Children.Add(DashboardLegend.CreateLines(trends[0].Series
+                .Select(series => (series.BrushKey, series.Name, series.IsDashed))));
         }
         else
         {

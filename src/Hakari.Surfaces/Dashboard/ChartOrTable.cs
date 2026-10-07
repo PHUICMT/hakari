@@ -41,7 +41,7 @@ internal static class ChartOrTable
         button.Click += (_, _) =>
         {
             showingTable = !showingTable;
-            built ??= table();
+            built ??= Scrolling(table());
             host.Content = showingTable ? built : chart;
             button.Content = Texts.Get(showingTable ? "dashboard.asChart" : "dashboard.asTable");
             if (SurfaceMotion.Current() != Core.Settings.AnimationSetting.Off)
@@ -55,6 +55,17 @@ internal static class ChartOrTable
         panel.Children.Add(button);
         return panel;
     }
+
+    private const double TableMostHeight = 320;
+
+    /// <summary>A long table scrolls within its own box instead of stretching the page.</summary>
+    private static ScrollViewer Scrolling(FrameworkElement table) => new()
+    {
+        Content = table,
+        MaxHeight = TableMostHeight,
+        VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+        HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled,
+    };
 
     /// <summary>One row per bar: its label and its cost.</summary>
     public static FrameworkElement Costs(

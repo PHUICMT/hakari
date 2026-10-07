@@ -58,6 +58,7 @@ public sealed class SettingsStore(string path)
         CustomAccountOrder = settings.CustomAccountOrder ?? [],
         CollapsedAccounts = settings.CollapsedAccounts ?? [],
         CollapsedSettingsSections = settings.CollapsedSettingsSections ?? [],
+        FoldedDashboardSections = settings.FoldedDashboardSections ?? [],
         HiddenAccounts = settings.HiddenAccounts ?? [],
         PlanPriceOverrides = settings.PlanPriceOverrides ?? new Dictionary<string, decimal>(),
         AccountNicknames = settings.AccountNicknames ?? new Dictionary<string, string>(),

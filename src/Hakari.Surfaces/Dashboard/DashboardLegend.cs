@@ -40,6 +40,42 @@ internal static class DashboardLegend
         return legend;
     }
 
+    private const double LineSampleWidth = 18;
+    private const double LineSampleThickness = 2;
+    private const double DashLength = 2;
+
+    /// <summary>
+    /// For line charts: each entry shows a short stretch of its line, solid or dashed as
+    /// drawn, so lines are told apart by more than color.
+    /// </summary>
+    public static VariableSizedWrapGrid CreateLines(
+        IEnumerable<(string BrushKey, string Text, bool IsDashed)> items)
+    {
+        var legend = Create(items.Select(item => (item.BrushKey, item.Text)));
+        foreach (var (item, entry) in legend.Children.OfType<Grid>().Zip(items))
+        {
+            var sample = new Microsoft.UI.Xaml.Shapes.Line
+            {
+                X2 = LineSampleWidth,
+                Stroke = DashboardCard.Brush(entry.BrushKey),
+                StrokeThickness = LineSampleThickness,
+                VerticalAlignment = VerticalAlignment.Center,
+            };
+            if (entry.IsDashed)
+            {
+                sample.StrokeDashArray = new Microsoft.UI.Xaml.Media.DoubleCollection
+                {
+                    DashLength,
+                    DashLength,
+                };
+            }
+
+            item.Children[0] = sample;
+        }
+
+        return legend;
+    }
+
     /// <summary>A grid, not a row, so a capped width cuts the text short.</summary>
     private static Grid Item(string brushKey, string text)
     {
