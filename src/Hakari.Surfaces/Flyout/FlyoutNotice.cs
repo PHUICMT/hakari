@@ -16,6 +16,13 @@ public enum NoticeAction
 
     /// <summary>Opens the newer release's download page.</summary>
     OpenUpdate,
+
+    /// <summary>Downloads the newer release and restarts into it; the second button opens
+    /// its notes.</summary>
+    UpdateNow,
+
+    /// <summary>"Got it" on the running version's changes; the second opens them all.</summary>
+    DismissWhatsNew,
 }
 
 /// <summary>

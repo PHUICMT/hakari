@@ -10,6 +10,8 @@ using Hakari.Core.Pricing;
 using Hakari.Core.Querying;
 using Hakari.Core.Settings;
 using Hakari.Core.Sources;
+using Hakari.Core.Updates;
+using Hakari.Core.Startup;
 
 namespace Hakari.Surfaces.Flyout;
 
@@ -100,6 +102,7 @@ internal static class FlyoutDataLoader
                 .. LimitsQuestions(store, settings),
                 .. StoppedDistributions(store, settings),
                 .. NewerVersion(settings),
+                .. WhatsNewSinceLast(settings),
             ]);
     }
 
@@ -179,14 +182,63 @@ internal static class FlyoutDataLoader
             yield break;
         }
 
+        var have = $"{current.Major}.{current.Minor}.{current.Build}";
+        yield return Updates.SelfUpdate.CanUpdateInPlace
+            ? new FlyoutNotice(
+                Tone.Normal,
+                Texts.Format("flyout.notice.update", update.Latest),
+                Texts.Format(
+                    InstallSource.Current == InstallKind.Winget
+                        ? "flyout.notice.updateWinget"
+                        : "flyout.notice.updateSelf",
+                    have),
+                NoticeAction.UpdateNow,
+                Texts.Get("flyout.notice.updateNow"),
+                AccountId: update.Latest,
+                SecondActionText: Texts.Get("flyout.notice.whatsNewAll"))
+            : new FlyoutNotice(
+                Tone.Normal,
+                Texts.Format("flyout.notice.update", update.Latest),
+                Texts.Format("flyout.notice.updateDetail", have),
+                NoticeAction.OpenUpdate,
+                Texts.Get("flyout.notice.updateAction"));
+    }
+
+    private const int WhatsNewShown = 3;
+    private const string WhatsNewSeparator = " · ";
+
+    /// <summary>
+    /// The running version's changes, once, on its first start after an update. A first
+    /// install only remembers the version and shows nothing.
+    /// </summary>
+    private static IEnumerable<FlyoutNotice> WhatsNewSinceLast(HakariSettings settings)
+    {
+        if (typeof(FlyoutDataLoader).Assembly.GetName().Version is not { } current)
+        {
+            yield break;
+        }
+
+        var version = WhatsNew.Text(current);
+        if (settings.LastSeenVersion.Length == 0)
+        {
+            SettingsStore.Default.Update(saved => saved with { LastSeenVersion = version });
+            yield break;
+        }
+
+        var changes = WhatsNew.Changes(AppContext.BaseDirectory);
+        if (!WhatsNew.IsNewSince(settings.LastSeenVersion, current) || changes.Count == 0)
+        {
+            yield break;
+        }
+
         yield return new FlyoutNotice(
             Tone.Normal,
-            Texts.Format("flyout.notice.update", update.Latest),
-            Texts.Format(
-                "flyout.notice.updateDetail",
-                $"{current.Major}.{current.Minor}.{current.Build}"),
-            NoticeAction.OpenUpdate,
-            Texts.Get("flyout.notice.updateAction"));
+            Texts.Format("flyout.notice.whatsNew", version),
+            string.Join(WhatsNewSeparator, changes.Take(WhatsNewShown)),
+            NoticeAction.DismissWhatsNew,
+            Texts.Get("flyout.notice.whatsNewOk"),
+            AccountId: version,
+            SecondActionText: Texts.Get("flyout.notice.whatsNewAll"));
     }
 
     /// <summary>

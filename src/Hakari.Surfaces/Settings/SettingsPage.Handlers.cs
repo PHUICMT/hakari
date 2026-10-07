@@ -1,3 +1,4 @@
+using Hakari.Core.Updates;
 using System.Diagnostics;
 using System.Globalization;
 using Hakari.Core.Configuration;
@@ -228,6 +229,67 @@ public sealed partial class SettingsPage
 
     private void OnUpdatesClicked(object sender, RoutedEventArgs args) =>
         Save(current => current with { CheckForUpdates = UpdatesToggle.IsChecked == true });
+
+    private const string StorePage = "ms-windows-store://pdp/?productid=9NFVF39T2447";
+    private string? updateReady;
+
+    /// <summary>
+    /// The Store copy opens its Store page, which updates it. Other copies ask GitHub now:
+    /// up to date says so on the button; a newer version turns the button into "update to",
+    /// which updates in place (or opens the download page where it cannot).
+    /// </summary>
+    private async void OnCheckUpdatesClicked(object sender, RoutedEventArgs args)
+    {
+        try
+        {
+            if (InstallSource.Current == InstallKind.Store)
+            {
+                await Launcher.LaunchUriAsync(new Uri(StorePage));
+                return;
+            }
+
+            if (updateReady is { } version)
+            {
+                await UpdateTo(version);
+                return;
+            }
+
+            CheckUpdatesButton.IsEnabled = false;
+            CheckUpdatesButton.Content = Texts.Get("settings.updates.checking");
+            await Task.Run(() => UpdateCheck.CheckAsync(
+                DateTimeOffset.UtcNow,
+                CancellationToken.None));
+            var current = typeof(SettingsPage).Assembly.GetName().Version ?? new Version();
+            updateReady = UpdateCheck.NewerThan(current)?.Latest;
+            CheckUpdatesButton.Content = updateReady is { } newer
+                ? Texts.Format("settings.updates.updateTo", newer)
+                : Texts.Get("settings.updates.upToDate");
+        }
+        catch (Exception exception)
+        {
+            CrashLog.Write(exception, "update check");
+            CheckUpdatesButton.Content = Texts.Get("settings.updates.failed");
+        }
+        finally
+        {
+            CheckUpdatesButton.IsEnabled = true;
+        }
+    }
+
+    private async Task UpdateTo(string version)
+    {
+        if (!Updates.SelfUpdate.CanUpdateInPlace)
+        {
+            await Launcher.LaunchUriAsync(new Uri(UpdateCheck.PageOf(version)));
+            return;
+        }
+
+        CheckUpdatesButton.IsEnabled = false;
+        var progress = new Progress<string>(step =>
+            CheckUpdatesButton.Content = Texts.Get(step));
+        await Updates.SelfUpdate.StartAsync(version, progress);
+        Application.Current.Exit();
+    }
 
     private void OnNotifyClicked(object sender, RoutedEventArgs args) =>
         Save(current => current with { NotifyOnLimits = NotifyToggle.IsChecked == true });

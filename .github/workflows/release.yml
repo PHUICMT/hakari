@@ -48,6 +48,19 @@ jobs:
       - name: Test
         run: dotnet test -c Release --nologo
 
+      # Notes first: the zips carry them as the "what's new" shown after an update.
+      - name: Notes
+        shell: pwsh
+        run: |
+          if ("${{ github.ref }}".StartsWith("refs/tags/v")) {
+            ./tools/Write-ReleaseNotes.ps1 -Tag "${{ github.ref_name }}"
+          }
+          else {
+            New-Item -ItemType Directory -Force artifacts/notes | Out-Null
+            "Test build." | Set-Content artifacts/notes/release.md
+            "Test build." | Set-Content artifacts/notes/store.txt
+          }
+
       - name: Zips
         shell: pwsh
         run: |
@@ -61,18 +74,6 @@ jobs:
       - name: Store upload
         shell: pwsh
         run: ./tools/Publish-StoreUpload.ps1 -Version $env:VERSION
-
-      - name: Notes
-        shell: pwsh
-        run: |
-          if ("${{ github.ref }}".StartsWith("refs/tags/v")) {
-            ./tools/Write-ReleaseNotes.ps1 -Tag "${{ github.ref_name }}"
-          }
-          else {
-            New-Item -ItemType Directory -Force artifacts/notes | Out-Null
-            "Test build." | Set-Content artifacts/notes/release.md
-            "Test build." | Set-Content artifacts/notes/store.txt
-          }
 
       - uses: actions/upload-artifact@v7
         with:

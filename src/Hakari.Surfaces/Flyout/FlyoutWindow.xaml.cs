@@ -1,3 +1,4 @@
+using Hakari.Core.Localization;
 using Hakari.Core.Settings;
 using Hakari.Surfaces.Motion;
 using Microsoft.UI.Windowing;
@@ -80,13 +81,19 @@ public sealed partial class FlyoutWindow : Window
         if (notice.Action == NoticeAction.OpenUpdate)
         {
             HideFlyout();
-            var page = Hakari.Core.Updates.UpdateCheck.Load()?.Url
-                ?? Hakari.Core.Updates.UpdateCheck.ReleasesPage;
-            if (Uri.TryCreate(page, UriKind.Absolute, out var address))
-            {
-                _ = Windows.System.Launcher.LaunchUriAsync(address);
-            }
+            OpenPage(Hakari.Core.Updates.UpdateCheck.Load()?.Url);
+            return;
+        }
 
+        if (notice.Action == NoticeAction.UpdateNow)
+        {
+            UpdateNow(notice);
+            return;
+        }
+
+        if (notice.Action == NoticeAction.DismissWhatsNew)
+        {
+            MarkSeen(notice);
             return;
         }
 
@@ -94,12 +101,103 @@ public sealed partial class FlyoutWindow : Window
         SettingsRequested?.Invoke(this, EventArgs.Empty);
     }
 
-    /// <summary>"Use estimate": the account's sign-in is left alone.</summary>
+    /// <summary>
+    /// The second button: "use estimate" leaves the account's sign-in alone; on an update or
+    /// on "what's new" it opens that version's notes.
+    /// </summary>
     private void OnNoticeSecondActionClicked(object sender, RoutedEventArgs args)
     {
-        if ((sender as FrameworkElement)?.DataContext is FlyoutNotice notice)
+        if ((sender as FrameworkElement)?.DataContext is not FlyoutNotice notice)
         {
-            AnswerLimits(notice, on: false);
+            return;
+        }
+
+        switch (notice.Action)
+        {
+            case NoticeAction.UpdateNow:
+                HideFlyout();
+                OpenPage(Hakari.Core.Updates.UpdateCheck.PageOf(notice.AccountId));
+                break;
+            case NoticeAction.DismissWhatsNew:
+                MarkSeen(notice);
+                HideFlyout();
+                OpenPage(Hakari.Core.Updates.UpdateCheck.PageOf(notice.AccountId));
+                break;
+            default:
+                AnswerLimits(notice, on: false);
+                break;
+        }
+    }
+
+    private static void OpenPage(string? page)
+    {
+        if (Uri.TryCreate(
+            page ?? Hakari.Core.Updates.UpdateCheck.ReleasesPage,
+            UriKind.Absolute,
+            out var address))
+        {
+            _ = Windows.System.Launcher.LaunchUriAsync(address);
+        }
+    }
+
+    /// <summary>This version's changes were seen; the notice goes and does not come back.</summary>
+    private void MarkSeen(FlyoutNotice notice)
+    {
+        SettingsStore.Default.Update(current => current with
+        {
+            LastSeenVersion = notice.AccountId,
+        });
+        RemoveNotice(notice);
+    }
+
+    private void RemoveNotice(FlyoutNotice notice) => ReplaceNotice(notice, null);
+
+    private void ReplaceNotice(FlyoutNotice notice, FlyoutNotice? replacement)
+    {
+        if (NoticeList.ItemsSource is IReadOnlyList<FlyoutNotice> notices)
+        {
+            NoticeList.ItemsSource = notices
+                .Select(other => other == notice ? replacement : other)
+                .OfType<FlyoutNotice>()
+                .ToList();
+            FitWindowNow();
+        }
+    }
+
+    /// <summary>
+    /// Downloads and checks the newer version, then hands over to the swap and quits; the
+    /// notice says how far it got, and on a failure offers the download page instead.
+    /// </summary>
+    private async void UpdateNow(FlyoutNotice notice)
+    {
+        var shown = notice with
+        {
+            Title = Texts.Get("flyout.notice.updating"),
+            Detail = Texts.Get("flyout.notice.updating.download"),
+            Action = NoticeAction.None,
+            SecondActionText = string.Empty,
+        };
+        ReplaceNotice(notice, shown);
+        var progress = new Progress<string>(step =>
+        {
+            var next = shown with { Detail = Texts.Get(step) };
+            ReplaceNotice(shown, next);
+            shown = next;
+        });
+        try
+        {
+            await Updates.SelfUpdate.StartAsync(notice.AccountId, progress);
+            Application.Current.Exit();
+        }
+        catch (Exception exception)
+        {
+            CrashLog.Write(exception, "update");
+            ReplaceNotice(shown, new FlyoutNotice(
+                Tone.Warning,
+                Texts.Get("flyout.notice.updateFailed"),
+                exception.Message,
+                NoticeAction.OpenUpdate,
+                Texts.Get("flyout.notice.updateAction")));
         }
     }
 

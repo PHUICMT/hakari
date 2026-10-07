@@ -1,3 +1,4 @@
+using Hakari.Core.Updates;
 using System.Globalization;
 using Hakari.Core.Accounts;
 using Hakari.Core.Configuration;
@@ -405,7 +406,16 @@ public sealed partial class SettingsPage
     private void FillAbout()
     {
         var version = typeof(SettingsPage).Assembly.GetName().Version;
-        VersionRow.Title = Texts.Format("settings.version", version?.ToString(VersionParts));
+        VersionRow.Title = Texts.Format("settings.version", version?.ToString(VersionParts))
+            + " · " + Texts.Get(InstallSource.Current switch
+            {
+                InstallKind.Store => "settings.installedFrom.store",
+                InstallKind.Winget => "settings.installedFrom.winget",
+                _ => "settings.installedFrom.zip",
+            });
+        CheckUpdatesButton.Content = Texts.Get(InstallSource.Current == InstallKind.Store
+            ? "settings.updates.openStore"
+            : "settings.updates.check");
         DataFolderRow.Description = HakariPaths.DataDirectory;
     }
 }

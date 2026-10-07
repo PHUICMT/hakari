@@ -42,6 +42,10 @@ if ($LASTEXITCODE -ne 0) { throw "Publishing Hakari.exe failed." }
 dotnet publish (Join-Path $root "src/Hakari.Surfaces/Hakari.Surfaces.csproj") @common -p:Platform=$platform
 if ($LASTEXITCODE -ne 0) { throw "Publishing Hakari.Surfaces.exe failed." }
 
+# The release notes, when the release build wrote them, go in as the "what's new" text.
+$notes = Join-Path $root "artifacts/notes/release.md"
+if (Test-Path $notes) { Copy-Item $notes (Join-Path $folder "whats-new.md") }
+
 foreach ($required in "Hakari.exe", "Hakari.Surfaces.exe", "pricing.json") {
     if (-not (Test-Path (Join-Path $folder $required))) { throw "$required is missing." }
 }

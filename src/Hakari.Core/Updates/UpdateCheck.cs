@@ -31,6 +31,19 @@ public static class UpdateCheck
 
     public static string StatePath => Path.Combine(HakariPaths.DataDirectory, StateFileName);
 
+    private const string DownloadBase = "https://github.com/PHUICMT/hakari/releases/download";
+
+    /// <summary>The release zip for this machine's architecture, "x64" or "arm64".</summary>
+    public static string ZipAddress(string version, string architecture) =>
+        $"{DownloadBase}/v{version}/Hakari-{version}-win-{architecture}.zip";
+
+    /// <summary>The zip's SHA-256, published beside it.</summary>
+    public static string ChecksumAddress(string version, string architecture) =>
+        ZipAddress(version, architecture) + ".sha256";
+
+    /// <summary>The release page of one version.</summary>
+    public static string PageOf(string version) => $"{ReleasesPage}/tag/v{version}";
+
     public static bool IsDue(DateTimeOffset now) =>
         Load() is not { } state || now - state.CheckedAt >= CheckEvery;
 

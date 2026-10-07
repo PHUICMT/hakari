@@ -297,7 +297,10 @@
                     <Border Style="{StaticResource HakariCard}">
                         <StackPanel>
                             <controls:SettingRow x:Name="VersionRow" Glyph="&#xE946;" BorderThickness="0"
-                                Description="{l:Text Key=settings.privacy}" />
+                                Description="{l:Text Key=settings.privacy}">
+                                <Button x:Name="CheckUpdatesButton" Style="{StaticResource HakariButton}"
+                                    Content="{l:Text Key=settings.updates.check}" Click="OnCheckUpdatesClicked" />
+                            </controls:SettingRow>
                             <controls:SettingRow Glyph="&#xEB51;" Title="{l:Text Key=settings.support}"
                                 Description="{l:Text Key=settings.support.description}">
                                 <StackPanel Orientation="Horizontal" Spacing="8">

@@ -99,6 +99,12 @@ public sealed record HakariSettings
     /// </summary>
     public bool CheckForUpdates { get; init; } = true;
 
+    /// <summary>
+    /// The last version whose "what's new" was seen, as "1.2.3"; empty on a first install,
+    /// which shows none.
+    /// </summary>
+    public string LastSeenVersion { get; init; } = string.Empty;
+
     /// <summary>Tell when a limit passes its warning or critical level or resets.</summary>
     public bool NotifyOnLimits { get; init; } = true;
 

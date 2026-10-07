@@ -1,6 +1,6 @@
 # Hakari privacy policy
 
-Last updated: 7 October 2026
+Last updated: 7 October 2026 (update downloads added)
 
 Hakari is a Windows taskbar meter and dashboard for Claude Code usage, made by PHUICMT. This page says what it reads, what it keeps, and what it sends.
 
@@ -26,6 +26,7 @@ Hakari makes only these requests. None of them carries your usage, prompts, repl
 | Public exchange rates | When you show costs in a currency other than US dollars | Frankfurter (`api.frankfurter.dev`) or ExchangeRate-API (`open.er-api.com`) |
 | Newer model prices | When you press *Check now* under Settings, Prices | GitHub (`raw.githubusercontent.com`) |
 | The public release list | Once a day, in the GitHub download only, unless you turn off *Check for new versions* | GitHub (`api.github.com`) |
+| The new version's zip and its checksum | Only when you press *Update now* or *Update to* (zip and winget copies) | GitHub (`github.com`) |
 
 Hakari has no analytics, no telemetry, no ads and no accounts of its own.
 

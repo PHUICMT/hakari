@@ -82,6 +82,7 @@ public sealed class SettingsStore(string path)
         LimitsAskedAccounts = settings.LimitsAskedAccounts ?? [],
         Language = settings.Language ?? Localization.Texts.FollowSystem,
         Currency = settings.Currency ?? Currency.CurrencyCodes.Dollar,
+        LastSeenVersion = settings.LastSeenVersion ?? string.Empty,
     };
 
     /// <summary>
