@@ -108,7 +108,7 @@ public sealed partial class SettingsPage
 
     private void ToggleSection(string key, FrameworkElement card, FontIcon chevron)
     {
-        var folding = card.Visibility == Visibility.Visible;
+        var folding = !CardFold.IsFoldedOrFolding(card);
         CardFold.Run(card, folding, fitWindow: () => { });
         if (chevron.RenderTransform is RotateTransform turn)
         {

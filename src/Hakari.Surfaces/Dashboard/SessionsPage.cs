@@ -54,7 +54,7 @@ internal sealed partial class SessionsPage : LoadedPage<SessionRows>
         TableCells.MakeRowsOpen(table, index => SessionSheet.Open(
             this, data.Rows[index], data.Currency));
         return DashboardCard.Create(
-            Texts.Get("dashboard.sessions.title"),
+            "dashboard.sessions.title",
             Texts.Get("dashboard.sessions.caption"),
             table);
     }

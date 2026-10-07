@@ -48,13 +48,13 @@ internal sealed partial class WorkflowsPage : LoadedPage<WorkflowsData>
         ]);
         var page = new StackPanel { Spacing = SectionSpacing };
         page.Children.Add(DashboardCard.Create(
-            Texts.Get("dashboard.workflows.title"),
+            "dashboard.workflows.title",
             Texts.Get("dashboard.workflows.caption"),
             tiles));
         if (subagents.Cost <= 0)
         {
             page.Children.Add(DashboardCard.Create(
-                Texts.Get("dashboard.workflows.sessions.title"),
+                "dashboard.workflows.sessions.title",
                 null,
                 Faint(Texts.Get("dashboard.workflows.none"))));
             return page;
@@ -86,7 +86,7 @@ internal sealed partial class WorkflowsPage : LoadedPage<WorkflowsData>
         body.Children.Add(DashboardLegend.Create(
             data.Daily.Select(series => (series.BrushKey, series.Name))));
         return DashboardCard.Create(
-            Texts.Get("dashboard.workflows.daily.title"),
+            "dashboard.workflows.daily.title",
             Texts.Get("dashboard.workflows.daily.caption"),
             body);
     }
@@ -123,7 +123,7 @@ internal sealed partial class WorkflowsPage : LoadedPage<WorkflowsData>
             ];
         });
         return DashboardCard.Create(
-            Texts.Get("dashboard.workflows.sessions.title"),
+            "dashboard.workflows.sessions.title",
             Texts.Get("dashboard.workflows.sessions.caption"),
             SimpleTable.Create(columns, [.. rows]));
     }
@@ -146,7 +146,7 @@ internal sealed partial class WorkflowsPage : LoadedPage<WorkflowsData>
             MoneyText.Format(model.Cost, data.Currency),
         ]);
         return DashboardCard.Create(
-            Texts.Get("dashboard.workflows.models.title"),
+            "dashboard.workflows.models.title",
             Texts.Get("dashboard.workflows.models.caption"),
             SimpleTable.Create(columns, [.. rows]));
     }

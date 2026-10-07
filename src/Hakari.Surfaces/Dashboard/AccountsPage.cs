@@ -56,7 +56,7 @@ internal sealed partial class AccountsPage : LoadedPage<AccountsData>
             }
             : SimpleTable.Create(Columns(), [.. data.Sources.Select(Row)]);
         return DashboardCard.Create(
-            Texts.Get("dashboard.sources.title"),
+            "dashboard.sources.title",
             Texts.Get("dashboard.sources.caption"),
             table);
     }

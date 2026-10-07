@@ -78,6 +78,7 @@ public partial class App : Application
         switch (command.Kind)
         {
             case SurfaceKind.Settings:
+                tooltip?.HidePopup();
                 ShowSettings();
                 break;
             case SurfaceKind.Dashboard:
@@ -103,6 +104,7 @@ public partial class App : Application
                 idleExitTimer?.Start();
                 break;
             case SurfaceKind.Onboarding:
+                tooltip?.HidePopup();
                 ShowOnboarding();
                 break;
             default:

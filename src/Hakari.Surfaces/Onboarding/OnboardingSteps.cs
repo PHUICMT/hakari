@@ -277,6 +277,14 @@ internal sealed class OnboardingSteps(SettingsStore store)
         track.Children.Add(piece);
         var storyboard = new Storyboard { RepeatBehavior = RepeatBehavior.Forever };
         track.Unloaded += (_, _) => storyboard.Stop();
+        track.Loaded += (_, _) =>
+        {
+            // Back on screen at the same size, SizeChanged does not come again.
+            if (storyboard.Children.Count > 0)
+            {
+                storyboard.Begin();
+            }
+        };
         track.SizeChanged += (_, args) =>
         {
             var width = args.NewSize.Width;

@@ -31,7 +31,7 @@ internal sealed partial class PlanValuePage : LoadedPage<PlanValueData>
         if (data.Accounts.Count == 0 && data.Combined is null && data.Unassigned is null)
         {
             page.Children.Add(DashboardCard.Create(
-                Texts.Get("dashboard.planValue.title"),
+                "dashboard.planValue.title",
                 Texts.Get("dashboard.planValue.caption"),
                 new TextBlock
                 {

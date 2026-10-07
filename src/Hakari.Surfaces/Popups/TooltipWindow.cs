@@ -31,18 +31,22 @@ public sealed partial class TooltipWindow : PopupWindow
     /// </summary>
     public async void ShowAt(int anchorX, int anchorY)
     {
-        var mine = ++generation;
-        IReadOnlyList<TooltipAccount> accounts;
+        // Async void: anything thrown here would end the window process, so all of it is
+        // caught, the drawing included.
         try
         {
-            accounts = await Task.Run(TooltipDataLoader.Load);
+            await ShowAtAsync(anchorX, anchorY);
         }
         catch (Exception exception)
         {
             CrashLog.Write(exception, "hover card");
-            return;
         }
+    }
 
+    private async Task ShowAtAsync(int anchorX, int anchorY)
+    {
+        var mine = ++generation;
+        var accounts = await Task.Run(TooltipDataLoader.Load);
         if (mine != generation)
         {
             return;

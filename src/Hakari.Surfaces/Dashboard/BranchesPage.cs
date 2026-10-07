@@ -58,7 +58,7 @@ internal sealed partial class BranchesPage : LoadedPage<BranchRows>
             ];
         });
         return DashboardCard.Create(
-            Texts.Get("dashboard.branches"),
+            "dashboard.branches",
             Texts.Get("dashboard.branches.caption"),
             SimpleTable.CreateSortable(columns, [.. rows], [.. data.Rows.Select(row =>
             {

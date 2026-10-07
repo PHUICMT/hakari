@@ -17,8 +17,13 @@ internal static class DashboardCard
     private const double CaptionGap = 120;
     private static readonly Thickness CardPadding = new(16, 14, 16, 16);
 
-    public static Border Create(string title, string? caption, UIElement content)
+    /// <param name="titleKey">
+    /// The title's text key: shown in the current language, and the fold is remembered under
+    /// it, so a fold survives a language change.
+    /// </param>
+    public static Border Create(string titleKey, string? caption, UIElement content)
     {
+        var title = Hakari.Core.Localization.Texts.Get(titleKey);
         var header = new Grid
         {
             ColumnSpacing = 4,
@@ -59,7 +64,7 @@ internal static class DashboardCard
             HorizontalContentAlignment = HorizontalAlignment.Stretch,
             IsTabStop = false,
         };
-        header.Children.Add(DashboardFold.Attach(header, foldable, title));
+        header.Children.Add(DashboardFold.Attach(header, foldable, titleKey));
         var body = new StackPanel();
         body.Children.Add(header);
         body.Children.Add(foldable);

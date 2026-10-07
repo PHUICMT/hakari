@@ -33,7 +33,7 @@ internal sealed partial class ChartsPage : LoadedPage<ChartsData>
             () => ChartOrTable.Week(data.Heat, data.Currency)));
         body.Children.Add(HeatScale.Create());
         return DashboardCard.Create(
-            Texts.Get("dashboard.heat.title"),
+            "dashboard.heat.title",
             Texts.Get("dashboard.heat.caption"),
             body);
     }
@@ -100,7 +100,7 @@ internal sealed partial class ChartsPage : LoadedPage<ChartsData>
         }
 
         return DashboardCard.Create(
-            Texts.Get("dashboard.trend.title"),
+            "dashboard.trend.title",
             trends.Count == 1
                 ? Texts.Format("dashboard.trend.caption", trends[0].AccountName)
                 : trends.Count > 1 ? Texts.Get("dashboard.trend.captionAll") : null,
@@ -118,7 +118,7 @@ internal sealed partial class ChartsPage : LoadedPage<ChartsData>
                 series.BrushKey,
                 series.Name.Length == 0 ? Texts.Get("dashboard.mix.other") : series.Name))));
         return DashboardCard.Create(
-            Texts.Get("dashboard.mix.title"),
+            "dashboard.mix.title",
             Texts.Get("dashboard.mix.caption"),
             body);
     }

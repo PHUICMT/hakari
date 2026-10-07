@@ -38,7 +38,7 @@ internal sealed partial class BreakdownPage : LoadedPage<BreakdownRows>
         new BreakdownRows([], 0m, "USD"));
 
     protected override UIElement Build(BreakdownRows data) => DashboardCard.Create(
-        Texts.Get(titleKey),
+        titleKey,
         Texts.Format("dashboard.rowCount", data.Rows.Count),
         Table(data));
 

@@ -48,13 +48,13 @@ internal sealed partial class OverviewPage : LoadedPage<OverviewData>
         lower.ColumnDefinitions.Add(StarColumn(ChartShare));
         lower.ColumnDefinitions.Add(StarColumn(TableShare));
         var chart = DashboardCard.Create(
-            Texts.Get("dashboard.dailyCost"),
+            "dashboard.dailyCost",
             PeriodText.Caption(),
             ChartOrTable.Create(
                 CostChart.Create(data.Timeline, data.Currency),
                 () => ChartOrTable.Costs(data.Timeline, data.Currency)));
         var models = DashboardCard.Create(
-            Texts.Get("dashboard.byModel"),
+            "dashboard.byModel",
             Texts.Get("dashboard.costShare"),
             ModelTable(data));
         lower.Children.Add(chart);
@@ -176,7 +176,7 @@ internal sealed partial class OverviewPage : LoadedPage<OverviewData>
         stack.Children.Add(bar);
         stack.Children.Add(DashboardLegend.Create(legendItems));
         return DashboardCard.Create(
-            Texts.Get("dashboard.whereMoneyGoes"),
+            "dashboard.whereMoneyGoes",
             PeriodText.Caption(),
             stack);
     }

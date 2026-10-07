@@ -82,7 +82,11 @@ public sealed partial class FlyoutWindow : Window
             HideFlyout();
             var page = Hakari.Core.Updates.UpdateCheck.Load()?.Url
                 ?? Hakari.Core.Updates.UpdateCheck.ReleasesPage;
-            _ = Windows.System.Launcher.LaunchUriAsync(new Uri(page));
+            if (Uri.TryCreate(page, UriKind.Absolute, out var address))
+            {
+                _ = Windows.System.Launcher.LaunchUriAsync(address);
+            }
+
             return;
         }
 
@@ -293,7 +297,7 @@ public sealed partial class FlyoutWindow : Window
             return;
         }
 
-        var folding = limits.Visibility == Visibility.Visible;
+        var folding = !CardFold.IsFoldedOrFolding(limits);
         var summary = headerGrid.Children[1];
         summary.Visibility = Visibility.Visible;
         summary.Opacity = folding ? 0 : 1;
@@ -330,7 +334,9 @@ public sealed partial class FlyoutWindow : Window
         }
 
         // Runs every frame of a fold: one layout pass, and a second only when the accounts
-        // have to give way to stay on screen.
+        // have to give way to stay on screen. The cap is lifted first, so room that a fold or
+        // a dismissed notice gave back goes to the accounts again.
+        AccountScroller.MaxHeight = double.PositiveInfinity;
         Root.UpdateLayout();
         if (Body.ActualHeight + Footer.ActualHeight > availableHeight
             && LimitAccountsToScreen(measured: false))

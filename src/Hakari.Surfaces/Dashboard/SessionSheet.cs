@@ -241,9 +241,9 @@ internal static class SessionSheet
         if (detail.Timeline.Count > 0)
         {
             body.Children.Add(DashboardCard.Create(
-                Texts.Get(detail.ByDay
+                detail.ByDay
                     ? "dashboard.sheet.timelineDays"
-                    : "dashboard.sheet.timeline"),
+                    : "dashboard.sheet.timeline",
                 null,
                 ChartOrTable.Create(
                     CostChart.Create(detail.Timeline, currency),
@@ -251,9 +251,9 @@ internal static class SessionSheet
         }
 
         body.Children.Add(DashboardCard.Create(
-            Texts.Get("dashboard.column.model"), null, Models(detail.Models, cost, currency)));
+            "dashboard.column.model", null, Models(detail.Models, cost, currency)));
         body.Children.Add(DashboardCard.Create(
-            Texts.Get("dashboard.sheet.folder"), null, Faint(project.Length == 0
+            "dashboard.sheet.folder", null, Faint(project.Length == 0
                 ? Texts.Get("dashboard.unknown")
                 : project)));
         body.Children.Add(Faint(Texts.Get("dashboard.sheet.privacy")));

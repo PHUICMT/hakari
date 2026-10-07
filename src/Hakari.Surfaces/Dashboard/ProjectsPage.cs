@@ -91,7 +91,7 @@ internal sealed partial class ProjectsPage : LoadedPage<ProjectRows>
         TableCells.MakeRowsOpen(table, (index, row) =>
             ProjectMergeMenu.Show(row, keys[index], keys, Reload));
         return DashboardCard.Create(
-            Texts.Get("dashboard.projects"),
+            "dashboard.projects",
             Texts.Get("dashboard.projects.caption"),
             table);
     }

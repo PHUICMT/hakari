@@ -8,6 +8,8 @@ namespace Hakari.Surfaces.Flyout;
 /// <summary>
 /// Folds or opens a card's body by easing its height, and has the window follow in the
 /// same frame, so the window never shows a gap or cuts content (which read as a blink).
+/// A second fold on the same body takes over from where the first one is, instead of the
+/// two fighting over its height.
 /// </summary>
 internal sealed class CardFold
 {
@@ -19,15 +21,34 @@ internal sealed class CardFold
     private readonly double fullHeight;
     private readonly TimeSpan duration;
     private readonly DateTimeOffset startedAt = DateTimeOffset.UtcNow;
+    private readonly double startShare;
 
-    private CardFold(FrameworkElement body, bool folding, Action fitWindow, TimeSpan duration)
+    private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<
+        FrameworkElement, CardFold> Running = new();
+
+    private CardFold(
+        FrameworkElement body,
+        bool folding,
+        Action fitWindow,
+        TimeSpan duration,
+        double startShare)
     {
         this.body = body;
         this.folding = folding;
         this.fitWindow = fitWindow;
         this.duration = duration;
+        this.startShare = startShare;
         fullHeight = MeasureFullHeight(body);
     }
+
+    /// <summary>
+    /// Whether the body is folded or on its way there; a body still folding is not yet
+    /// Collapsed, so its Visibility alone would say "open" to a quick second click.
+    /// </summary>
+    public static bool IsFoldedOrFolding(FrameworkElement body) =>
+        Running.TryGetValue(body, out var fold)
+            ? fold.folding
+            : body.Visibility == Visibility.Collapsed;
 
     public static void Run(FrameworkElement body, bool folding, Action fitWindow)
     {
@@ -38,7 +59,18 @@ internal sealed class CardFold
             AnimationSetting.Reduced => SurfaceMotion.Fast,
             _ => TimeSpan.Zero,
         };
-        var fold = new CardFold(body, folding, fitWindow, duration);
+        // Where the body is now, as an opened share, so a reversed fold starts from there.
+        var startShare = folding ? 1.0 : 0.0;
+        if (Running.TryGetValue(body, out var running))
+        {
+            CompositionTarget.Rendering -= running.OnRendering;
+            Running.Remove(body);
+            startShare = running.fullHeight > 0
+                ? Math.Clamp(body.MaxHeight / running.fullHeight, 0, 1)
+                : startShare;
+        }
+
+        var fold = new CardFold(body, folding, fitWindow, duration, startShare);
         if (duration == TimeSpan.Zero)
         {
             fold.Finish();
@@ -47,6 +79,7 @@ internal sealed class CardFold
 
         body.Visibility = Visibility.Visible;
         fold.Apply(0);
+        Running.AddOrUpdate(body, fold);
         CompositionTarget.Rendering += fold.OnRendering;
     }
 
@@ -65,12 +98,17 @@ internal sealed class CardFold
     /// </summary>
     private static double WidthFor(FrameworkElement body)
     {
+        // ActualWidth already leaves out an element's own margin; only the body's margin
+        // has to come off its parent's width.
+        var bodyMargin = body.Margin.Left + body.Margin.Right;
         DependencyObject? current = body;
         while (current is FrameworkElement element)
         {
             if (element.ActualWidth > 0)
             {
-                return element.ActualWidth - element.Margin.Left - element.Margin.Right;
+                return element == body
+                    ? element.ActualWidth
+                    : Math.Max(0, element.ActualWidth - bodyMargin);
             }
 
             current = VisualTreeHelper.GetParent(element);
@@ -85,6 +123,7 @@ internal sealed class CardFold
         if (progress >= 1)
         {
             CompositionTarget.Rendering -= OnRendering;
+            Running.Remove(body);
             Finish();
             return;
         }
@@ -95,7 +134,8 @@ internal sealed class CardFold
     /// <summary>Opened share 0 to 1 of the body, and the window fitted to it.</summary>
     private void Apply(double eased)
     {
-        var opened = folding ? 1 - eased : eased;
+        var target = folding ? 0.0 : 1.0;
+        var opened = startShare + (target - startShare) * eased;
         body.MaxHeight = fullHeight * opened;
         body.Opacity = opened;
         fitWindow();

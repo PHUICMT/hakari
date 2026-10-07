@@ -23,6 +23,7 @@ internal static class StoreTips
     private const double ListWidth = 260;
 
     private static StoreContext? context;
+    private static IntPtr contextWindow;
 
     /// <summary>
     /// The tips on offer in the order of their product ids (name them "tip-1-small",
@@ -45,9 +46,9 @@ internal static class StoreTips
                     StringComparer.Ordinal)]
                 : [];
         }
-        catch (Exception exception) when (exception is System.Runtime.InteropServices.COMException
-            or InvalidOperationException)
+        catch (Exception exception)
         {
+            CrashLog.Write(exception, "store tips");
             return [];
         }
     }
@@ -94,9 +95,17 @@ internal static class StoreTips
             button.Click += async (_, _) =>
             {
                 flyout.Hide();
-                if (await BuyAsync(tip, window))
+                try
                 {
-                    thanked(Texts.Get("settings.support.thanks"));
+                    if (await BuyAsync(tip, window))
+                    {
+                        thanked(Texts.Get("settings.support.thanks"));
+                    }
+                }
+                catch (Exception exception)
+                {
+                    // Async void: an escaping error would end the window process.
+                    CrashLog.Write(exception, "store tip");
                 }
             };
             list.Children.Add(button);
@@ -126,8 +135,7 @@ internal static class StoreTips
 
             return result.Status == StorePurchaseStatus.Succeeded;
         }
-        catch (Exception exception) when (exception is System.Runtime.InteropServices.COMException
-            or InvalidOperationException)
+        catch (Exception exception)
         {
             CrashLog.Write(exception, "store tip");
             return false;
@@ -135,22 +143,33 @@ internal static class StoreTips
     }
 
     /// <summary>A desktop app's Store dialogs need the window that owns them.</summary>
+    /// <remarks>
+    /// Kept per window: the dashboard is rebuilt after a close or a language change, and a
+    /// context tied to the old window's handle could no longer show the Store's dialog.
+    /// </remarks>
     private static StoreContext? Context(IntPtr window)
     {
-        if (context is not null)
+        if (context is not null && contextWindow == window)
         {
             return context;
+        }
+
+        if (window == IntPtr.Zero)
+        {
+            return null;
         }
 
         try
         {
             context = StoreContext.GetDefault();
             WinRT.Interop.InitializeWithWindow.Initialize(context, window);
+            contextWindow = window;
             return context;
         }
-        catch (Exception exception) when (exception is System.Runtime.InteropServices.COMException
-            or InvalidOperationException)
+        catch (Exception exception)
         {
+            CrashLog.Write(exception, "store context");
+            context = null;
             return null;
         }
     }
