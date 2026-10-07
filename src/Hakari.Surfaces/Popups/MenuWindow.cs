@@ -15,6 +15,7 @@ namespace Hakari.Surfaces.Popups;
 public sealed partial class MenuWindow : PopupWindow
 {
     private const double MenuWidth = 240;
+    private const double MenuRise = 12;
     private const double IconSize = 14;
     private const double IconColumn = 20;
     private const double ItemSpacing = 10;
@@ -54,6 +55,7 @@ public sealed partial class MenuWindow : PopupWindow
         AddEscape(items);
         Body = items;
         ShowAbove(anchorX, anchorY, activate: true, AnchorSide.Start);
+        Motion.SurfaceMotion.Enter(items, fromY: MenuRise);
     }
 
     private static void Send(ResidentCommand command) =>

@@ -16,7 +16,7 @@ public sealed partial class TooltipWindow : PopupWindow
     private const double LineSize = 12;
     private const double LineSpacing = 2;
     private const double AccountSpacing = 10;
-    private const string OpacityPath = "Opacity";
+    private const double TooltipRise = 6;
 
     private int generation;
 
@@ -67,7 +67,7 @@ public sealed partial class TooltipWindow : PopupWindow
         Body = stack;
         stack.Opacity = 0;
         ShowAbove(anchorX, anchorY, activate: false, Flyout.AnchorSide.Center);
-        SurfaceMotion.Settle(stack, OpacityPath, 1);
+        SurfaceMotion.Enter(stack, fromY: TooltipRise);
     }
 
     protected override void OnHiding() => generation++;

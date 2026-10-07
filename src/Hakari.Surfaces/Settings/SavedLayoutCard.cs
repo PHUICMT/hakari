@@ -137,9 +137,8 @@ internal sealed partial class SavedLayoutCard : UserControl
         {
             Placement = Microsoft.UI.Xaml.Controls.Primitives.FlyoutPlacementMode.Bottom,
             FlyoutPresenterStyle = (Style)Application.Current.Resources["HakariListPresenter"],
-            AreOpenCloseAnimationsEnabled =
-                SurfaceMotion.Current() != Core.Settings.AnimationSetting.Off,
         };
+        SurfaceMotion.EnterOnOpen(question);
         var forget = new Button
         {
             Content = Texts.Get("settings.layout.forget.confirm"),

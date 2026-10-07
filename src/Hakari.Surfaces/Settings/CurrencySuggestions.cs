@@ -18,6 +18,7 @@ namespace Hakari.Surfaces.Settings;
 internal sealed class CurrencySuggestions
 {
     private const double ListWidth = 340;
+    private const double DropDistance = 6;
     private const double CodeWidth = 44;
     private const double CodeSize = 13;
     private const double DetailSize = 11;
@@ -77,11 +78,7 @@ internal sealed class CurrencySuggestions
         {
             popup.XamlRoot = box.XamlRoot;
             popup.IsOpen = true;
-            if (SurfaceMotion.Current() != Core.Settings.AnimationSetting.Off)
-            {
-                popup.Child.Opacity = 0;
-                SurfaceMotion.Settle(popup.Child, "Opacity", 1);
-            }
+            SurfaceMotion.Enter(popup.Child, fromY: -DropDistance);
         }
         else if (!open)
         {

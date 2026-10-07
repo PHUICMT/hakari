@@ -21,6 +21,7 @@ internal static class ProjectMergeMenu
     private const double ListWidth = 360;
     private const double SectionSize = 11;
     private static readonly Thickness SectionMargin = new(12, 8, 12, 4);
+    private const double SwapDistance = 24;
     private const double QuestionSize = 14;
     private const double ExplainSize = 12;
     private const double QuestionSpacing = 10;
@@ -42,12 +43,20 @@ internal static class ProjectMergeMenu
             Content = list,
             Placement = FlyoutPlacementMode.Bottom,
             FlyoutPresenterStyle = (Style)Application.Current.Resources["HakariListPresenter"],
-            AreOpenCloseAnimationsEnabled =
-                SurfaceMotion.Current() != AnimationSetting.Off,
         };
+        SurfaceMotion.EnterOnOpen(flyout);
 
-        void Ask(UIElement question) => flyout.Content = question;
-        void Back() => flyout.Content = list;
+        void Ask(UIElement question)
+        {
+            flyout.Content = question;
+            SurfaceMotion.Enter(question, fromX: SwapDistance);
+        }
+
+        void Back()
+        {
+            flyout.Content = list;
+            SurfaceMotion.Enter(list, fromX: -SwapDistance);
+        }
 
         var name = RowNames.Project(project).Title;
         var joined = merges.JoinedInto(project);

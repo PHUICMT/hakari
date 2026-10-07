@@ -66,8 +66,8 @@ internal static class StoreTips
             Content = list,
             Placement = FlyoutPlacementMode.Bottom,
             FlyoutPresenterStyle = (Style)Application.Current.Resources["HakariListPresenter"],
-            AreOpenCloseAnimationsEnabled = SurfaceMotion.Current() != AnimationSetting.Off,
         };
+        SurfaceMotion.EnterOnOpen(flyout);
         foreach (var tip in tips)
         {
             var row = new Grid { ColumnSpacing = 12 };

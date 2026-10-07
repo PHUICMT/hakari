@@ -171,6 +171,7 @@ internal static class SupportLinks
             Placement = FlyoutPlacementMode.Bottom,
             FlyoutPresenterStyle = (Style)Application.Current.Resources["HakariListPresenter"],
         };
+        Motion.SurfaceMotion.EnterOnOpen(flyout);
         flyout.ShowAt(anchor);
     }
 

@@ -99,6 +99,69 @@ internal static class SurfaceMotion
         storyboard.Begin();
     }
 
+    /// <summary>
+    /// Brings in something just shown: under Full it fades in while moving the given
+    /// distance into place, under Reduced it only fades, under Off it is simply there.
+    /// </summary>
+    public static void Enter(UIElement element, double fromX = 0, double fromY = 0)
+    {
+        var motion = Current();
+        element.Opacity = 1;
+        if (motion == AnimationSetting.Off)
+        {
+            return;
+        }
+
+        var storyboard = new Storyboard();
+        var full = motion == AnimationSetting.Full;
+        var offset = new Microsoft.UI.Xaml.Media.TranslateTransform();
+        if (full)
+        {
+            element.RenderTransform = offset;
+            storyboard.Children.Add(Animate(offset, "X", fromX, 0, Entrance));
+            storyboard.Children.Add(Animate(offset, "Y", fromY, 0, Entrance));
+        }
+
+        storyboard.Children.Add(
+            Animate(element, "Opacity", 0, 1, full ? Entrance : ReducedFade));
+        storyboard.Completed += (_, _) =>
+        {
+            element.Opacity = 1;
+            offset.X = 0;
+            offset.Y = 0;
+            storyboard.Stop();
+        };
+        storyboard.Begin();
+    }
+
+    private const double FlyoutRise = 8;
+
+    /// <summary>
+    /// A flyout's content comes in the same way every time it opens, Hakari's motion setting
+    /// deciding how, so it moves even where Windows' own popup animation is turned off.
+    /// </summary>
+    public static void EnterOnOpen(Microsoft.UI.Xaml.Controls.Primitives.FlyoutBase flyout)
+    {
+        flyout.AreOpenCloseAnimationsEnabled = Current() != AnimationSetting.Off;
+        // Hidden while it opens and started once on screen, since a storyboard may not run
+        // on an element that is not in the tree yet.
+        flyout.Opening += (_, _) =>
+        {
+            if (flyout is Microsoft.UI.Xaml.Controls.Flyout { Content: { } content }
+                && Current() != AnimationSetting.Off)
+            {
+                content.Opacity = 0;
+            }
+        };
+        flyout.Opened += (_, _) =>
+        {
+            if (flyout is Microsoft.UI.Xaml.Controls.Flyout { Content: { } content })
+            {
+                Enter(content, fromY: -FlyoutRise);
+            }
+        };
+    }
+
     private static DependencyProperty PropertyOf(DependencyObject target, string property) =>
         (target, property) switch
         {

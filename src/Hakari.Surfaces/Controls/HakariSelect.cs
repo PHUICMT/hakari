@@ -134,8 +134,8 @@ public sealed partial class HakariSelect : Button
             Content = list,
             Placement = FlyoutPlacementMode.Bottom,
             FlyoutPresenterStyle = (Style)Application.Current.Resources["HakariListPresenter"],
-            AreOpenCloseAnimationsEnabled = SurfaceMotion.Current() != AnimationSetting.Off,
         };
+        SurfaceMotion.EnterOnOpen(flyout);
 
         foreach (var (value, text) in choices)
         {
