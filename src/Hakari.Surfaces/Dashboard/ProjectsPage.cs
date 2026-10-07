@@ -4,6 +4,9 @@ using Hakari.Core.Presentation;
 using Hakari.Core.Querying;
 using Hakari.Core.Settings;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Automation;
+using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Media;
 
 namespace Hakari.Surfaces.Dashboard;
 
@@ -22,6 +25,9 @@ internal sealed partial class ProjectsPage : LoadedPage<ProjectRows>
     private const double NumberColumn = 84;
     private const double CostColumn = 110;
     private const double PercentScale = 100;
+    private const double ActionColumn = 40;
+    private const string MoreGlyph = "\uE712";
+    private const double MoreSize = 13;
 
     public ProjectsPage()
         : base("dashboard.projects")
@@ -60,7 +66,9 @@ internal sealed partial class ProjectsPage : LoadedPage<ProjectRows>
             new(Texts.Get("dashboard.column.hitRate"), new GridLength(NumberColumn),
                 IsNumber: true, ShownFrom: 440),
             new(Texts.Get("dashboard.column.cost"), new GridLength(CostColumn), IsNumber: true),
+            new(string.Empty, new GridLength(ActionColumn), IsNumber: true),
         ];
+        var keys = data.Rows.Select(row => row.Usage.Key).ToList();
         var rows = data.Rows.Select(row =>
         {
             var (title, detail) = RowNames.Project(row.Usage.Key);
@@ -76,6 +84,7 @@ internal sealed partial class ProjectsPage : LoadedPage<ProjectRows>
                 row.Usage.Messages.ToString("N0", CultureInfo.InvariantCulture),
                 PercentText.Format(row.Usage.Tokens.CacheHitRate * PercentScale, 0),
                 MoneyText.Format(row.Usage.Cost, data.Currency),
+                MergeButton(row.Usage.Key, keys),
             ];
         });
         var table = SimpleTable.CreateSortable(columns, [.. rows], [.. data.Rows.Select(row =>
@@ -86,13 +95,35 @@ internal sealed partial class ProjectsPage : LoadedPage<ProjectRows>
                 row.Usage.Messages,
                 row.Usage.Tokens.CacheHitRate,
                 row.Usage.Cost,
+                null,
             ])]);
-        var keys = data.Rows.Select(row => row.Usage.Key).ToList();
-        TableCells.MakeRowsOpen(table, (index, row) =>
-            ProjectMergeMenu.Show(row, keys[index], keys, Reload));
         return DashboardCard.Create(
             "dashboard.projects",
             Texts.Get("dashboard.projects.caption"),
             table);
+    }
+
+    /// <summary>
+    /// The only way into joining or splitting: a small button at the row's end, so a stray
+    /// click on the row itself changes nothing.
+    /// </summary>
+    private Button MergeButton(string project, IReadOnlyList<string> keys)
+    {
+        var button = new Button
+        {
+            Style = (Style)Application.Current.Resources["HakariSubtleButton"],
+            Padding = new Thickness(6, 4, 6, 4),
+            Content = new FontIcon
+            {
+                Glyph = MoreGlyph,
+                FontSize = MoreSize,
+                FontFamily = (FontFamily)Application.Current.Resources["HakariIconFont"],
+            },
+        };
+        var label = Texts.Get("dashboard.merge.menu");
+        ToolTipService.SetToolTip(button, label);
+        AutomationProperties.SetName(button, label);
+        button.Click += (_, _) => ProjectMergeMenu.Show(button, project, keys, Reload);
+        return button;
     }
 }
