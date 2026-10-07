@@ -166,6 +166,7 @@ public sealed partial class SettingsPage
         RenewSignInToggle.IsChecked = settings.RefreshSignInAutomatically;
         NotifyToggle.IsChecked = settings.NotifyOnLimits;
         TitlesToggle.IsChecked = settings.ShowSessionTitles;
+        ThinkingToggle.IsChecked = settings.CountThinking;
     }
 
     /// <summary>

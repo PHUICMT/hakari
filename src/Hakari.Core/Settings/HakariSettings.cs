@@ -77,6 +77,12 @@ public sealed record HakariSettings
     /// </summary>
     public bool ShowSessionTitles { get; init; }
 
+    /// <summary>
+    /// Note which responses had a thinking part, by the kind of their parts alone, for the
+    /// share of responses that thought. Off unless the user asked.
+    /// </summary>
+    public bool CountThinking { get; init; }
+
     /// <summary>Tell when a limit passes its warning or critical level or resets.</summary>
     public bool NotifyOnLimits { get; init; } = true;
 
@@ -161,6 +167,7 @@ public sealed record HakariSettings
         && RateMode == other.RateMode
         && RefreshSignInAutomatically == other.RefreshSignInAutomatically
         && ShowSessionTitles == other.ShowSessionTitles
+        && CountThinking == other.CountThinking
         && Paused == other.Paused
         && PausedUntil == other.PausedUntil;
 

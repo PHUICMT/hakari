@@ -167,8 +167,12 @@ internal sealed class UsageFeed : IDisposable
         Func<decimal, decimal> fromDollars = dollars => converter is null
             ? dollars
             : converter.Convert(dollars, DateOnly.FromDateTime(DateTime.Now));
-        SyncSessionTitles(store, settings.ShowSessionTitles);
-        var indexer = new Indexer(store, settings.ShowSessionTitles);
+        SyncIndexOption(store, "sessionTitles", settings.ShowSessionTitles);
+        SyncIndexOption(store, "thinkingMarks", settings.CountThinking);
+        var indexer = new Indexer(
+            store,
+            settings.ShowSessionTitles,
+            collectThinkingMarks: settings.CountThinking);
         indexer.Progressed += ShowIndexProgress;
         using var tracker = new ChangeTracker(
             sources,
@@ -255,20 +259,19 @@ internal sealed class UsageFeed : IDisposable
     }
 
     /// <summary>
-    /// Titles are only kept while the user wants them. Turning them on or off changes what the
-    /// index holds, and the logs are read again from the start so it holds the right thing.
+    /// Titles and thinking marks are only kept while the user wants them. Turning one on or
+    /// off changes what the index holds, so the logs are read again from the start.
     /// </summary>
-    private static void SyncSessionTitles(IndexStore store, bool wanted)
+    private static void SyncIndexOption(IndexStore store, string option, bool wanted)
     {
-        const string Option = "sessionTitles";
-        var kept = store.GetOption(Option) == bool.TrueString;
+        var kept = store.GetOption(option) == bool.TrueString;
         if (kept == wanted)
         {
             return;
         }
 
         store.DeleteAll();
-        store.SetOption(Option, wanted.ToString());
+        store.SetOption(option, wanted.ToString());
     }
 
     /// <summary>

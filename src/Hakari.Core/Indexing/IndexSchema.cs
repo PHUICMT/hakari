@@ -68,6 +68,10 @@ internal static class IndexSchema
             is_custom INTEGER NOT NULL
         );
 
+        CREATE TABLE IF NOT EXISTS thinking_marks (
+            deduplication_key TEXT PRIMARY KEY
+        );
+
         CREATE TABLE IF NOT EXISTS index_options (
             name TEXT PRIMARY KEY,
             value TEXT NOT NULL
@@ -121,5 +125,6 @@ internal static class IndexSchema
         DELETE FROM usage_records;
         DELETE FROM tracked_files;
         DELETE FROM session_titles;
+        DELETE FROM thinking_marks;
         """;
 }

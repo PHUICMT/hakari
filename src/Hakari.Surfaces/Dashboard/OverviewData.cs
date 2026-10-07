@@ -14,7 +14,8 @@ internal sealed record OverviewData(
     IReadOnlyList<CostShare> Shares,
     IReadOnlyList<(string Label, decimal Cost)> Timeline,
     IReadOnlyList<UsageSummary> ByModel,
-    decimal CacheSavings = 0)
+    decimal CacheSavings = 0,
+    double? ThinkingShare = null)
 {
     private const int TopModels = 6;
 
@@ -42,7 +43,10 @@ internal sealed record OverviewData(
             CostShares.Of(byModel, PricingTableOrEmpty(), DateOnly.FromDateTime(now.UtcDateTime)),
             ReadTimeline(query, filter, now),
             [.. byModel.Take(TopModels)],
-            query.CacheSavings(usage));
+            query.CacheSavings(usage),
+            Hakari.Core.Settings.SettingsStore.Default.Load().CountThinking
+                ? query.ThinkingShare(usage)
+                : null);
     }
 
     /// <summary>Every bar is present, even with nothing spent, so gaps read as gaps.</summary>

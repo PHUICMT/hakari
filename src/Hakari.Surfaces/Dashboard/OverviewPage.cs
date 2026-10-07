@@ -117,9 +117,13 @@ internal sealed partial class OverviewPage : LoadedPage<OverviewData>
             DashboardTile.Create(
                 Texts.Get("dashboard.tile.output"),
                 TokenText.Format(tokens.Output),
-                Texts.Format(
-                    "dashboard.tile.perResponse",
-                    TokenText.Format(total.Messages == 0 ? 0 : tokens.Output / total.Messages))),
+                data.ThinkingShare is { } thinking
+                    ? Texts.Format(
+                        "dashboard.tile.thinking", PercentText.Format(thinking * PercentScale, 0))
+                    : Texts.Format(
+                        "dashboard.tile.perResponse",
+                        TokenText.Format(
+                            total.Messages == 0 ? 0 : tokens.Output / total.Messages))),
         ]);
     }
 

@@ -223,6 +223,9 @@ public sealed partial class SettingsPage
     private void OnTitlesClicked(object sender, RoutedEventArgs args) =>
         Save(current => current with { ShowSessionTitles = TitlesToggle.IsChecked == true });
 
+    private void OnThinkingClicked(object sender, RoutedEventArgs args) =>
+        Save(current => current with { CountThinking = ThinkingToggle.IsChecked == true });
+
     private void OnNotifyClicked(object sender, RoutedEventArgs args) =>
         Save(current => current with { NotifyOnLimits = NotifyToggle.IsChecked == true });
 

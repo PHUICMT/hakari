@@ -17,6 +17,7 @@ public sealed class Indexer
     private readonly IndexStore store;
     private readonly TrackedFileRepository trackedFiles;
     private readonly bool collectSessionTitles;
+    private readonly bool collectThinkingMarks;
     private readonly long progressFromBytes;
 
     /// <param name="collectSessionTitles">
@@ -24,13 +25,19 @@ public sealed class Indexer
     /// conversation and nothing else Hakari reads does.
     /// </param>
     /// <param name="progressFromBytes">Scans of this many new bytes or more show progress.</param>
+    /// <param name="collectThinkingMarks">
+    /// Also note which responses thought first, by the kind of their parts alone. Off unless
+    /// the user asked.
+    /// </param>
     public Indexer(
         IndexStore store,
         bool collectSessionTitles = false,
-        long progressFromBytes = DefaultProgressFromBytes)
+        long progressFromBytes = DefaultProgressFromBytes,
+        bool collectThinkingMarks = false)
     {
         this.store = store;
         this.collectSessionTitles = collectSessionTitles;
+        this.collectThinkingMarks = collectThinkingMarks;
         this.progressFromBytes = progressFromBytes;
         trackedFiles = new TrackedFileRepository(store.Connection);
     }
@@ -165,6 +172,7 @@ public sealed class Indexer
         using var transaction = store.Connection.BeginTransaction();
         using var writer = new UsageRecordWriter(store.Connection, transaction);
         using var titleWriter = new SessionTitleWriter(store.Connection, transaction);
+        using var thinkingWriter = new ThinkingMarkWriter(store.Connection, transaction);
         var recordsChanged = 0;
         var endOffset = file.IndexedOffset;
 
@@ -173,6 +181,12 @@ public sealed class Indexer
             endOffset = CompleteLineReader.ReadFrom(file.Path, file.IndexedOffset, line =>
             {
                 var record = UsageLineParser.TryParse(line);
+                if (record is not null && collectThinkingMarks
+                    && ThinkingMarkParser.HasThinking(line))
+                {
+                    thinkingWriter.Mark(record.DeduplicationKey);
+                }
+
                 if (record is not null && writer.TryUpsert(file.SourceId, record))
                 {
                     recordsChanged++;

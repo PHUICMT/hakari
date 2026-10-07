@@ -97,6 +97,10 @@
                                 Description="{l:Text Key=settings.titles.description}">
                                 <controls:HakariToggle x:Name="TitlesToggle" Click="OnTitlesClicked" />
                             </controls:SettingRow>
+                            <controls:SettingRow Glyph="&#xE945;" Title="{l:Text Key=settings.thinking}"
+                                Description="{l:Text Key=settings.thinking.description}">
+                                <controls:HakariToggle x:Name="ThinkingToggle" Click="OnThinkingClicked" />
+                            </controls:SettingRow>
                             <controls:SettingRow Glyph="&#xE8B7;" Title="{l:Text Key=settings.folders}"
                                 Description="{l:Text Key=settings.folders.description}">
                                 <Button Content="{l:Text Key=settings.folders.add}" Style="{StaticResource HakariButton}"

@@ -91,6 +91,29 @@ public sealed class UsageQuery(
         return saved;
     }
 
+    /// <summary>
+    /// The share of responses that thought first, 0 to 1, from the marks kept while the user
+    /// counts thinking; null when there are no responses.
+    /// </summary>
+    public double? ThinkingShare(UsageFilter filter)
+    {
+        using var command = store.Connection.CreateCommand();
+        var whereClause = UsageFilterSql.BuildWhereClause(filter, command);
+        command.CommandText = $"""
+            SELECT COUNT(*),
+                   SUM(CASE WHEN deduplication_key IN
+                       (SELECT deduplication_key FROM thinking_marks) THEN 1 ELSE 0 END)
+            FROM usage_records {whereClause}
+            """;
+        using var reader = command.ExecuteReader();
+        if (!reader.Read() || reader.GetInt64(0) == 0)
+        {
+            return null;
+        }
+
+        return (double)(reader.IsDBNull(1) ? 0 : reader.GetInt64(1)) / reader.GetInt64(0);
+    }
+
     public IReadOnlyList<string> FindUnpricedModels()
     {
         using var command = store.Connection.CreateCommand();
