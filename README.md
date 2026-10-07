@@ -23,8 +23,8 @@ Windows 10 (2004) or later, x64 or Arm64. Hakari is free everywhere; pick one:
 
 | Where | How | Updates |
 |---|---|---|
-| **Microsoft Store** | [Hakari - Usage Meter](https://apps.microsoft.com/detail/9NFVF39T2447) | Automatic, through the Store |
-| **winget** | `winget install PHUICMT.Hakari` | `winget upgrade PHUICMT.Hakari` |
+| **Microsoft Store** | Hakari - Usage Meter *(in review, coming soon)* | Automatic, through the Store |
+| **winget** | `winget install PHUICMT.Hakari` *(in review, coming soon)* | `winget upgrade PHUICMT.Hakari` |
 | **Zip** | [Releases](https://github.com/PHUICMT/hakari/releases): `Hakari-<version>-win-x64.zip`, or `win-arm64` for Windows on Arm | Hakari says in its flyout when a newer version is out |
 
 **Zip:** unzip it where you keep apps, such as `%LOCALAPPDATA%\Programs\Hakari`, and run
