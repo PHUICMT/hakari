@@ -72,7 +72,7 @@ internal sealed partial class SessionsPage : LoadedPage<SessionRows>
             row.TopModel is var (name, share)
                 ? Model(name, PercentText.Format(share * PercentScale, 0))
                 : string.Empty,
-            Duration(row.Usage.LastSeen - row.Usage.FirstSeen),
+            Duration(row.Active),
             row.Usage.Messages.ToString("N0", CultureInfo.InvariantCulture),
             row.IsHigh
                 ? TableCells.WithBadge(cost, TableCells.Badge(Texts.Get("dashboard.high"), true))
@@ -87,7 +87,7 @@ internal sealed partial class SessionsPage : LoadedPage<SessionRows>
         RowNames.Project(GroupKeys.Split(row.Usage.Key).Project).Title,
         row.Source ?? string.Empty,
         row.TopModel?.Share ?? 0,
-        row.Usage.LastSeen - row.Usage.FirstSeen,
+        row.Active,
         row.Usage.Messages,
         row.Usage.Cost,
     ];

@@ -8,8 +8,10 @@ namespace Hakari.Surfaces.Dashboard;
 /// <param name="Source">Where the session ran, such as "Windows" or "WSL".</param>
 /// <param name="TopModel">The model that cost the most in it, and its share of the cost.</param>
 /// <param name="IsHigh">Costs over three times the usual session of the period.</param>
+/// <param name="Active">Time in use, leaving out long pauses between replies.</param>
 internal sealed record SessionRow(
     UsageSummary Usage,
+    TimeSpan Active,
     string? Title,
     string? Source,
     (string Name, double Share)? TopModel,
@@ -38,6 +40,7 @@ internal sealed record SessionRows(IReadOnlyList<SessionRow> Rows, string Curren
         var titles = SessionTitles.Load(store);
         var sources = SourcesOf(query, store, usage);
         var topModels = TopModels(query, usage);
+        var active = query.ActiveTime(usage);
         return new SessionRows(
             [
                 .. all.Take(MostRows).Select(row =>
@@ -45,6 +48,7 @@ internal sealed record SessionRows(IReadOnlyList<SessionRow> Rows, string Curren
                     var session = GroupKeys.Split(row.Key).Item;
                     return new SessionRow(
                         row,
+                        active.GetValueOrDefault(row.Key),
                         titles.GetValueOrDefault(session),
                         sources.GetValueOrDefault(row.Key),
                         TopModel(topModels, row.Key, row.Cost),

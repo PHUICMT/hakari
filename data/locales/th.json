@@ -478,7 +478,7 @@
   "dashboard.column.session": "Session",
   "dashboard.column.source": "แหล่ง",
   "dashboard.column.modelMix": "โมเดลหลัก",
-  "dashboard.column.duration": "ระยะเวลา",
+  "dashboard.column.duration": "เวลาใช้งาน",
   "dashboard.projects.caption": "ตามโฟลเดอร์ที่ทำงาน รวมทุกแหล่งข้อมูล",
   "dashboard.branches.caption": "branch ของ git ตอนที่ตอบแต่ละครั้ง",
   "dashboard.sessions.title": "Session ที่แพงที่สุด",

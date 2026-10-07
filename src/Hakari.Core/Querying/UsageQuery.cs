@@ -31,6 +31,41 @@ public sealed class UsageQuery(
         return DateOnly.FromDateTime(firstUsage.UtcDateTime);
     }
 
+    /// <summary>A pause longer than this between replies is time away, not work.</summary>
+    public static readonly TimeSpan IdleGap = TimeSpan.FromMinutes(30);
+
+    /// <summary>
+    /// How long each session (keyed as <see cref="GroupBy.ProjectSession"/>) was in use: the
+    /// gaps between its replies added up, leaving out pauses over <see cref="IdleGap"/>, so a
+    /// session resumed days later is not counted as running the whole time.
+    /// </summary>
+    public IReadOnlyDictionary<string, TimeSpan> ActiveTime(UsageFilter filter)
+    {
+        using var command = store.Connection.CreateCommand();
+        var whereClause = UsageFilterSql.BuildWhereClause(filter, command);
+        var key = GroupByExpressions.For(GroupBy.ProjectSession);
+        command.CommandText = $"""
+            SELECT session_key, sum(CASE WHEN gap <= $idle THEN gap ELSE 0 END)
+            FROM (
+                SELECT {key} AS session_key,
+                    timestamp_ms - lag(timestamp_ms)
+                        OVER (PARTITION BY {key} ORDER BY timestamp_ms) AS gap
+                FROM usage_records
+                {whereClause})
+            GROUP BY session_key
+            """;
+        command.Parameters.AddWithValue("$idle", (long)IdleGap.TotalMilliseconds);
+        var times = new Dictionary<string, TimeSpan>(StringComparer.Ordinal);
+        using var reader = command.ExecuteReader();
+        while (reader.Read())
+        {
+            var milliseconds = reader.IsDBNull(1) ? 0 : reader.GetInt64(1);
+            times[reader.GetString(0)] = TimeSpan.FromMilliseconds(milliseconds);
+        }
+
+        return times;
+    }
+
     /// <summary>Whether anything was indexed yet, without adding anything up.</summary>
     public bool HasAny()
     {

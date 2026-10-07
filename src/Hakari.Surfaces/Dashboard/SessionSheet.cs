@@ -90,6 +90,11 @@ internal static class SessionSheet
     private static string Label(string hourKey) =>
         hourKey.Length > 11 ? hourKey[11..] : hourKey;
 
+    /// <summary>"8 Sep – 7 Oct": the days a session spread over, under its time in use.</summary>
+    private static string DayRange(UsageSummary usage) =>
+        usage.FirstSeen.ToLocalTime().ToString("d MMM", Texts.Culture) + " – "
+        + usage.LastSeen.ToLocalTime().ToString("d MMM", Texts.Culture);
+
     /// <summary>"2026-09-08" becomes "8 Sep" (or "8 ก.ย.").</summary>
     private static string DayLabel(string dayKey) =>
         DateOnly.TryParseExact(dayKey, "yyyy-MM-dd", CultureInfo.InvariantCulture,
@@ -215,9 +220,11 @@ internal static class SessionSheet
             DashboardTile.Create(Texts.Get("dashboard.column.cost"),
                 MoneyText.Format(cost, currency), null),
             DashboardTile.Create(Texts.Get("dashboard.column.duration"),
-                SessionsPage.Duration(usage.LastSeen - usage.FirstSeen),
-                Texts.Format("dashboard.sheet.responses",
-                    usage.Messages.ToString("N0", CultureInfo.InvariantCulture))),
+                SessionsPage.Duration(row.Active),
+                detail.ByDay
+                    ? DayRange(usage)
+                    : Texts.Format("dashboard.sheet.responses",
+                        usage.Messages.ToString("N0", CultureInfo.InvariantCulture))),
             DashboardTile.Create(Texts.Get("dashboard.sheet.subagents"),
                 Share(detail.SubagentCost, cost),
                 MoneyText.Format(detail.SubagentCost, currency)),

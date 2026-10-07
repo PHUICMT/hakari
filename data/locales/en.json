@@ -478,7 +478,7 @@
   "dashboard.column.session": "Session",
   "dashboard.column.source": "Source",
   "dashboard.column.modelMix": "Model mix",
-  "dashboard.column.duration": "Duration",
+  "dashboard.column.duration": "Active time",
   "dashboard.projects.caption": "By working folder, across sources",
   "dashboard.branches.caption": "The git branch at the time of each response",
   "dashboard.sessions.title": "Most expensive sessions",
