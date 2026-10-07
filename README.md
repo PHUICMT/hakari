@@ -15,7 +15,7 @@ Status: **early release**. See [docs/SPEC.md](docs/SPEC.md), [docs/ARCHITECTURE.
 
 Windows 10 (2004) or later, 64-bit.
 
-1. Download `Hakari-<version>-win-x64.zip` from [Releases](https://github.com/PHUICMT/hakari/releases/latest).
+1. Download `Hakari-<version>-win-x64.zip` from [Releases](https://github.com/PHUICMT/hakari/releases).
 2. Unzip it where you keep apps, such as `%LOCALAPPDATA%\Programs\Hakari`.
 3. Run `Hakari.exe`. The meter appears on the taskbar and a short first-run guide opens.
 
