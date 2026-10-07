@@ -72,6 +72,41 @@
             <Color x:Key="HakariHoverColor">#12FFFFFF</Color>
             <Color x:Key="HakariPressedColor">#20FFFFFF</Color>
         </ResourceDictionary>
+        <!-- High contrast: every color comes from the user's own contrast theme, and tones
+             are told by words and marks, never by color alone -->
+        <ResourceDictionary x:Key="HighContrast">
+            <StaticResource x:Key="HakariSurfaceColor" ResourceKey="SystemColorWindowColor" />
+            <StaticResource x:Key="HakariTileColor" ResourceKey="SystemColorWindowColor" />
+            <StaticResource x:Key="HakariLineColor" ResourceKey="SystemColorWindowTextColor" />
+            <StaticResource x:Key="HakariLineStrongColor" ResourceKey="SystemColorWindowTextColor" />
+            <StaticResource x:Key="HakariGroundColor" ResourceKey="SystemColorWindowColor" />
+            <StaticResource x:Key="HakariTaskbarColor" ResourceKey="SystemColorWindowColor" />
+            <StaticResource x:Key="HakariChart1Color" ResourceKey="SystemColorHighlightColor" />
+            <StaticResource x:Key="HakariChart2Color" ResourceKey="SystemColorHighlightColor" />
+            <StaticResource x:Key="HakariChart3Color" ResourceKey="SystemColorHighlightColor" />
+            <StaticResource x:Key="HakariChart4Color" ResourceKey="SystemColorHighlightColor" />
+            <StaticResource x:Key="HakariChart5Color" ResourceKey="SystemColorHighlightColor" />
+            <StaticResource x:Key="HakariHeat0Color" ResourceKey="SystemColorWindowColor" />
+            <StaticResource x:Key="HakariHeat1Color" ResourceKey="SystemColorHighlightColor" />
+            <StaticResource x:Key="HakariHeat2Color" ResourceKey="SystemColorHighlightColor" />
+            <StaticResource x:Key="HakariHeat3Color" ResourceKey="SystemColorHighlightColor" />
+            <StaticResource x:Key="HakariHeat4Color" ResourceKey="SystemColorHighlightColor" />
+            <StaticResource x:Key="HakariAccentSoftColor" ResourceKey="SystemColorWindowColor" />
+            <StaticResource x:Key="HakariOkSoftColor" ResourceKey="SystemColorWindowColor" />
+            <StaticResource x:Key="HakariWarnSoftColor" ResourceKey="SystemColorWindowColor" />
+            <StaticResource x:Key="HakariCriticalSoftColor" ResourceKey="SystemColorWindowColor" />
+            <StaticResource x:Key="HakariInkColor" ResourceKey="SystemColorWindowTextColor" />
+            <StaticResource x:Key="HakariInkMutedColor" ResourceKey="SystemColorWindowTextColor" />
+            <StaticResource x:Key="HakariInkFaintColor" ResourceKey="SystemColorGrayTextColor" />
+            <StaticResource x:Key="HakariAccentColor" ResourceKey="SystemColorHighlightColor" />
+            <StaticResource x:Key="HakariAccentStrongColor" ResourceKey="SystemColorHighlightColor" />
+            <StaticResource x:Key="HakariOnAccentColor" ResourceKey="SystemColorHighlightTextColor" />
+            <StaticResource x:Key="HakariOkColor" ResourceKey="SystemColorHotlightColor" />
+            <StaticResource x:Key="HakariWarnColor" ResourceKey="SystemColorHotlightColor" />
+            <StaticResource x:Key="HakariCriticalColor" ResourceKey="SystemColorHotlightColor" />
+            <StaticResource x:Key="HakariHoverColor" ResourceKey="SystemColorHighlightColor" />
+            <StaticResource x:Key="HakariPressedColor" ResourceKey="SystemColorHighlightColor" />
+        </ResourceDictionary>
     </ResourceDictionary.ThemeDictionaries>
 
     <!-- Mostly opaque: acrylic only tints the edges, so what is behind never hurts legibility -->
