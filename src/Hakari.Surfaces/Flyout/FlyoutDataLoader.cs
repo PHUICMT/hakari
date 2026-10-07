@@ -99,6 +99,7 @@ internal static class FlyoutDataLoader
                 .. FirstRead(query, store),
                 .. LimitsQuestions(store, settings),
                 .. StoppedDistributions(store, settings),
+                .. NewerVersion(settings),
             ]);
     }
 
@@ -164,6 +165,27 @@ internal static class FlyoutDataLoader
                 Tone.Normal,
                 Texts.Get("flyout.notice.reading"),
                 Texts.Get("flyout.notice.readingDetail"));
+    }
+
+    /// <summary>A newer release than this copy, when the daily look found one.</summary>
+    private static IEnumerable<FlyoutNotice> NewerVersion(HakariSettings settings)
+    {
+        var current = typeof(FlyoutDataLoader).Assembly.GetName().Version;
+        if (!settings.CheckForUpdates
+            || current is null
+            || Hakari.Core.Updates.UpdateCheck.NewerThan(current) is not { } update)
+        {
+            yield break;
+        }
+
+        yield return new FlyoutNotice(
+            Tone.Normal,
+            Texts.Format("flyout.notice.update", update.Latest),
+            Texts.Format(
+                "flyout.notice.updateDetail",
+                $"{current.Major}.{current.Minor}.{current.Build}"),
+            NoticeAction.OpenUpdate,
+            Texts.Get("flyout.notice.updateAction"));
     }
 
     /// <summary>

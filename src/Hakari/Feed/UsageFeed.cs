@@ -9,6 +9,7 @@ using Hakari.Core.Pricing;
 using Hakari.Core.Querying;
 using Hakari.Core.Settings;
 using Hakari.Core.Sources;
+using Hakari.Core.Updates;
 using Hakari.Core.Watching;
 using Hakari.Taskbar.Rendering;
 using Hakari.Taskbar.Tray;
@@ -26,6 +27,7 @@ internal sealed class UsageFeed : IDisposable
 
     /// <summary>How often spending is held against the budgets and usual sessions.</summary>
     private static readonly TimeSpan SpendCheckInterval = TimeSpan.FromMinutes(1);
+    private static readonly TimeSpan UpdateCheckInterval = TimeSpan.FromHours(1);
 
     /// <summary>How often to look for newly started WSL distributions and new sign-ins.</summary>
     private static readonly TimeSpan SourceCheckInterval = TimeSpan.FromMinutes(1);
@@ -215,6 +217,7 @@ internal sealed class UsageFeed : IDisposable
         var nextSourceCheck = DateTimeOffset.UtcNow + SourceCheckInterval;
         var nextSpendCheck = DateTimeOffset.UtcNow + SpendCheckInterval;
         var spendWatch = new SpendWatch(store);
+        var nextUpdateCheck = DateTimeOffset.UtcNow;
 
         while (!cancellation.IsCancellationRequested && !settingsChanged)
         {
@@ -241,6 +244,12 @@ internal sealed class UsageFeed : IDisposable
             {
                 refreshRequested = false;
                 limits.PollSoon();
+            }
+
+            if (settings.CheckForUpdates && now >= nextUpdateCheck)
+            {
+                nextUpdateCheck = now + UpdateCheckInterval;
+                StartUpdateCheck(now);
             }
 
             if (now >= nextSpendCheck)
@@ -448,6 +457,22 @@ internal sealed class UsageFeed : IDisposable
         {
             settingsSignal.WaitOne(ContentRefreshInterval);
         }
+    }
+
+    private Task? updateCheck;
+
+    /// <summary>
+    /// Off this thread, so a slow network never holds up the widget; at most one at a time,
+    /// and only once a day by the file it keeps.
+    /// </summary>
+    private void StartUpdateCheck(DateTimeOffset now)
+    {
+        if (updateCheck is { IsCompleted: false } || !UpdateCheck.IsDue(now))
+        {
+            return;
+        }
+
+        updateCheck = Task.Run(() => UpdateCheck.CheckAsync(now, cancellation.Token));
     }
 
     private static CurrencyConverter? CreateConverter(

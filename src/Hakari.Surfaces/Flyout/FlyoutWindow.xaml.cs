@@ -60,7 +60,10 @@ public sealed partial class FlyoutWindow : Window
 
     public event EventHandler? SettingsRequested;
 
-    /// <summary>A notice's main button: prices open Settings, "turn on" allows limits.</summary>
+    /// <summary>
+    /// A notice's main button: prices open Settings, "turn on" allows limits, a newer
+    /// version opens its download page.
+    /// </summary>
     private void OnNoticeActionClicked(object sender, RoutedEventArgs args)
     {
         if ((sender as FrameworkElement)?.DataContext is not FlyoutNotice notice)
@@ -71,6 +74,15 @@ public sealed partial class FlyoutWindow : Window
         if (notice.Action == NoticeAction.TurnOnLimits)
         {
             AnswerLimits(notice, on: true);
+            return;
+        }
+
+        if (notice.Action == NoticeAction.OpenUpdate)
+        {
+            HideFlyout();
+            var page = Hakari.Core.Updates.UpdateCheck.Load()?.Url
+                ?? Hakari.Core.Updates.UpdateCheck.ReleasesPage;
+            _ = Windows.System.Launcher.LaunchUriAsync(new Uri(page));
             return;
         }
 

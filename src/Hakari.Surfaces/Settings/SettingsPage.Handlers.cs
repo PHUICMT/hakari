@@ -226,6 +226,9 @@ public sealed partial class SettingsPage
     private void OnThinkingClicked(object sender, RoutedEventArgs args) =>
         Save(current => current with { CountThinking = ThinkingToggle.IsChecked == true });
 
+    private void OnUpdatesClicked(object sender, RoutedEventArgs args) =>
+        Save(current => current with { CheckForUpdates = UpdatesToggle.IsChecked == true });
+
     private void OnNotifyClicked(object sender, RoutedEventArgs args) =>
         Save(current => current with { NotifyOnLimits = NotifyToggle.IsChecked == true });
 

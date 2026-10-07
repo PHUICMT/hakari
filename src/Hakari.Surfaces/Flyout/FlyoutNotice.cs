@@ -13,6 +13,9 @@ public enum NoticeAction
 
     /// <summary>Lets Hakari ask for this account's limits.</summary>
     TurnOnLimits,
+
+    /// <summary>Opens the newer release's download page.</summary>
+    OpenUpdate,
 }
 
 /// <summary>

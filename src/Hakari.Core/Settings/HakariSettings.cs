@@ -93,6 +93,12 @@ public sealed record HakariSettings
     /// </summary>
     public bool CountThinking { get; init; }
 
+    /// <summary>
+    /// Look once a day at the project's public release list and say in the flyout when a
+    /// newer version is out. Nothing about the user is sent.
+    /// </summary>
+    public bool CheckForUpdates { get; init; } = true;
+
     /// <summary>Tell when a limit passes its warning or critical level or resets.</summary>
     public bool NotifyOnLimits { get; init; } = true;
 

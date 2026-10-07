@@ -167,6 +167,7 @@ public sealed partial class SettingsPage
         NotifyToggle.IsChecked = settings.NotifyOnLimits;
         TitlesToggle.IsChecked = settings.ShowSessionTitles;
         ThinkingToggle.IsChecked = settings.CountThinking;
+        UpdatesToggle.IsChecked = settings.CheckForUpdates;
     }
 
     /// <summary>

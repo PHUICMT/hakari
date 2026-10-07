@@ -311,6 +311,10 @@
                                         Click="OnSupportClicked" />
                                 </StackPanel>
                             </controls:SettingRow>
+                            <controls:SettingRow Glyph="&#xE895;" Title="{l:Text Key=settings.updates}"
+                                Description="{l:Text Key=settings.updates.description}">
+                                <controls:HakariToggle x:Name="UpdatesToggle" Click="OnUpdatesClicked" />
+                            </controls:SettingRow>
                             <controls:SettingRow x:Name="DataFolderRow" Glyph="&#xE8A5;" Title="{l:Text Key=settings.dataFolder}">
                                 <Button Content="{l:Text Key=settings.dataFolder.open}" Style="{StaticResource HakariButton}"
                                     Click="OnOpenDataFolderClicked" />
