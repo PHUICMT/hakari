@@ -60,7 +60,8 @@ internal static class DashboardCard
         var foldable = new ContentControl
         {
             Content = content,
-            Margin = new Thickness(0, HeaderGap, 0, 0),
+            // Padding, not a margin: it sits inside the height that folds, so the gap folds too.
+            Padding = new Thickness(0, HeaderGap, 0, 0),
             HorizontalContentAlignment = HorizontalAlignment.Stretch,
             IsTabStop = false,
         };

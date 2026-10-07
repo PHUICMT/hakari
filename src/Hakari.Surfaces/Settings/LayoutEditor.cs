@@ -587,23 +587,44 @@ internal sealed partial class LayoutEditor : StackPanel
         change(edit);
     }
 
-    /// <summary>The row folds away and fades first; the layout changes once it is gone.</summary>
+    private readonly HashSet<int> pendingRemovals = [];
+    private Microsoft.UI.Dispatching.DispatcherQueueTimer? removalTimer;
+
+    /// <summary>
+    /// The row folds away and fades first; the layout changes once it is gone. Rows removed
+    /// in quick succession go together in one change, so each index still names the row it
+    /// was given for (removing one first would shift the others).
+    /// </summary>
     private void RemoveSlot(FrameworkElement row, int index)
     {
+        pendingRemovals.Add(index);
         if (SurfaceMotion.Current() == AnimationSetting.Off)
         {
-            change(current => Without(current, index));
+            ApplyRemovals();
             return;
         }
 
         row.IsHitTestVisible = false;
         SurfaceMotion.Settle(row, "Opacity", 0);
         Flyout.CardFold.Run(row, folding: true, fitWindow: () => { });
-        var timer = DispatcherQueue.CreateTimer();
-        timer.Interval = SurfaceMotion.Normal;
-        timer.IsRepeating = false;
-        timer.Tick += (_, _) => change(current => Without(current, index));
-        timer.Start();
+        if (removalTimer is null)
+        {
+            removalTimer = DispatcherQueue.CreateTimer();
+            removalTimer.Interval = SurfaceMotion.Normal;
+            removalTimer.IsRepeating = false;
+            removalTimer.Tick += (_, _) => ApplyRemovals();
+        }
+
+        removalTimer.Stop();
+        removalTimer.Start();
+    }
+
+    private void ApplyRemovals()
+    {
+        removalTimer?.Stop();
+        var removed = pendingRemovals.ToHashSet();
+        pendingRemovals.Clear();
+        change(current => Without(current, removed));
     }
 
     /// <summary>
@@ -744,10 +765,14 @@ internal sealed partial class LayoutEditor : StackPanel
         return layout with { Slots = slots };
     }
 
-    private static WidgetLayout Without(WidgetLayout layout, int index) =>
-        layout.Slots.Count <= 1
-            ? layout
-            : layout with { Slots = [.. layout.Slots.Where((_, position) => position != index)] };
+    /// <summary>The layout keeps at least one slot, whatever was asked.</summary>
+    private static WidgetLayout Without(WidgetLayout layout, IReadOnlySet<int> indexes)
+    {
+        var kept = layout.Slots.Where((_, position) => !indexes.Contains(position)).ToList();
+        return kept.Count == 0
+            ? layout with { Slots = [layout.Slots[0]] }
+            : layout with { Slots = kept };
+    }
 
     private StackPanel FormatBlock()
     {

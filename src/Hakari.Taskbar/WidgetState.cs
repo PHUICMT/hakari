@@ -18,4 +18,7 @@ internal sealed class WidgetState(WidgetContent initialContent)
 
     /// <summary>Showing the compact form because the full one had no room on its taskbar.</summary>
     public bool IsCompact { get; set; }
+
+    /// <summary>The full form's size from before it shrank, to know when it fits again.</summary>
+    public System.Drawing.Size FullSize { get; set; }
 }

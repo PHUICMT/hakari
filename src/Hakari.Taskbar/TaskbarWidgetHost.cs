@@ -348,6 +348,7 @@ public sealed class TaskbarWidgetHost : IDisposable
     {
         var overlayHidden = options.Mode == AttachMode.TopMostOverlay
             && FullScreenDetector.IsSomethingFullScreen();
+        TryFullAgain(widget, taskbar);
         var target = WidgetPlacement.LeftOfNotificationArea(taskbar, widget.RenderedSize);
         if (!overlayHidden && target is null && TryCompact(widget, taskbar))
         {
@@ -371,6 +372,24 @@ public sealed class TaskbarWidgetHost : IDisposable
     /// No room for the full widget: it shrinks to its first block's ring and top line, as the
     /// minimal template does, before giving up and hiding. The next content tries full again.
     /// </summary>
+    /// <summary>
+    /// A compact widget goes back to its full form as soon as the full form fits again, such
+    /// as after an Explorer restart or a tray icon going away, not only on the next content.
+    /// </summary>
+    private void TryFullAgain(WidgetWindow widget, TaskbarInfo taskbar)
+    {
+        var state = states[widget];
+        if (!state.IsCompact || state.FullSize.IsEmpty
+            || WidgetPlacement.LeftOfNotificationArea(taskbar, state.FullSize) is null)
+        {
+            return;
+        }
+
+        state.IsCompact = false;
+        state.Animation.ChangeContent(content, Stopwatch.GetTimestamp(), motion);
+        RenderFrame(widget, taskbar, state);
+    }
+
     private bool TryCompact(WidgetWindow widget, TaskbarInfo taskbar)
     {
         var state = states[widget];
@@ -380,6 +399,7 @@ public sealed class TaskbarWidgetHost : IDisposable
         }
 
         state.IsCompact = true;
+        state.FullSize = widget.RenderedSize;
         state.Animation.ChangeContent(
             content.Compact(),
             Stopwatch.GetTimestamp(),
