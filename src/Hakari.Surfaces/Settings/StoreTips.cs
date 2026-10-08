@@ -21,6 +21,8 @@ internal static class StoreTips
     private const string DeveloperManaged = "Consumable";
     private const string StoreManaged = "UnmanagedConsumable";
     private const double ListWidth = 260;
+    private const double RowGap = 2;
+    private static readonly Thickness ListPadding = new(0, 4, 0, 4);
 
     private static StoreContext? context;
     private static IntPtr contextWindow;
@@ -60,11 +62,15 @@ internal static class StoreTips
         IntPtr window,
         Action<string> thanked)
     {
-        var list = new StackPanel { Width = ListWidth };
+        var list = new StackPanel { Width = ListWidth, Padding = ListPadding, Spacing = RowGap };
+
+        // Under the button, its right edge on the button's, and free to pass the window's
+        // edge so a button near the bottom does not squeeze the list against it.
         var flyout = new Microsoft.UI.Xaml.Controls.Flyout
         {
             Content = list,
-            Placement = FlyoutPlacementMode.Bottom,
+            Placement = FlyoutPlacementMode.BottomEdgeAlignedRight,
+            ShouldConstrainToRootBounds = false,
             FlyoutPresenterStyle = (Style)Application.Current.Resources["HakariListPresenter"],
         };
         SurfaceMotion.EnterOnOpen(flyout);
