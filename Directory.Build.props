@@ -6,6 +6,24 @@
     <LangVersion>latest</LangVersion>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <!-- Only a version given on the command line (as releases do) is set this early. -->
+    <VersionGiven>$(Version)</VersionGiven>
   </PropertyGroup>
+
+  <!-- A local build takes the latest release tag, not the SDK's 1.0.0, so it reads as the
+       version it is built on and update checks behave as in a release. -->
+  <Target Name="VersionFromLatestTag" BeforeTargets="GetAssemblyVersion"
+      Condition="'$(VersionGiven)' == ''">
+    <Exec Command="git describe --tags --abbrev=0 --match v*" ConsoleToMSBuild="true"
+        IgnoreExitCode="true" StandardOutputImportance="low" StandardErrorImportance="low"
+        WorkingDirectory="$(MSBuildThisFileDirectory)">
+      <Output TaskParameter="ConsoleOutput" PropertyName="LatestTag" />
+      <Output TaskParameter="ExitCode" PropertyName="LatestTagExitCode" />
+    </Exec>
+    <PropertyGroup Condition="'$(LatestTagExitCode)' == '0' and '$(LatestTag)' != ''">
+      <Version>$(LatestTag.TrimStart('v'))</Version>
+      <InformationalVersion>$(Version)-dev</InformationalVersion>
+    </PropertyGroup>
+  </Target>
 
 </Project>
