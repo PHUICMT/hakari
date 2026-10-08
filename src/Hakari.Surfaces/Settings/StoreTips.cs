@@ -10,6 +10,10 @@ using Windows.Services.Store;
 
 namespace Hakari.Surfaces.Settings;
 
+/// <summary>A tip on offer: its Store title and local price, and the product to buy.</summary>
+/// <param name="Product">Null for a preview tip, which buys nothing.</param>
+internal sealed record TipOffer(string Title, string Price, StoreProduct? Product);
+
 /// <summary>
 /// Tips through the Microsoft Store, in the Store build only: the app's consumable add-ons,
 /// read from the Store with their local prices, so a new tip size needs no app update. A tip
@@ -24,16 +28,40 @@ internal static class StoreTips
     private const double RowGap = 2;
     private static readonly Thickness ListPadding = new(0, 4, 0, 4);
 
+    private const double PictureSize = 18;
+    private const double PictureColumn = 26;
+
+    /// <summary>A picture per tip, smallest first, in color from the emoji font.</summary>
+    private static readonly string[] Pictures = ["\u2615", "\U0001F370", "\U0001F371"];
+
+    /// <summary>
+    /// Set to 1 on a build run from source to see the list without the Store. Its tips have
+    /// sample prices and buy nothing.
+    /// </summary>
+    private const string PreviewVariable = "HAKARI_TIP_PREVIEW";
+
+    private static readonly TipOffer[] PreviewTips =
+    [
+        new("Coffee", "\u0E3F34.00", null),
+        new("Coffee and cake", "\u0E3F104.00", null),
+        new("Lunch", "\u0E3F174.00", null),
+    ];
+
     private static StoreContext? context;
     private static IntPtr contextWindow;
 
     /// <summary>
     /// The tips on offer in the order of their product ids (name them "tip-1-small",
-    /// "tip-2-coffee" and so on); empty outside the Store build.
+    /// "tip-2-coffee" and so on); empty outside the Store build unless previewing.
     /// </summary>
-    public static async Task<IReadOnlyList<StoreProduct>> ListAsync(IntPtr window)
+    public static async Task<IReadOnlyList<TipOffer>> ListAsync(IntPtr window)
     {
-        if (!PackageIdentity.IsPackaged || Context(window) is not { } store)
+        if (!PackageIdentity.IsPackaged)
+        {
+            return Environment.GetEnvironmentVariable(PreviewVariable) == "1" ? PreviewTips : [];
+        }
+
+        if (Context(window) is not { } store)
         {
             return [];
         }
@@ -43,9 +71,10 @@ internal static class StoreTips
             var result = await store.GetAssociatedStoreProductsAsync(
                 [DeveloperManaged, StoreManaged]);
             return result.ExtendedError is null
-                ? [.. result.Products.Values.OrderBy(
-                    product => product.InAppOfferToken,
-                    StringComparer.Ordinal)]
+                ? [.. result.Products.Values
+                    .OrderBy(product => product.InAppOfferToken, StringComparer.Ordinal)
+                    .Select(product => new TipOffer(
+                        product.Title, product.Price.FormattedPrice, product))]
                 : [];
         }
         catch (Exception exception)
@@ -55,10 +84,10 @@ internal static class StoreTips
         }
     }
 
-    /// <summary>A list of tips under the button, each with its Store price.</summary>
+    /// <summary>A list of tips under the button, each with a picture and its Store price.</summary>
     public static void ShowList(
         FrameworkElement anchor,
-        IReadOnlyList<StoreProduct> tips,
+        IReadOnlyList<TipOffer> tips,
         IntPtr window,
         Action<string> thanked)
     {
@@ -74,22 +103,38 @@ internal static class StoreTips
             FlyoutPresenterStyle = (Style)Application.Current.Resources["HakariListPresenter"],
         };
         SurfaceMotion.EnterOnOpen(flyout);
-        foreach (var tip in tips)
+        for (var index = 0; index < tips.Count; index++)
         {
-            var row = new Grid { ColumnSpacing = 12 };
+            var tip = tips[index];
+            var row = new Grid { ColumnSpacing = 10 };
+            row.ColumnDefinitions.Add(
+                new ColumnDefinition { Width = new GridLength(PictureColumn) });
             row.ColumnDefinitions.Add(new ColumnDefinition());
             row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
             row.Children.Add(new TextBlock
             {
+                Text = Pictures[Math.Min(index, Pictures.Length - 1)],
+                FontSize = PictureSize,
+                FontFamily = new FontFamily("Segoe UI Emoji"),
+                IsColorFontEnabled = true,
+                VerticalAlignment = VerticalAlignment.Center,
+                HorizontalAlignment = HorizontalAlignment.Center,
+            });
+            var title = new TextBlock
+            {
                 Text = tip.Title,
                 TextTrimming = TextTrimming.CharacterEllipsis,
-            });
+                VerticalAlignment = VerticalAlignment.Center,
+            };
+            Grid.SetColumn(title, 1);
+            row.Children.Add(title);
             var price = new TextBlock
             {
-                Text = tip.Price.FormattedPrice,
+                Text = tip.Price,
                 Foreground = (Brush)Application.Current.Resources["HakariInkMutedBrush"],
+                VerticalAlignment = VerticalAlignment.Center,
             };
-            Grid.SetColumn(price, 1);
+            Grid.SetColumn(price, 2);
             row.Children.Add(price);
             var button = new Button
             {
@@ -103,7 +148,7 @@ internal static class StoreTips
                 flyout.Hide();
                 try
                 {
-                    if (await BuyAsync(tip, window))
+                    if (tip.Product is { } product && await BuyAsync(product, window))
                     {
                         thanked(Texts.Get("settings.support.thanks"));
                     }

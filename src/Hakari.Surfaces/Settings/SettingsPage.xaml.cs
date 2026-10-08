@@ -39,7 +39,7 @@ public sealed partial class SettingsPage : UserControl
         Loaded += (_, _) => OfferStoreTips();
     }
 
-    private IReadOnlyList<Windows.Services.Store.StoreProduct> storeTips = [];
+    private IReadOnlyList<TipOffer> storeTips = [];
 
     /// <summary>Shows the Store tip button once the Store says there are tips to give.</summary>
     private async void OfferStoreTips()
