@@ -2,6 +2,13 @@
 
 A lightweight Windows taskbar meter and dashboard for **Claude Code** usage. It combines every place you use Claude Code on your PC (Windows, WSL distributions, extra config folders) and every account into one real total.
 
+<a href="https://apps.microsoft.com/detail/9NFVF39T2447?mode=direct">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://get.microsoft.com/images/en-us%20light.svg">
+    <img src="https://get.microsoft.com/images/en-us%20dark.svg" alt="Get it from Microsoft" width="200">
+  </picture>
+</a>
+
 > Not affiliated with or endorsed by Anthropic. "Claude" is a trademark of Anthropic, PBC.
 
 ![Hakari on the taskbar, with its flyout and dashboard](docs/images/hero.png)
