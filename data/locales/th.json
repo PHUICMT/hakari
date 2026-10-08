@@ -561,6 +561,8 @@
   "flyout.notice.whatsNew": "มีอะไรใหม่ใน Hakari {0}",
   "flyout.notice.whatsNewOk": "รับทราบ",
   "flyout.notice.whatsNewAll": "ดูทั้งหมด",
+  "flyout.notice.logFormat": "Claude Code เปลี่ยนรูปแบบ log",
+  "flyout.notice.logFormatDetail": "อ่านคำตอบล่าสุดส่วนใหญ่ไม่ออก ค่าใช้จ่ายและโทเค็นอาจขาดไป Hakari เวอร์ชันใหม่มักอ่านรูปแบบใหม่ได้แล้ว",
   "flyout.notice.update": "Hakari {0} ออกแล้ว",
   "flyout.notice.updateDetail": "ตอนนี้ใช้ {0} อยู่ ปิด Hakari แล้วแทนที่โฟลเดอร์ด้วย zip ใหม่ การตั้งค่ายังอยู่ครบ",
   "flyout.notice.updateAction": "ดาวน์โหลด",

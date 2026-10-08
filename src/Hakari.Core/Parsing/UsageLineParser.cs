@@ -9,6 +9,11 @@ public static class UsageLineParser
     private static readonly byte[] AssistantLineMarker =
         Encoding.UTF8.GetBytes($"\"{LogFieldNames.Type}\":\"{LogFieldValues.AssistantType}\"");
 
+    private static readonly byte[] AssistantWord =
+        Encoding.UTF8.GetBytes($"\"{LogFieldValues.AssistantType}\"");
+
+    private static readonly byte[] UsageWord = Encoding.UTF8.GetBytes($"\"{LogFieldNames.Usage}\"");
+
     public static UsageRecord? TryParse(ReadOnlySpan<byte> line) =>
         TryParse(line, checkThinking: false, out _);
 
@@ -19,18 +24,29 @@ public static class UsageLineParser
     public static UsageRecord? TryParse(
         ReadOnlySpan<byte> line,
         bool checkThinking,
-        out bool hasThinking)
+        out bool hasThinking) =>
+        TryParse(line, checkThinking, out hasThinking, out _);
+
+    /// <summary>As above, also saying what kind of line it was.</summary>
+    public static UsageRecord? TryParse(
+        ReadOnlySpan<byte> line,
+        bool checkThinking,
+        out bool hasThinking,
+        out LineKind kind)
     {
         hasThinking = false;
         if (line.IndexOf(AssistantLineMarker) < 0)
         {
+            kind = line.IndexOf(AssistantWord) >= 0 && line.IndexOf(UsageWord) >= 0
+                ? LineKind.Missed
+                : LineKind.Other;
             return null;
         }
 
         try
         {
             using var document = JsonDocument.Parse(line.ToArray());
-            var record = ReadRecord(document.RootElement);
+            var record = ReadRecord(document.RootElement, out kind);
             hasThinking = record is not null && checkThinking
                 && ThinkingMarkParser.HasThinking(line, document.RootElement);
             return record;
@@ -38,16 +54,15 @@ public static class UsageLineParser
         catch (Exception exception) when (exception is JsonException
             or InvalidOperationException or FormatException)
         {
+            kind = LineKind.Unreadable;
             return null;
         }
     }
 
-    private static UsageRecord? ReadRecord(JsonElement root)
+    private static UsageRecord? ReadRecord(JsonElement root, out LineKind kind)
     {
-        if (!root.TryGetObject(LogFieldNames.Message, out var message)
-            || !message.TryGetObject(LogFieldNames.Usage, out var usage)
-            || message.GetStringOrNull(LogFieldNames.MessageId) is not { } messageId
-            || !TryReadTimestamp(root, out var timestamp))
+        kind = LineKind.Unreadable;
+        if (!root.TryGetObject(LogFieldNames.Message, out var message))
         {
             return null;
         }
@@ -55,9 +70,19 @@ public static class UsageLineParser
         var model = message.GetStringOrNull(LogFieldNames.Model) ?? LogFieldValues.UnknownModel;
         if (model == LogFieldValues.SyntheticModel)
         {
+            kind = LineKind.Other;
             return null;
         }
 
+        if (!message.TryGetObject(LogFieldNames.Usage, out var usage)
+            || message.GetStringOrNull(LogFieldNames.MessageId) is not { } messageId
+            || !TryReadTimestamp(root, out var timestamp))
+        {
+            return null;
+        }
+
+        var tokens = ReadTokens(usage);
+        kind = tokens.TotalInput + tokens.Output == 0 ? LineKind.Empty : LineKind.Usage;
         return new UsageRecord(
             MessageId: messageId,
             RequestId: root.GetStringOrNull(LogFieldNames.RequestId),
@@ -69,7 +94,7 @@ public static class UsageLineParser
             IsSidechain: root.IsTrue(LogFieldNames.IsSidechain),
             Speed: usage.GetStringOrNull(LogFieldNames.Speed) ?? SpeedNames.Standard,
             InferenceGeography: usage.GetStringOrNull(LogFieldNames.InferenceGeography),
-            Tokens: ReadTokens(usage),
+            Tokens: tokens,
             WebSearchRequests: ReadWebSearchRequests(usage));
     }
 

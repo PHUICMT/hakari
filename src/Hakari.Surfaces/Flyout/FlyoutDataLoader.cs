@@ -103,6 +103,7 @@ internal static class FlyoutDataLoader
                     : [],
                 .. Unpriced(query),
                 .. FirstRead(query, store),
+                .. LogFormat(store),
                 .. LimitsQuestions(store, settings),
                 .. StoppedDistributions(store, settings),
                 .. NewerVersion(settings),
@@ -155,6 +156,23 @@ internal static class FlyoutDataLoader
     /// Before the first read of the logs has finished there is nothing to count yet; the
     /// flyout says so instead of showing zeros.
     /// </summary>
+    /// <summary>
+    /// Claude Code seems to log in a new shape that this version cannot read, so the numbers
+    /// may be short; a newer Hakari usually reads it.
+    /// </summary>
+    private static IEnumerable<FlyoutNotice> LogFormat(IndexStore store)
+    {
+        if (LogFormatWatch.SeemsChanged(store))
+        {
+            yield return new FlyoutNotice(
+                Tone.Warning,
+                Texts.Get("flyout.notice.logFormat"),
+                Texts.Get("flyout.notice.logFormatDetail"),
+                NoticeAction.OpenUpdate,
+                Texts.Get("flyout.notice.updateAction"));
+        }
+    }
+
     private static IEnumerable<FlyoutNotice> FirstRead(UsageQuery query, IndexStore store)
     {
         if (query.HasAny())

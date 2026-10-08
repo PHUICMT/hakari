@@ -561,6 +561,8 @@
   "flyout.notice.whatsNew": "New in Hakari {0}",
   "flyout.notice.whatsNewOk": "Got it",
   "flyout.notice.whatsNewAll": "What's new",
+  "flyout.notice.logFormat": "Claude Code changed its log format",
+  "flyout.notice.logFormatDetail": "Most recent responses could not be read, so costs and tokens may be short. A newer Hakari usually reads the new format.",
   "flyout.notice.update": "Hakari {0} is out",
   "flyout.notice.updateDetail": "You have {0}. Quit Hakari, then replace its folder with the new zip; settings stay.",
   "flyout.notice.updateAction": "Download",

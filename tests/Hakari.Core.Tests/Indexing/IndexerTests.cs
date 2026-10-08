@@ -177,6 +177,41 @@ public sealed class IndexerTests : IDisposable
         Assert.Equal(expected, Assert.Single(cells).Key);
     }
 
+    [Fact]
+    public void Marks_the_log_format_changed_when_most_responses_cannot_be_read()
+    {
+        var unread = """{"type": "assistant", "message": {"usage": {"tokens": 5}}}""";
+        AppendLines([.. Enumerable.Repeat(unread, (int)LogFormatWatch.SampleSize)]);
+
+        Index();
+
+        Assert.True(LogFormatWatch.SeemsChanged(store));
+    }
+
+    [Fact]
+    public void Clears_the_mark_once_a_later_sample_reads_fine()
+    {
+        var unread = """{"type": "assistant", "message": {"usage": {"tokens": 5}}}""";
+        AppendLines([.. Enumerable.Repeat(unread, (int)LogFormatWatch.SampleSize)]);
+        Index();
+
+        AppendLines([.. Enumerable.Range(0, (int)LogFormatWatch.SampleSize)
+            .Select(index => SampleLogLines.Assistant(messageId: $"msg_{index}"))]);
+        Index();
+
+        Assert.False(LogFormatWatch.SeemsChanged(store));
+    }
+
+    [Fact]
+    public void Waits_for_a_full_sample_before_judging_the_format()
+    {
+        AppendLines("""{"type": "assistant", "message": {"usage": {}}}""");
+
+        Index();
+
+        Assert.False(LogFormatWatch.SeemsChanged(store));
+    }
+
     public void Dispose()
     {
         store.Dispose();

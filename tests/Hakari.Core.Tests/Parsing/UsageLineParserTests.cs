@@ -35,6 +35,31 @@ public class UsageLineParserTests
     [Fact]
     public void Ignores_malformed_json() => Assert.Null(Parse("""{"type":"assistant",broken"""));
 
+    [Theory]
+    [InlineData("""{"type":"user","message":{"role":"user","content":"hi"}}""", LineKind.Other)]
+    [InlineData("""{"type":"assistant",broken""", LineKind.Unreadable)]
+    [InlineData("""{"type":"assistant","message":{"model":"x"}}""", LineKind.Unreadable)]
+    [InlineData("""{"type": "assistant", "message": {"usage": {}}}""", LineKind.Missed)]
+    public void Tells_what_kind_of_line_it_read(string line, LineKind expected)
+    {
+        UsageLineParser.TryParse(Encoding.UTF8.GetBytes(line), false, out _, out var kind);
+
+        Assert.Equal(expected, kind);
+    }
+
+    [Fact]
+    public void Calls_a_read_response_usage_and_an_error_reply_other()
+    {
+        Assert.Equal(LineKind.Usage, KindOf(SampleLogLines.Assistant()));
+        Assert.Equal(LineKind.Other, KindOf(SampleLogLines.Assistant(model: "<synthetic>")));
+    }
+
+    private static LineKind KindOf(string line)
+    {
+        UsageLineParser.TryParse(Encoding.UTF8.GetBytes(line), false, out _, out var kind);
+        return kind;
+    }
+
     private static Hakari.Core.Usage.UsageRecord? Parse(string line) =>
         UsageLineParser.TryParse(Encoding.UTF8.GetBytes(line));
 }

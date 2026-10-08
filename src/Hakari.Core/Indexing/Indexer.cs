@@ -68,6 +68,7 @@ public sealed class Indexer
             }
         }
 
+        LogFormatWatch.Record(store, totals.Lines);
         return new IndexStatistics(
             totals.FilesScanned,
             totals.FilesChanged,
@@ -174,6 +175,7 @@ public sealed class Indexer
         using var titleWriter = new SessionTitleWriter(store.Connection, transaction);
         using var thinkingWriter = new ThinkingMarkWriter(store.Connection, transaction);
         var recordsChanged = 0;
+        var lines = LineKindCounts.None;
         var endOffset = file.IndexedOffset;
 
         try
@@ -181,7 +183,8 @@ public sealed class Indexer
             endOffset = CompleteLineReader.ReadFrom(file.Path, file.IndexedOffset, line =>
             {
                 var record = UsageLineParser.TryParse(
-                    line, collectThinkingMarks, out var hasThinking);
+                    line, collectThinkingMarks, out var hasThinking, out var kind);
+                lines = lines.Add(kind);
                 if (record is not null && hasThinking)
                 {
                     thinkingWriter.Mark(record.DeduplicationKey);
@@ -209,6 +212,7 @@ public sealed class Indexer
 
         totals.BytesRead += endOffset - file.IndexedOffset;
         totals.RecordsChanged += recordsChanged;
+        totals.Lines += lines;
     }
 
     private sealed class RunningTotals
@@ -220,5 +224,7 @@ public sealed class Indexer
         public long BytesRead { get; set; }
 
         public int RecordsChanged { get; set; }
+
+        public LineKindCounts Lines { get; set; } = LineKindCounts.None;
     }
 }
