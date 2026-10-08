@@ -11,8 +11,7 @@ using Windows.Services.Store;
 namespace Hakari.Surfaces.Settings;
 
 /// <summary>A tip on offer: its Store title and local price, and the product to buy.</summary>
-/// <param name="Product">Null for a preview tip, which buys nothing.</param>
-internal sealed record TipOffer(string Title, string Price, StoreProduct? Product);
+internal sealed record TipOffer(string Title, string Price, StoreProduct Product);
 
 /// <summary>
 /// Tips through the Microsoft Store, in the Store build only: the app's consumable add-ons,
@@ -34,34 +33,16 @@ internal static class StoreTips
     /// <summary>A picture per tip, smallest first, in color from the emoji font.</summary>
     private static readonly string[] Pictures = ["\u2615", "\U0001F370", "\U0001F371"];
 
-    /// <summary>
-    /// Set to 1 on a build run from source to see the list without the Store. Its tips have
-    /// sample prices and buy nothing.
-    /// </summary>
-    private const string PreviewVariable = "HAKARI_TIP_PREVIEW";
-
-    private static readonly TipOffer[] PreviewTips =
-    [
-        new("Coffee", "\u0E3F34.00", null),
-        new("Coffee and cake", "\u0E3F104.00", null),
-        new("Lunch", "\u0E3F174.00", null),
-    ];
-
     private static StoreContext? context;
     private static IntPtr contextWindow;
 
     /// <summary>
     /// The tips on offer in the order of their product ids (name them "tip-1-small",
-    /// "tip-2-coffee" and so on); empty outside the Store build unless previewing.
+    /// "tip-2-coffee" and so on); empty outside the Store build.
     /// </summary>
     public static async Task<IReadOnlyList<TipOffer>> ListAsync(IntPtr window)
     {
-        if (!PackageIdentity.IsPackaged)
-        {
-            return Environment.GetEnvironmentVariable(PreviewVariable) == "1" ? PreviewTips : [];
-        }
-
-        if (Context(window) is not { } store)
+        if (!PackageIdentity.IsPackaged || Context(window) is not { } store)
         {
             return [];
         }
@@ -148,7 +129,7 @@ internal static class StoreTips
                 flyout.Hide();
                 try
                 {
-                    if (tip.Product is { } product && await BuyAsync(product, window))
+                    if (await BuyAsync(tip.Product, window))
                     {
                         thanked(Texts.Get("settings.support.thanks"));
                     }
