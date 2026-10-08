@@ -4,10 +4,9 @@ name: release
 #   1. test, build the x64 and arm64 zips and the Store upload, write the notes;
 #   2. publish the GitHub release with the zips and their checksums;
 #   3. open the winget pull request (needs the WINGET_TOKEN secret);
-#   4. send the Store submission (needs the STORE_* secrets and the repository variable
-#      STORE_AUTOMATION set to "on"; Individual Partner Center accounts cannot yet link the
-#      Entra app the API needs, so until then the .msixupload is left on the run to upload
-#      by hand).
+#   4. send the Store submission through store.yml (needs the STORE_* secrets and the
+#      repository variable STORE_AUTOMATION set to "on"); store.yml can also be run by hand
+#      with this run's id to send the same build again.
 # A step whose secret is missing is skipped, so the rest still runs. One workflow, because a
 # release published by this workflow's own token would not start another workflow.
 on:
@@ -17,10 +16,7 @@ on:
 
 permissions:
   contents: write
-
-env:
-  STORE_APP_ID: 9NFVF39T2447
-  STORE_SELLER_ID: "96470620"
+  actions: read
 
 jobs:
   build:
@@ -128,46 +124,7 @@ jobs:
 
   store:
     needs: [build, github]
-    if: vars.STORE_AUTOMATION == 'on'
-    runs-on: windows-latest
-    env:
-      STORE_TENANT_ID: ${{ secrets.STORE_TENANT_ID }}
-      STORE_CLIENT_ID: ${{ secrets.STORE_CLIENT_ID }}
-      STORE_CLIENT_SECRET: ${{ secrets.STORE_CLIENT_SECRET }}
-    steps:
-      - uses: actions/download-artifact@v7
-        if: env.STORE_CLIENT_SECRET != ''
-        with:
-          name: release
-
-      - name: Store CLI
-        if: env.STORE_CLIENT_SECRET != ''
-        uses: microsoft/microsoft-store-apppublisher@v1.1
-
-      - name: Submit
-        if: env.STORE_CLIENT_SECRET != ''
-        shell: pwsh
-        run: |
-          msstore reconfigure --tenantId $env:STORE_TENANT_ID --sellerId $env:STORE_SELLER_ID `
-            --clientId $env:STORE_CLIENT_ID --clientSecret $env:STORE_CLIENT_SECRET
-          $upload = (Get-ChildItem msix/*.msixupload | Select-Object -First 1).FullName
-
-          # Upload as a draft first: publishing replaces the draft, so the notes come after.
-          msstore publish . --inputFile $upload --appId $env:STORE_APP_ID --noCommit
-          if ($LASTEXITCODE -ne 0) { throw "Store upload failed." }
-
-          $notes = Get-Content notes/store.txt -Raw
-          $submission = msstore submission get $env:STORE_APP_ID | ConvertFrom-Json
-          foreach ($language in $submission.Listings.PSObject.Properties.Name) {
-            $submission.Listings.$language.BaseListing.ReleaseNotes = $notes
-          }
-          $json = $submission | ConvertTo-Json -Depth 100 -Compress
-          msstore submission update $env:STORE_APP_ID $json
-          if ($LASTEXITCODE -ne 0) { throw "Store notes failed." }
-
-          msstore submission publish $env:STORE_APP_ID
-          if ($LASTEXITCODE -ne 0) { throw "Store submission failed." }
-
-      - name: Skipped
-        if: env.STORE_CLIENT_SECRET == ''
-        run: echo "No STORE_* secrets; the Store was not updated."
+    uses: ./.github/workflows/store.yml
+    with:
+      run_id: ${{ github.run_id }}
+    secrets: inherit
