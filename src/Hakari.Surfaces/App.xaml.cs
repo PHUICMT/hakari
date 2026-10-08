@@ -56,6 +56,16 @@ public partial class App : Application
             return;
         }
 
+        // Two requests close together can start two processes before either listens; the
+        // mutex settles which one stays, and the other waits for it to listen and hands over.
+        oneProcess = new Mutex(initiallyOwned: true, ProcessMutexName, out var isFirst);
+        if (!isFirst)
+        {
+            HandOver(command);
+            Environment.Exit(NormalExitCode);
+            return;
+        }
+
         dispatcher = DispatcherQueue.GetForCurrentThread();
         idleExitTimer = dispatcher.CreateTimer();
         idleExitTimer.Interval = IdleExitDelay;
@@ -70,6 +80,22 @@ public partial class App : Application
     }
 
     private static SurfaceCommand DefaultCommand() => new(SurfaceKind.Flyout, 0, 0);
+
+    private const string ProcessMutexName = @"Local\Hakari.Surfaces";
+    private static readonly TimeSpan HandOverFor = TimeSpan.FromSeconds(5);
+    private static readonly TimeSpan HandOverPause = TimeSpan.FromMilliseconds(100);
+
+    /// <summary>Held for the process's life; released by the system when it exits.</summary>
+    private static Mutex? oneProcess;
+
+    private static void HandOver(SurfaceCommand command)
+    {
+        var giveUpAt = DateTime.UtcNow + HandOverFor;
+        while (DateTime.UtcNow < giveUpAt && !SurfaceChannel.TrySend(command))
+        {
+            Thread.Sleep(HandOverPause);
+        }
+    }
 
     private void Handle(SurfaceCommand command)
     {
