@@ -372,17 +372,18 @@ internal sealed class UsageFeed : IDisposable
         var settings = presentation;
         if (settings.AlertsMutedAt(now)
             || (settings.DailyBudget is null && settings.MonthlyBudget is null
-                && !settings.NotifyOnUnusualSessions))
+                && settings.ProjectBudgets.Count == 0 && !settings.NotifyOnUnusualSessions))
         {
             return;
         }
 
         foreach (var alert in watch.Check(
-            query,
+            query.WithMerges(new ProjectMerges(settings.ProjectMerges)),
             settings.DailyBudget,
             settings.MonthlyBudget,
             settings.NotifyOnUnusualSessions,
-            now.ToLocalTime()))
+            now.ToLocalTime(),
+            settings.ProjectBudgets))
         {
             AlertRaised?.Invoke(SpendAlertText.Compose(alert, query.Currency));
         }

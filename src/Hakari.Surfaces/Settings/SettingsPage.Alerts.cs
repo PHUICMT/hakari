@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Globalization;
 using Hakari.Core.Localization;
+using Hakari.Core.Presentation;
 using Hakari.Core.Presentation.Widget;
 using Hakari.Core.Pricing;
 using Hakari.Core.Settings;
@@ -112,20 +113,8 @@ public sealed partial class SettingsPage
         });
     }
 
-    private static decimal? ParseAmount(string text, out bool valid)
-    {
-        var trimmed = text.Trim().Replace(",", string.Empty);
-        if (trimmed.Length == 0)
-        {
-            valid = true;
-            return null;
-        }
-
-        valid = decimal.TryParse(
-            trimmed, NumberStyles.Number, CultureInfo.InvariantCulture, out var amount)
-            && amount > 0;
-        return valid ? amount : null;
-    }
+    private static decimal? ParseAmount(string text, out bool valid) =>
+        AmountText.Parse(text, out valid);
 
     /// <summary>"Shipped with Hakari · prices of 5 Oct 2026 · 22 models", plus a status.</summary>
     private void ShowPriceTable(string status)

@@ -1,4 +1,5 @@
 using Hakari.Core.Localization;
+using Hakari.Core.Presentation;
 using Hakari.Core.Querying;
 using Hakari.Core.Settings;
 using Hakari.Surfaces.Motion;
@@ -10,10 +11,11 @@ using Microsoft.UI.Xaml.Media;
 namespace Hakari.Surfaces.Dashboard;
 
 /// <summary>
-/// What a project's menu button offers: join it into another project, for a folder moved or
-/// copied to a new path, and split back out any folder joined into it. Folders of the same
-/// name come first, since a move keeps the name. Picking one only asks: the menu turns into a
-/// question saying what will change, and nothing is saved until that is confirmed.
+/// What a project's menu button offers: a monthly budget; joining it into another project,
+/// for a folder moved or copied to a new path; and splitting back out any folder joined into
+/// it. Folders of the same name come first, since a move keeps the name. Picking one only
+/// asks: the menu turns into a question saying what will change, and nothing is saved until
+/// that is confirmed.
 /// </summary>
 internal static class ProjectMergeMenu
 {
@@ -22,6 +24,7 @@ internal static class ProjectMergeMenu
     private const double SectionSize = 11;
     private static readonly Thickness SectionMargin = new(12, 8, 12, 4);
     private const double SwapDistance = 24;
+    private const int BudgetLength = 12;
     private const double QuestionSize = 14;
     private const double ExplainSize = 12;
     private const double QuestionSpacing = 10;
@@ -29,14 +32,17 @@ internal static class ProjectMergeMenu
     private static readonly Thickness FolderPadding = new(10, 8, 10, 8);
 
     /// <param name="others">The other projects shown, the costliest first.</param>
-    /// <param name="changed">Runs after a join or split was saved.</param>
+    /// <param name="currency">The currency a budget is typed in.</param>
+    /// <param name="changed">Runs after a budget, join or split was saved.</param>
     public static void Show(
         FrameworkElement anchor,
         string project,
         IReadOnlyList<string> others,
+        string currency,
         Action changed)
     {
-        var merges = new ProjectMerges(SettingsStore.Default.Load().ProjectMerges);
+        var settings = SettingsStore.Default.Load();
+        var merges = new ProjectMerges(settings.ProjectMerges);
         var list = new StackPanel { Width = ListWidth };
         var flyout = new Microsoft.UI.Xaml.Controls.Flyout
         {
@@ -59,6 +65,20 @@ internal static class ProjectMergeMenu
         }
 
         var name = RowNames.Project(project).Title;
+        var budget = settings.ProjectBudgets.GetValueOrDefault(project);
+        list.Children.Add(Section(Texts.Get("dashboard.budget.section")));
+        list.Children.Add(Item(
+            budget > 0
+                ? Texts.Format("dashboard.budget.edit", MoneyText.Format(budget, currency))
+                : Texts.Get("dashboard.budget.set"),
+            null,
+            () => Ask(BudgetQuestion(
+                name,
+                budget,
+                currency,
+                amount => SaveBudget(project, amount, flyout, changed),
+                Back))));
+
         var joined = merges.JoinedInto(project);
         if (joined.Count > 0)
         {
@@ -221,6 +241,124 @@ internal static class ProjectMergeMenu
             Background = DashboardCard.Brush("HakariHoverBrush"),
             Child = lines,
         };
+    }
+
+    /// <summary>
+    /// The monthly budget asked for in place: an amount, what it does, and save, remove (when
+    /// one is set) or back. Enter saves; a blank or invalid amount is not taken.
+    /// </summary>
+    private static StackPanel BudgetQuestion(
+        string name,
+        decimal budget,
+        string currency,
+        Action<decimal?> save,
+        Action back)
+    {
+        var panel = new StackPanel
+        {
+            Width = ListWidth,
+            Padding = QuestionPadding,
+            Spacing = QuestionSpacing,
+        };
+        panel.Children.Add(new TextBlock
+        {
+            Text = Texts.Format("dashboard.budget.question", name),
+            FontSize = QuestionSize,
+            FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
+            TextWrapping = TextWrapping.Wrap,
+        });
+        var amount = new TextBox
+        {
+            Style = (Style)Application.Current.Resources["HakariTextBox"],
+            MaxLength = BudgetLength,
+            PlaceholderText = Texts.Format("dashboard.budget.placeholder", currency),
+            Text = budget > 0 ? budget.ToString(System.Globalization.CultureInfo.InvariantCulture)
+                : string.Empty,
+        };
+        panel.Children.Add(amount);
+        panel.Children.Add(new TextBlock
+        {
+            Text = Texts.Get("dashboard.budget.explain"),
+            FontSize = ExplainSize,
+            Foreground = DashboardCard.Brush("HakariInkMutedBrush"),
+            TextWrapping = TextWrapping.Wrap,
+        });
+
+        void TrySave()
+        {
+            if (AmountText.Parse(amount.Text, out var valid) is { } value && valid)
+            {
+                save(value);
+            }
+        }
+
+        amount.KeyDown += (_, args) =>
+        {
+            if (args.Key == Windows.System.VirtualKey.Enter)
+            {
+                args.Handled = true;
+                TrySave();
+            }
+        };
+        amount.Loaded += (_, _) => amount.Focus(FocusState.Programmatic);
+
+        var buttons = new StackPanel
+        {
+            Orientation = Orientation.Horizontal,
+            HorizontalAlignment = HorizontalAlignment.Right,
+            Spacing = 8,
+        };
+        buttons.Children.Add(Plain(Texts.Get("dashboard.merge.cancel"), back));
+        if (budget > 0)
+        {
+            buttons.Children.Add(Plain(Texts.Get("dashboard.budget.remove"), () => save(null)));
+        }
+
+        var yes = new Button
+        {
+            Content = Texts.Get("dashboard.budget.save"),
+            Style = (Style)Application.Current.Resources["HakariPrimaryButton"],
+        };
+        yes.Click += (_, _) => TrySave();
+        buttons.Children.Add(yes);
+        panel.Children.Add(buttons);
+        return panel;
+    }
+
+    private static Button Plain(string text, Action click)
+    {
+        var button = new Button
+        {
+            Content = text,
+            Style = (Style)Application.Current.Resources["HakariButton"],
+        };
+        button.Click += (_, _) => click();
+        return button;
+    }
+
+    /// <summary>A budget saved, or removed with null.</summary>
+    private static void SaveBudget(
+        string project,
+        decimal? amount,
+        Microsoft.UI.Xaml.Controls.Flyout flyout,
+        Action changed)
+    {
+        flyout.Hide();
+        SettingsStore.Default.Update(current =>
+        {
+            var budgets = new Dictionary<string, decimal>(current.ProjectBudgets);
+            if (amount is { } value)
+            {
+                budgets[project] = value;
+            }
+            else
+            {
+                budgets.Remove(project);
+            }
+
+            return current with { ProjectBudgets = budgets };
+        });
+        changed();
     }
 
     private static TextBlock Section(string text) => new()

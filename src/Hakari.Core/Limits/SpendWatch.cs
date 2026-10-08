@@ -4,17 +4,22 @@ using Hakari.Core.Querying;
 
 namespace Hakari.Core.Limits;
 
-/// <summary>What spending crossed: a day's or a month's budget, or one costly session.</summary>
+/// <summary>
+/// What spending crossed: a day's or a month's budget, a project's month, or one costly
+/// session.
+/// </summary>
 public enum SpendAlertKind
 {
     DailyBudget,
     MonthlyBudget,
     UnusualSession,
+    ProjectBudget,
 }
 
-/// <param name="Spent">The day's, the month's or the session's cost.</param>
+/// <param name="Spent">The day's, the month's, the project's or the session's cost.</param>
 /// <param name="Mark">The budget, or for a session what a usual one costs.</param>
-/// <param name="Session">The session's key, for an unusual one.</param>
+/// <param name="Session">The session's key for an unusual one; the project's folder for a
+/// project budget.</param>
 public sealed record SpendAlert(SpendAlertKind Kind, decimal Spent, decimal Mark, string? Session);
 
 /// <summary>
@@ -30,6 +35,8 @@ public sealed class SpendWatch(IndexStore store)
     private const string DayOption = "spendAlert.day";
     private const string MonthOption = "spendAlert.month";
     private const string SessionsOption = "spendAlert.sessions";
+    private const string ProjectsOption = "spendAlert.projects";
+    private const char LineSeparator = '\n';
     private const int RememberedSessions = 50;
     private const char Separator = ',';
     private static readonly TimeSpan UsualWindow = TimeSpan.FromDays(7);
@@ -40,7 +47,8 @@ public sealed class SpendWatch(IndexStore store)
         decimal? dailyBudget,
         decimal? monthlyBudget,
         bool watchSessions,
-        DateTimeOffset now)
+        DateTimeOffset now,
+        IReadOnlyDictionary<string, decimal>? projectBudgets = null)
     {
         var alerts = new List<SpendAlert>();
         var day = now.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
@@ -70,7 +78,42 @@ public sealed class SpendWatch(IndexStore store)
             alerts.AddRange(UnusualSessions(query, now));
         }
 
+        if (projectBudgets is { Count: > 0 })
+        {
+            alerts.AddRange(ProjectsOverBudget(query, projectBudgets, month, now));
+        }
+
         return alerts;
+    }
+
+    /// <summary>
+    /// Each project whose month passed its budget, once a month. The note of which were told
+    /// starts with the month, so a new month starts a new list.
+    /// </summary>
+    private IEnumerable<SpendAlert> ProjectsOverBudget(
+        UsageQuery query,
+        IReadOnlyDictionary<string, decimal> budgets,
+        string month,
+        DateTimeOffset now)
+    {
+        var saved = (store.GetOption(ProjectsOption) ?? string.Empty).Split(LineSeparator);
+        var told = saved[0] == month ? saved.Skip(1).ToList() : [];
+        var costs = query.Summarize(
+                new UsageFilter(From: TimePeriods.StartOfMonth(now)),
+                GroupBy.Project)
+            .ToDictionary(project => project.Key, project => project.Cost);
+        foreach (var (project, budget) in budgets)
+        {
+            var spent = costs.GetValueOrDefault(project);
+            if (budget <= 0 || spent < budget || told.Contains(project))
+            {
+                continue;
+            }
+
+            told.Add(project);
+            store.SetOption(ProjectsOption, string.Join(LineSeparator, [month, .. told]));
+            yield return new SpendAlert(SpendAlertKind.ProjectBudget, spent, budget, project);
+        }
     }
 
     /// <summary>

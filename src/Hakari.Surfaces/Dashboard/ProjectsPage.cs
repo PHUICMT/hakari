@@ -10,8 +10,16 @@ using Microsoft.UI.Xaml.Media;
 
 namespace Hakari.Surfaces.Dashboard;
 
-/// <summary>One project: its usage, how many sessions it had, and folders joined into it.</summary>
-internal sealed record ProjectRow(UsageSummary Usage, int Sessions, int Joined);
+/// <summary>
+/// One project: its usage, how many sessions it had, folders joined into it, and its monthly
+/// budget with what this month has cost so far.
+/// </summary>
+internal sealed record ProjectRow(
+    UsageSummary Usage,
+    int Sessions,
+    int Joined,
+    decimal Budget = 0,
+    decimal MonthCost = 0);
 
 internal sealed record ProjectRows(IReadOnlyList<ProjectRow> Rows, string Currency);
 
@@ -37,8 +45,16 @@ internal sealed partial class ProjectsPage : LoadedPage<ProjectRows>
     protected override ProjectRows Read(DashboardFilter filter) => DashboardData.Read(
         (query, _) =>
         {
-            var usage = filter.ToUsageFilter(DateTimeOffset.Now);
-            var merges = new ProjectMerges(SettingsStore.Default.Load().ProjectMerges);
+            var now = DateTimeOffset.Now;
+            var usage = filter.ToUsageFilter(now);
+            var settings = SettingsStore.Default.Load();
+            var merges = new ProjectMerges(settings.ProjectMerges);
+            var monthCosts = settings.ProjectBudgets.Count == 0
+                ? new Dictionary<string, decimal>()
+                : query.Summarize(
+                        new UsageFilter(From: TimePeriods.StartOfMonth(now)),
+                        GroupBy.Project)
+                    .ToDictionary(project => project.Key, project => project.Cost);
             var sessions = query.Summarize(usage, GroupBy.ProjectSession)
                 .GroupBy(session => GroupKeys.Split(session.Key).Project)
                 .ToDictionary(group => group.Key, group => group.Count());
@@ -48,7 +64,9 @@ internal sealed partial class ProjectsPage : LoadedPage<ProjectRows>
                         .Select(project => new ProjectRow(
                             project,
                             sessions.GetValueOrDefault(project.Key),
-                            merges.JoinedInto(project.Key).Count)),
+                            merges.JoinedInto(project.Key).Count,
+                            settings.ProjectBudgets.GetValueOrDefault(project.Key),
+                            monthCosts.GetValueOrDefault(project.Key))),
                 ],
                 query.Currency);
         },
@@ -77,6 +95,14 @@ internal sealed partial class ProjectsPage : LoadedPage<ProjectRows>
                 detail += " · " + Texts.Format("dashboard.merge.count", row.Joined);
             }
 
+            if (row.Budget > 0)
+            {
+                detail += " · " + Texts.Format(
+                    "dashboard.budget.used",
+                    PercentText.Format((double)(row.MonthCost / row.Budget) * PercentScale, 0),
+                    MoneyText.Format(row.Budget, data.Currency));
+            }
+
             return (IReadOnlyList<object>)
             [
                 TableCells.TwoLines(title, detail),
@@ -84,7 +110,7 @@ internal sealed partial class ProjectsPage : LoadedPage<ProjectRows>
                 row.Usage.Messages.ToString("N0", CultureInfo.InvariantCulture),
                 PercentText.Format(row.Usage.Tokens.CacheHitRate * PercentScale, 0),
                 MoneyText.Format(row.Usage.Cost, data.Currency),
-                MergeButton(row.Usage.Key, keys),
+                MergeButton(row.Usage.Key, keys, data.Currency),
             ];
         });
         var table = SimpleTable.CreateSortable(columns, [.. rows], [.. data.Rows.Select(row =>
@@ -104,10 +130,10 @@ internal sealed partial class ProjectsPage : LoadedPage<ProjectRows>
     }
 
     /// <summary>
-    /// The only way into joining or splitting: a small button at the row's end, so a stray
-    /// click on the row itself changes nothing.
+    /// The only way into a budget, joining or splitting: a small button at the row's end, so
+    /// a stray click on the row itself changes nothing.
     /// </summary>
-    private Button MergeButton(string project, IReadOnlyList<string> keys)
+    private Button MergeButton(string project, IReadOnlyList<string> keys, string currency)
     {
         var button = new Button
         {
@@ -123,7 +149,8 @@ internal sealed partial class ProjectsPage : LoadedPage<ProjectRows>
         var label = Texts.Get("dashboard.merge.menu");
         ToolTipService.SetToolTip(button, label);
         AutomationProperties.SetName(button, label);
-        button.Click += (_, _) => ProjectMergeMenu.Show(button, project, keys, Reload);
+        button.Click += (_, _) =>
+            ProjectMergeMenu.Show(button, project, keys, currency, Reload);
         return button;
     }
 }

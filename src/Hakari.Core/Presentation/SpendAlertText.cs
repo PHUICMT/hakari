@@ -16,6 +16,11 @@ public static class SpendAlertText
         {
             SpendAlertKind.DailyBudget => Budget("alert.budgetDay", spent, mark),
             SpendAlertKind.MonthlyBudget => Budget("alert.budgetMonth", spent, mark),
+            SpendAlertKind.ProjectBudget => Budget(
+                "alert.budgetProject",
+                spent,
+                mark,
+                ProjectName(alert.Session)),
             _ => new LimitAlertMessage(
                 Texts.Get("alert.unusual"),
                 Texts.Format("alert.unusual.body", spent),
@@ -27,8 +32,18 @@ public static class SpendAlertText
         };
     }
 
-    private static LimitAlertMessage Budget(string titleKey, string spent, string budget) => new(
-        Texts.Format(titleKey, budget),
+    /// <summary>The project's folder name, as the dashboard titles it.</summary>
+    private static string ProjectName(string? folder) =>
+        string.IsNullOrEmpty(folder)
+            ? string.Empty
+            : Path.GetFileName(folder.TrimEnd('/', '\\')) is { Length: > 0 } name ? name : folder;
+
+    private static LimitAlertMessage Budget(
+        string titleKey,
+        string spent,
+        string budget,
+        string project = "") => new(
+        Texts.Format(titleKey, budget, project),
         Texts.Format("alert.budget.body", spent, budget),
         string.Empty,
         FullBar,

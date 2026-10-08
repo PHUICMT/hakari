@@ -22,6 +22,9 @@ public sealed class UsageQuery(
 
     public string Currency => converter?.Currency ?? CurrencyCodes.Dollar;
 
+    /// <summary>The same reads, with these folders joined as the dashboard joins them.</summary>
+    public UsageQuery WithMerges(ProjectMerges joined) => new(store, pricing, converter, joined);
+
     public DateOnly? FirstUsageDay()
     {
         using var command = store.Connection.CreateCommand();

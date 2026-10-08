@@ -152,6 +152,13 @@ public sealed record HakariSettings
     /// <summary>What a month may cost, in the shown currency; null for no budget.</summary>
     public decimal? MonthlyBudget { get; init; }
 
+    /// <summary>
+    /// What a project may cost per month, in the shown currency, keyed by its folder as the
+    /// dashboard lists it (with joined folders counted in).
+    /// </summary>
+    public IReadOnlyDictionary<string, decimal> ProjectBudgets { get; init; } =
+        new Dictionary<string, decimal>();
+
     /// <summary>Tell when one session costs far more than sessions usually do.</summary>
     public bool NotifyOnUnusualSessions { get; init; } = true;
 
@@ -206,6 +213,8 @@ public sealed record HakariSettings
         && AlertsMutedUntil == other.AlertsMutedUntil
         && DailyBudget == other.DailyBudget
         && MonthlyBudget == other.MonthlyBudget
+        && SameEntries(ProjectBudgets, other.ProjectBudgets)
+        && SameEntries(ProjectMerges, other.ProjectMerges)
         && NotifyOnUnusualSessions == other.NotifyOnUnusualSessions
         && NotifyOnResets == other.NotifyOnResets
         && AccountOrdering == other.AccountOrdering
@@ -218,6 +227,13 @@ public sealed record HakariSettings
         && AccountNicknames.Count == other.AccountNicknames.Count
         && AccountNicknames.All(entry =>
             other.AccountNicknames.TryGetValue(entry.Key, out var name) && name == entry.Value);
+
+    private static bool SameEntries<TValue>(
+        IReadOnlyDictionary<string, TValue> left,
+        IReadOnlyDictionary<string, TValue> right) =>
+        left.Count == right.Count
+        && left.All(entry => right.TryGetValue(entry.Key, out var value)
+            && EqualityComparer<TValue>.Default.Equals(value, entry.Value));
 
     /// <summary>The account's own layout, else the shared one.</summary>
     public WidgetLayout LayoutOf(string accountId) =>
