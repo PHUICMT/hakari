@@ -7,6 +7,7 @@ namespace Hakari.Surfaces.Flyout;
 /// 0 to 1, where an even pace through a weekly limit would be by now; null for none.
 /// </param>
 /// <param name="PaceText">Says that mark in words, such as "Even pace 71%".</param>
+/// <param name="FullAtText">When the recent pace fills it before it resets; empty if not.</param>
 public sealed record LimitRow(
     string Name,
     string Value,
@@ -14,8 +15,12 @@ public sealed record LimitRow(
     double Fraction,
     Tone Tone,
     double? Pace = null,
-    string PaceText = "")
+    string PaceText = "",
+    string FullAtText = "")
 {
+    public Visibility FullAtVisibility =>
+        FullAtText.Length == 0 ? Visibility.Collapsed : Visibility.Visible;
+
     public Visibility PaceVisibility => Pace is null ? Visibility.Collapsed : Visibility.Visible;
 
     /// <summary>The meter's share left of the mark, as a column width.</summary>

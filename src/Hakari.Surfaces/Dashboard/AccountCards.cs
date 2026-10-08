@@ -177,6 +177,11 @@ internal static class AccountCards
         {
             block.Children.Add(Meter(limit));
             block.Children.Add(Text(limit.ResetText, ResetSize, "HakariInkFaintBrush"));
+            if (limit.FullAtText.Length > 0)
+            {
+                block.Children.Add(
+                    Text(limit.FullAtText, ResetSize, "HakariWarnBrush", wrap: true));
+            }
         }
 
         return block;

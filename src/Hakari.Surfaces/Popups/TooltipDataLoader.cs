@@ -86,30 +86,38 @@ internal static class TooltipDataLoader
         LimitHistory history,
         DateTimeOffset now)
     {
-        var title = AccountLabels.Full(account, settings.NicknameOf(account.AccountId))
-            + TitleSeparator + PlanNames.Short(account.Plan);
+        var title = AccountLabels.Full(account, settings.NicknameOf(account.AccountId));
         var fullAtOf = FlyoutDataLoader.FullAtOf((account, snapshot), history, now);
-        var lines = snapshot.Limits.Select(limit => LimitLine(limit, fullAtOf(limit), now))
-            .ToList();
-        lines.AddRange(MoneyLines(query, account.AccountId, now));
-        return new TooltipAccount(title, lines, Updated(snapshot, now));
+        return new TooltipAccount(
+            title,
+            [.. MoneyLines(query, account.AccountId, now)],
+            Updated(snapshot, now),
+            PlanNames.Short(account.Plan),
+            [.. snapshot.Limits.Select(limit =>
+                Limit(limit, snapshot.Freshness, fullAtOf(limit), now))]);
     }
 
-    private static string LimitLine(
+    private const double PercentScale = 100;
+
+    private static TooltipLimit Limit(
         UsageLimit limit,
+        LimitFreshness freshness,
         DateTimeOffset? fullAt,
         DateTimeOffset now)
     {
-        var name = LimitNames.Long(limit);
-        var percent = limit.Percent >= LimitForecaster.FullPercent
-            ? Texts.Get("flyout.full")
-            : $"{limit.Percent}%";
-        var line = limit.ResetsAt is { } resetsAt
-            ? Texts.Format("tooltip.limit", name, percent, ResetText.Clock(resetsAt, now))
-            : $"{name} {percent}";
-        return fullAt is { } full
-            ? line + TitleSeparator + Texts.Format("tooltip.fullAt", ResetText.Clock(full, now))
-            : line;
+        var isFull = limit.Percent >= LimitForecaster.FullPercent;
+        var tone = isFull ? Tone.Critical : FlyoutDataLoader.ToneOf(limit, freshness);
+        return new TooltipLimit(
+            LimitNames.Long(limit),
+            isFull ? Texts.Get("flyout.full") : $"{limit.Percent}%",
+            Math.Clamp(limit.Percent / PercentScale, 0, 1),
+            fullAt is not null && tone == Tone.Normal ? Tone.Warning : tone,
+            limit.ResetsAt is { } resetsAt
+                ? Texts.Format("flyout.resets", ResetText.Clock(resetsAt, now))
+                : string.Empty,
+            fullAt is { } full
+                ? Texts.Format("tooltip.fullAt", ResetText.Clock(full, now))
+                : string.Empty);
     }
 
     private static readonly TimeSpan ActiveWindow = TimeSpan.FromMinutes(5);

@@ -171,11 +171,19 @@
                                                             Background="{ThemeResource HakariInkFaintBrush}" />
                                                     </Grid>
                                                 </Grid>
-                                                <Grid>
-                                                    <TextBlock Text="{x:Bind ResetText}" Style="{StaticResource HakariCaptionText}" />
-                                                    <TextBlock Text="{x:Bind PaceText}" HorizontalAlignment="Right"
+                                                <Grid ColumnSpacing="8">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock Text="{x:Bind ResetText}" TextWrapping="Wrap"
+                                                        Style="{StaticResource HakariCaptionText}" />
+                                                    <TextBlock Grid.Column="1" Text="{x:Bind PaceText}"
                                                         Style="{StaticResource HakariCaptionText}" />
                                                 </Grid>
+                                                <TextBlock Text="{x:Bind FullAtText}" Visibility="{x:Bind FullAtVisibility}"
+                                                    TextWrapping="Wrap" Style="{StaticResource HakariCaptionText}"
+                                                    Foreground="{ThemeResource HakariWarnBrush}" />
                                             </StackPanel>
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>

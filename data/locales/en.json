@@ -50,8 +50,8 @@
   "flyout.noLimits": "No limits yet",
   "flyout.updatedNow": "Updated just now",
   "flyout.updatedAgo": "Updated {0}",
-  "flyout.fullAt": "at this pace, full around {0}",
-  "tooltip.fullAt": "full ~{0}",
+  "flyout.fullAt": "At this pace, full around {0}",
+  "tooltip.fullAt": "full around {0}",
   "flyout.resets": "Resets {0}",
   "flyout.evenPace": "Even pace {0}",
   "flyout.monthProjection": "≈ {0} by month end",
@@ -98,7 +98,6 @@
   "menu.pauseHour": "Pause for 1 hour",
   "menu.settingsPlain": "Settings",  "menu.quit": "Quit Hakari",
 
-  "tooltip.limit": "{0} {1} · resets {2}",
   "tooltip.money": "Today {0} · this month {1}",
   "tooltip.burn": "Burn {0}/h · {1} active sessions",
   "tooltip.scroll": "scroll to switch account",

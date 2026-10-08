@@ -576,32 +576,27 @@ internal static class FlyoutDataLoader
             return new LimitRow(
                 Name: LimitNames.Long(limit),
                 Value: limit.Percent >= FullPercent ? Texts.Get("flyout.full") : valueOf(limit),
-                ResetText: ResetLine(limit, fullAt, now),
+                ResetText: limit.ResetsAt is { } resetsAt
+                    ? Texts.Format("flyout.resets", ResetText.Long(resetsAt, now))
+                    : Texts.Get("flyout.startsNext"),
                 Fraction: Math.Clamp(percentOf(limit) / PercentScale, 0, 1),
                 Tone: fullAt is not null && tone == Tone.Normal ? Tone.Warning : tone,
                 Pace: PaceOf(limit, now),
                 PaceText: PaceOf(limit, now) is { } pace
                     ? Texts.Format("flyout.evenPace", PercentText.Format(pace * PercentScale, 0))
+                    : string.Empty,
+                FullAtText: fullAt is { } full
+                    ? Texts.Format("flyout.fullAt", ResetText.Long(full, now))
                     : string.Empty);
         }),
     ];
 
-    /// <summary>"Resets Wed 17:00", and when the pace fills it first, about when.</summary>
-    private static string ResetLine(UsageLimit limit, DateTimeOffset? fullAt, DateTimeOffset now)
-    {
-        var reset = limit.ResetsAt is { } resetsAt
-            ? Texts.Format("flyout.resets", ResetText.Long(resetsAt, now))
-            : Texts.Get("flyout.startsNext");
-        return fullAt is { } full
-            ? reset + DetailSeparator + Texts.Format("flyout.fullAt", ResetText.Long(full, now))
-            : reset;
-    }
 
     /// <summary>A full limit has nothing left to pace, so it carries no mark.</summary>
     private static double? PaceOf(UsageLimit limit, DateTimeOffset now) =>
         limit.Percent >= FullPercent ? null : EvenPace.Of(limit, now);
 
-    private static Tone ToneOf(UsageLimit limit, LimitFreshness freshness) =>
+    internal static Tone ToneOf(UsageLimit limit, LimitFreshness freshness) =>
         LimitPriority.SeverityRank(limit.Severity) switch
         {
             0 when freshness == LimitFreshness.LastKnown => Tone.Muted,
