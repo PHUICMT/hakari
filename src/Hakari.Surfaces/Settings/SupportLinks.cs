@@ -69,12 +69,12 @@ internal static class SupportLinks
             StrokeEndLineCap = PenLineCap.Round,
         };
 
-    private const string BagPath = "M2.5,5 H12.5 L12,13.5 H3 Z";
+    private const string BagPath = "M2,5 H13 L12.4,14 H2.6 Z";
     private const string BagHandlePath = "M5.5,5 V3.8 A2,2 0 0 1 9.5,3.8 V5";
     private const double PaneSize = 2.6;
     private const double PaneGap = 0.5;
     private const double PanesLeft = 4.65;
-    private const double PanesTop = 6.9;
+    private const double PanesTop = 7.2;
     private const double BagStroke = 1.2;
 
     /// <summary>The four window panes in the Store's colors: red, green, blue, yellow.</summary>
@@ -87,16 +87,14 @@ internal static class SupportLinks
     ];
 
     /// <summary>
-    /// A white shopping bag with four colored panes, the way the Store's own icon reads,
-    /// drawn as shapes so it stays crisp.
+    /// A filled white shopping bag with four colored panes on it, the way the Store's own
+    /// icon reads, drawn as shapes so it stays crisp.
     /// </summary>
     private static Viewbox StoreBag()
     {
         var white = new SolidColorBrush(Microsoft.UI.Colors.White);
         var canvas = new Canvas { Width = CupCanvas, Height = CupCanvas };
-        var bag = Shape(BagPath, fill: null, stroke: white);
-        bag.StrokeThickness = BagStroke;
-        canvas.Children.Add(bag);
+        canvas.Children.Add(Shape(BagPath, fill: white, stroke: null));
         var handle = Shape(BagHandlePath, fill: null, stroke: white);
         handle.StrokeThickness = BagStroke;
         canvas.Children.Add(handle);
@@ -122,9 +120,6 @@ internal static class SupportLinks
         };
     }
 
-    /// <summary>Black with a grey edge, like the Store's own badge.</summary>
-    private static readonly Windows.UI.Color StoreEdge =
-        Windows.UI.Color.FromArgb(0xFF, 0x5C, 0x5C, 0x5C);
 
     /// <summary>Each service in its own color and mark, so each button reads at a glance.</summary>
     public static void Brand(Button button, SupportService service)
@@ -136,7 +131,7 @@ internal static class SupportLinks
             SupportService.KoFi =>
                 (Windows.UI.Color.FromArgb(0xFF, 0xFF, 0x5E, 0x5B), null, "☕", "Ko-fi"),
             SupportService.StoreTip => (
-                Microsoft.UI.Colors.Black,
+                Windows.UI.Color.FromArgb(0xFF, 0x00, 0x67, 0xB8),
                 null,
                 null,
                 Texts.Get("settings.support.storeTip")),
@@ -147,11 +142,6 @@ internal static class SupportLinks
         button.Background = brush;
         button.BorderBrush = brush;
         button.Foreground = new SolidColorBrush(Microsoft.UI.Colors.White);
-        if (service == SupportService.StoreTip)
-        {
-            button.BorderBrush = new SolidColorBrush(StoreEdge);
-        }
-
         var content = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6 };
         content.Children.Add(service == SupportService.StoreTip
             ? StoreBag()
