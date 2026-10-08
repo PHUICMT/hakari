@@ -30,6 +30,7 @@ public sealed partial class SettingsPage : UserControl
         SupportLinks.Brand(SponsorsButton, SupportService.GitHubSponsors);
         SupportLinks.Brand(KoFiButton, SupportService.KoFi);
         SupportLinks.Brand(PromptPayButton, SupportService.PromptPay);
+        SupportLinks.Brand(StoreTipButton, SupportService.StoreTip);
         PromptPayButton.Visibility = SupportLinks.ShowsPromptPay
             ? Visibility.Visible
             : Visibility.Collapsed;

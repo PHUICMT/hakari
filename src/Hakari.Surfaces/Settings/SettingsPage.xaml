@@ -314,7 +314,6 @@
                                         Click="OnSupportClicked" />
                                     <!-- Store build only, when the Store has tips on offer -->
                                     <Button x:Name="StoreTipButton" Visibility="Collapsed"
-                                        Content="{l:Text Key=settings.support.storeTip}"
                                         Style="{StaticResource HakariButton}" Click="OnStoreTipClicked" />
                                 </StackPanel>
                             </controls:SettingRow>

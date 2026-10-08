@@ -69,6 +69,9 @@ internal static class SupportLinks
             StrokeEndLineCap = PenLineCap.Round,
         };
 
+    /// <summary>A shopping bag: a tip bought in the Store, without the Store's own logo.</summary>
+    private const string ShopGlyph = "\uE719";
+
     /// <summary>Each service in its own color and mark, so each button reads at a glance.</summary>
     public static void Brand(Button button, SupportService service)
     {
@@ -78,6 +81,11 @@ internal static class SupportLinks
                 (Windows.UI.Color.FromArgb(0xFF, 0xBF, 0x39, 0x89), "", null, "Sponsor"),
             SupportService.KoFi =>
                 (Windows.UI.Color.FromArgb(0xFF, 0xFF, 0x5E, 0x5B), null, "☕", "Ko-fi"),
+            SupportService.StoreTip => (
+                Windows.UI.Color.FromArgb(0xFF, 0x00, 0x5F, 0xB8),
+                ShopGlyph,
+                null,
+                Texts.Get("settings.support.storeTip")),
             _ => (Windows.UI.Color.FromArgb(0xFF, 0x11, 0x35, 0x66), "", null, "PromptPay"),
         };
         var (color, glyph, emoji, text) = look;
@@ -195,4 +203,5 @@ internal enum SupportService
     GitHubSponsors,
     KoFi,
     PromptPay,
+    StoreTip,
 }
