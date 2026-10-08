@@ -35,22 +35,73 @@ public sealed class LimitForecaster
     /// Null when there is not enough history, usage is not rising, the limit is already
     /// full, or it resets before it would fill.
     /// </summary>
-    public DateTimeOffset? FullAt(string accountId, UsageLimit limit, DateTimeOffset now)
+    public DateTimeOffset? FullAt(string accountId, UsageLimit limit, DateTimeOffset now) =>
+        samplesByLimit.TryGetValue(KeyOf(accountId, limit), out var samples)
+            ? Project(
+                [.. samples.Select(sample => (sample.At, (double)sample.Percent))],
+                limit,
+                now)
+            : null;
+
+    /// <summary>
+    /// The same estimate from the saved history, for a window that did not watch the
+    /// readings arrive. Readings before the latest drop belong to an earlier window.
+    /// </summary>
+    public static DateTimeOffset? FullAt(
+        LimitHistory history,
+        string accountId,
+        UsageLimit limit,
+        DateTimeOffset now)
     {
-        if (limit.Percent >= FullPercent
-            || !samplesByLimit.TryGetValue(KeyOf(accountId, limit), out var samples))
+        if (limit.Percent >= FullPercent)
+        {
+            return null;
+        }
+
+        var readings = history.Load(accountId, limit.Kind, now - PaceWindow);
+        var start = 0;
+        for (var index = 1; index < readings.Count; index++)
+        {
+            if (readings[index].Percent < readings[index - 1].Percent)
+            {
+                start = index;
+            }
+        }
+
+        return Project(
+            [.. readings.Skip(start).Select(reading => (reading.At, reading.Percent))],
+            limit,
+            now);
+    }
+
+    private static DateTimeOffset? Project(
+        IReadOnlyList<(DateTimeOffset At, double Percent)> samples,
+        UsageLimit limit,
+        DateTimeOffset now)
+    {
+        if (limit.Percent >= FullPercent || samples.Count == 0)
         {
             return null;
         }
 
         var latest = samples[^1];
-        var baseline = samples.FirstOrDefault(sample =>
-            latest.At - sample.At >= MinimumSpan && now - sample.At <= PaceWindow);
-        if (baseline is null || latest.Percent - baseline.Percent < MinimumRise)
+        var baselineIndex = -1;
+        for (var index = 0; index < samples.Count; index++)
+        {
+            if (latest.At - samples[index].At >= MinimumSpan
+                && now - samples[index].At <= PaceWindow)
+            {
+                baselineIndex = index;
+                break;
+            }
+        }
+
+        if (baselineIndex < 0 || latest.Percent - samples[baselineIndex].Percent < MinimumRise)
         {
             return null;
         }
 
+        var baseline = samples[baselineIndex];
         var percentPerSecond = (latest.Percent - baseline.Percent)
             / (latest.At - baseline.At).TotalSeconds;
         var fullAt = latest.At.AddSeconds((FullPercent - latest.Percent) / percentPerSecond);

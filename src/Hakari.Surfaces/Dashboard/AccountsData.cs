@@ -36,11 +36,15 @@ internal sealed record AccountsData(
         var settings = SettingsStore.Default.Load();
         var repository = new AccountRepository(store);
         var cache = new LimitCache(store);
+        var history = new LimitHistory(store);
         var accounts = Ordered(repository.ListAccounts(), cache, settings, now);
         var usage = filter.ToUsageFilter(now) with { AccountId = null };
         var today = new UsageFilter(From: TimePeriods.StartOfToday(now));
         return new AccountsData(
-            [.. accounts.Select(entry => Card(entry, query, cache, usage, settings, now))],
+            [
+                .. accounts.Select(entry =>
+                    Card(entry, query, cache, history, usage, settings, now)),
+            ],
             EarlierCard(query, usage),
             Money(query, UsageFilter.Everything),
             Money(query, usage),
@@ -101,6 +105,7 @@ internal sealed record AccountsData(
         (AccountInfo Account, LimitSnapshot? Snapshot) entry,
         UsageQuery query,
         LimitCache cache,
+        LimitHistory history,
         UsageFilter usage,
         HakariSettings settings,
         DateTimeOffset now)
@@ -118,7 +123,8 @@ internal sealed record AccountsData(
             tone,
             entry.Snapshot is null
                 ? []
-                : FlyoutDataLoader.LimitRowsOf((account, entry.Snapshot), settings, query, now),
+                : FlyoutDataLoader.LimitRowsOf(
+                    (account, entry.Snapshot), settings, query, history, now),
             MoneyText.Format(cost, query.Currency));
     }
 

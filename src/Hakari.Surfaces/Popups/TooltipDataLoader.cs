@@ -47,6 +47,7 @@ internal static class TooltipDataLoader
             PricingSources.LoadCurrent(),
             FlyoutDataLoader.StoredConverter(store, settings));
         var cache = new LimitCache(store);
+        var history = new LimitHistory(store);
         var known = new AccountRepository(store).ListAccounts()
             .Select(account => (Account: account, Snapshot: cache.Load(account.AccountId)))
             .Where(entry => entry.Snapshot is not null)
@@ -57,7 +58,8 @@ internal static class TooltipDataLoader
             entry => LimitPriority.Rank(entry.Snapshot),
             settings);
         var cards = arranged
-            .Select(entry => Card(entry.Account, entry.Snapshot, settings, query, now))
+            .Select(entry =>
+                Card(entry.Account, entry.Snapshot, settings, query, history, now))
             .ToList();
         if (cards.Count > 1 && settings.AccountsMode == MultiAccountMode.TakeTurns)
         {
@@ -81,24 +83,33 @@ internal static class TooltipDataLoader
         LimitSnapshot snapshot,
         HakariSettings settings,
         UsageQuery query,
+        LimitHistory history,
         DateTimeOffset now)
     {
         var title = AccountLabels.Full(account, settings.NicknameOf(account.AccountId))
             + TitleSeparator + PlanNames.Short(account.Plan);
-        var lines = snapshot.Limits.Select(limit => LimitLine(limit, now)).ToList();
+        var fullAtOf = FlyoutDataLoader.FullAtOf((account, snapshot), history, now);
+        var lines = snapshot.Limits.Select(limit => LimitLine(limit, fullAtOf(limit), now))
+            .ToList();
         lines.AddRange(MoneyLines(query, account.AccountId, now));
         return new TooltipAccount(title, lines, Updated(snapshot, now));
     }
 
-    private static string LimitLine(UsageLimit limit, DateTimeOffset now)
+    private static string LimitLine(
+        UsageLimit limit,
+        DateTimeOffset? fullAt,
+        DateTimeOffset now)
     {
         var name = LimitNames.Long(limit);
         var percent = limit.Percent >= LimitForecaster.FullPercent
             ? Texts.Get("flyout.full")
             : $"{limit.Percent}%";
-        return limit.ResetsAt is { } resetsAt
+        var line = limit.ResetsAt is { } resetsAt
             ? Texts.Format("tooltip.limit", name, percent, ResetText.Clock(resetsAt, now))
             : $"{name} {percent}";
+        return fullAt is { } full
+            ? line + TitleSeparator + Texts.Format("tooltip.fullAt", ResetText.Clock(full, now))
+            : line;
     }
 
     private static readonly TimeSpan ActiveWindow = TimeSpan.FromMinutes(5);

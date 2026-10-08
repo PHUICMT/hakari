@@ -50,6 +50,8 @@
   "flyout.noLimits": "No limits yet",
   "flyout.updatedNow": "Updated just now",
   "flyout.updatedAgo": "Updated {0}",
+  "flyout.fullAt": "at this pace, full around {0}",
+  "tooltip.fullAt": "full ~{0}",
   "flyout.resets": "Resets {0}",
   "flyout.evenPace": "Even pace {0}",
   "flyout.monthProjection": "≈ {0} by month end",

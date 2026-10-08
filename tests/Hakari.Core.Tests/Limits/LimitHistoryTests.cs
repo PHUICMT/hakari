@@ -57,6 +57,40 @@ public sealed class LimitHistoryTests : IDisposable
         Assert.Equal(50, Assert.Single(Load("session", Start.AddDays(-200))).Percent);
     }
 
+    [Fact]
+    public void Forecasts_when_a_limit_fills_from_saved_readings()
+    {
+        history.Record("a", Snapshot(40, Start));
+        history.Record("a", Snapshot(50, Start.AddMinutes(10)));
+
+        var fullAt = LimitForecaster.FullAt(
+            history, "a", Session(50), Start.AddMinutes(10));
+
+        Assert.Equal(Start.AddMinutes(60), fullAt);
+    }
+
+    [Fact]
+    public void Forecast_leaves_out_readings_from_before_a_reset()
+    {
+        history.Record("a", Snapshot(80, Start));
+        history.Record("a", Snapshot(5, Start.AddMinutes(5)));
+        history.Record("a", Snapshot(15, Start.AddMinutes(15)));
+
+        var fullAt = LimitForecaster.FullAt(
+            history, "a", Session(15), Start.AddMinutes(15));
+
+        Assert.Equal(Start.AddMinutes(100), fullAt);
+    }
+
+    [Fact]
+    public void Forecast_is_silent_without_recent_readings()
+    {
+        history.Record("a", Snapshot(40, Start));
+        history.Record("a", Snapshot(50, Start.AddMinutes(10)));
+
+        Assert.Null(LimitForecaster.FullAt(history, "a", Session(50), Start.AddHours(2)));
+    }
+
     public void Dispose()
     {
         store.Dispose();
@@ -66,6 +100,9 @@ public sealed class LimitHistoryTests : IDisposable
 
     private IReadOnlyList<LimitReading> Load(string kind, DateTimeOffset? since = null) =>
         history.Load("a", kind, since ?? Start.AddDays(-1));
+
+    private static UsageLimit Session(int percent) =>
+        new("session", "session", percent, "normal", Start.AddHours(4), null, true);
 
     private static LimitSnapshot Snapshot(int percent, DateTimeOffset at) => new(
         [new UsageLimit("session", "session", percent, "normal", at.AddHours(3), null, true)],

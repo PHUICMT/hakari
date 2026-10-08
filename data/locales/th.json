@@ -50,6 +50,8 @@
   "flyout.noLimits": "ยังไม่มีข้อมูล limit",
   "flyout.updatedNow": "อัปเดตเมื่อสักครู่",
   "flyout.updatedAgo": "อัปเดต {0}",
+  "flyout.fullAt": "ถ้าใช้เท่านี้จะเต็มราว {0}",
+  "tooltip.fullAt": "เต็มราว {0}",
   "flyout.resets": "รีเซ็ต {0}",
   "flyout.evenPace": "ถ้าใช้เท่าๆ กัน {0}",
   "flyout.monthProjection": "≈ {0} ถึงสิ้นเดือน",

@@ -68,6 +68,7 @@ internal static class FlyoutDataLoader
         using var store = IndexStore.OpenReadOnly(HakariPaths.DefaultIndexPath);
         var pricing = PricingSources.LoadCurrent();
         var query = new UsageQuery(store, pricing, StoredConverter(store, settings));
+        var history = new LimitHistory(store);
         var now = DateTimeOffset.Now;
 
         var accounts = AccountArrangement.Arrange(
@@ -86,7 +87,10 @@ internal static class FlyoutDataLoader
         return new FlyoutSnapshot(
             UpdatedText: accounts.Count > 1 ? string.Empty : UpdatedText(newest, now),
             AccountSummary: AccountSummary(accounts, settings),
-            Accounts: [.. accounts.Select(account => Group(account, settings, query, now))],
+            Accounts:
+            [
+                .. accounts.Select(account => Group(account, settings, query, history, now)),
+            ],
             Stats: StatTiles(query, bySource.Sum(source => source.Cost), now),
             BurnRate: BurnRate(query, now),
             HourlyBurn: HourlyBurn(query, now),
@@ -370,6 +374,7 @@ internal static class FlyoutDataLoader
         (AccountInfo Account, LimitSnapshot Snapshot) entry,
         HakariSettings settings,
         UsageQuery query,
+        LimitHistory history,
         DateTimeOffset now)
     {
         var nickname = settings.NicknameOf(entry.Account.AccountId);
@@ -401,7 +406,8 @@ internal static class FlyoutDataLoader
                 entry.Snapshot,
                 now,
                 limit => Percent(limit, percentOf, settings),
-                percentOf),
+                percentOf,
+                FullAtOf(entry, history, now)),
             IsCollapsed: settings.CollapsedAccounts.Contains(entry.Account.AccountId));
     }
 
@@ -464,6 +470,7 @@ internal static class FlyoutDataLoader
         (AccountInfo Account, LimitSnapshot Snapshot) entry,
         HakariSettings settings,
         UsageQuery query,
+        LimitHistory history,
         DateTimeOffset now)
     {
         var percentOf = PercentsOf(entry, settings, query, now);
@@ -471,16 +478,30 @@ internal static class FlyoutDataLoader
             entry.Snapshot,
             now,
             limit => Percent(limit, percentOf, settings),
-            percentOf);
+            percentOf,
+            FullAtOf(entry, history, now));
     }
+
+    /// <summary>
+    /// When the recent pace fills each limit before it resets. Only for limits read live: a
+    /// last known reading says nothing about the pace now.
+    /// </summary>
+    internal static Func<UsageLimit, DateTimeOffset?> FullAtOf(
+        (AccountInfo Account, LimitSnapshot Snapshot) entry,
+        LimitHistory history,
+        DateTimeOffset now) =>
+        limit => entry.Snapshot.Freshness == LimitFreshness.Live
+            ? LimitForecaster.FullAt(history, entry.Account.AccountId, limit, now)
+            : null;
 
     private static List<LimitRow> LimitRows(
         LimitSnapshot limits,
         DateTimeOffset now,
         Func<UsageLimit, string> valueOf,
-        Func<UsageLimit, double> percentOf) =>
+        Func<UsageLimit, double> percentOf,
+        Func<UsageLimit, DateTimeOffset?> fullAtOf) =>
     [
-        .. PlanLimitRows(limits, now, valueOf, percentOf),
+        .. PlanLimitRows(limits, now, valueOf, percentOf, fullAtOf),
         .. ExtraUsageRows(limits.ExtraUsage),
     ];
 
@@ -506,21 +527,38 @@ internal static class FlyoutDataLoader
         LimitSnapshot limits,
         DateTimeOffset now,
         Func<UsageLimit, string> valueOf,
-        Func<UsageLimit, double> percentOf) =>
+        Func<UsageLimit, double> percentOf,
+        Func<UsageLimit, DateTimeOffset?> fullAtOf) =>
     [
-        .. limits.Limits.Select(limit => new LimitRow(
-            Name: LimitNames.Long(limit),
-            Value: limit.Percent >= FullPercent ? Texts.Get("flyout.full") : valueOf(limit),
-            ResetText: limit.ResetsAt is { } resetsAt
-                ? Texts.Format("flyout.resets", ResetText.Long(resetsAt, now))
-                : Texts.Get("flyout.startsNext"),
-            Fraction: Math.Clamp(percentOf(limit) / PercentScale, 0, 1),
-            Tone: limit.Percent >= FullPercent ? Tone.Critical : ToneOf(limit, limits.Freshness),
-            Pace: PaceOf(limit, now),
-            PaceText: PaceOf(limit, now) is { } pace
-                ? Texts.Format("flyout.evenPace", PercentText.Format(pace * PercentScale, 0))
-                : string.Empty)),
+        .. limits.Limits.Select(limit =>
+        {
+            var fullAt = fullAtOf(limit);
+            var tone = limit.Percent >= FullPercent
+                ? Tone.Critical
+                : ToneOf(limit, limits.Freshness);
+            return new LimitRow(
+                Name: LimitNames.Long(limit),
+                Value: limit.Percent >= FullPercent ? Texts.Get("flyout.full") : valueOf(limit),
+                ResetText: ResetLine(limit, fullAt, now),
+                Fraction: Math.Clamp(percentOf(limit) / PercentScale, 0, 1),
+                Tone: fullAt is not null && tone == Tone.Normal ? Tone.Warning : tone,
+                Pace: PaceOf(limit, now),
+                PaceText: PaceOf(limit, now) is { } pace
+                    ? Texts.Format("flyout.evenPace", PercentText.Format(pace * PercentScale, 0))
+                    : string.Empty);
+        }),
     ];
+
+    /// <summary>"Resets Wed 17:00", and when the pace fills it first, about when.</summary>
+    private static string ResetLine(UsageLimit limit, DateTimeOffset? fullAt, DateTimeOffset now)
+    {
+        var reset = limit.ResetsAt is { } resetsAt
+            ? Texts.Format("flyout.resets", ResetText.Long(resetsAt, now))
+            : Texts.Get("flyout.startsNext");
+        return fullAt is { } full
+            ? reset + DetailSeparator + Texts.Format("flyout.fullAt", ResetText.Long(full, now))
+            : reset;
+    }
 
     /// <summary>A full limit has nothing left to pace, so it carries no mark.</summary>
     private static double? PaceOf(UsageLimit limit, DateTimeOffset now) =>
