@@ -1,0 +1,32 @@
+name: store-status
+
+# Reads where the Store submission stands (in certification, publishing, in the Store),
+# without changing anything. Run by hand.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  STORE_APP_ID: 9NFVF39T2447
+  STORE_SELLER_ID: "96470620"
+
+jobs:
+  status:
+    runs-on: windows-latest
+    env:
+      STORE_TENANT_ID: ${{ secrets.STORE_TENANT_ID }}
+      STORE_CLIENT_ID: ${{ secrets.STORE_CLIENT_ID }}
+      STORE_CLIENT_SECRET: ${{ secrets.STORE_CLIENT_SECRET }}
+    steps:
+      - name: Store CLI
+        uses: microsoft/microsoft-store-apppublisher@v1.4
+
+      - name: Status
+        shell: pwsh
+        run: |
+          msstore reconfigure --tenantId $env:STORE_TENANT_ID --sellerId $env:STORE_SELLER_ID `
+            --clientId $env:STORE_CLIENT_ID --clientSecret $env:STORE_CLIENT_SECRET | Out-Null
+          msstore submission status $env:STORE_APP_ID
+          msstore apps get $env:STORE_APP_ID
