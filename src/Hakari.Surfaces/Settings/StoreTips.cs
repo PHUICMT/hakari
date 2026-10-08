@@ -93,12 +93,12 @@ internal static class StoreTips
     {
         var list = new StackPanel { Width = ListWidth, Padding = ListPadding, Spacing = RowGap };
 
-        // Under the button, its right edge on the button's, and free to pass the window's
-        // edge so a button near the bottom does not squeeze the list against it.
+        // Above the button like the PromptPay code beside it, its right edge on the
+        // button's, and free to pass the window's edge rather than be squeezed against it.
         var flyout = new Microsoft.UI.Xaml.Controls.Flyout
         {
             Content = list,
-            Placement = FlyoutPlacementMode.BottomEdgeAlignedRight,
+            Placement = FlyoutPlacementMode.TopEdgeAlignedRight,
             ShouldConstrainToRootBounds = false,
             FlyoutPresenterStyle = (Style)Application.Current.Resources["HakariListPresenter"],
         };

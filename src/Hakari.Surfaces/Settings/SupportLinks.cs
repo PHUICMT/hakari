@@ -176,7 +176,7 @@ internal static class SupportLinks
         var flyout = new Microsoft.UI.Xaml.Controls.Flyout
         {
             Content = body,
-            Placement = FlyoutPlacementMode.Bottom,
+            Placement = FlyoutPlacementMode.Top,
             FlyoutPresenterStyle = (Style)Application.Current.Resources["HakariListPresenter"],
         };
         Motion.SurfaceMotion.EnterOnOpen(flyout);

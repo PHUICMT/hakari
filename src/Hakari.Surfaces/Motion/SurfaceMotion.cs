@@ -1,5 +1,6 @@
 using Hakari.Core.Settings;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Media.Animation;
 using Windows.UI.ViewManagement;
 
@@ -157,7 +158,11 @@ internal static class SurfaceMotion
         {
             if (flyout is Microsoft.UI.Xaml.Controls.Flyout { Content: { } content })
             {
-                Enter(content, fromY: -FlyoutRise);
+                // Comes in from the side of the button: down when below it, up when above.
+                var above = flyout.Placement is FlyoutPlacementMode.Top
+                    or FlyoutPlacementMode.TopEdgeAlignedLeft
+                    or FlyoutPlacementMode.TopEdgeAlignedRight;
+                Enter(content, fromY: above ? FlyoutRise : -FlyoutRise);
             }
         };
     }
