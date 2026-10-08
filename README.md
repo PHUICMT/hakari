@@ -25,13 +25,14 @@ Windows 10 (2004) or later, x64 or Arm64. Hakari is free everywhere; pick one:
 |---|---|---|
 | **Microsoft Store** | [Hakari - Usage Meter](https://apps.microsoft.com/detail/9NFVF39T2447) | Automatic, through the Store |
 | **winget** | `winget install PHUICMT.Hakari` *(in review, coming soon)* | `winget upgrade PHUICMT.Hakari` |
-| **Zip** | [Releases](https://github.com/PHUICMT/hakari/releases): `Hakari-<version>-win-x64.zip`, or `win-arm64` for Windows on Arm | Hakari says in its flyout when a newer version is out |
+| **Zip** | [Releases](https://github.com/PHUICMT/hakari/releases): `Hakari-<version>-win-x64.zip`, or `win-arm64` for Windows on Arm | From 0.9.3, **Update now** in the flyout (or *Settings → About → Check for updates*) |
 
 **Zip:** unzip it where you keep apps, such as `%LOCALAPPDATA%\Programs\Hakari`, and run
 `Hakari.exe`. Nothing else to install: .NET and the Windows App SDK come inside. The zip is not
 code-signed yet, so SmartScreen may warn on first run; choose **More info → Run anyway**. Each
-release lists the zip's SHA-256 beside it. To update, quit Hakari from its tray menu and
-replace the folder; settings stay.
+release lists the zip's SHA-256 beside it. From 0.9.3 Hakari downloads, checks and swaps in a
+newer version itself; before that, quit Hakari from its tray menu and replace the folder.
+Settings stay either way.
 
 On first run the meter appears on the taskbar next to the tray, and a short guide opens.
 Left-click the meter for the flyout, right-click it for the dashboard, settings and more.
@@ -42,6 +43,18 @@ the tray menu and delete the folder. Settings and the usage index live in
 `%LOCALAPPDATA%\Hakari`; delete that too to remove everything.
 
 ## FAQ
+
+**What does Hakari count?**
+Cost and tokens come from the logs Claude Code writes on this PC. The 5-hour and weekly
+limits come from your account, so they include everything.
+
+| Where you use Claude | Cost and tokens | 5-hour and weekly limits |
+|---|---|---|
+| Claude Code on this PC: terminal, VS Code, JetBrains, the Claude desktop app's Code tab, WSL | Yes | Yes |
+| Claude Code on another PC, or in the cloud | No, only this PC's logs | Yes, the limits include it |
+| Chat on claude.ai, in the Claude apps, or Cowork | No, it leaves no usage on the PC | Yes, the limits include it |
+
+Limits need Claude Code signed in on this PC once, and limits turned on for that account.
 
 **Is the cost what I pay?**
 No. It is what the same tokens would cost at API prices, from the price table Hakari ships

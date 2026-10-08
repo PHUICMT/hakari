@@ -446,6 +446,7 @@
   "onboarding.noSources": "ยังไม่พบ Claude Code บนเครื่องนี้ ใช้งานสักครั้งแล้ว Hakari จะเจอเอง",
   "onboarding.reading": "กำลังอ่าน log อยู่เบื้องหลังแบบไม่แย่งทรัพยากรเครื่อง",
   "onboarding.moreSources": "เพิ่มโฟลเดอร์อื่นหรือตั้งค่า WSL ได้ทีหลังใน ตั้งค่า",
+  "onboarding.scope": "ค่าใช้จ่ายนับเฉพาะ Claude Code บนเครื่องนี้ แชทใน claude.ai หรือแอป Claude ไม่นับ แต่ % limit 5 ชม. และรายสัปดาห์รวมทุกช่องทาง",
   "onboarding.noAccounts": "ยังไม่พบบัญชี บัญชีจะขึ้นเองเมื่อใช้ Claude Code ตั้งชื่อทีหลังได้ใน ตั้งค่า",
   "onboarding.showAccount": "แสดงบัญชีนี้บน taskbar",
   "onboarding.tokenNote": "Hakari อ่าน token ลงชื่อเข้าใช้ของบัญชีบนเครื่องนี้เพื่อถามข้อมูล limit เท่านั้น ไม่ส่งไปที่อื่น",

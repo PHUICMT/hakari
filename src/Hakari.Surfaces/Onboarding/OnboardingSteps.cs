@@ -54,6 +54,7 @@ internal sealed class OnboardingSteps(SettingsStore store)
         body.Children.Add(Sweep());
         body.Children.Add(Faint(Texts.Get("onboarding.reading")));
         body.Children.Add(Faint(Texts.Get("onboarding.moreSources")));
+        body.Children.Add(Faint(Texts.Get("onboarding.scope")));
         return body;
     }
 

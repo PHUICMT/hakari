@@ -446,6 +446,7 @@
   "onboarding.noSources": "Claude Code isn't on this PC yet. Use it once and Hakari will find it.",
   "onboarding.reading": "Reading in the background at low priority.",
   "onboarding.moreSources": "Add other folders or change WSL later in Settings.",
+  "onboarding.scope": "Cost counts Claude Code on this PC only. Chat on claude.ai or in the Claude apps is not in it, but the 5-hour and weekly limits include everything.",
   "onboarding.noAccounts": "No accounts yet. They show up once Claude Code is used; name them later in Settings.",
   "onboarding.showAccount": "Show this account on the taskbar",
   "onboarding.tokenNote": "Hakari reads each account's sign-in token on this PC only to ask for its limits. It is sent nowhere else.",
