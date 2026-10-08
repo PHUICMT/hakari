@@ -114,6 +114,24 @@ internal static class StoreTips
         flyout.ShowAt(anchor);
     }
 
+    /// <summary>The Store's own rating and review dialog, over the given window.</summary>
+    public static async Task RequestReviewAsync(IntPtr window)
+    {
+        if (!PackageIdentity.IsPackaged || Context(window) is not { } store)
+        {
+            return;
+        }
+
+        try
+        {
+            await store.RequestRateAndReviewAppAsync();
+        }
+        catch (Exception exception)
+        {
+            CrashLog.Write(exception, "store review");
+        }
+    }
+
     /// <returns>True when the tip went through.</returns>
     private static async Task<bool> BuyAsync(StoreProduct tip, IntPtr window)
     {

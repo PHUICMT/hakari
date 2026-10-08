@@ -97,6 +97,14 @@ public sealed partial class FlyoutWindow : Window
             return;
         }
 
+        if (notice.Action == NoticeAction.RateApp)
+        {
+            ReviewAnswered(notice);
+            _ = Settings.StoreTips.RequestReviewAsync(
+                WinRT.Interop.WindowNative.GetWindowHandle(this));
+            return;
+        }
+
         HideFlyout();
         SettingsRequested?.Invoke(this, EventArgs.Empty);
     }
@@ -123,6 +131,9 @@ public sealed partial class FlyoutWindow : Window
                 HideFlyout();
                 OpenPage(Hakari.Core.Updates.UpdateCheck.PageOf(notice.AccountId));
                 break;
+            case NoticeAction.RateApp:
+                ReviewAnswered(notice);
+                break;
             default:
                 AnswerLimits(notice, on: false);
                 break;
@@ -147,6 +158,13 @@ public sealed partial class FlyoutWindow : Window
         {
             LastSeenVersion = notice.AccountId,
         });
+        RemoveNotice(notice);
+    }
+
+    /// <summary>Asked once, whatever the answer: the notice goes and does not come back.</summary>
+    private void ReviewAnswered(FlyoutNotice notice)
+    {
+        SettingsStore.Default.Update(current => current with { ReviewAsked = true });
         RemoveNotice(notice);
     }
 

@@ -108,6 +108,7 @@ internal static class FlyoutDataLoader
                 .. StoppedDistributions(store, settings),
                 .. NewerVersion(settings),
                 .. WhatsNewSinceLast(settings),
+                .. AskForReview(store, settings, now),
             ]);
     }
 
@@ -224,6 +225,24 @@ internal static class FlyoutDataLoader
                 Texts.Format("flyout.notice.updateDetail", have),
                 NoticeAction.OpenUpdate,
                 Texts.Get("flyout.notice.updateAction"));
+    }
+
+    /// <summary>Once, two weeks in, in the Store copy only: ratings help others find it.</summary>
+    private static IEnumerable<FlyoutNotice> AskForReview(
+        IndexStore store,
+        HakariSettings settings,
+        DateTimeOffset now)
+    {
+        if (ReviewAsk.IsDue(InstallSource.Current, settings.ReviewAsked, store.CreatedAt, now))
+        {
+            yield return new FlyoutNotice(
+                Tone.Normal,
+                Texts.Get("flyout.notice.review"),
+                Texts.Get("flyout.notice.reviewDetail"),
+                NoticeAction.RateApp,
+                Texts.Get("flyout.notice.reviewAction"),
+                SecondActionText: Texts.Get("flyout.notice.reviewLater"));
+        }
     }
 
     private const int WhatsNewShown = 3;

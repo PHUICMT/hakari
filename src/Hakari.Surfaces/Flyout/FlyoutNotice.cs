@@ -23,6 +23,9 @@ public enum NoticeAction
 
     /// <summary>"Got it" on the running version's changes; the second opens them all.</summary>
     DismissWhatsNew,
+
+    /// <summary>Opens the Store's rating dialog; the second button only says not now.</summary>
+    RateApp,
 }
 
 /// <summary>

@@ -105,6 +105,9 @@ public sealed record HakariSettings
     /// </summary>
     public string LastSeenVersion { get; init; } = string.Empty;
 
+    /// <summary>The Store copy asked once for a rating; it does not ask again.</summary>
+    public bool ReviewAsked { get; init; }
+
     /// <summary>Tell when a limit passes its warning or critical level or resets.</summary>
     public bool NotifyOnLimits { get; init; } = true;
 
