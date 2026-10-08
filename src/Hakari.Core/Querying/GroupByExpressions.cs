@@ -29,6 +29,8 @@ internal static class GroupByExpressions
         GroupBy.ProjectBranch => $"{project} || {Separator} || coalesce(git_branch, '')",
         GroupBy.WeekdayHour => $"strftime('%w %H', {LocalSeconds})",
         GroupBy.ProjectSession => $"{project} || {Separator} || session_id",
+        GroupBy.DayAccountProjectModel => $"date({LocalSeconds}) || {Separator} || "
+            + $"{AccountSql.AccountOfRecord} || {Separator} || {project} || {Separator} || model",
         _ => throw new ArgumentOutOfRangeException(nameof(groupBy), groupBy, null),
     };
 }

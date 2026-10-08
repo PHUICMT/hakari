@@ -8,7 +8,10 @@ using Microsoft.UI.Xaml.Media;
 
 namespace Hakari.Surfaces.Dashboard;
 
-/// <summary>Period, account, source and model, plus refresh; the same on every page.</summary>
+/// <summary>
+/// Period, account, source and model, plus refresh and a CSV export of what the filter
+/// shows; the same on every page.
+/// </summary>
 internal sealed partial class DashboardFilterBar : StackPanel
 {
     private const string AllChoice = "";
@@ -40,6 +43,7 @@ internal sealed partial class DashboardFilterBar : StackPanel
         VerticalAlignment = VerticalAlignment.Center;
         firstLine.Children.Add(PeriodChoices());
         firstLine.Children.Add(RefreshButton());
+        firstLine.Children.Add(ExportButton());
         secondLine.Children.Add(accountSelect);
         secondLine.Children.Add(sourceSelect);
         secondLine.Children.Add(modelSelect);
@@ -165,6 +169,33 @@ internal sealed partial class DashboardFilterBar : StackPanel
         };
         Accessible.Name(button, Texts.Get("dashboard.refresh"));
         button.Click += (_, _) => Changed?.Invoke(this, EventArgs.Empty);
+        return button;
+    }
+
+    private const string ExportGlyph = "\uE896";
+
+    private Button ExportButton()
+    {
+        var button = new Button
+        {
+            Content = new FontIcon
+            {
+                Glyph = ExportGlyph,
+                FontSize = RefreshGlyphSize,
+                FontFamily = (FontFamily)Application.Current.Resources["HakariIconFont"],
+            },
+            Style = (Style)Application.Current.Resources["HakariButton"],
+            Padding = RefreshPadding,
+        };
+        var label = Texts.Get("dashboard.export");
+        Accessible.Name(button, label);
+        ToolTipService.SetToolTip(button, label);
+        button.Click += async (_, _) =>
+        {
+            button.IsEnabled = false;
+            await UsageExport.SaveAsync(button);
+            button.IsEnabled = true;
+        };
         return button;
     }
 

@@ -178,6 +178,21 @@ public sealed class IndexerTests : IDisposable
     }
 
     [Fact]
+    public void Groups_an_export_by_day_account_project_and_model()
+    {
+        AppendLines(SampleLogLines.Assistant());
+        Index();
+
+        var row = Assert.Single(new UsageQuery(store, PricingTable.LoadBundled())
+            .Summarize(UsageFilter.Everything, GroupBy.DayAccountProjectModel));
+
+        var parts = row.Key.Split(GroupKeys.Separator);
+        Assert.Equal(4, parts.Length);
+        Assert.Equal(@"D:\work", parts[2]);
+        Assert.Equal("claude-opus-5", parts[3]);
+    }
+
+    [Fact]
     public void Marks_the_log_format_changed_when_most_responses_cannot_be_read()
     {
         var unread = """{"type": "assistant", "message": {"usage": {"tokens": 5}}}""";

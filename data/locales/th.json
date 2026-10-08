@@ -118,6 +118,7 @@
   "dashboard.allAccounts": "ทุกบัญชี",
   "dashboard.allSources": "ทุกแหล่งข้อมูล",
   "dashboard.allModels": "ทุกโมเดล",
+  "dashboard.export": "ส่งออกข้อมูลที่แสดงอยู่เป็น CSV",
   "dashboard.refresh": "อ่านใหม่",
   "dashboard.tile.cost": "ค่าใช้จ่าย · {0}",
   "dashboard.tile.vsPrevious": "{0} เทียบกับ {1} ก่อนหน้า",
