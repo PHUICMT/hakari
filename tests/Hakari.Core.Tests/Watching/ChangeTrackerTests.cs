@@ -26,6 +26,29 @@ public sealed class ChangeTrackerTests : IDisposable
             ConfigDirectory: directory.Combine("config"));
     }
 
+    /// <summary>
+    /// A watcher's event can already be on its way when the tracker is disposed; landing
+    /// afterwards it must not throw, since on a pool thread that ends the process.
+    /// </summary>
+    [Theory]
+    [InlineData("RecordChange")]
+    [InlineData("ScheduleFullScan")]
+    public void A_change_that_lands_after_dispose_is_ignored(string handler)
+    {
+        var tracker = new ChangeTracker([source], NoDebounce, TimeProvider.System);
+        tracker.Dispose();
+        var method = typeof(ChangeTracker).GetMethod(
+            handler,
+            System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)!;
+        object[] arguments = method.GetParameters().Length == 2
+            ? [source, directory.Combine("config", "projects", "project_a", "late.jsonl")]
+            : [source];
+
+        var thrown = Record.Exception(() => method.Invoke(tracker, arguments));
+
+        Assert.Null(thrown);
+    }
+
     [Fact]
     public void Starts_with_a_full_scan_of_every_source()
     {

@@ -48,7 +48,10 @@ public sealed class ChangeTracker : IDisposable
     public static bool IsWatchable(UsageSource source) =>
         !source.ProjectsDirectory.StartsWith(NetworkPathPrefix, StringComparison.Ordinal);
 
-    /// <summary>Ends a <see cref="WaitForWork"/> early, such as after a settings change.</summary>
+    /// <summary>
+    /// Ends a <see cref="WaitForWork"/> early, such as after a settings change. Safe after
+    /// <see cref="Dispose"/>: a watcher's event already on its way still lands here.
+    /// </summary>
     public void Wake()
     {
         try
@@ -93,6 +96,7 @@ public sealed class ChangeTracker : IDisposable
     {
         foreach (var watcher in watchers)
         {
+            watcher.EnableRaisingEvents = false;
             watcher.Dispose();
         }
 
@@ -159,7 +163,7 @@ public sealed class ChangeTracker : IDisposable
             lastChange = timeProvider.GetUtcNow();
         }
 
-        wakeUp.Set();
+        Wake();
     }
 
     /// <summary>The watcher overflowed and may have missed events, so rescan everything.</summary>
@@ -170,6 +174,6 @@ public sealed class ChangeTracker : IDisposable
             nextFullScan[source] = timeProvider.GetUtcNow();
         }
 
-        wakeUp.Set();
+        Wake();
     }
 }
