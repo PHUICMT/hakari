@@ -195,11 +195,6 @@ public sealed partial class DashboardWindow : Window
 
     private IntPtr WindowHandle => WinRT.Interop.WindowNative.GetWindowHandle(this);
 
-    /// <summary>The page the dashboard was left on, else the overview.</summary>
-    public static DashboardPage RememberedPage() =>
-        Enum.TryParse<DashboardPage>(SettingsStore.Default.Load().Dashboard.Page, out var page)
-            ? page
-            : DashboardPage.Overview;
 
     /// <summary>The filter the dashboard was left with, for its first page.</summary>
     private static DashboardFilter RememberedFilter(DashboardMemory memory) => new(

@@ -216,7 +216,8 @@ public partial class App : Application
             dashboard.LanguageChanged += (_, _) => RebuildForLanguage(window);
         }
 
-        dashboard.Present(page ?? DashboardWindow.RememberedPage());
+        // "Dashboard" from the flyout or a menu means the overview, not wherever it was left.
+        dashboard.Present(page ?? DashboardPage.Overview);
     }
 
     /// <summary>
