@@ -131,6 +131,11 @@ public partial class App : Application
                 idleExitTimer?.Start();
                 break;
             case SurfaceKind.Warm:
+                if (flyout?.IsShowing != true)
+                {
+                    FlyoutDataLoader.Prefetch();
+                }
+
                 idleExitTimer?.Start();
                 break;
             case SurfaceKind.Onboarding:

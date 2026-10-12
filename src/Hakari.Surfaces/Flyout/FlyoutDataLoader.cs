@@ -29,6 +29,87 @@ internal static class FlyoutDataLoader
     private const double ExtraUsageWarnAt = 0.8;
     private static readonly TimeSpan RecentSourceWindow = TimeSpan.FromMinutes(10);
 
+    /// <summary>A read this recent is still current enough to open the flyout with.</summary>
+    private static readonly TimeSpan PrefetchKeep = TimeSpan.FromSeconds(10);
+
+    private static readonly Lock PrefetchLock = new();
+    private static Task<FlyoutSnapshot>? prefetching;
+    private static (FlyoutSnapshot Snapshot, long At)? prefetched;
+
+    /// <summary>
+    /// Starts reading in the background, as pointing at the widget or the tray icon hints the
+    /// flyout may open: the read takes around half a second, which a click then skips.
+    /// </summary>
+    public static void Prefetch()
+    {
+        lock (PrefetchLock)
+        {
+            if (prefetching is { IsCompleted: false })
+            {
+                return;
+            }
+
+            prefetching = Task.Run(() =>
+            {
+                var snapshot = Load();
+                lock (PrefetchLock)
+                {
+                    prefetched = (snapshot, Environment.TickCount64);
+                }
+
+                return snapshot;
+            });
+        }
+    }
+
+    private const string Waiting = "—";
+
+    /// <summary>
+    /// What the flyout shows while its first read runs: the four tiles with dashes and a
+    /// loading line, so it opens at once and the numbers roll in.
+    /// </summary>
+    public static FlyoutSnapshot Loading() => new(
+        UpdatedText: string.Empty,
+        AccountSummary: Texts.Get("flyout.loading"),
+        Accounts: [],
+        Stats:
+        [
+            new(Texts.Get("flyout.today"), Waiting, string.Empty),
+            new(Texts.Get("flyout.thisWeek"), Waiting, string.Empty),
+            new(Texts.Get("flyout.thisMonth"), Waiting, string.Empty),
+            new(Texts.Get("flyout.allTime"), Waiting, string.Empty),
+        ],
+        BurnRate: Waiting,
+        HourlyBurn: [],
+        Sources: [],
+        Notices: []);
+
+    /// <summary>A read made moments ago, used once; null when there is none.</summary>
+    public static FlyoutSnapshot? TakeRecent()
+    {
+        lock (PrefetchLock)
+        {
+            if (prefetched is { } hit
+                && Environment.TickCount64 - hit.At < PrefetchKeep.TotalMilliseconds)
+            {
+                prefetched = null;
+                return hit.Snapshot;
+            }
+
+            return null;
+        }
+    }
+
+    /// <summary>The read under way, which is no slower to wait for, or a new one.</summary>
+    public static Task<FlyoutSnapshot> NextAsync()
+    {
+        lock (PrefetchLock)
+        {
+            prefetched = null;
+            return prefetching is { IsCompleted: false } running ? running : Task.Run(Load);
+        }
+    }
+
     /// <summary>
     /// Never fails: before the first index exists, or when it cannot be read, the flyout
     /// opens with a note instead of numbers.

@@ -270,9 +270,40 @@ public sealed partial class FlyoutWindow : Window
         AppWindow.IsShownInSwitchers = false;
     }
 
+    /// <summary>What the flyout showed last, to open with at once while a new read runs.</summary>
+    private FlyoutSnapshot? shownSnapshot;
+
+    /// <summary>The next fit only resizes: the flyout is already up, so no entrance.</summary>
+    private bool refitOnly;
+
+    /// <summary>
+    /// Opens at once: with a read made while pointing at the widget, else with what it showed
+    /// last, or a loading state the first time, and a new read under way whose changed
+    /// numbers then roll in.
+    /// </summary>
     private void Show(int anchorX, int anchorY)
     {
-        var snapshot = FlyoutDataLoader.Load();
+        var recent = FlyoutDataLoader.TakeRecent();
+        var snapshot = recent ?? shownSnapshot ?? FlyoutDataLoader.Loading();
+        var isStale = recent is null;
+        shownSnapshot = snapshot;
+        refitOnly = false;
+        Lay(snapshot, anchorX, anchorY);
+        IsShowing = true;
+        Root.LayoutUpdated -= FitAfterLayout;
+        Root.LayoutUpdated += FitAfterLayout;
+        Activate();
+        NativeFocus.BringToFront(WinRT.Interop.WindowNative.GetWindowHandle(this));
+        shownAt = Environment.TickCount64;
+        if (isStale)
+        {
+            RefreshWhileOpen();
+        }
+    }
+
+    /// <summary>Fills, folds to fit the screen, then sizes and places the window.</summary>
+    private void Lay(FlyoutSnapshot snapshot, int anchorX, int anchorY)
+    {
         Fill(snapshot);
         var scale = ScaleAt(anchorX, anchorY);
         availableHeight = AvailableHeight(anchorX, anchorY, scale);
@@ -285,14 +316,55 @@ public sealed partial class FlyoutWindow : Window
         var outer = AppWindow.Size;
         var placement = FlyoutPlacement.Above(anchorX, anchorY, outer, scale, AnchorSide.Center);
         AppWindow.Move(new PointInt32(placement.X, placement.Y));
-        IsShowing = true;
         lastAnchor = (anchorX, anchorY, scale);
         pendingFit = (anchorX, anchorY, scale);
-        Root.LayoutUpdated -= FitAfterLayout;
-        Root.LayoutUpdated += FitAfterLayout;
-        Activate();
-        NativeFocus.BringToFront(WinRT.Interop.WindowNative.GetWindowHandle(this));
-        shownAt = Environment.TickCount64;
+    }
+
+    private const double RollDistance = 6;
+
+    /// <summary>
+    /// Reads again behind the open flyout, then puts the new numbers in: a stat whose value
+    /// changed rolls up into place, and the window is fitted to the new content.
+    /// </summary>
+    private async void RefreshWhileOpen()
+    {
+        try
+        {
+            var next = await FlyoutDataLoader.NextAsync();
+            var before = shownSnapshot;
+            shownSnapshot = next;
+            if (!IsShowing || before is null || lastAnchor is not { } anchor)
+            {
+                return;
+            }
+
+            // An entrance still settling finishes with the new content instead.
+            refitOnly = pendingFit is null;
+            Lay(next, anchor.AnchorX, anchor.AnchorY);
+            Root.LayoutUpdated -= FitAfterLayout;
+            Root.LayoutUpdated += FitAfterLayout;
+            RollChanged(before, next);
+        }
+        catch (Exception exception)
+        {
+            CrashLog.Write(exception, "flyout refresh");
+        }
+    }
+
+    private void RollChanged(FlyoutSnapshot before, FlyoutSnapshot next)
+    {
+        for (var index = 0; index < next.Stats.Count && index < StatGrid.Children.Count; index++)
+        {
+            if (index >= before.Stats.Count || before.Stats[index] != next.Stats[index])
+            {
+                SurfaceMotion.Enter(StatGrid.Children[index], fromY: RollDistance);
+            }
+        }
+
+        if (before.BurnRate != next.BurnRate)
+        {
+            SurfaceMotion.Enter(BurnText, fromY: RollDistance);
+        }
     }
 
     /// <summary>
@@ -344,6 +416,12 @@ public sealed partial class FlyoutWindow : Window
         Root.LayoutUpdated -= FitAfterLayout;
         pendingFit = null;
         fitAttempts = 0;
+        if (refitOnly)
+        {
+            refitOnly = false;
+            return;
+        }
+
         PlayEntrance();
     }
 

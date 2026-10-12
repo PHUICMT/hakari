@@ -72,6 +72,7 @@
   "flyout.extraUsage.note": "เครดิตที่จ่ายเพิ่ม ใช้เมื่อเกิน limit ของแผน",
   "flyout.full": "เต็ม",
   "flyout.today": "วันนี้",
+  "flyout.loading": "กำลังโหลด…",
   "flyout.replies": "{0} คำตอบ",
   "flyout.thisWeek": "สัปดาห์นี้",
   "flyout.sinceMonday": "ตั้งแต่วันจันทร์",
