@@ -493,7 +493,7 @@
   "dashboard.column.source": "Source",
   "dashboard.column.modelMix": "Model mix",
   "dashboard.column.duration": "Active time",
-  "dashboard.projects.caption": "By working folder, across sources · click a row to join a moved or copied folder",
+  "dashboard.projects.caption": "By working folder, across sources and sessions · … sets a budget or joins a moved folder",
   "dashboard.merge.menu": "Budget, join or split…",
   "dashboard.merge.folder": "This folder",
   "dashboard.merge.target": "Will count as part of",

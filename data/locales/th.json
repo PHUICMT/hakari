@@ -493,7 +493,7 @@
   "dashboard.column.source": "แหล่ง",
   "dashboard.column.modelMix": "โมเดลหลัก",
   "dashboard.column.duration": "เวลาใช้งาน",
-  "dashboard.projects.caption": "ตามโฟลเดอร์ที่ทำงาน รวมทุกแหล่งข้อมูล · คลิกแถวเพื่อรวมโฟลเดอร์ที่ย้ายหรือคัดลอกมา",
+  "dashboard.projects.caption": "ตามโฟลเดอร์ที่ทำงาน รวมทุกแหล่งข้อมูลและทุก session · ปุ่ม … ใช้ตั้งงบหรือรวมโฟลเดอร์ที่ย้ายมา",
   "dashboard.merge.menu": "ตั้งงบ รวม หรือแยกโฟลเดอร์…",
   "dashboard.merge.folder": "โฟลเดอร์นี้",
   "dashboard.merge.target": "จะนับเป็นส่วนหนึ่งของ",
