@@ -19,7 +19,7 @@ public static class PromptSize
     /// <summary>The same band in SQL, for a summary to group by.</summary>
     public static string Sql(string promptTokensSql) =>
         "CASE "
-        + string.Concat(Thresholds.Reverse().Select(threshold =>
+        + string.Concat(Thresholds.OrderDescending().Select(threshold =>
             $"WHEN {promptTokensSql} > {Number(threshold)} THEN {Number(threshold)} "))
         + "ELSE 0 END";
 
