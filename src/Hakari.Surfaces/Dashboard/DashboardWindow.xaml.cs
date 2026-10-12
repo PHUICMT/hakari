@@ -277,8 +277,41 @@ public sealed partial class DashboardWindow : Window
 
     private DashboardFilter lastFilter = DashboardFilter.Current;
 
-    /// <summary>Kept in memory; written once, when the window closes.</summary>
-    private void RememberFilter(object? sender, DashboardFilter filter) => lastFilter = filter;
+    /// <summary>A wait after the last filter change, so a run of clicks is one write.</summary>
+    private static readonly TimeSpan FilterSaveDelay = TimeSpan.FromSeconds(1);
+
+    private Microsoft.UI.Dispatching.DispatcherQueueTimer? filterSave;
+
+    /// <summary>
+    /// Written soon after it changes, not only on close: the window process can end without a
+    /// close, as when Hakari updates itself or Windows signs out, and the choice would be lost.
+    /// </summary>
+    private void RememberFilter(object? sender, DashboardFilter filter)
+    {
+        lastFilter = filter;
+        if (filterSave is null)
+        {
+            filterSave = DispatcherQueue.CreateTimer();
+            filterSave.IsRepeating = false;
+            filterSave.Interval = FilterSaveDelay;
+            filterSave.Tick += (_, _) => SaveFilter();
+        }
+
+        filterSave.Stop();
+        filterSave.Start();
+    }
+
+    private void SaveFilter()
+    {
+        var filter = lastFilter;
+        Remember(memory => memory with
+        {
+            Period = filter.Period.ToString(),
+            AccountId = filter.AccountId,
+            SourceId = filter.SourceId,
+            Model = filter.Model,
+        });
+    }
 
     private void Show(DashboardPage page, bool animate)
     {
