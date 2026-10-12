@@ -207,9 +207,18 @@ public sealed class TaskbarWidgetHost : IDisposable
         }
     }
 
+    /// <summary>
+    /// Drops widgets whose taskbar is gone, and widgets whose target now resolves to another
+    /// taskbar: secondary taskbars are found by their order, which changes when a display
+    /// wakes late or Explorer rebuilds one. A widget left on its old taskbar would be placed
+    /// with the other one's size and position, under the new widget made for it.
+    /// </summary>
     private void RemoveDeadWidgets()
     {
-        foreach (var deadWidget in widgets.Where(widget => !widget.IsAlive).ToList())
+        var stale = widgets
+            .Where(widget => !widget.IsAlive || widget.Target.Resolve() != widget.ParentHandle)
+            .ToList();
+        foreach (var deadWidget in stale)
         {
             deadWidget.Dispose();
             widgets.Remove(deadWidget);

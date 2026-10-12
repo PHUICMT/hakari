@@ -243,17 +243,38 @@ public sealed class TrayIcon : IDisposable
         MenuRequested(this, new System.Drawing.Point(cursor.X, cursor.Y));
     }
 
+    /// <summary>
+    /// One click arrives twice in version 4, as the select or menu event and as the button
+    /// going up; the second within this time is the same click, and acting on it again would
+    /// close the flyout the first one just opened.
+    /// </summary>
+    private static readonly TimeSpan SameClick = TimeSpan.FromMilliseconds(400);
+
+    private long lastSelect = long.MinValue / 2;
+    private long lastMenu = long.MinValue / 2;
+
     private void HandleIconEvent(uint iconEvent)
     {
+        var now = Environment.TickCount64;
         switch (iconEvent)
         {
             case NotifyIconConstants.SelectEvent:
             case WindowMessages.LeftButtonUp:
-                Selected?.Invoke(this, EventArgs.Empty);
+                if (now - lastSelect >= SameClick.TotalMilliseconds)
+                {
+                    lastSelect = now;
+                    Selected?.Invoke(this, EventArgs.Empty);
+                }
+
                 break;
             case NotifyIconConstants.ContextMenuEvent:
             case WindowMessages.RightButtonUp:
-                RequestMenu();
+                if (now - lastMenu >= SameClick.TotalMilliseconds)
+                {
+                    lastMenu = now;
+                    RequestMenu();
+                }
+
                 break;
         }
     }

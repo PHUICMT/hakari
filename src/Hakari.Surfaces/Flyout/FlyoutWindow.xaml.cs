@@ -292,7 +292,20 @@ public sealed partial class FlyoutWindow : Window
         Root.LayoutUpdated += FitAfterLayout;
         Activate();
         NativeFocus.BringToFront(WinRT.Interop.WindowNative.GetWindowHandle(this));
+        shownAt = Environment.TickCount64;
     }
+
+    /// <summary>
+    /// Opened from the tray's hidden-icons panel, the panel closes just after and hands
+    /// focus back, which would hide the flyout as soon as it appeared. Losing focus this
+    /// soon after opening takes it back instead.
+    /// </summary>
+    private static readonly TimeSpan OpeningGrace = TimeSpan.FromMilliseconds(600);
+
+    private long shownAt;
+
+    private bool IsJustOpened =>
+        Environment.TickCount64 - shownAt < OpeningGrace.TotalMilliseconds;
 
     /// <summary>
     /// The size measured before showing differs from the real layout (item containers are
@@ -615,10 +628,22 @@ public sealed partial class FlyoutWindow : Window
 
     private void OnActivated(object sender, WindowActivatedEventArgs args)
     {
-        if (args.WindowActivationState == WindowActivationState.Deactivated && IsShowing)
+        if (args.WindowActivationState != WindowActivationState.Deactivated || !IsShowing)
         {
-            HideFlyout();
+            return;
         }
+
+        if (IsJustOpened)
+        {
+            DispatcherQueue.TryEnqueue(() =>
+            {
+                Activate();
+                NativeFocus.BringToFront(WinRT.Interop.WindowNative.GetWindowHandle(this));
+            });
+            return;
+        }
+
+        HideFlyout();
     }
 
     private void OnEscapeInvoked(
