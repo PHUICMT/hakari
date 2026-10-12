@@ -118,6 +118,62 @@ public class PricingTableTests
         Assert.Equal(1m, Pricing.Cost(Usage("claude-haiku-4-5", input)));
     }
 
+    [Theory]
+    [InlineData(99_000, 0.10)]
+    [InlineData(150_000, 0.50)]
+    public void Prices_a_long_prompt_at_its_own_rate(long promptTokens, double perMillion)
+    {
+        var tokens = new TokenCounts(Input: promptTokens, 0, 0, 0, 0);
+        var usage = Usage("claude-haiku-5-5", tokens) with
+        {
+            PromptOver = PromptSize.Over(promptTokens),
+        };
+
+        Assert.Equal((decimal)perMillion * promptTokens / 1_000_000m, Pricing.Cost(usage));
+    }
+
+    [Fact]
+    public void Sorts_prompts_into_the_bands_prices_change_at()
+    {
+        Assert.Equal(0, PromptSize.Over(100_000));
+        Assert.Equal(100_000, PromptSize.Over(100_001));
+        Assert.Equal(200_000, PromptSize.Over(500_000));
+    }
+
+    [Fact]
+    public void Reads_a_new_model_from_the_litellm_list()
+    {
+        const string json = """
+            {
+              "claude-new-1": {
+                "litellm_provider": "anthropic",
+                "input_cost_per_token": 1e-07,
+                "output_cost_per_token": 5e-07,
+                "cache_creation_input_token_cost": 1.25e-07,
+                "cache_creation_input_token_cost_above_1hr": 2e-07,
+                "cache_read_input_token_cost": 1e-08,
+                "input_cost_per_token_above_100k_tokens": 5e-07,
+                "output_cost_per_token_above_100k_tokens": 2.5e-06,
+                "provider_specific_entry": { "fast": 2 }
+              },
+              "us.anthropic.claude-new-1": {
+                "litellm_provider": "bedrock_converse",
+                "input_cost_per_token": 9e-07,
+                "output_cost_per_token": 9e-07
+              }
+            }
+            """;
+
+        var found = LiteLlmPrices.Extract(json, ["claude-new-1", "claude-missing"]);
+
+        var price = Assert.Single(Assert.Single(found).Value);
+        Assert.Equal(0.10m, price.Input);
+        Assert.Equal(0.20m, price.CacheWriteOneHour);
+        Assert.Equal(new FastModePrice(0.20m, 1.0m), price.Fast);
+        Assert.Equal(100_000, price.LongPrompt?.Above);
+        Assert.Equal(1.0m, price.LongPrompt?.CacheWriteOneHour);
+    }
+
     private static PricedUsage Usage(
         string model,
         TokenCounts tokens,

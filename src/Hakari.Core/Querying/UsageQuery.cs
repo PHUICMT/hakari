@@ -153,7 +153,8 @@ public sealed class UsageQuery(
         while (reader.Read())
         {
             var utcDay = ToUtcDay(reader.GetInt64(4));
-            if (pricing.Find(reader.GetString(1), utcDay) is not { } price)
+            if (pricing.Find(reader.GetString(1), utcDay)
+                    ?.ForPrompt(reader.GetInt64(PromptOverColumn)) is not { } price)
             {
                 continue;
             }
@@ -208,9 +209,15 @@ public sealed class UsageQuery(
         return unpricedModels;
     }
 
+    private const string PromptTokensSql =
+        "(input_tokens + cache_write_five_minutes + cache_write_one_hour + cache_read_tokens)";
+
+    private static readonly string PromptOverSql = PromptSize.Sql(PromptTokensSql);
+
     /// <remarks>
     /// Rows are split by UTC day as well as by every pricing input, so each day is priced with
-    /// the price that was in effect on that day.
+    /// the price that was in effect on that day, and by prompt length, so a long prompt meets
+    /// its own price.
     /// </remarks>
     private static string BuildSummarySql(string groupExpression, string whereClause) => $"""
         SELECT
@@ -227,11 +234,14 @@ public sealed class UsageQuery(
             sum(cache_read_tokens),
             sum(web_search_requests),
             min(timestamp_ms),
-            max(timestamp_ms)
+            max(timestamp_ms),
+            {PromptOverSql} AS prompt_over
         FROM usage_records
         {whereClause}
-        GROUP BY group_key, model, speed, inference_geography, utc_day_number
+        GROUP BY group_key, model, speed, inference_geography, utc_day_number, prompt_over
         """;
+
+    private const int PromptOverColumn = 14;
 
     private UsageSummary ReadPricedSummary(SqliteDataReader reader)
     {
@@ -250,7 +260,8 @@ public sealed class UsageQuery(
             InferenceGeography: reader.IsDBNull(3) ? null : reader.GetString(3),
             UtcDay: utcDay,
             Tokens: tokens,
-            WebSearchRequests: webSearchRequests);
+            WebSearchRequests: webSearchRequests,
+            PromptOver: reader.GetInt64(PromptOverColumn));
         var dollarCost = pricing.Cost(pricedUsage);
         var cost = dollarCost is { } dollars && converter is not null
             ? converter.Convert(dollars, utcDay)

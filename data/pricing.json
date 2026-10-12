@@ -1,6 +1,6 @@
 {
   "schema": 2,
-  "updated": "2026-10-05",
+  "updated": "2026-10-12",
   "source": "https://platform.claude.com/docs/en/about-claude/pricing",
   "currency": "USD",
   "unit": "per_1m_tokens",
@@ -154,6 +154,23 @@
         "cacheWriteFiveMinutes": 1.0,
         "cacheWriteOneHour": 1.60,
         "cacheRead": 0.08
+      }
+    ],
+    "claude-haiku-5-5": [
+      {
+        "input": 0.10,
+        "output": 0.50,
+        "cacheWriteFiveMinutes": 0.125,
+        "cacheWriteOneHour": 0.20,
+        "cacheRead": 0.01,
+        "longPrompt": {
+          "above": 100000,
+          "input": 0.50,
+          "output": 2.50,
+          "cacheWriteFiveMinutes": 0.625,
+          "cacheWriteOneHour": 1.0,
+          "cacheRead": 0.05
+        }
       }
     ],
     "claude-haiku-4-5": [

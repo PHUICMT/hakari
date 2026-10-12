@@ -393,7 +393,7 @@
 
   "settings.about": "About",
   "settings.version": "Hakari {0}",
-  "settings.privacy": "Reads token counts from local logs, never prompts or replies. Network use: your account's usage limits, public exchange rates, and once a day the public release list.",
+  "settings.privacy": "Reads token counts from local logs, never prompts or replies. Network use: your account's usage limits, public exchange rates, public price lists, and once a day the public release list.",
   "settings.support": "Support Hakari",
   "settings.support.description": "Free builds stay free. A coffee keeps it going.",
   "settings.support.storeTip": "Tip in Store",

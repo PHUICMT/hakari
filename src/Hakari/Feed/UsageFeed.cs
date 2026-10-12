@@ -220,6 +220,7 @@ internal sealed class UsageFeed : IDisposable
         var nextSpendCheck = DateTimeOffset.UtcNow + SpendCheckInterval;
         var spendWatch = new SpendWatch(store);
         var nextUpdateCheck = DateTimeOffset.UtcNow;
+        var nextPriceCheck = DateTimeOffset.UtcNow;
 
         while (!cancellation.IsCancellationRequested && !settingsChanged)
         {
@@ -253,6 +254,12 @@ internal sealed class UsageFeed : IDisposable
             {
                 nextUpdateCheck = now + UpdateCheckInterval;
                 StartUpdateCheck(now);
+            }
+
+            if (now >= nextPriceCheck)
+            {
+                nextPriceCheck = now + PriceCheckInterval;
+                StartPriceRefresh(query, now);
             }
 
             if (now >= nextSpendCheck)
@@ -477,6 +484,31 @@ internal sealed class UsageFeed : IDisposable
         }
 
         updateCheck = Task.Run(() => UpdateCheck.CheckAsync(now, cancellation.Token));
+    }
+
+    /// <summary>How often the loop asks whether prices need a look; the look is rarer.</summary>
+    private static readonly TimeSpan PriceCheckInterval = TimeSpan.FromMinutes(10);
+
+    private Task? priceRefresh;
+
+    /// <summary>
+    /// Off this thread like the update check. A changed price file is noticed by the source
+    /// check, which reads the totals again with the new prices.
+    /// </summary>
+    private void StartPriceRefresh(UsageQuery query, DateTimeOffset now)
+    {
+        if (priceRefresh is { IsCompleted: false })
+        {
+            return;
+        }
+
+        var unpriced = query.FindUnpricedModels();
+        if (!PriceRefresh.IsDue(now, unpriced))
+        {
+            return;
+        }
+
+        priceRefresh = Task.Run(() => PriceRefresh.RefreshAsync(unpriced, now, cancellation.Token));
     }
 
     private static CurrencyConverter? CreateConverter(

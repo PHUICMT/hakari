@@ -59,7 +59,7 @@ public sealed partial class PricingTable
 
     public decimal? Cost(PricedUsage usage)
     {
-        if (Find(usage.Model, usage.UtcDay) is not { } price)
+        if (Find(usage.Model, usage.UtcDay)?.ForPrompt(usage.PromptOver) is not { } price)
         {
             return null;
         }

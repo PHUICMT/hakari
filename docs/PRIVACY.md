@@ -24,7 +24,8 @@ Hakari makes only these requests. None of them carries your usage, prompts, repl
 | Your account's usage limits | For accounts where you turned limits on | Anthropic (`api.anthropic.com`), with that account's own sign-in |
 | Renewing that sign-in | When it expires, if *Renew sign-in automatically* is on | Anthropic (`console.anthropic.com`) |
 | Public exchange rates | When you show costs in a currency other than US dollars | Frankfurter (`api.frankfurter.dev`) or ExchangeRate-API (`open.er-api.com`) |
-| Newer model prices | When you press *Check now* under Settings, Prices | GitHub (`raw.githubusercontent.com`) |
+| Newer model prices | Once a day, hourly while a model in your logs has no price, and when you press *Check now* under Settings, Prices | GitHub (`raw.githubusercontent.com`) |
+| Prices for a model Hakari's table does not list yet | At most every six hours, only while such a model is in your logs: LiteLLM's public price list | GitHub (`raw.githubusercontent.com`) |
 | The public release list | Once a day, in the GitHub download only, unless you turn off *Check for new versions* | GitHub (`api.github.com`) |
 | The new version's zip and its checksum | Only when you press *Update now* or *Update to* (zip and winget copies) | GitHub (`github.com`) |
 

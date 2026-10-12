@@ -5,9 +5,10 @@ namespace Hakari.Core.Pricing;
 
 /// <summary>
 /// Where prices come from: the table shipped with Hakari, a newer copy fetched from the
-/// project when the user asks ("check now"), and the user's own prices on top, which can
-/// change a model's price or add one that is not listed yet. A file that cannot be read is
-/// left out rather than breaking the totals.
+/// project (daily, or when asked), prices from LiteLLM's public list for models neither
+/// table has yet, and the user's own prices on top, which can change a model's price or add
+/// one that is not listed. A file that cannot be read is left out rather than breaking the
+/// totals.
 /// </summary>
 public static class PricingSources
 {
@@ -16,9 +17,12 @@ public static class PricingSources
 
     private const string DownloadedFileName = "pricing-latest.json";
     private const string CustomFileName = "custom-prices.json";
+    private const string FallbackFileName = "pricing-fallback.json";
 
     public static string DownloadedPath =>
         Path.Combine(HakariPaths.DataDirectory, DownloadedFileName);
+
+    public static string FallbackPath => Path.Combine(HakariPaths.DataDirectory, FallbackFileName);
 
     public static string CustomPath => Path.Combine(HakariPaths.DataDirectory, CustomFileName);
 
@@ -52,6 +56,18 @@ public static class PricingSources
     private static PricingTable Read()
     {
         var table = Newest(Shipped(), TryLoad(DownloadedPath));
+        if (TryLoad(FallbackPath) is { Models: not null } fallback)
+        {
+            // Only for models the project's table does not price: it is checked by hand.
+            foreach (var (model, prices) in fallback.Models)
+            {
+                if (!table.IsPriced(model) && prices is { Count: > 0 })
+                {
+                    table.Models[model] = prices;
+                }
+            }
+        }
+
         if (TryLoad(CustomPath) is { Models: not null } custom)
         {
             foreach (var (model, prices) in custom.Models)
@@ -75,7 +91,7 @@ public static class PricingSources
     /// </summary>
     public static string Version() => string.Join(
         '|',
-        new[] { DownloadedPath, CustomPath }.Select(path => File.Exists(path)
+        new[] { DownloadedPath, FallbackPath, CustomPath }.Select(path => File.Exists(path)
             ? File.GetLastWriteTimeUtc(path).Ticks.ToString(
                 System.Globalization.CultureInfo.InvariantCulture)
             : "-"));
@@ -107,6 +123,32 @@ public static class PricingSources
         Directory.CreateDirectory(HakariPaths.DataDirectory);
         File.WriteAllText(DownloadedPath, json);
         return true;
+    }
+
+    /// <summary>
+    /// Adds prices found elsewhere for models the tables lack, keeping those found before.
+    /// </summary>
+    /// <returns>True when a model was added or its price changed.</returns>
+    public static bool AcceptFallback(IReadOnlyDictionary<string, List<ModelPrice>> found)
+    {
+        var kept = TryLoad(FallbackPath) ?? new PricingTable();
+        var changed = false;
+        foreach (var (model, prices) in found)
+        {
+            if (!kept.Models.TryGetValue(model, out var before) || !before.SequenceEqual(prices))
+            {
+                kept.Models[model] = prices;
+                changed = true;
+            }
+        }
+
+        if (changed)
+        {
+            Directory.CreateDirectory(HakariPaths.DataDirectory);
+            File.WriteAllText(FallbackPath, JsonSerializer.Serialize(kept));
+        }
+
+        return changed;
     }
 
     /// <summary>Starts the user's price file with one example to copy, if there is none.</summary>
