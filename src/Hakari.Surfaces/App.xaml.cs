@@ -15,7 +15,11 @@ namespace Hakari.Surfaces;
 /// </summary>
 public partial class App : Application
 {
-    private static readonly TimeSpan IdleExitDelay = TimeSpan.FromSeconds(60);
+    /// <summary>
+    /// Long enough that opening the flyout again soon does not wait for a cold start, which
+    /// takes a second or more; idle, the process uses no processor time, only memory.
+    /// </summary>
+    private static readonly TimeSpan IdleExitDelay = TimeSpan.FromMinutes(5);
 
     private readonly CancellationTokenSource listening = new();
     private DispatcherQueue? dispatcher;

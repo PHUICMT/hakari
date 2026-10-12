@@ -50,6 +50,15 @@ public sealed class TrayIcon : IDisposable
     public event EventHandler? Selected;
 
     /// <summary>
+    /// The pointer moved over the icon, at most once every few seconds: a hint that a click
+    /// may follow, so the window process can start early.
+    /// </summary>
+    public event EventHandler? Hovered;
+
+    private static readonly TimeSpan HoverEvery = TimeSpan.FromSeconds(5);
+    private long lastHover = long.MinValue / 2;
+
+    /// <summary>
     /// Right click, with the pointer's screen position. When nobody handles it, the system
     /// menu shows instead.
     /// </summary>
@@ -258,6 +267,14 @@ public sealed class TrayIcon : IDisposable
         var now = Environment.TickCount64;
         switch (iconEvent)
         {
+            case WindowMessages.MouseMove:
+                if (now - lastHover >= HoverEvery.TotalMilliseconds)
+                {
+                    lastHover = now;
+                    Hovered?.Invoke(this, EventArgs.Empty);
+                }
+
+                break;
             case NotifyIconConstants.SelectEvent:
             case WindowMessages.LeftButtonUp:
                 if (now - lastSelect >= SameClick.TotalMilliseconds)

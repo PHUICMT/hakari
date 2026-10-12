@@ -76,6 +76,8 @@ internal sealed class ResidentApp : IDisposable
         widgets.Clicked += (_, click) =>
             OpenFlyout(click.PointerX, click.TaskbarBounds.Top);
         trayIcon.Selected += (_, _) => OpenFlyoutAtWidget();
+        trayIcon.Hovered += (_, _) => Task.Run(() =>
+            SurfacesLauncher.Show(new SurfaceCommand(SurfaceKind.Warm, 0, 0)));
     }
 
     /// <summary>
