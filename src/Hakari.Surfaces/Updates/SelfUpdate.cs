@@ -27,7 +27,7 @@ internal static class SelfUpdate
 
     /// <summary>Whether this copy can update itself, not only open a download page.</summary>
     public static bool CanUpdateInPlace =>
-        InstallSource.Current switch
+        !AppBuild.IsFromSource && InstallSource.Current switch
         {
             InstallKind.Winget => true,
             InstallKind.Zip => CanWrite(AppContext.BaseDirectory),
