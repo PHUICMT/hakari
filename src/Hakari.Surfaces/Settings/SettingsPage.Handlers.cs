@@ -101,6 +101,14 @@ public sealed partial class SettingsPage
         Save(current => current with { TrayIcon = style });
     }
 
+    private void OnWidgetTextChecked(object sender, RoutedEventArgs args)
+    {
+        var color = ReferenceEquals(sender, TextLight) ? WidgetTextColor.Light
+            : ReferenceEquals(sender, TextDark) ? WidgetTextColor.Dark
+            : WidgetTextColor.Automatic;
+        Save(current => current with { WidgetText = color });
+    }
+
     private void SetDisplayChosen(string displayId, bool chosen) =>
         Save(current => current with
         {

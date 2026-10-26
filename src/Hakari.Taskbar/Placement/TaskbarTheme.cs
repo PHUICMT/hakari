@@ -1,3 +1,4 @@
+using System.Drawing;
 using Hakari.Taskbar.Interop;
 using Microsoft.Win32;
 
@@ -23,14 +24,45 @@ public static class TaskbarTheme
     private const double GreenWeight = 0.7152;
     private const double BlueWeight = 0.0722;
 
+    /// <summary>How far left of the widget its background is read, clear of the widget.</summary>
+    private const int BesideWidget = 6;
+
+    /// <summary>Rows read beside the widget, as shares of the taskbar's height.</summary>
+    private static readonly double[] BesideRows = [0.3, 0.5, 0.7];
+
     /// <summary>
-    /// Decides by the taskbar's actual background, because a secondary taskbar does not
-    /// always follow a theme change. Falls back to the Windows setting.
+    /// Decides by what is actually behind the widget: just left of it when it has been
+    /// placed, which on a see-through taskbar is the wallpaper the text sits on, else the
+    /// taskbar's empty ends. A secondary taskbar does not always follow a theme change, so
+    /// the Windows setting is only the last resort.
     /// </summary>
-    public static bool IsLight(TaskbarInfo taskbar) =>
-        SampleLuminance(taskbar) is { } luminance
+    public static bool IsLight(TaskbarInfo taskbar, Rectangle widgetBounds) =>
+        (SampleBesideWidget(taskbar, widgetBounds) ?? SampleLuminance(taskbar))
+            is { } luminance
             ? luminance >= LightLuminanceThreshold
             : IsWindowsModeLight();
+
+    public static bool IsLight(TaskbarInfo taskbar) => IsLight(taskbar, Rectangle.Empty);
+
+    /// <summary>
+    /// The middle of three readings beside the widget, so one app icon edge or badge in the
+    /// way does not decide it.
+    /// </summary>
+    private static double? SampleBesideWidget(TaskbarInfo taskbar, Rectangle widgetBounds)
+    {
+        var column = widgetBounds.Left - BesideWidget;
+        if (widgetBounds.IsEmpty || column <= taskbar.Bounds.Left
+            || !taskbar.Bounds.IntersectsWith(widgetBounds))
+        {
+            return null;
+        }
+
+        var points = BesideRows
+            .Select(share => (column, taskbar.Bounds.Top + (int)(taskbar.Bounds.Height * share)))
+            .ToList();
+        var samples = Read(points);
+        return samples.Count == 0 ? null : samples.Order().ElementAt(samples.Count / 2);
+    }
 
     public static bool IsWindowsModeLight()
     {
@@ -41,21 +73,27 @@ public static class TaskbarTheme
     private static double? SampleLuminance(TaskbarInfo taskbar)
     {
         var middle = taskbar.Bounds.Top + taskbar.Bounds.Height / 2;
-        int[] sampleColumns =
+        var samples = Read(
         [
-            taskbar.Bounds.Left + SampleInset,
-            taskbar.Bounds.Right - SampleInset,
-        ];
+            (taskbar.Bounds.Left + SampleInset, middle),
+            (taskbar.Bounds.Right - SampleInset, middle),
+        ]);
+        return samples.Count == 0 ? null : samples.Average();
+    }
 
+    /// <summary>The luminance of each screen point that could be read.</summary>
+    private static List<double> Read(IReadOnlyList<(int X, int Y)> points)
+    {
         var screenContext = User32.GetDC(IntPtr.Zero);
         try
         {
-            var samples = sampleColumns
-                .Select(column => Gdi32.GetPixel(screenContext, column, middle))
-                .Where(color => color != Gdi32.InvalidColor)
-                .Select(RelativeLuminance)
-                .ToList();
-            return samples.Count == 0 ? null : samples.Average();
+            return
+            [
+                .. points
+                    .Select(point => Gdi32.GetPixel(screenContext, point.X, point.Y))
+                    .Where(color => color != Gdi32.InvalidColor)
+                    .Select(RelativeLuminance),
+            ];
         }
         finally
         {

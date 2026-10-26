@@ -132,6 +132,17 @@
                                         Content="{l:Text Key=settings.trayIcon.cost}" Checked="OnTrayIconChecked" />
                                 </controls:HakariSegmented>
                             </controls:SettingRow>
+                            <controls:SettingRow Glyph="&#xE790;" Title="{l:Text Key=settings.widgetText}"
+                                Description="{l:Text Key=settings.widgetText.description}">
+                                <controls:HakariSegmented>
+                                    <controls:HakariSegment x:Name="TextAutomatic" GroupName="WidgetText"
+                                        Content="{l:Text Key=settings.widgetText.automatic}" Checked="OnWidgetTextChecked" />
+                                    <controls:HakariSegment x:Name="TextLight" GroupName="WidgetText"
+                                        Content="{l:Text Key=settings.widgetText.light}" Checked="OnWidgetTextChecked" />
+                                    <controls:HakariSegment x:Name="TextDark" GroupName="WidgetText"
+                                        Content="{l:Text Key=settings.widgetText.dark}" Checked="OnWidgetTextChecked" />
+                                </controls:HakariSegmented>
+                            </controls:SettingRow>
                         </StackPanel>
                     </Border>
                 </StackPanel>

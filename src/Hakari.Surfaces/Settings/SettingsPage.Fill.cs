@@ -75,6 +75,9 @@ public sealed partial class SettingsPage
         TrayLogo.IsChecked = settings.TrayIcon == TrayIconStyle.Logo;
         TrayLimit.IsChecked = settings.TrayIcon == TrayIconStyle.Limit;
         TrayCost.IsChecked = settings.TrayIcon == TrayIconStyle.Cost;
+        TextAutomatic.IsChecked = settings.WidgetText == WidgetTextColor.Automatic;
+        TextLight.IsChecked = settings.WidgetText == WidgetTextColor.Light;
+        TextDark.IsChecked = settings.WidgetText == WidgetTextColor.Dark;
     }
 
     /// <summary>One switch per connected display, shown only while choosing.</summary>

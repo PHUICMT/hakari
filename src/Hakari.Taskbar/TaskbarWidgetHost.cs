@@ -117,6 +117,13 @@ public sealed class TaskbarWidgetHost : IDisposable
         motion = ResolveMotion();
     }
 
+    /// <summary>Light or dark text, or null to follow what is behind the widget.</summary>
+    public void SetTextColor(bool? lightText)
+    {
+        options = options with { LightText = lightText };
+        SynchronizeWidgets(renderAll: true);
+    }
+
     /// <summary>Changes which displays get a widget (see TaskbarWidgetHostOptions).</summary>
     public void SetDisplayFilter(Func<string, bool>? showOnDisplay)
     {
@@ -325,13 +332,55 @@ public sealed class TaskbarWidgetHost : IDisposable
         var state = states[widget];
         if (sampleTheme || !state.PaletteSampled)
         {
-            state.Palette = TaskbarTheme.IsLight(taskbar)
-                ? WidgetPalette.LightTaskbar
-                : WidgetPalette.DarkTaskbar;
+            state.Palette = PaletteFor(widget, taskbar);
             state.PaletteSampled = true;
         }
 
         RenderFrame(widget, taskbar, state);
+    }
+
+    private WidgetPalette PaletteFor(WidgetWindow widget, TaskbarInfo taskbar)
+    {
+        var lightTaskbar = options.LightText is { } lightText
+            ? !lightText
+            : TaskbarTheme.IsLight(taskbar, widget.ScreenBounds);
+        return lightTaskbar ? WidgetPalette.LightTaskbar : WidgetPalette.DarkTaskbar;
+    }
+
+    /// <summary>Placement ticks between looks at the color behind each widget.</summary>
+    private const int ThemeRecheckTicks = 30;
+
+    private int ticksSinceThemeCheck;
+
+    /// <summary>
+    /// A see-through taskbar shows the wallpaper, which changes without any theme event, and
+    /// a taskbar can be dark for a moment when the color is first read. So the color behind
+    /// each widget is looked at again every half minute; only a widget whose text would now
+    /// stand out better is redrawn.
+    /// </summary>
+    private void RecheckThemeIfDue()
+    {
+        if (options.LightText is not null || ++ticksSinceThemeCheck < ThemeRecheckTicks)
+        {
+            return;
+        }
+
+        ticksSinceThemeCheck = 0;
+        foreach (var widget in widgets)
+        {
+            if (TaskbarLocator.Describe(widget.Target, layoutMonitor) is not { } taskbar
+                || !states.TryGetValue(widget, out var state))
+            {
+                continue;
+            }
+
+            var palette = PaletteFor(widget, taskbar);
+            if (palette != state.Palette)
+            {
+                state.Palette = palette;
+                RenderFrame(widget, taskbar, state);
+            }
+        }
     }
 
     private void RenderFrame(WidgetWindow widget, TaskbarInfo taskbar, WidgetState state)
@@ -583,8 +632,11 @@ public sealed class TaskbarWidgetHost : IDisposable
                 SynchronizeWidgets(renderAll: true);
                 return IntPtr.Zero;
             case LayoutChangedMessage:
+                SynchronizeWidgets(renderAll: false);
+                return IntPtr.Zero;
             case WindowMessages.Timer:
                 SynchronizeWidgets(renderAll: false);
+                RecheckThemeIfDue();
                 return IntPtr.Zero;
             case WindowMessages.DisplayChange:
             case WindowMessages.SettingChange:

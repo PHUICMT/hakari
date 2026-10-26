@@ -81,6 +81,8 @@ public sealed record HakariSettings
 
     public TrayIconStyle TrayIcon { get; init; } = TrayIconStyle.Automatic;
 
+    public WidgetTextColor WidgetText { get; init; } = WidgetTextColor.Automatic;
+
     /// <summary>
     /// Keep and show the short title Claude Code gives each session. Off by default: titles
     /// are written from the conversation, so reading them is the user's choice.

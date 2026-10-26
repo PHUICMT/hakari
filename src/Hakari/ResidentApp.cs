@@ -55,6 +55,7 @@ internal sealed class ResidentApp : IDisposable
         {
             Motion = ToMotion(settings.Animation),
             ShowOnDisplay = DisplayFilter.From(settings),
+            LightText = ToLightText(settings.WidgetText),
         };
         widgets = new TaskbarWidgetHost(hostOptions, WidgetText.Loading);
         widgets.Faulted += ErrorLog.Write;
@@ -301,6 +302,13 @@ internal sealed class ResidentApp : IDisposable
         widgets.Dispose();
     }
 
+    private static bool? ToLightText(WidgetTextColor color) => color switch
+    {
+        WidgetTextColor.Light => true,
+        WidgetTextColor.Dark => false,
+        _ => null,
+    };
+
     private static MotionPreference? ToMotion(AnimationSetting setting) => setting switch
     {
         AnimationSetting.Full => MotionPreference.Full,
@@ -317,6 +325,11 @@ internal sealed class ResidentApp : IDisposable
         if (settings.Animation != appliedSettings.Animation)
         {
             widgets.SetMotion(ToMotion(settings.Animation));
+        }
+
+        if (settings.WidgetText != appliedSettings.WidgetText)
+        {
+            widgets.SetTextColor(ToLightText(settings.WidgetText));
         }
 
         if (settings.Displays != appliedSettings.Displays
