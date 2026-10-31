@@ -77,7 +77,7 @@ public static class WidgetComposer
             WidgetItem.RepliesToday => Money(
                 Texts.Format("widget.repliesToday", TokenText.Format(facts.RepliesToday))),
             WidgetItem.SessionLimit =>
-                LimitLine(first, LimitPicks.Session, labelled, facts, now, rules),
+                LimitLine(first, LimitPicks.SessionOrWeekly, labelled, facts, now, rules),
             WidgetItem.WeeklyLimit =>
                 LimitLine(first, LimitPicks.Weekly, labelled, facts, now, rules),
             WidgetItem.MostPressingLimit =>
@@ -210,7 +210,7 @@ public static class WidgetComposer
         {
             WidgetRingSource.Weekly => LimitPicks.Weekly(snapshot),
             WidgetRingSource.MostPressing => LimitPriority.MostPressing(snapshot),
-            _ => LimitPicks.Session(snapshot),
+            _ => LimitPicks.SessionOrWeekly(snapshot),
         };
         return limit is null
             ? null

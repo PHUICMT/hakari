@@ -32,7 +32,8 @@ public static class SlotCells
             WidgetItem.RepliesToday => Plain(
                 facts.RepliesToday.ToString(CountFormat, CultureInfo.InvariantCulture),
                 "widget.label.replies"),
-            WidgetItem.SessionLimit => Limit(account, LimitPicks.Session, facts, now, rules),
+            WidgetItem.SessionLimit =>
+                Limit(account, LimitPicks.SessionOrWeekly, facts, now, rules),
             WidgetItem.WeeklyLimit => Limit(account, LimitPicks.Weekly, facts, now, rules),
             WidgetItem.MostPressingLimit =>
                 Limit(account, LimitPriority.MostPressing, facts, now, rules),
@@ -80,13 +81,21 @@ public static class SlotCells
             WidgetComposer.FractionOf(account, limit));
     }
 
-    /// <summary>"5% · 93%" over "5h · Week", in the color of the worse of the two.</summary>
+    /// <summary>
+    /// "5% · 93%" over "5h · Week", in the color of the worse of the two; only the weekly one
+    /// for a plan with no 5-hour limit.
+    /// </summary>
     private static SlotCell BothLimits(
         WidgetAccount? account,
         WidgetFacts facts,
         DateTimeOffset now,
         ToneRules rules)
     {
+        if (account is not null && LimitPicks.Session(account.Snapshot.ProjectedTo(now)) is null)
+        {
+            return Limit(account, LimitPicks.Weekly, facts, now, rules);
+        }
+
         var session = Limit(account, LimitPicks.Session, facts, now, rules);
         var weekly = Limit(account, LimitPicks.Weekly, facts, now, rules);
         return new SlotCell(

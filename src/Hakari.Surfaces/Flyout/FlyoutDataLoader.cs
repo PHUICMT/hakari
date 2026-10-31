@@ -409,10 +409,13 @@ internal static class FlyoutDataLoader
             yield break;
         }
 
+        // A distribution removed from the PC will never run again, so it is not "stopped".
+        var installed = InstalledDistributions();
         foreach (var activity in SourceActivity.Load(store))
         {
             if (activity.SourceId.StartsWith(WslPrefix, StringComparison.OrdinalIgnoreCase)
-                && !current.Contains(activity.SourceId))
+                && !current.Contains(activity.SourceId)
+                && !IsRemovedDistribution(activity.SourceId, installed))
             {
                 yield return new FlyoutNotice(
                     Tone.Warning,
@@ -750,14 +753,17 @@ internal static class FlyoutDataLoader
         DateTimeOffset now)
     {
         var costs = bySource.ToDictionary(source => source.Key, source => source.Cost);
+        var installed = InstalledDistributions();
         return
         [
             .. SourceActivity.Load(store).Select(activity =>
             {
                 var isRecent = now - activity.LastUsage < RecentSourceWindow;
-                var when = isRecent
-                    ? Texts.Get("flyout.live")
-                    : Texts.Format("flyout.lastUsed", LastUsedText(now - activity.LastUsage));
+                var when = IsRemovedDistribution(activity.SourceId, installed)
+                    ? Texts.Get("flyout.removed")
+                    : isRecent
+                        ? Texts.Get("flyout.live")
+                        : Texts.Format("flyout.lastUsed", LastUsedText(now - activity.LastUsage));
                 var cost = MoneyText.Format(
                     costs.GetValueOrDefault(activity.SourceId), query.Currency);
                 return new SourceRow(
@@ -769,4 +775,20 @@ internal static class FlyoutDataLoader
     }
 
     internal static string LastUsedText(TimeSpan age) => AgeText.Format(age);
+
+    /// <summary>The WSL distributions installed now, from the registry; WSL stays off.</summary>
+    private static HashSet<string> InstalledDistributions() =>
+        new(WslLocator.FindDistributions(), StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// A WSL source ("wsl:Ubuntu-24.04:alex:.claude") whose distribution is no longer
+    /// installed: its past usage still counts, but it will not run again.
+    /// </summary>
+    private static bool IsRemovedDistribution(string sourceId, HashSet<string> installed) =>
+        sourceId.Split(SourceIdSeparator) is [var kind, var distribution, ..]
+        && string.Equals(kind, WslKind, StringComparison.OrdinalIgnoreCase)
+        && !installed.Contains(distribution);
+
+    private const char SourceIdSeparator = ':';
+    private const string WslKind = "wsl";
 }

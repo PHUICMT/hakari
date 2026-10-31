@@ -53,7 +53,7 @@ internal sealed record ChartsData(
     private const string WeeklyKind = "weekly_all";
 
     /// <summary>
-    /// How full each account's 5-hour and weekly limits were: the chosen account, or every
+    /// How full each account's limits were, 5-hour and weekly: the chosen account, or every
     /// shown account with readings, all over the same stretch of time so they line up.
     /// </summary>
     private static List<LimitTrend> ReadTrends(
@@ -71,6 +71,8 @@ internal sealed record ChartsData(
             ? now.AddHours(-24)
             : filter.From(now) ?? now.AddDays(-TrendDays);
         var history = new LimitHistory(store);
+        // A limit with no readings is left out, not drawn as an empty line: a plan without a
+        // 5-hour limit (Ultra) has only the weekly one.
         var read = accounts
             .Select(account => (Account: account, Series: new List<TrendSeries>
             {
@@ -83,8 +85,8 @@ internal sealed record ChartsData(
                     "HakariChart5Brush",
                     history.Load(account.AccountId, WeeklyKind, from),
                     IsDashed: true),
-            }))
-            .Where(entry => entry.Series.Any(series => series.Readings.Count > 0))
+            }.Where(series => series.Readings.Count > 0).ToList()))
+            .Where(entry => entry.Series.Count > 0)
             .ToList();
         var start = ChartStart(read.SelectMany(entry => entry.Series), from, now);
         return

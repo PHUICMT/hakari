@@ -52,10 +52,10 @@ the tray menu and delete the folder. Settings and the usage index live in
 ## FAQ
 
 **What does Hakari count?**
-Cost and tokens come from the logs Claude Code writes on this PC. The 5-hour and weekly
-limits come from your account, so they include everything.
+Cost and tokens come from the logs Claude Code writes on this PC. The usage limits (weekly,
+and 5-hour on plans that have one) come from your account, so they include everything.
 
-| Where you use Claude | Cost and tokens | 5-hour and weekly limits |
+| Where you use Claude | Cost and tokens | Usage limits |
 |---|---|---|
 | Claude Code on this PC: terminal, VS Code, JetBrains, the Claude desktop app's Code tab, WSL | Yes | Yes |
 | Claude Code on another PC, or in the cloud | No, only this PC's logs | Yes, the limits include it |
@@ -77,11 +77,12 @@ By default Hakari only reads distributions that are running, so it never starts 
 itself. Open the distribution once, or choose *All* under *Settings → Sources → WSL
 distributions* (that can start stopped distributions).
 
-**How does it know my 5-hour and weekly limits?**
+**How does it know my usage limits?**
 Only for accounts where you turn limits on (the flyout asks once per account). Hakari then
 uses the sign-in Claude Code keeps on your PC to ask Anthropic for that account's usage, and
-nothing else. Turned off, it shows an estimate from your own usage instead. See
-[PRIVACY.md](docs/PRIVACY.md).
+nothing else. It shows the limits the account actually has: Ultra has no 5-hour limit, so a
+slot set to the 5-hour limit shows the weekly one there. Turned off, it shows an estimate from
+your own usage instead. See [PRIVACY.md](docs/PRIVACY.md).
 
 **I can't see the meter on the taskbar.**
 When the taskbar has no room, the meter first shrinks to a compact form, then moves to the
