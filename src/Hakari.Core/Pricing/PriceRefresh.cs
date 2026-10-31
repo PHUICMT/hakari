@@ -48,6 +48,10 @@ public static class PriceRefresh
         {
             changed |= await TryAsync(async () => PricingSources.Accept(
                 await client.GetStringAsync(PricingSources.LatestAddress, cancellation)));
+
+            // Plan names and prices change too, as when Max 20x became Ultra.
+            await TryAsync(async () => Accounts.PlanCatalog.Accept(
+                await client.GetStringAsync(Accounts.PlanCatalog.LatestAddress, cancellation)));
             state = state with { CheckedAt = now };
         }
 

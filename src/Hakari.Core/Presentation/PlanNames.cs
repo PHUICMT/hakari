@@ -3,15 +3,11 @@ using Hakari.Core.Localization;
 
 namespace Hakari.Core.Presentation;
 
+/// <summary>A plan's current name, from <see cref="PlanCatalog"/>.</summary>
 public static class PlanNames
 {
-    public static string Short(SubscriptionPlan plan) => plan switch
-    {
-        SubscriptionPlan.Pro => "Pro",
-        SubscriptionPlan.MaxFiveTimes => "Max 5x",
-        SubscriptionPlan.MaxTwentyTimes => "Max 20x",
-        SubscriptionPlan.Team => "Team",
-        SubscriptionPlan.Enterprise => "Enterprise",
-        _ => Texts.Get("plan.unknown"),
-    };
+    public static string Short(SubscriptionPlan plan) =>
+        PlanCatalog.Current.Find(plan)?.Name is { Length: > 0 } name
+            ? name
+            : Texts.Get("plan.unknown");
 }

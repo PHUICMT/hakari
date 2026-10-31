@@ -1,0 +1,11 @@
+{
+  "updated": "2026-10-31",
+  "source": "https://claude.com/pricing",
+  "plans": [
+    { "plan": "Enterprise", "name": "Enterprise", "match": ["enterprise"] },
+    { "plan": "Team", "name": "Team", "match": ["team"], "monthlyDollars": 25 },
+    { "plan": "MaxTwentyTimes", "name": "Ultra", "match": ["20x", "ultra"], "monthlyDollars": 200 },
+    { "plan": "MaxFiveTimes", "name": "Max", "match": ["5x", "max"], "monthlyDollars": 100 },
+    { "plan": "Pro", "name": "Pro", "match": ["pro"], "monthlyDollars": 20 }
+  ]
+}

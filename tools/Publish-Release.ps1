@@ -46,7 +46,7 @@ if ($LASTEXITCODE -ne 0) { throw "Publishing Hakari.Surfaces.exe failed." }
 $notes = Join-Path $root "artifacts/notes/release.md"
 if (Test-Path $notes) { Copy-Item $notes (Join-Path $folder "whats-new.md") }
 
-foreach ($required in "Hakari.exe", "Hakari.Surfaces.exe", "pricing.json") {
+foreach ($required in "Hakari.exe", "Hakari.Surfaces.exe", "pricing.json", "plans.json") {
     if (-not (Test-Path (Join-Path $folder $required))) { throw "$required is missing." }
 }
 

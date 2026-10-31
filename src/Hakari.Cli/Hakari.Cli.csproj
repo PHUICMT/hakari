@@ -14,5 +14,6 @@
 
   <ItemGroup>
     <None Include="..\..\data\pricing.json" Link="pricing.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\..\data\plans.json" Link="plans.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

@@ -8,6 +8,7 @@ public sealed class PlanPricesTests
     [InlineData(SubscriptionPlan.Pro, 20)]
     [InlineData(SubscriptionPlan.MaxFiveTimes, 100)]
     [InlineData(SubscriptionPlan.MaxTwentyTimes, 200)]
+    [InlineData(SubscriptionPlan.Team, 25)]
     public void Knows_the_list_price_of_a_plan(SubscriptionPlan plan, int dollars) =>
         Assert.Equal(dollars, PlanPrices.MonthlyDollars(plan));
 

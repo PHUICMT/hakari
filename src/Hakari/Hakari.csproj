@@ -20,6 +20,7 @@
   <ItemGroup>
     <None Include="..\..\assets\Hakari.ico" Link="Hakari.ico" CopyToOutputDirectory="PreserveNewest" />
     <None Include="..\..\data\pricing.json" Link="pricing.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\..\data\plans.json" Link="plans.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>
