@@ -10,7 +10,8 @@ public sealed record TaskbarInfo(
     Rectangle NotificationArea,
     Rectangle AppButtons,
     uint Dpi,
-    bool HasXamlLayout)
+    bool HasXamlLayout,
+    Rectangle FreeBeforeStart = default)
 {
     private const double DefaultDpi = 96.0;
 

@@ -34,7 +34,8 @@ public static class TaskbarLocator
             NotificationArea: notificationArea,
             AppButtons: appButtons,
             Dpi: User32.GetDpiForWindow(handle),
-            HasXamlLayout: xamlLayout is not null);
+            HasXamlLayout: xamlLayout is not null,
+            FreeBeforeStart: xamlLayout?.FreeBeforeStart ?? Rectangle.Empty);
     }
 
     private static Rectangle? ReadChildBounds(IntPtr parent, string className)

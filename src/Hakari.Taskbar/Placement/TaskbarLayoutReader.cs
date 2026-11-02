@@ -13,6 +13,7 @@ public static class TaskbarLayoutReader
     private const string AppButtonClassPrefix = "Taskbar.TaskListButton";
     private const string NotificationAreaClassPrefix = "SystemTray.";
     private const string ShowDesktopButtonClass = "SystemTray.ShowDesktopButton";
+    private const string StartButtonId = "StartButton";
 
     public static TaskbarLayout? Read(IntPtr taskbarHandle)
     {
@@ -26,7 +27,7 @@ public static class TaskbarLayoutReader
                 automation.CreateTrueCondition(),
                 CreateCacheRequest(automation));
 
-            var layout = Summarize(ReadElements(elements));
+            var layout = Summarize([.. ReadElements(elements)], taskbarBounds);
             return layout is not null && IsPlausible(layout, taskbarBounds) ? layout : null;
         }
         catch (Exception exception) when (AutomationClient.IsAutomationProblem(exception))
@@ -36,35 +37,38 @@ public static class TaskbarLayoutReader
     }
 
     /// <summary>
-    /// Caching the two properties fetches them in one cross-process call instead of two calls
+    /// Caching the properties fetches them in one cross-process call instead of several calls
     /// per element.
     /// </summary>
     private static IUIAutomationCacheRequest CreateCacheRequest(IUIAutomation automation)
     {
         var cacheRequest = automation.CreateCacheRequest();
+        cacheRequest.AddProperty(AutomationClient.AutomationIdPropertyId);
         cacheRequest.AddProperty(AutomationClient.ClassNamePropertyId);
         cacheRequest.AddProperty(AutomationClient.BoundingRectanglePropertyId);
         return cacheRequest;
     }
 
-    private static IEnumerable<(string ClassName, Rectangle Bounds)> ReadElements(
-        IUIAutomationElementArray elements)
+    private static IEnumerable<TaskbarElement> ReadElements(IUIAutomationElementArray elements)
     {
         for (var position = 0; position < elements.Length; position++)
         {
             var element = elements.GetElement(position);
-            var className = element.CachedClassName ?? string.Empty;
-            yield return (className, ToRectangle(element.CachedBoundingRectangle));
+            yield return new TaskbarElement(
+                element.CachedClassName ?? string.Empty,
+                element.CachedAutomationId ?? string.Empty,
+                ToRectangle(element.CachedBoundingRectangle));
         }
     }
 
-    private static TaskbarLayout? Summarize(
-        IEnumerable<(string ClassName, Rectangle Bounds)> elements)
+    public static TaskbarLayout? Summarize(
+        IReadOnlyList<TaskbarElement> elements,
+        Rectangle taskbarBounds)
     {
         var appButtons = Rectangle.Empty;
         var notificationArea = Rectangle.Empty;
 
-        foreach (var (className, bounds) in elements)
+        foreach (var (className, _, bounds) in elements)
         {
             if (bounds.IsEmpty)
             {
@@ -81,7 +85,37 @@ public static class TaskbarLayoutReader
             }
         }
 
-        return notificationArea.IsEmpty ? null : new TaskbarLayout(appButtons, notificationArea);
+        return notificationArea.IsEmpty
+            ? null
+            : new TaskbarLayout(
+                appButtons,
+                notificationArea,
+                FreeBeforeStart(elements, taskbarBounds));
+    }
+
+    /// <summary>
+    /// What ends left of Start is in the way, such as the Widgets button or another app's meter.
+    /// What reaches across Start, such as the frame and old Win32 windows, is only background.
+    /// Hakari's own widget does not count, or it would push itself along each time it is read.
+    /// </summary>
+    private static Rectangle FreeBeforeStart(
+        IReadOnlyList<TaskbarElement> elements,
+        Rectangle taskbarBounds)
+    {
+        var start = elements.FirstOrDefault(element => element.AutomationId == StartButtonId);
+        if (start is null || start.Bounds.IsEmpty)
+        {
+            return Rectangle.Empty;
+        }
+
+        var left = elements
+            .Where(element => element.ClassName != WidgetWindow.ClassName
+                && !element.Bounds.IsEmpty
+                && element.Bounds.Right <= start.Bounds.Left)
+            .Select(element => element.Bounds.Right)
+            .Append(taskbarBounds.Left)
+            .Max();
+        return Rectangle.FromLTRB(left, taskbarBounds.Top, start.Bounds.Left, taskbarBounds.Bottom);
     }
 
     /// <summary>

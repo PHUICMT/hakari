@@ -85,8 +85,10 @@ slot set to the 5-hour limit shows the weekly one there. Turned off, it shows an
 your own usage instead. See [PRIVACY.md](docs/PRIVACY.md).
 
 **I can't see the meter on the taskbar.**
-When the taskbar has no room, the meter first shrinks to a compact form, then moves to the
-tray icon, which shows your limit and opens the same flyout. It comes back when room frees up.
+The meter sits beside the tray. If the taskbar's icons are centered and fill that side, it moves
+to the empty left end of the taskbar. With no room there either, it shrinks to a compact form,
+then moves to the tray icon, which shows your limit and opens the same flyout. It comes back
+when room frees up.
 
 **Will it slow my PC down?**
 It runs at low priority, reads only the new part of each log, never wakes WSL, and stays idle

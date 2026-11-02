@@ -48,6 +48,59 @@ public class WidgetPlacementTests
         Assert.Equal(3136 - 8, placement?.Right);
     }
 
+    [Fact]
+    public void Prefers_the_tray_side_when_both_sides_fit()
+    {
+        var taskbar = Taskbar(notificationLeft: 3136, appButtonsRight: 1900) with
+        {
+            FreeBeforeStart = Rectangle.FromLTRB(0, 1392, 1500, 1440),
+        };
+
+        Assert.Equal(new Rectangle(3002, 1396, 130, 40), WidgetPlacement.Find(taskbar, WidgetSize));
+    }
+
+    [Fact]
+    public void Goes_before_start_when_centered_buttons_fill_the_tray_side()
+    {
+        var taskbar = Taskbar(notificationLeft: 3136, appButtonsRight: 3050) with
+        {
+            FreeBeforeStart = Rectangle.FromLTRB(0, 1392, 500, 1440),
+        };
+
+        Assert.Equal(new Rectangle(8, 1396, 130, 40), WidgetPlacement.Find(taskbar, WidgetSize));
+    }
+
+    [Fact]
+    public void Starts_after_what_is_already_before_start()
+    {
+        var taskbar = Taskbar(notificationLeft: 3136, appButtonsRight: 3050) with
+        {
+            FreeBeforeStart = Rectangle.FromLTRB(150, 1392, 500, 1440),
+            Dpi = 192,
+        };
+
+        Assert.Equal(166, WidgetPlacement.Find(taskbar, WidgetSize)?.Left);
+    }
+
+    [Fact]
+    public void Gives_up_when_neither_side_has_room()
+    {
+        var taskbar = Taskbar(notificationLeft: 3136, appButtonsRight: 3050) with
+        {
+            FreeBeforeStart = Rectangle.FromLTRB(0, 1392, 140, 1440),
+        };
+
+        Assert.Null(WidgetPlacement.Find(taskbar, WidgetSize));
+    }
+
+    [Fact]
+    public void A_left_aligned_taskbar_has_no_room_before_start()
+    {
+        var taskbar = Taskbar(notificationLeft: 3136, appButtonsRight: 3050);
+
+        Assert.Null(WidgetPlacement.Find(taskbar, WidgetSize));
+    }
+
     private static TaskbarInfo Taskbar(int notificationLeft, int appButtonsRight) => new(
         Handle: IntPtr.Zero,
         IsPrimary: true,

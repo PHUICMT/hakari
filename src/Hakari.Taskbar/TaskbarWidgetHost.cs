@@ -407,10 +407,10 @@ public sealed class TaskbarWidgetHost : IDisposable
         var overlayHidden = options.Mode == AttachMode.TopMostOverlay
             && FullScreenDetector.IsSomethingFullScreen();
         TryFullAgain(widget, taskbar);
-        var target = WidgetPlacement.LeftOfNotificationArea(taskbar, widget.RenderedSize);
+        var target = WidgetPlacement.Find(taskbar, widget.RenderedSize);
         if (!overlayHidden && target is null && TryCompact(widget, taskbar))
         {
-            target = WidgetPlacement.LeftOfNotificationArea(taskbar, widget.RenderedSize);
+            target = WidgetPlacement.Find(taskbar, widget.RenderedSize);
         }
 
         if (overlayHidden || target is not { } screenBounds)
@@ -438,7 +438,7 @@ public sealed class TaskbarWidgetHost : IDisposable
     {
         var state = states[widget];
         if (!state.IsCompact || state.FullSize.IsEmpty
-            || WidgetPlacement.LeftOfNotificationArea(taskbar, state.FullSize) is null)
+            || WidgetPlacement.Find(taskbar, state.FullSize) is null)
         {
             return;
         }

@@ -7,6 +7,7 @@ namespace Hakari.Taskbar.Automation;
 internal static class AutomationClient
 {
     public const int BoundingRectanglePropertyId = 30001;
+    public const int AutomationIdPropertyId = 30011;
     public const int ClassNamePropertyId = 30012;
 
     private static readonly Lazy<IUIAutomation> LazyInstance = new(() => new CUIAutomation8());

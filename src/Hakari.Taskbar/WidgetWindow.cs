@@ -11,7 +11,7 @@ namespace Hakari.Taskbar;
 /// </summary>
 internal sealed class WidgetWindow : IDisposable
 {
-    private const string ClassName = "HakariTaskbarWidget";
+    internal const string ClassName = "HakariTaskbarWidget";
     private static readonly Dictionary<IntPtr, WidgetWindow> WindowsByHandle = [];
 
     private readonly AttachMode mode;
