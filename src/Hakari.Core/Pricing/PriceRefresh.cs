@@ -4,14 +4,18 @@ using Hakari.Core.Configuration;
 
 namespace Hakari.Core.Pricing;
 
-/// <summary>When prices were last looked for, kept between runs.</summary>
-public sealed record PriceRefreshState(DateTimeOffset CheckedAt, DateTimeOffset FallbackAt);
+/// <summary>When prices were last looked for, and for which unpriced models.</summary>
+public sealed record PriceRefreshState(
+    DateTimeOffset CheckedAt,
+    DateTimeOffset FallbackAt,
+    IReadOnlyList<string>? LookedFor = null);
 
 /// <summary>
 /// Keeps prices current without being asked: the project's table once a day, sooner (hourly)
 /// while some model in the logs has no price, and then LiteLLM's list for models still
-/// missing, at most every six hours. Only public price files are fetched; nothing about the
-/// user is sent. A network problem is quiet and tried again later.
+/// missing, also hourly: it usually lists a new model within days, and waiting longer left a
+/// model unpriced for hours after it was there. Only public price files are fetched; nothing
+/// about the user is sent. A network problem is quiet and tried again later.
 /// </summary>
 public static class PriceRefresh
 {
@@ -20,18 +24,38 @@ public static class PriceRefresh
 
     private static readonly TimeSpan CheckEvery = TimeSpan.FromDays(1);
     private static readonly TimeSpan CheckWhileMissing = TimeSpan.FromHours(1);
-    private static readonly TimeSpan FallbackEvery = TimeSpan.FromHours(6);
+    private static readonly TimeSpan FallbackEvery = TimeSpan.FromHours(1);
     private static readonly TimeSpan RequestTimeout = TimeSpan.FromSeconds(30);
 
     public static string StatePath => Path.Combine(HakariPaths.DataDirectory, StateFileName);
 
     /// <summary>Whether a look is due, given the models that have no price now.</summary>
-    public static bool IsDue(DateTimeOffset now, IReadOnlyCollection<string> unpriced)
-    {
-        var state = Load();
-        return now - state.CheckedAt >= (unpriced.Count > 0 ? CheckWhileMissing : CheckEvery)
-            || unpriced.Count > 0 && now - state.FallbackAt >= FallbackEvery;
-    }
+    public static bool IsDue(DateTimeOffset now, IReadOnlyCollection<string> unpriced) =>
+        IsDue(Load(), now, unpriced);
+
+    /// <summary>A model not looked for yet is looked for at once, whatever the time.</summary>
+    internal static bool IsDue(
+        PriceRefreshState state,
+        DateTimeOffset now,
+        IReadOnlyCollection<string> unpriced) =>
+        IsTableDue(state, now, unpriced) || IsFallbackDue(state, now, unpriced);
+
+    private static bool HasNew(PriceRefreshState state, IReadOnlyCollection<string> unpriced) =>
+        unpriced.Any(model => state.LookedFor?.Contains(model, StringComparer.Ordinal) != true);
+
+    private static bool IsTableDue(
+        PriceRefreshState state,
+        DateTimeOffset now,
+        IReadOnlyCollection<string> unpriced) =>
+        HasNew(state, unpriced)
+        || now - state.CheckedAt >= (unpriced.Count > 0 ? CheckWhileMissing : CheckEvery);
+
+    private static bool IsFallbackDue(
+        PriceRefreshState state,
+        DateTimeOffset now,
+        IReadOnlyCollection<string> unpriced) =>
+        unpriced.Count > 0
+        && (HasNew(state, unpriced) || now - state.FallbackAt >= FallbackEvery);
 
     /// <returns>True when any price changed, so totals should be read again.</returns>
     public static async Task<bool> RefreshAsync(
@@ -40,11 +64,12 @@ public static class PriceRefresh
         CancellationToken cancellation)
     {
         var state = Load();
+        var fallbackDue = IsFallbackDue(state, now, unpriced);
         var changed = false;
         using var client = new HttpClient { Timeout = RequestTimeout };
         client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue(ProductName, "1"));
 
-        if (now - state.CheckedAt >= (unpriced.Count > 0 ? CheckWhileMissing : CheckEvery))
+        if (IsTableDue(state, now, unpriced))
         {
             changed |= await TryAsync(async () => PricingSources.Accept(
                 await client.GetStringAsync(PricingSources.LatestAddress, cancellation)));
@@ -57,7 +82,7 @@ public static class PriceRefresh
 
         var current = PricingSources.LoadCurrent();
         var stillMissing = unpriced.Where(model => !current.IsPriced(model)).ToList();
-        if (stillMissing.Count > 0 && now - state.FallbackAt >= FallbackEvery)
+        if (stillMissing.Count > 0 && fallbackDue)
         {
             changed |= await TryAsync(async () => PricingSources.AcceptFallback(
                 LiteLlmPrices.Extract(
@@ -66,7 +91,7 @@ public static class PriceRefresh
             state = state with { FallbackAt = now };
         }
 
-        Save(state);
+        Save(state with { LookedFor = [.. unpriced] });
         return changed;
     }
 
