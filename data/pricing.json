@@ -1,6 +1,6 @@
 {
   "schema": 2,
-  "updated": "2026-10-12",
+  "updated": "2026-11-11",
   "source": "https://platform.claude.com/docs/en/about-claude/pricing",
   "currency": "USD",
   "unit": "per_1m_tokens",
@@ -9,6 +9,26 @@
   },
   "webSearchPerThousand": 10.0,
   "models": {
+    "claude-fable-5-2": [
+      {
+        "input": 8.0,
+        "output": 40.0,
+        "cacheWriteFiveMinutes": 10.0,
+        "cacheWriteOneHour": 16.0,
+        "cacheRead": 0.20,
+        "fast": { "input": 16.0, "output": 80.0 }
+      }
+    ],
+    "claude-mythos-5-2": [
+      {
+        "input": 8.0,
+        "output": 40.0,
+        "cacheWriteFiveMinutes": 10.0,
+        "cacheWriteOneHour": 16.0,
+        "cacheRead": 0.20,
+        "fast": { "input": 16.0, "output": 80.0 }
+      }
+    ],
     "claude-fable-5-1": [
       {
         "input": 10.0,
