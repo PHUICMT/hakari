@@ -21,7 +21,10 @@ public static class ClaudeHookSettings
     private const string TypeField = "type";
     private const string CommandField = "command";
     private const string TimeoutField = "timeout";
+    private const string ShellField = "shell";
     private const string CommandType = "command";
+    private const string BashName = "bash";
+    private const string PowerShellName = "powershell";
 
     private static readonly string[] Events =
         [HookInput.SessionStart, HookInput.UserPromptSubmit, HookInput.PostToolUse];
@@ -34,14 +37,31 @@ public static class ClaudeHookSettings
     };
 
     /// <summary>
-    /// The command line for Hakari.exe. Forward slashes and quotes work the same whether
-    /// Claude Code runs hooks through Git Bash or cmd.
+    /// The command line for Hakari.exe in the shell that will run it. Each first checks that
+    /// Hakari is still there and otherwise ends quietly, because uninstalling, above all from
+    /// the Store, cannot take the hook out, and a hook that fails shows an error in every
+    /// session.
     /// </summary>
-    public static string CommandFor(string executablePath) =>
-        $"\"{executablePath.Replace('\\', '/')}\" {Flag}";
+    public static HookCommand CommandFor(string executablePath, HookShell shell) => shell switch
+    {
+        HookShell.PowerShell => new HookCommand(PowerShellCommand(executablePath), shell),
+        _ => new HookCommand(BashCommand(executablePath), shell),
+    };
+
+    private static string BashCommand(string executablePath)
+    {
+        var path = executablePath.Replace('\\', '/');
+        return $"[ -e \"{path}\" ] && \"{path}\" {Flag}; exit 0";
+    }
+
+    private static string PowerShellCommand(string executablePath)
+    {
+        var path = executablePath.Replace("'", "''");
+        return $"if (Test-Path -LiteralPath '{path}') {{ & '{path}' {Flag} }}";
+    }
 
     /// <exception cref="JsonException">The file is not a JSON object; it is left alone.</exception>
-    public static string WithHook(string? json, string command)
+    public static string WithHook(string? json, HookCommand command)
     {
         var root = ParseObject(json);
         RemoveOurs(root);
@@ -56,7 +76,8 @@ public static class ClaudeHookSettings
                 [HooksField] = new JsonArray(new JsonObject
                 {
                     [TypeField] = CommandType,
-                    [CommandField] = command,
+                    [CommandField] = command.Command,
+                    [ShellField] = ShellName(command.Shell),
                     [TimeoutField] = TimeoutSeconds,
                 }),
             });
@@ -74,14 +95,20 @@ public static class ClaudeHookSettings
     }
 
     /// <summary>Whether every event runs exactly this command, so nothing needs writing.</summary>
-    public static bool HasHook(string? json, string command)
+    public static bool HasHook(string? json, HookCommand command)
     {
         try
         {
             var hooks = ParseObject(json)[HooksField] as JsonObject;
-            return Events.All(eventName => Commands(hooks?[eventName] as JsonArray)
-                .Count(text => text.Contains(Flag, StringComparison.Ordinal)) == 1
-                && Commands(hooks?[eventName] as JsonArray).Contains(command));
+            return Events.All(eventName =>
+            {
+                var ours = Handlers(hooks?[eventName] as JsonArray)
+                    .Where(handler => CommandOf(handler).Contains(Flag, StringComparison.Ordinal))
+                    .ToList();
+                return ours.Count == 1
+                    && CommandOf(ours[0]) == command.Command
+                    && TextOf(ours[0], ShellField) == ShellName(command.Shell);
+            });
         }
         catch (JsonException)
         {
@@ -109,16 +136,23 @@ public static class ClaudeHookSettings
             : JsonNode.Parse(json) as JsonObject
                 ?? throw new JsonException("Claude Code settings are not a JSON object.");
 
-    private static IEnumerable<string> Commands(JsonArray? groups) =>
+    private static IEnumerable<JsonObject> Handlers(JsonArray? groups) =>
         groups?.OfType<JsonObject>()
             .SelectMany(group => (group[HooksField] as JsonArray ?? []).OfType<JsonObject>())
-            .Select(CommandOf)
         ?? [];
 
-    private static string CommandOf(JsonObject handler) =>
-        handler[CommandField] is JsonValue value && value.TryGetValue<string>(out var command)
-            ? command
+    private static IEnumerable<string> Commands(JsonArray? groups) =>
+        Handlers(groups).Select(CommandOf);
+
+    private static string CommandOf(JsonObject handler) => TextOf(handler, CommandField);
+
+    private static string TextOf(JsonObject handler, string field) =>
+        handler[field] is JsonValue value && value.TryGetValue<string>(out var text)
+            ? text
             : string.Empty;
+
+    private static string ShellName(HookShell shell) =>
+        shell == HookShell.PowerShell ? PowerShellName : BashName;
 
     /// <summary>Drops Hakari's handlers, then any group, event or hooks list left empty.</summary>
     private static void RemoveOurs(JsonObject root)

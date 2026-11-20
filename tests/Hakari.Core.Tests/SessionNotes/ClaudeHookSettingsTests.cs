@@ -6,8 +6,11 @@ namespace Hakari.Core.Tests.SessionNotes;
 
 public class ClaudeHookSettingsTests
 {
-    private const string Command = "\"C:/Apps/Hakari/Hakari.exe\" --usage-note";
-    private const string MovedCommand = "\"D:/Hakari/Hakari.exe\" --usage-note";
+    private const string ExecutablePath = @"C:\Apps\Hakari\Hakari.exe";
+    private const string MovedPath = @"D:\Hakari\Hakari.exe";
+
+    private static readonly HookCommand Command =
+        ClaudeHookSettings.CommandFor(ExecutablePath, HookShell.Bash);
 
     private const string OtherSettings = """
         {
@@ -21,19 +24,44 @@ public class ClaudeHookSettingsTests
         """;
 
     [Fact]
-    public void Writes_the_command_with_forward_slashes_and_the_flag()
+    public void A_bash_command_runs_hakari_only_while_it_is_there_and_always_succeeds()
     {
-        Assert.Equal(Command, ClaudeHookSettings.CommandFor(@"C:\Apps\Hakari\Hakari.exe"));
+        Assert.Equal(
+            "[ -e \"C:/Apps/Hakari/Hakari.exe\" ] && \"C:/Apps/Hakari/Hakari.exe\" "
+                + "--usage-note; exit 0",
+            Command.Command);
     }
 
     [Fact]
-    public void Adds_one_handler_for_each_event_to_an_empty_file()
+    public void A_powershell_command_checks_the_path_and_calls_it_with_the_call_operator()
+    {
+        var command = ClaudeHookSettings.CommandFor(@"C:\O'Neil\Hakari.exe", HookShell.PowerShell);
+
+        Assert.Equal(
+            "if (Test-Path -LiteralPath 'C:\\O''Neil\\Hakari.exe') "
+                + "{ & 'C:\\O''Neil\\Hakari.exe' --usage-note }",
+            command.Command);
+    }
+
+    [Fact]
+    public void Adds_one_handler_for_each_event_with_its_shell()
     {
         var json = ClaudeHookSettings.WithHook(null, Command);
 
         Assert.True(ClaudeHookSettings.HasHook(json, Command));
         var hooks = JsonNode.Parse(json)!["hooks"]!.AsObject();
         Assert.Equal(["SessionStart", "UserPromptSubmit", "PostToolUse"], hooks.Select(e => e.Key));
+        Assert.Equal("bash", hooks["SessionStart"]![0]!["hooks"]![0]!["shell"]!.GetValue<string>());
+    }
+
+    [Fact]
+    public void A_changed_shell_counts_as_not_installed()
+    {
+        var json = ClaudeHookSettings.WithHook(null, Command);
+
+        var powerShell = ClaudeHookSettings.CommandFor(ExecutablePath, HookShell.PowerShell);
+
+        Assert.False(ClaudeHookSettings.HasHook(json, powerShell));
     }
 
     [Fact]
@@ -50,13 +78,27 @@ public class ClaudeHookSettingsTests
     [Fact]
     public void Adding_again_replaces_an_old_path_instead_of_doubling()
     {
+        var moved = ClaudeHookSettings.CommandFor(MovedPath, HookShell.Bash);
         var once = ClaudeHookSettings.WithHook(OtherSettings, Command);
 
-        var moved = ClaudeHookSettings.WithHook(once, MovedCommand);
+        var again = ClaudeHookSettings.WithHook(once, moved);
 
-        Assert.True(ClaudeHookSettings.HasHook(moved, MovedCommand));
-        Assert.DoesNotContain("C:/Apps", moved);
-        Assert.False(ClaudeHookSettings.HasHook(once, MovedCommand));
+        Assert.True(ClaudeHookSettings.HasHook(again, moved));
+        Assert.DoesNotContain("C:/Apps", again);
+        Assert.False(ClaudeHookSettings.HasHook(once, moved));
+    }
+
+    [Fact]
+    public void Replaces_a_hook_written_by_the_first_version()
+    {
+        var escapedNew = Command.Command.Replace("\"", "\\\"");
+        var escapedFirst = "\\\"C:/Apps/Hakari/Hakari.exe\\\" --usage-note";
+        var first = ClaudeHookSettings.WithHook(null, Command).Replace(escapedNew, escapedFirst);
+
+        var updated = ClaudeHookSettings.WithHook(first, Command);
+
+        Assert.True(ClaudeHookSettings.HasHook(updated, Command));
+        Assert.Equal(3, updated.Split("--usage-note").Length - 1);
     }
 
     [Fact]

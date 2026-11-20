@@ -91,8 +91,9 @@ default), each session gets a short note with how full the limit is, when it res
 suggestion to save its work before starting something long. It gets another note at each
 higher step, and one more when the limit resets. The note goes to the model, not to you. It
 uses the limits Hakari already reads, so it adds no requests and takes about a tenth of a
-second. Turn it off before you delete a zip copy, so Claude Code doesn't keep calling a missing
-file. WSL sessions are not covered yet.
+second. Uninstalling cannot take the hook out of Claude Code's settings, so the hook first checks
+that Hakari is still there and does nothing otherwise; turn the switch off first if you want the
+entries gone too. WSL sessions are not covered yet.
 
 **I can't see the meter on the taskbar.**
 The meter sits beside the tray. If the taskbar's icons are centered and fill that side, it moves

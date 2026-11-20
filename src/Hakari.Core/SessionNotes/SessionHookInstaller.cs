@@ -52,12 +52,13 @@ public static class SessionHookInstaller
             ? Install(ConfigDirectories(settings))
             : new HookInstallResult(0, 0);
 
-    private static string CommandForThisInstall() =>
-        ClaudeHookSettings.CommandFor(ExecutablePath());
+    /// <summary>Written for the shell Claude Code will use on this PC.</summary>
+    private static HookCommand CommandForThisInstall() =>
+        ClaudeHookSettings.CommandFor(ExecutablePath(), HookShellDetector.Detect());
 
     private static HookInstallResult Apply(
         IEnumerable<string> configDirectories,
-        string command,
+        HookCommand command,
         bool install)
     {
         var changed = 0;
@@ -88,7 +89,7 @@ public static class SessionHookInstaller
     }
 
     /// <returns>The new file, or null when it already says what it should.</returns>
-    private static string? Next(string? json, string command, bool install) =>
+    private static string? Next(string? json, HookCommand command, bool install) =>
         install
             ? ClaudeHookSettings.HasHook(json, command)
                 ? null
