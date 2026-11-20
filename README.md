@@ -84,6 +84,16 @@ nothing else. It shows the limits the account actually has: Ultra has no 5-hour 
 slot set to the 5-hour limit shows the weekly one there. Turned off, it shows an estimate from
 your own usage instead. See [PRIVACY.md](docs/PRIVACY.md).
 
+**Can Claude Code know a limit is nearly full?**
+Yes, if you want it to. Turn on *Settings → Alerts → Tell Claude Code sessions*. Hakari adds a
+hook to Claude Code's settings on this PC. Once a limit passes the share you choose (80% by
+default), each session gets a short note with how full the limit is, when it resets, and a
+suggestion to save its work before starting something long. It gets another note at each
+higher step, and one more when the limit resets. The note goes to the model, not to you. It
+uses the limits Hakari already reads, so it adds no requests and takes about a tenth of a
+second. Turn it off before you delete a zip copy, so Claude Code doesn't keep calling a missing
+file. WSL sessions are not covered yet.
+
 **I can't see the meter on the taskbar.**
 The meter sits beside the tray. If the taskbar's icons are centered and fill that side, it moves
 to the empty left end of the taskbar. With no room there either, it shrinks to a compact form,

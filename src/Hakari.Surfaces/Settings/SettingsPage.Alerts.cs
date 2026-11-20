@@ -4,6 +4,7 @@ using Hakari.Core.Localization;
 using Hakari.Core.Presentation;
 using Hakari.Core.Presentation.Widget;
 using Hakari.Core.Pricing;
+using Hakari.Core.SessionNotes;
 using Hakari.Core.Settings;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -32,6 +33,10 @@ public sealed partial class SettingsPage
         NotifyToggle.IsChecked = settings.NotifyOnLimits;
         ResetAlertToggle.IsChecked = settings.NotifyOnResets;
         UnusualToggle.IsChecked = settings.NotifyOnUnusualSessions;
+        SessionNotesToggle.IsChecked = settings.TellSessionsAboutLimits;
+        SessionNotesFromSelect.SetChoices(
+            Percents(NoteLevel.Choices),
+            NoteLevel.Usable(settings.SessionNotesFrom));
         AlertWarnSelect.SetChoices(Percents(WarnLevels), settings.Widget.WarnAt);
         AlertCriticalSelect.SetChoices(Percents(CriticalLevels), settings.Widget.CriticalAt);
         if (DailyBudgetBox.FocusState == FocusState.Unfocused)
@@ -68,6 +73,8 @@ public sealed partial class SettingsPage
                 WarnAt = Math.Min(current.Widget.WarnAt, (int)value - 5),
             },
         });
+        SessionNotesFromSelect.Selected += (_, value) =>
+            Save(current => current with { SessionNotesFrom = (int)value });
     }
 
     private static IEnumerable<(object Value, string Text)> Percents(int[] levels) =>
@@ -75,6 +82,31 @@ public sealed partial class SettingsPage
 
     private static string Amount(decimal? amount) =>
         amount?.ToString("0.##", CultureInfo.InvariantCulture) ?? string.Empty;
+
+    /// <summary>
+    /// Adds the hook to, or takes it out of, Claude Code's settings first, and keeps the
+    /// choice only if that worked, so the switch never says on while no session is told.
+    /// </summary>
+    private async void OnSessionNotesClicked(object sender, RoutedEventArgs args)
+    {
+        var turnOn = SessionNotesToggle.IsChecked == true;
+        var directories = SessionHookInstaller.ConfigDirectories(store.Load());
+        var result = await Task.Run(() => turnOn
+            ? SessionHookInstaller.Install(directories)
+            : SessionHookInstaller.Remove(directories));
+
+        var worked = result.Failed == 0 || result.Changed > 0;
+        SessionNotesRow.Description = Texts.Get(worked
+            ? "settings.alerts.sessions.description"
+            : "settings.alerts.sessions.failed");
+        if (!worked)
+        {
+            SessionNotesToggle.IsChecked = !turnOn;
+            return;
+        }
+
+        Save(current => current with { TellSessionsAboutLimits = turnOn });
+    }
 
     private void OnResetAlertClicked(object sender, RoutedEventArgs args) =>
         Save(current => current with { NotifyOnResets = ResetAlertToggle.IsChecked == true });

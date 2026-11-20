@@ -67,6 +67,7 @@ internal sealed class ResidentApp : IDisposable
         settingsWatcher.Changed += (_, _) =>
             widgets.PostAction(() => Apply(settingsStore.Load()));
         RecordLocation();
+        RepairSessionHook();
 
         menu.QuitRequested += (_, _) => MessageLoop.Quit();
         widgetSurfaces = new WidgetSurfaces(widgets);
@@ -99,6 +100,16 @@ internal sealed class ResidentApp : IDisposable
         Task.Run(() => SurfacesLauncher.Show(command));
     }
 
+    /// <summary>
+    /// A moved zip copy or an updated Store copy is started from a new path, so the session
+    /// hook is pointed at it again; off the widget thread, as it reads a few small files.
+    /// </summary>
+    private void RepairSessionHook()
+    {
+        var settings = settingsStore.Load();
+        _ = Task.Run(() => Hakari.Core.SessionNotes.SessionHookInstaller.Repair(settings));
+    }
+
     private static void RecordLocation()
     {
         if (Environment.ProcessPath is { } executablePath)
@@ -114,6 +125,9 @@ internal sealed class ResidentApp : IDisposable
         {
             case ResidentCommand.RefreshNow:
                 feed.RefreshNow();
+                break;
+            case ResidentCommand.RefreshLimitsSoon:
+                feed.RefreshLimitsSoon();
                 break;
             case ResidentCommand.PauseForAnHour:
                 Apply(settingsStore.Update(current => current with

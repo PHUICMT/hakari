@@ -12,6 +12,12 @@ const string ReportSecondsFlag = "--report-seconds";
 const int DefaultReportSeconds = 30;
 const string ToastDemoFlag = "--demo-toast";
 
+// Claude Code runs this as a hook: it prints a note when the session's limit is nearly full.
+if (args.Contains(Hakari.Core.SessionNotes.ClaudeHookSettings.Flag))
+{
+    return SessionNoteCommand.Run();
+}
+
 // Shows one sample limit notification and says whether Windows took it, for checking setup.
 if (args.Contains(ToastDemoFlag))
 {

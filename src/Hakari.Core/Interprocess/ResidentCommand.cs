@@ -12,4 +12,10 @@ public enum ResidentCommand
 
     /// <summary>A notification's "Mute today": no more limit alerts until midnight.</summary>
     MuteAlertsToday,
+
+    /// <summary>
+    /// A session hook saw a nearly full limit read a while ago: read limits again, unless
+    /// that was just done.
+    /// </summary>
+    RefreshLimitsSoon,
 }

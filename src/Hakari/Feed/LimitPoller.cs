@@ -18,6 +18,8 @@ internal sealed class LimitPoller : IDisposable
     private static readonly TimeSpan ActiveWindow = TimeSpan.FromMinutes(5);
     private static readonly TimeSpan RequestTimeout = TimeSpan.FromSeconds(15);
 
+    /// <summary>Close to full, sessions and alerts need fresher numbers.</summary>
+    private static readonly TimeSpan NearlyFullInterval = TimeSpan.FromMinutes(1);
 
     private readonly IReadOnlyList<UsageSource> sources;
     private readonly HttpClient httpClient = new() { Timeout = RequestTimeout };
@@ -135,10 +137,15 @@ internal sealed class LimitPoller : IDisposable
         ];
 
         var active = now - lastUsage < ActiveWindow;
-        nextPoll = now + (active ? ActiveInterval : IdleInterval);
+        nextPoll = now + (!active ? IdleInterval
+            : AnyNearlyFull() ? NearlyFullInterval
+            : ActiveInterval);
         Polls++;
         return true;
     }
+
+    private bool AnyNearlyFull() => Accounts.Any(account => account.Snapshot.Limits.Any(
+        limit => limit.Percent >= Hakari.Core.SessionNotes.NoteLevel.DefaultFrom));
 
     /// <summary>When the recent pace fills the limit before it resets, else null.</summary>
     public DateTimeOffset? FullAt(string accountId, UsageLimit limit, DateTimeOffset now) =>

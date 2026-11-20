@@ -84,6 +84,24 @@ internal sealed class UsageFeed : IDisposable
         changeTracker?.Wake();
     }
 
+    /// <summary>Hooks in many sessions can ask at once; one read a minute is enough.</summary>
+    private static readonly TimeSpan HookRefreshSpacing = TimeSpan.FromMinutes(1);
+
+    private DateTimeOffset lastHookRefresh = DateTimeOffset.MinValue;
+
+    /// <summary>A session hook asks for fresher limits; at most once a minute.</summary>
+    public void RefreshLimitsSoon()
+    {
+        var now = DateTimeOffset.UtcNow;
+        if (now - lastHookRefresh < HookRefreshSpacing)
+        {
+            return;
+        }
+
+        lastHookRefresh = now;
+        RefreshNow();
+    }
+
     private volatile int turnShift;
 
     /// <summary>

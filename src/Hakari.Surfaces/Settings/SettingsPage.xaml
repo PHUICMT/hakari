@@ -279,6 +279,15 @@
                                 Description="{l:Text Key=settings.alerts.unusual.description}">
                                 <controls:HakariToggle x:Name="UnusualToggle" Click="OnUnusualClicked" />
                             </controls:SettingRow>
+                            <controls:SettingRow x:Name="SessionNotesRow" Glyph="&#xE8BD;"
+                                Title="{l:Text Key=settings.alerts.sessions}"
+                                Description="{l:Text Key=settings.alerts.sessions.description}">
+                                <controls:HakariToggle x:Name="SessionNotesToggle" Click="OnSessionNotesClicked" />
+                            </controls:SettingRow>
+                            <controls:SettingRow Glyph="&#xE7BA;" Title="{l:Text Key=settings.alerts.sessions.from}"
+                                Description="{l:Text Key=settings.alerts.sessions.from.description}">
+                                <controls:HakariSelect x:Name="SessionNotesFromSelect" />
+                            </controls:SettingRow>
                         </StackPanel>
                     </Border>
                 </StackPanel>

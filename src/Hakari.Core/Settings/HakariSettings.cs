@@ -113,6 +113,15 @@ public sealed record HakariSettings
     /// <summary>Tell when a limit passes its warning or critical level or resets.</summary>
     public bool NotifyOnLimits { get; init; } = true;
 
+    /// <summary>
+    /// Claude Code sessions are told, through a hook Hakari adds to their settings, when
+    /// their account's limit is nearly full and when it resets.
+    /// </summary>
+    public bool TellSessionsAboutLimits { get; init; }
+
+    /// <summary>The share of a limit at which sessions first hear about it.</summary>
+    public int SessionNotesFrom { get; init; } = SessionNotes.NoteLevel.DefaultFrom;
+
     /// <summary>The first-run steps were finished or closed; they never show again.</summary>
     public bool OnboardingDone { get; init; }
 
