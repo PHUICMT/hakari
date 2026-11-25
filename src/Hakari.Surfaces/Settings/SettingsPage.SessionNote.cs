@@ -5,6 +5,7 @@ using Hakari.Surfaces.Controls;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input;
 
 namespace Hakari.Surfaces.Settings;
 
@@ -47,6 +48,7 @@ public sealed partial class SettingsPage
             noteSaveTimer.Start();
         };
         SessionNoteBox.LostFocus += (_, _) => SaveNote();
+        ShowPlaceholderHint(null);
         foreach (var name in LimitNoteText.Placeholders)
         {
             SessionNotePlaceholders.Children.Add(PlaceholderButton(name));
@@ -65,6 +67,14 @@ public sealed partial class SettingsPage
             FontSize = 12,
         };
         Accessible.Name(button, $"{token}: {Texts.Get(PlaceholderHelpKey(name))}");
+
+        // Said at once in the line below, from the pointer or the keyboard alike.
+        button.AddHandler(PointerEnteredEvent, new PointerEventHandler(
+            (_, _) => ShowPlaceholderHint(name)), handledEventsToo: true);
+        button.AddHandler(PointerExitedEvent, new PointerEventHandler(
+            (_, _) => ShowPlaceholderHint(null)), handledEventsToo: true);
+        button.GotFocus += (_, _) => ShowPlaceholderHint(name);
+        button.LostFocus += (_, _) => ShowPlaceholderHint(null);
         button.Click += (_, _) =>
         {
             var at = SessionNoteBox.SelectionStart;
@@ -76,6 +86,12 @@ public sealed partial class SettingsPage
         };
         return button;
     }
+
+    /// <summary>What a value stands for, or how to find out when none is pointed at.</summary>
+    private void ShowPlaceholderHint(string? name) =>
+        SessionNoteHint.Text = name is null
+            ? Texts.Get("settings.alerts.sessions.text.hint")
+            : "{" + name + "}  " + Texts.Get(PlaceholderHelpKey(name));
 
     /// <summary>Written out in full, so the check for missing texts can see every key.</summary>
     private static string PlaceholderHelpKey(string name) => name switch

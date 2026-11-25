@@ -310,6 +310,8 @@
                                 <TextBox x:Name="SessionNoteBox" Style="{StaticResource HakariTextBox}"
                                     AcceptsReturn="True" TextWrapping="Wrap" MinHeight="72" MaxLength="2000" />
                                 <controls:FlowPanel x:Name="SessionNotePlaceholders" />
+                                <TextBlock x:Name="SessionNoteHint" Style="{StaticResource HakariCaptionText}"
+                                    TextWrapping="Wrap" TextTrimming="None" />
                                 <TextBlock Text="{l:Text Key=settings.alerts.sessions.text.preview}"
                                     Style="{StaticResource HakariCaptionText}" />
                                 <TextBlock x:Name="SessionNotePreview" TextWrapping="Wrap" FontSize="12"

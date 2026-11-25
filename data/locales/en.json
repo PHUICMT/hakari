@@ -494,6 +494,7 @@
   "settings.alerts.sessions.text.description": "What sessions are told. Values in braces are filled in each time; the buttons below put one in at the cursor.",
   "settings.alerts.sessions.text.default": "Use Hakari's text",
   "settings.alerts.sessions.text.preview": "A session would read, for a 5-hour limit at 92% read 20 minutes ago:",
+  "settings.alerts.sessions.text.hint": "Point at a value, or move to it with Tab, to see what it stands for.",
   "settings.alerts.sessions.text.limits": "Every nearly full limit, with its share and when it resets",
   "settings.alerts.sessions.text.limit": "The name of the fullest limit, such as 5-hour limit",
   "settings.alerts.sessions.text.percent": "How full that limit is, such as 92%",

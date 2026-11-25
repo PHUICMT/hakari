@@ -494,6 +494,7 @@
   "settings.alerts.sessions.text.description": "ข้อความที่ session จะได้รับ ค่าในวงเล็บปีกกาจะถูกเติมให้ทุกครั้ง กดปุ่มด้านล่างเพื่อใส่ค่าตรงตำแหน่งเคอร์เซอร์",
   "settings.alerts.sessions.text.default": "ใช้ข้อความของ Hakari",
   "settings.alerts.sessions.text.preview": "ตัวอย่างที่ session จะได้รับ เมื่อ limit 5 ชม. อยู่ที่ 92% และอ่านตัวเลขไว้เมื่อ 20 นาทีก่อน:",
+  "settings.alerts.sessions.text.hint": "ชี้หรือกด Tab ไปที่ค่า เพื่อดูว่าค่านั้นคืออะไร",
   "settings.alerts.sessions.text.limits": "ทุก limit ที่ใกล้เต็ม พร้อม % และเวลารีเซ็ต",
   "settings.alerts.sessions.text.limit": "ชื่อ limit ที่เต็มที่สุด เช่น 5-hour limit",
   "settings.alerts.sessions.text.percent": "limit นั้นเต็มกี่ % เช่น 92%",
