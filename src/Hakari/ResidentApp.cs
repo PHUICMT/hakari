@@ -129,6 +129,9 @@ internal sealed class ResidentApp : IDisposable
             case ResidentCommand.RefreshLimitsSoon:
                 feed.RefreshLimitsSoon();
                 break;
+            case ResidentCommand.PlayAlertSound:
+                AlertSoundPlayer.Preview(settingsStore.Load());
+                break;
             case ResidentCommand.PauseForAnHour:
                 Apply(settingsStore.Update(current => current with
                 {
@@ -250,13 +253,17 @@ internal sealed class ResidentApp : IDisposable
     /// <summary>A Windows notification, or the tray's balloon when that is refused.</summary>
     private void ShowAlert(LimitAlertMessage message)
     {
-        if (!ToastNotifier.Show(message))
+        var settings = settingsStore.Load();
+        var silent = AlertSoundPlayer.PlaysItself(settings);
+        if (!ToastNotifier.Show(message, silent))
         {
             var text = string.Join(
                 Environment.NewLine,
                 new[] { message.Body, message.Detail }.Where(line => line.Length > 0));
-            trayIcon.ShowBalloon(message.Title, text, message.IsWarning);
+            trayIcon.ShowBalloon(message.Title, text, message.IsWarning, silent);
         }
+
+        AlertSoundPlayer.Play(settings);
     }
 
     /// <summary>Runs on the widget thread: every update from the feed shows as it comes.</summary>

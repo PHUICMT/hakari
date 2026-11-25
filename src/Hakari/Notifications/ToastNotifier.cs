@@ -80,8 +80,9 @@ internal static class ToastNotifier
         }
     }
 
+    /// <param name="silent">Hakari plays its own sound, or none, so Windows plays nothing.</param>
     /// <returns>False when Windows would not take it, so the caller can fall back.</returns>
-    public static bool Show(LimitAlertMessage message)
+    public static bool Show(LimitAlertMessage message, bool silent = false)
     {
         if (!registered)
         {
@@ -91,7 +92,7 @@ internal static class ToastNotifier
         try
         {
             var document = new XmlDocument();
-            document.LoadXml(Xml(message));
+            document.LoadXml(Xml(message, silent));
             var notifier = Hakari.Core.Startup.PackageIdentity.IsPackaged
                 ? ToastNotificationManager.CreateToastNotifier()
                 : ToastNotificationManager.CreateToastNotifier(AppId);
@@ -105,7 +106,7 @@ internal static class ToastNotifier
         }
     }
 
-    private static string Xml(LimitAlertMessage message)
+    private static string Xml(LimitAlertMessage message, bool silent)
     {
         var lines = string.Concat(
             new[] { message.Title, message.Detail }
@@ -121,7 +122,9 @@ internal static class ToastNotifier
             + Action(Texts.Get("alert.muteToday"), MuteTodayAction);
         return $"<toast launch=\"{OpenAction}\" activationType=\"protocol\">"
             + $"<visual><binding template=\"ToastGeneric\">{lines}{progress}</binding></visual>"
-            + $"<actions>{actions}</actions></toast>";
+            + $"<actions>{actions}</actions>"
+            + (silent ? "<audio silent=\"true\"/>" : string.Empty)
+            + "</toast>";
     }
 
     private static string Action(string content, string link) =>

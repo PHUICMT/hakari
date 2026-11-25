@@ -81,7 +81,8 @@ public sealed class TrayIcon : IDisposable
     /// A notification from the icon. It stays quiet while Windows is asked not to disturb the
     /// user, and a warning is shown with the warning icon.
     /// </summary>
-    public void ShowBalloon(string title, string text, bool isWarning)
+    /// <param name="silent">Hakari plays its own sound, or none, so Windows plays nothing.</param>
+    public void ShowBalloon(string title, string text, bool isWarning, bool silent = false)
     {
         var data = CreateData(NotifyIconConstants.InfoFlag);
         data.Info = text.Length > NotifyIconData.InfoLength - 1
@@ -91,7 +92,8 @@ public sealed class TrayIcon : IDisposable
             ? title[..(NotifyIconData.InfoTitleLength - 1)]
             : title;
         data.InfoFlags = NotifyIconConstants.InfoRespectQuietTime
-            | (isWarning ? NotifyIconConstants.InfoWarning : NotifyIconConstants.InfoNone);
+            | (isWarning ? NotifyIconConstants.InfoWarning : NotifyIconConstants.InfoNone)
+            | (silent ? NotifyIconConstants.InfoNoSound : NotifyIconConstants.InfoNone);
         Shell32.Shell_NotifyIcon(NotifyIconConstants.Modify, ref data);
     }
 

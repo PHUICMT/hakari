@@ -113,6 +113,15 @@ public sealed record HakariSettings
     /// <summary>Tell when a limit passes its warning or critical level or resets.</summary>
     public bool NotifyOnLimits { get; init; } = true;
 
+    /// <summary>The sound alerts make; Windows' own unless the user picks another.</summary>
+    public AlertSound AlertSound { get; init; } = AlertSound.Windows;
+
+    /// <summary>Hakari's copy of the sound file the user picked.</summary>
+    public string AlertSoundFile { get; init; } = string.Empty;
+
+    /// <summary>How loud Hakari's alert sounds play, 0 to 100; Windows' keeps its own.</summary>
+    public int AlertVolume { get; init; } = Sound.AlertSoundFiles.DefaultVolume;
+
     /// <summary>
     /// Claude Code sessions are told, through a hook Hakari adds to their settings, when
     /// their account's limit is nearly full and when it resets.

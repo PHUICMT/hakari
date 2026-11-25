@@ -249,6 +249,20 @@
                                 Description="{l:Text Key=settings.notify.description}" BorderThickness="0">
                                 <controls:HakariToggle x:Name="NotifyToggle" Click="OnNotifyClicked" />
                             </controls:SettingRow>
+                            <controls:SettingRow x:Name="AlertSoundRow" Glyph="&#xE7F5;"
+                                Title="{l:Text Key=settings.alerts.sound}"
+                                Description="{l:Text Key=settings.alerts.sound.description}">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <controls:HakariSelect x:Name="AlertSoundSelect" />
+                                    <Button x:Name="PlaySoundButton" Content="{l:Text Key=settings.alerts.sound.play}"
+                                        Style="{StaticResource HakariButton}" Click="OnPlaySoundClicked" />
+                                </StackPanel>
+                            </controls:SettingRow>
+                            <controls:SettingRow x:Name="AlertVolumeRow" Glyph="&#xE767;"
+                                Title="{l:Text Key=settings.alerts.volume}"
+                                Description="{l:Text Key=settings.alerts.volume.description}">
+                                <controls:HakariSelect x:Name="AlertVolumeSelect" />
+                            </controls:SettingRow>
                             <controls:SettingRow Glyph="&#xE7BA;" Title="{l:Text Key=settings.alerts.levels}"
                                 Description="{l:Text Key=settings.alerts.levels.description}">
                                 <StackPanel Orientation="Horizontal" Spacing="8">

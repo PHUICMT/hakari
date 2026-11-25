@@ -18,4 +18,7 @@ public enum ResidentCommand
     /// that was just done.
     /// </summary>
     RefreshLimitsSoon,
+
+    /// <summary>Settings' test button: play the alert sound as chosen, at its volume.</summary>
+    PlayAlertSound,
 }

@@ -17,6 +17,7 @@ internal static class NotifyIconConstants
     public const uint InfoNone = 0x00000000;
     public const uint InfoWarning = 0x00000002;
     public const uint InfoRespectQuietTime = 0x00000080;
+    public const uint InfoNoSound = 0x00000010;
 
     /// <summary>Version 4 sends the mouse event in the low word of the callback's lParam.</summary>
     public const uint Version4 = 4;

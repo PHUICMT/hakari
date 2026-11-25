@@ -34,6 +34,7 @@ public sealed partial class SettingsPage
         ResetAlertToggle.IsChecked = settings.NotifyOnResets;
         UnusualToggle.IsChecked = settings.NotifyOnUnusualSessions;
         SessionNotesToggle.IsChecked = settings.TellSessionsAboutLimits;
+        FillSound(settings);
         SessionNotesFromSelect.SetChoices(
             Percents(NoteLevel.Choices),
             NoteLevel.Usable(settings.SessionNotesFrom));
