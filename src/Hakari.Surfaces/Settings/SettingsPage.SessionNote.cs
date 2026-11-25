@@ -1,5 +1,7 @@
+using Hakari.Core.Localization;
 using Hakari.Core.SessionNotes;
 using Hakari.Core.Settings;
+using Hakari.Surfaces.Controls;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -62,6 +64,7 @@ public sealed partial class SettingsPage
             Padding = new Thickness(8, 2, 8, 2),
             FontSize = 12,
         };
+        Accessible.Name(button, $"{token}: {Texts.Get(PlaceholderHelpKey(name))}");
         button.Click += (_, _) =>
         {
             var at = SessionNoteBox.SelectionStart;
@@ -73,6 +76,19 @@ public sealed partial class SettingsPage
         };
         return button;
     }
+
+    /// <summary>Written out in full, so the check for missing texts can see every key.</summary>
+    private static string PlaceholderHelpKey(string name) => name switch
+    {
+        "limits" => "settings.alerts.sessions.text.limits",
+        "limit" => "settings.alerts.sessions.text.limit",
+        "percent" => "settings.alerts.sessions.text.percent",
+        "state" => "settings.alerts.sessions.text.state",
+        "resets" => "settings.alerts.sessions.text.resets",
+        "in" => "settings.alerts.sessions.text.in",
+        "advice" => "settings.alerts.sessions.text.advice",
+        _ => "settings.alerts.sessions.text.readAt",
+    };
 
     private void OnSessionNoteDefaultClicked(object sender, RoutedEventArgs args)
     {

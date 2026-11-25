@@ -59,9 +59,20 @@ public class LimitNoteTextTests
     [Fact]
     public void The_settings_sample_uses_the_users_text()
     {
-        var sample = LimitNoteText.Sample("{limit}: {percent}", Now, Bangkok);
+        var sample = LimitNoteText.Sample("{limit}: {percent}.{readAt}", Now, Bangkok);
 
-        Assert.Equal("5-hour limit: 92%", sample);
+        Assert.Equal("5-hour limit: 92%. (read at 20:40; it may be higher now.)", sample);
+    }
+
+    [Fact]
+    public void Says_when_it_was_read_only_once_the_reading_is_old()
+    {
+        var fresh = LimitNoteText.NearlyFull([Session], Now, Now, Bangkok, "[{readAt}]");
+        var old = LimitNoteText.NearlyFull(
+            [Session], Now.AddMinutes(-16), Now, Bangkok, "[{readAt}]");
+
+        Assert.Equal("[]", fresh);
+        Assert.Equal("[ (read at 20:44; it may be higher now.)]", old);
     }
 
     private static string Note(string template) =>

@@ -52,19 +52,25 @@ public static class LimitNoteText
         return text.Length > MaximumLength ? text[..MaximumLength] : text;
     }
 
-    /// <summary>The note as a session would get it now, with a made-up limit.</summary>
+    /// <summary>
+    /// The note as a session would get it now, with a made-up limit read a while ago, so
+    /// {readAt}, which only shows for old readings, can be seen too.
+    /// </summary>
     public static string Sample(string? template, DateTimeOffset now, TimeZoneInfo zone) =>
         NearlyFull(
         [
             new UsageLimit(SessionKind, SessionKind, 92, "warning",
                 now + SampleResetIn, null, IsActive: true),
         ],
-            now,
+            now - SampleReadAgo,
             now,
             zone,
             template);
 
     private static readonly TimeSpan SampleResetIn = TimeSpan.FromMinutes(95);
+
+    /// <summary>Older than <see cref="StaleAfter"/>, so the sample says when it was read.</summary>
+    public static readonly TimeSpan SampleReadAgo = TimeSpan.FromMinutes(20);
 
     /// <summary>
     /// What each placeholder stands for. The single-limit ones describe the fullest limit, as
