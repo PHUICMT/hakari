@@ -30,12 +30,42 @@ public static class AlertSoundFiles
     {
         [AlertSound.Chime] =
         [
-            new(659.25, Now, TimeSpan.FromMilliseconds(700)),
-            new(880.00, TimeSpan.FromMilliseconds(130), TimeSpan.FromMilliseconds(800)),
+            new(659.25, Now, Milliseconds(700)),
+            new(880.00, Milliseconds(130), Milliseconds(800)),
         ],
-        [AlertSound.Soft] = [new(392.00, Now, TimeSpan.FromMilliseconds(1000))],
-        [AlertSound.Ping] = [new(1318.51, Now, TimeSpan.FromMilliseconds(380))],
+        [AlertSound.Soft] = [new(392.00, Now, Milliseconds(1000))],
+        [AlertSound.Ping] = [new(1318.51, Now, Milliseconds(380))],
+        [AlertSound.Bell] = [new(880.00, Now, Milliseconds(1800), Timbre.Bell)],
+        [AlertSound.Marimba] =
+        [
+            new(523.25, Now, Milliseconds(450), Timbre.Wood),
+            new(659.25, Milliseconds(95), Milliseconds(450), Timbre.Wood),
+            new(783.99, Milliseconds(190), Milliseconds(600), Timbre.Wood),
+        ],
+        [AlertSound.Droplet] =
+        [
+            new(700.00, Now, Milliseconds(260), Timbre.Pure, EndFrequency: 1500),
+        ],
+        [AlertSound.Sparkle] =
+        [
+            new(1046.50, Now, Milliseconds(350), Timbre.Pure),
+            new(1318.51, Milliseconds(70), Milliseconds(350), Timbre.Pure),
+            new(1567.98, Milliseconds(140), Milliseconds(350), Timbre.Pure),
+            new(2093.00, Milliseconds(210), Milliseconds(600), Timbre.Pure),
+        ],
+        [AlertSound.Doorbell] =
+        [
+            new(659.25, Now, Milliseconds(900), Timbre.Bell),
+            new(523.25, Milliseconds(420), Milliseconds(1300), Timbre.Bell),
+        ],
+        [AlertSound.Knock] =
+        [
+            new(196.00, Now, Milliseconds(180), Timbre.Wood),
+            new(196.00, Milliseconds(170), Milliseconds(220), Timbre.Wood),
+        ],
     };
+
+    private static TimeSpan Milliseconds(double value) => TimeSpan.FromMilliseconds(value);
 
     public static string Folder => Path.Combine(HakariPaths.DataDirectory, FolderName);
 

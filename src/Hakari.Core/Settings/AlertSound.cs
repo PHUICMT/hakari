@@ -15,6 +15,24 @@ public enum AlertSound
     /// <summary>One short high note.</summary>
     Ping,
 
+    /// <summary>A struck bell that rings on.</summary>
+    Bell,
+
+    /// <summary>Three quick wooden notes going up.</summary>
+    Marimba,
+
+    /// <summary>A short rising drop, like water.</summary>
+    Droplet,
+
+    /// <summary>Four fast bright notes going up.</summary>
+    Sparkle,
+
+    /// <summary>Ding-dong, two notes going down.</summary>
+    Doorbell,
+
+    /// <summary>Two soft low knocks.</summary>
+    Knock,
+
     /// <summary>A sound file the user picked; Hakari keeps its own copy.</summary>
     Custom,
 

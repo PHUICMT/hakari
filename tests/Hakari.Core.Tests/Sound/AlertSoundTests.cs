@@ -38,6 +38,34 @@ public class AlertSoundTests
     }
 
     [Fact]
+    public void Every_sound_hakari_makes_has_notes_and_a_name()
+    {
+        var builtIn = Enum.GetValues<AlertSound>().Where(AlertSoundFiles.IsBuiltIn).ToList();
+
+        Assert.Equal(9, builtIn.Count);
+        Assert.DoesNotContain(AlertSound.Windows, builtIn);
+        Assert.DoesNotContain(AlertSound.Custom, builtIn);
+    }
+
+    [Theory]
+    [InlineData(Timbre.Warm)]
+    [InlineData(Timbre.Pure)]
+    [InlineData(Timbre.Bell)]
+    [InlineData(Timbre.Wood)]
+    public void Every_timbre_and_a_sliding_pitch_stay_within_range(Timbre timbre)
+    {
+        var wav = ToneSynth.Wav(
+        [
+            new Note(300, TimeSpan.Zero, TimeSpan.FromMilliseconds(300), timbre, 900),
+            new Note(450, TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(300), timbre),
+        ]);
+
+        var loudest = Enumerable.Range(0, (wav.Length - HeaderBytes) / BytesPerSample)
+            .Max(index => Math.Abs((int)BitConverter.ToInt16(wav, HeaderBytes + index * 2)));
+        Assert.InRange(loudest, short.MaxValue / 4, short.MaxValue - 1);
+    }
+
+    [Fact]
     public void Plays_no_file_for_windows_sound_no_sound_or_a_missing_pick()
     {
         Assert.Null(AlertSoundFiles.PathOf(new HakariSettings { AlertSound = AlertSound.Windows }));
