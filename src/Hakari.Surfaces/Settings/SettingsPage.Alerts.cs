@@ -9,6 +9,7 @@ using Hakari.Core.Settings;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Media;
 using Windows.System;
 
 namespace Hakari.Surfaces.Settings;
@@ -19,8 +20,6 @@ namespace Hakari.Surfaces.Settings;
 /// </summary>
 public sealed partial class SettingsPage
 {
-    private static readonly int[] WarnLevels = [50, 60, 70, 75, 80, 85, 90];
-    private static readonly int[] CriticalLevels = [80, 85, 90, 95, 98, 100];
     private static readonly HttpClient PriceClient = new() { Timeout = TimeSpan.FromSeconds(15) };
     private const string DateFormat = "d MMM yyyy";
     private const string TextEditor = "notepad.exe";
@@ -35,11 +34,9 @@ public sealed partial class SettingsPage
         UnusualToggle.IsChecked = settings.NotifyOnUnusualSessions;
         SessionNotesToggle.IsChecked = settings.TellSessionsAboutLimits;
         FillSound(settings);
-        SessionNotesFromSelect.SetChoices(
-            Percents(NoteLevel.Choices),
-            NoteLevel.Usable(settings.SessionNotesFrom));
-        AlertWarnSelect.SetChoices(Percents(WarnLevels), settings.Widget.WarnAt);
-        AlertCriticalSelect.SetChoices(Percents(CriticalLevels), settings.Widget.CriticalAt);
+        SessionNotesFromSlider.Value = NoteLevel.Usable(settings.SessionNotesFrom);
+        AlertWarnSlider.Value = settings.Widget.WarnAt;
+        AlertCriticalSlider.Value = settings.Widget.CriticalAt;
         if (DailyBudgetBox.FocusState == FocusState.Unfocused)
         {
             DailyBudgetBox.Text = Amount(settings.DailyBudget);
@@ -58,28 +55,30 @@ public sealed partial class SettingsPage
         }
 
         alertHandlersAttached = true;
-        AlertWarnSelect.Selected += (_, value) => Save(current => current with
-        {
-            Widget = current.Widget with
-            {
-                WarnAt = (int)value,
-                CriticalAt = Math.Max(current.Widget.CriticalAt, (int)value + 5),
-            },
-        });
-        AlertCriticalSelect.Selected += (_, value) => Save(current => current with
-        {
-            Widget = current.Widget with
-            {
-                CriticalAt = (int)value,
-                WarnAt = Math.Min(current.Widget.WarnAt, (int)value - 5),
-            },
-        });
-        SessionNotesFromSelect.Selected += (_, value) =>
-            Save(current => current with { SessionNotesFrom = (int)value });
+        AlertWarnSlider.Accent = (Brush)Application.Current.Resources["HakariWarnBrush"];
+        AlertCriticalSlider.Accent = (Brush)Application.Current.Resources["HakariCriticalBrush"];
+
+        // The two levels keep a gap: dragging one past the other pushes the other along.
+        AlertWarnSlider.Changing += (_, value) =>
+            AlertCriticalSlider.Value = Math.Max(AlertCriticalSlider.Value, value + LevelGap);
+        AlertCriticalSlider.Changing += (_, value) =>
+            AlertWarnSlider.Value = Math.Min(AlertWarnSlider.Value, value - LevelGap);
+        AlertWarnSlider.Changed += (_, _) => SaveLevels();
+        AlertCriticalSlider.Changed += (_, _) => SaveLevels();
+        SessionNotesFromSlider.Changed += (_, value) =>
+            Save(current => current with { SessionNotesFrom = value });
     }
 
-    private static IEnumerable<(object Value, string Text)> Percents(int[] levels) =>
-        levels.Select(percent => ((object)percent, $"{percent}%"));
+    private const int LevelGap = 5;
+
+    private void SaveLevels() => Save(current => current with
+    {
+        Widget = current.Widget with
+        {
+            WarnAt = AlertWarnSlider.Value,
+            CriticalAt = AlertCriticalSlider.Value,
+        },
+    });
 
     private static string Amount(decimal? amount) =>
         amount?.ToString("0.##", CultureInfo.InvariantCulture) ?? string.Empty;

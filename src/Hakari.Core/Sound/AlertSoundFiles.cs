@@ -12,9 +12,6 @@ public static class AlertSoundFiles
     public const int DefaultVolume = 60;
     public const int MaximumVolume = 100;
 
-    /// <summary>The volumes offered in Settings.</summary>
-    public static readonly int[] Volumes = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
-
     /// <summary>Formats Windows plays without extra codecs.</summary>
     public static readonly string[] Extensions = [".wav", ".mp3", ".wma", ".m4a"];
 

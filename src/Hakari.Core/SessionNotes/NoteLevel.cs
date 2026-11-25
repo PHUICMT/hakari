@@ -11,9 +11,6 @@ public static class NoteLevel
     public const int Full = 100;
     public const int DefaultFrom = 80;
 
-    /// <summary>The shares offered in Settings for the first note.</summary>
-    public static readonly int[] Choices = [50, 60, 70, 80, 90, 95];
-
     private static readonly int[] LaterSteps = [60, 70, 80, 90, 95, Full];
 
     public static int Of(int percent, int from) =>

@@ -25,8 +25,8 @@ internal sealed partial class LayoutEditor : StackPanel
     private const double HintSize = 12;
     private const double DotSize = 9;
     private const int FormatDebounceMilliseconds = 300;
-    private static readonly int[] WarnChoices = [50, 60, 70, 75, 80, 85, 90];
-    private static readonly int[] CriticalChoices = [80, 85, 90, 95, 98, 100];
+    private const double LevelTrackLength = 110;
+    private const int LevelGap = 5;
     private static readonly int[] CycleChoices = [4, 8, 15, 30];
     private const int DefaultCycleSeconds = 8;
 
@@ -52,8 +52,21 @@ internal sealed partial class LayoutEditor : StackPanel
     private readonly StackPanel slotList = new() { Spacing = Gap };
     private readonly Button addSlot = new();
     private readonly TextBox formatBox = new();
-    private readonly HakariSelect warnSelect = new();
-    private readonly HakariSelect criticalSelect = new();
+    private readonly HakariSlider warnSlider = new()
+    {
+        Minimum = 50,
+        Maximum = 95,
+        Step = 5,
+        TrackLength = LevelTrackLength,
+    };
+
+    private readonly HakariSlider criticalSlider = new()
+    {
+        Minimum = 60,
+        Maximum = 100,
+        Step = 1,
+        TrackLength = LevelTrackLength,
+    };
     private readonly HakariToggle cycleToggle = new();
     private readonly HakariSelect cycleSelect = new();
 
@@ -155,12 +168,8 @@ internal sealed partial class LayoutEditor : StackPanel
             }
 
             belowText.Text = Texts.Format("settings.thresholds.below", layout.WarnAt);
-            warnSelect.SetChoices(
-                WarnChoices.Select(percent => ((object)percent, $"{percent}%")),
-                layout.WarnAt);
-            criticalSelect.SetChoices(
-                CriticalChoices.Select(percent => ((object)percent, $"{percent}%")),
-                layout.CriticalAt);
+            warnSlider.Value = layout.WarnAt;
+            criticalSlider.Value = layout.CriticalAt;
             cycleToggle.IsChecked = layout.CycleSeconds > 0;
             cycleSelect.Visibility = layout.CycleSeconds > 0
                 ? Visibility.Visible
@@ -832,12 +841,19 @@ internal sealed partial class LayoutEditor : StackPanel
     /// </summary>
     private Grid ColorsAndCycle()
     {
-        warnSelect.Selected += (_, value) => change(layout => WithWarn(layout, (int)value));
-        criticalSelect.Selected += (_, value) => change(layout => layout with
+        warnSlider.Accent = Brush("HakariWarnBrush");
+        criticalSlider.Accent = Brush("HakariCriticalBrush");
+
+        // The two levels keep a gap: dragging one past the other pushes the other along.
+        warnSlider.Changing += (_, value) =>
         {
-            CriticalAt = (int)value,
-            WarnAt = Math.Min(layout.WarnAt, (int)value - 5),
-        });
+            criticalSlider.Value = Math.Max(criticalSlider.Value, value + LevelGap);
+            belowText.Text = Texts.Format("settings.thresholds.below", value);
+        };
+        criticalSlider.Changing += (_, value) =>
+            warnSlider.Value = Math.Min(warnSlider.Value, value - LevelGap);
+        warnSlider.Changed += (_, _) => ChangeLevels();
+        criticalSlider.Changed += (_, _) => ChangeLevels();
         cycleToggle.Click += (_, _) =>
             ChangeCycle(cycleToggle.IsChecked == true ? DefaultCycleSeconds : 0);
         cycleSelect.Selected += (_, value) => ChangeCycle((int)value);
@@ -847,9 +863,9 @@ internal sealed partial class LayoutEditor : StackPanel
         colors.Children.Add(Dot("HakariAccentBrush"));
         colors.Children.Add(belowText);
         colors.Children.Add(Dot("HakariWarnBrush"));
-        colors.Children.Add(warnSelect);
+        colors.Children.Add(warnSlider);
         colors.Children.Add(Dot("HakariCriticalBrush"));
-        colors.Children.Add(criticalSelect);
+        colors.Children.Add(criticalSlider);
         colors.Children.Add(RowText(Texts.Get("settings.thresholds.andUp"), isLabel: false));
         ToolTipService.SetToolTip(colors, Texts.Get("settings.thresholds.description"));
 
@@ -886,11 +902,11 @@ internal sealed partial class LayoutEditor : StackPanel
         VerticalAlignment = VerticalAlignment.Center,
         Margin = new Thickness(0, 0, isLabel ? 4 : 0, 0),
     };
-    private static WidgetLayout WithWarn(WidgetLayout layout, int warnAt) => layout with
+    private void ChangeLevels() => change(layout => layout with
     {
-        WarnAt = warnAt,
-        CriticalAt = Math.Max(layout.CriticalAt, warnAt + 5),
-    };
+        WarnAt = warnSlider.Value,
+        CriticalAt = criticalSlider.Value,
+    });
 
     private void ChangeCycle(int seconds)
     {

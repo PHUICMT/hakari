@@ -36,9 +36,7 @@ public sealed partial class SettingsPage
         AlertSoundSelect.SetChoices(
             SoundChoices.Select(sound => ((object)sound, SoundName(sound))),
             settings.AlertSound);
-        AlertVolumeSelect.SetChoices(
-            AlertSoundFiles.Volumes.Select(percent => ((object)percent, $"{percent}%")),
-            NearestVolume(settings.AlertVolume));
+        AlertVolumeSlider.Value = AlertSoundFiles.Usable(settings.AlertVolume);
         ShowSoundState(settings);
         if (soundHandlersAttached)
         {
@@ -47,8 +45,11 @@ public sealed partial class SettingsPage
 
         soundHandlersAttached = true;
         AlertSoundSelect.Selected += (_, value) => OnSoundChosen((AlertSound)value);
-        AlertVolumeSelect.Selected += (_, value) =>
-            Save(current => current with { AlertVolume = (int)value });
+        AlertVolumeSlider.Changed += (_, value) =>
+        {
+            Save(current => current with { AlertVolume = value });
+            PlayPreview();
+        };
     }
 
     private async void OnSoundChosen(AlertSound sound)
@@ -57,6 +58,7 @@ public sealed partial class SettingsPage
         {
             Save(current => current with { AlertSound = sound });
             ShowSoundState(store.Load());
+            PlayPreview();
             return;
         }
 
@@ -74,6 +76,10 @@ public sealed partial class SettingsPage
             SoundChoices.Select(choice => ((object)choice, SoundName(choice))),
             settings.AlertSound);
         ShowSoundState(settings);
+        if (copy is not null)
+        {
+            PlayPreview();
+        }
     }
 
     /// <returns>Hakari's copy of the picked file, or null when none was picked or copied.</returns>
@@ -104,8 +110,14 @@ public sealed partial class SettingsPage
         }
     }
 
-    private void OnPlaySoundClicked(object sender, RoutedEventArgs args) =>
-        ResidentChannel.TrySend(ResidentCommand.PlayAlertSound);
+    private void OnPlaySoundClicked(object sender, RoutedEventArgs args) => PlayPreview();
+
+    /// <summary>
+    /// Hakari.exe plays it, after the choice is saved, so it sounds exactly as an alert will.
+    /// Off the window thread, as the pipe can wait a moment.
+    /// </summary>
+    private static void PlayPreview() =>
+        _ = Task.Run(() => ResidentChannel.TrySend(ResidentCommand.PlayAlertSound));
 
     /// <summary>
     /// Says which file plays, and that the volume only reaches Hakari's sounds; the volume row
@@ -118,13 +130,10 @@ public sealed partial class SettingsPage
         AlertSoundRow.Description = picked
             ? Texts.Format("settings.alerts.sound.file", Path.GetFileName(settings.AlertSoundFile))
             : Texts.Get("settings.alerts.sound.description");
-        AlertVolumeSelect.IsEnabled = settings.AlertSound is not (AlertSound.Windows
+        AlertVolumeSlider.IsEnabled = settings.AlertSound is not (AlertSound.Windows
             or AlertSound.None);
         PlaySoundButton.IsEnabled = settings.AlertSound != AlertSound.None;
     }
-
-    private static int NearestVolume(int volume) =>
-        AlertSoundFiles.Volumes.MinBy(choice => Math.Abs(choice - volume));
 
     private static string SoundName(AlertSound sound) => Texts.Get(sound switch
     {
