@@ -300,6 +300,21 @@
                                 Description="{l:Text Key=settings.alerts.sessions.from.description}">
                                 <controls:HakariSlider x:Name="SessionNotesFromSlider" Minimum="50" Maximum="95" Step="5" />
                             </controls:SettingRow>
+                            <controls:SettingRow Glyph="&#xE8C4;" Title="{l:Text Key=settings.alerts.sessions.text}"
+                                Description="{l:Text Key=settings.alerts.sessions.text.description}">
+                                <Button x:Name="SessionNoteDefaultButton" Content="{l:Text Key=settings.alerts.sessions.text.default}"
+                                    Style="{StaticResource HakariButton}" Click="OnSessionNoteDefaultClicked" />
+                            </controls:SettingRow>
+                            <!-- Under the row it belongs to, lined up with the row's title. -->
+                            <StackPanel Margin="44,0,16,16" Spacing="8">
+                                <TextBox x:Name="SessionNoteBox" Style="{StaticResource HakariTextBox}"
+                                    AcceptsReturn="True" TextWrapping="Wrap" MinHeight="72" MaxLength="2000" />
+                                <controls:FlowPanel x:Name="SessionNotePlaceholders" />
+                                <TextBlock Text="{l:Text Key=settings.alerts.sessions.text.preview}"
+                                    Style="{StaticResource HakariCaptionText}" />
+                                <TextBlock x:Name="SessionNotePreview" TextWrapping="Wrap" FontSize="12"
+                                    Foreground="{ThemeResource HakariInkMutedBrush}" IsTextSelectionEnabled="True" />
+                            </StackPanel>
                         </StackPanel>
                     </Border>
                 </StackPanel>

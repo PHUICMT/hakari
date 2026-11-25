@@ -131,6 +131,9 @@ public sealed record HakariSettings
     /// <summary>The share of a limit at which sessions first hear about it.</summary>
     public int SessionNotesFrom { get; init; } = SessionNotes.NoteLevel.DefaultFrom;
 
+    /// <summary>The user's own note text with {placeholders}; empty uses Hakari's.</summary>
+    public string SessionNoteTemplate { get; init; } = string.Empty;
+
     /// <summary>The first-run steps were finished or closed; they never show again.</summary>
     public bool OnboardingDone { get; init; }
 

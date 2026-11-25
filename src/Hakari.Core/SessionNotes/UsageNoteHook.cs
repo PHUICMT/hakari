@@ -84,7 +84,8 @@ public static class UsageNoteHook
             memory.Known(input.SessionId),
             from,
             now,
-            zone);
+            zone,
+            settings.SessionNoteTemplate);
         memory.Remember(input.SessionId, decision.Levels, now);
 
         var wantsFresh = now - snapshot.FetchedAt > FreshFor

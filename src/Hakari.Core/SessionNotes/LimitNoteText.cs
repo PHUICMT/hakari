@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text.RegularExpressions;
 using Hakari.Core.Limits;
 
 namespace Hakari.Core.SessionNotes;
@@ -21,24 +22,84 @@ public static class LimitNoteText
 
     private static readonly CultureInfo Invariant = CultureInfo.InvariantCulture;
 
+    /// <summary>What sessions are told unless the user writes their own.</summary>
+    public const string DefaultTemplate =
+        "Hakari usage note for this Claude account: {limits}.{readAt} {advice}";
+
+    /// <summary>A note longer than this is cut, well below what Claude Code accepts.</summary>
+    public const int MaximumLength = 2000;
+
+    /// <summary>The names a template can use in braces, in the order Settings lists them.</summary>
+    public static readonly string[] Placeholders =
+        ["limits", "limit", "percent", "state", "resets", "in", "advice", "readAt"];
+
+    private static readonly Regex Placeholder = new(@"\{(\w+)\}", RegexOptions.Compiled);
+
+    /// <param name="template">The user's text with {placeholders}; empty for the default.</param>
     public static string NearlyFull(
+        IReadOnlyList<UsageLimit> limits,
+        DateTimeOffset fetchedAt,
+        DateTimeOffset now,
+        TimeZoneInfo zone,
+        string? template = null)
+    {
+        var values = Values(limits, fetchedAt, now, zone);
+        var text = Placeholder.Replace(
+            string.IsNullOrWhiteSpace(template) ? DefaultTemplate : template,
+            match => values.TryGetValue(match.Groups[1].Value, out var value)
+                ? value
+                : match.Value);
+        return text.Length > MaximumLength ? text[..MaximumLength] : text;
+    }
+
+    /// <summary>The note as a session would get it now, with a made-up limit.</summary>
+    public static string Sample(string? template, DateTimeOffset now, TimeZoneInfo zone) =>
+        NearlyFull(
+        [
+            new UsageLimit(SessionKind, SessionKind, 92, "warning",
+                now + SampleResetIn, null, IsActive: true),
+        ],
+            now,
+            now,
+            zone,
+            template);
+
+    private static readonly TimeSpan SampleResetIn = TimeSpan.FromMinutes(95);
+
+    /// <summary>
+    /// What each placeholder stands for. The single-limit ones describe the fullest limit, as
+    /// that is the one that stops work first.
+    /// </summary>
+    private static Dictionary<string, string> Values(
         IReadOnlyList<UsageLimit> limits,
         DateTimeOffset fetchedAt,
         DateTimeOffset now,
         TimeZoneInfo zone)
     {
-        var parts = string.Join("; ", limits.Select(limit => Describe(limit, now, zone)));
-        var anyFull = limits.Any(limit => limit.Percent >= NoteLevel.Full);
-        var advice = anyFull
-            ? "Requests can be refused until the reset. Save progress now (commit, or write "
-                + "down what is done and what is next) and stop at a safe point; the work "
-                + "can carry on after the reset."
-            : "When a limit reaches 100%, requests are refused until it resets. Before "
-                + "starting long work, save progress (commit, or write down what is done "
-                + "and what is next) so the work can carry on after the reset.";
-        return $"Hakari usage note for this Claude account: {parts}.{Taken(fetchedAt, now, zone)}"
-            + $" {advice}";
+        var fullest = limits.MaxBy(limit => limit.Percent)!;
+        var anyFull = fullest.Percent >= NoteLevel.Full;
+        return new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["limits"] = string.Join("; ", limits.Select(limit => Describe(limit, now, zone))),
+            ["limit"] = Name(fullest),
+            ["percent"] = $"{fullest.Percent}%",
+            ["state"] = anyFull ? "full" : "nearly full",
+            ["resets"] = fullest.ResetsAt is { } at ? At(at, now, zone) : string.Empty,
+            ["in"] = fullest.ResetsAt is { } until ? Span(until - now) : string.Empty,
+            ["advice"] = anyFull ? FullAdvice : NearlyFullAdvice,
+            ["readAt"] = Taken(fetchedAt, now, zone),
+        };
     }
+
+    private const string FullAdvice =
+        "Requests can be refused until the reset. Save progress now (commit, or write "
+        + "down what is done and what is next) and stop at a safe point; the work "
+        + "can carry on after the reset.";
+
+    private const string NearlyFullAdvice =
+        "When a limit reaches 100%, requests are refused until it resets. Before "
+        + "starting long work, save progress (commit, or write down what is done "
+        + "and what is next) so the work can carry on after the reset.";
 
     public static string Reset(IReadOnlyList<UsageLimit> limits) =>
         "Hakari usage note: "

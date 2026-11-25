@@ -13,13 +13,15 @@ public sealed record NoteDecision(string? Text, IReadOnlyDictionary<string, int>
     /// </summary>
     /// <param name="known">The steps told to this session before, by limit.</param>
     /// <param name="from">The share at which the first note comes.</param>
+    /// <param name="template">The user's own note text; null or empty for the default.</param>
     public static NoteDecision Decide(
         string eventName,
         LimitSnapshot snapshot,
         IReadOnlyDictionary<string, int> known,
         int from,
         DateTimeOffset now,
-        TimeZoneInfo zone)
+        TimeZoneInfo zone,
+        string? template = null)
     {
         var fresh = eventName == HookInput.SessionStart;
         var limits = snapshot.ProjectedTo(now).Limits;
@@ -39,7 +41,8 @@ public sealed record NoteDecision(string? Text, IReadOnlyDictionary<string, int>
         var parts = new List<string>();
         if (nearlyFull.Count > 0 && (fresh || climbed))
         {
-            parts.Add(LimitNoteText.NearlyFull(nearlyFull, snapshot.FetchedAt, now, zone));
+            parts.Add(LimitNoteText.NearlyFull(
+                nearlyFull, snapshot.FetchedAt, now, zone, template));
         }
 
         if (reset.Count > 0)

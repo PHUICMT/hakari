@@ -34,6 +34,7 @@ public sealed partial class SettingsPage
         UnusualToggle.IsChecked = settings.NotifyOnUnusualSessions;
         SessionNotesToggle.IsChecked = settings.TellSessionsAboutLimits;
         FillSound(settings);
+        FillSessionNote(settings);
         SessionNotesFromSlider.Value = NoteLevel.Usable(settings.SessionNotesFrom);
         AlertWarnSlider.Value = settings.Widget.WarnAt;
         AlertCriticalSlider.Value = settings.Widget.CriticalAt;
